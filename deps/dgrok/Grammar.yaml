@@ -1,0 +1,538 @@
+# First column: .=unfinished, !=finished and working
+AddOp:
+  Doc: |
+    ! -> '+'
+    ! -> '-'
+    ! -> OR
+    ! -> XOR
+ArrayType:
+  Doc: |
+    ! -> ARRAY ['[' (Type [','])+ ']'] OF Type
+AssemblerStatement:
+  Doc: |
+    ! -> ASM
+    !    <assemblylanguage>
+    !    END
+AssemblyAttribute:
+  Doc: |
+    ! -> '[' ASSEMBLY ':' Expression ']'
+Atom:
+  Doc: |
+    ! -> Particle
+    !    ( '.' ExtendedIdent
+    !      | '[' ExpressionList ']'
+    !      | '^'
+    !      | '(' (ParameterExpression [','])* ')'
+    !    )*
+BareInherited:
+  Doc: |
+    ! -> INHERITED
+Block:
+  Doc: |
+    ! -> BEGIN [StatementList] END
+    ! -> AssemblerStatement
+CaseSelector:
+  Doc: |
+    ! -> (ExpressionOrRange [','])+
+    !    ':' [Statement] [';']
+CaseStatement:
+  Doc: |
+    ! -> CASE Expression OF
+    !    (CaseSelector)+
+    !    [ELSE [StatementList]]
+    !    END
+ClassHelperType:
+  Doc: |
+    ! -> CLASS HELPER
+    !    ['(' QualifiedIdent ')']
+    !    FOR QualifiedIdent
+    !    (VisibilitySection)*
+    !    END
+ClassOfType:
+  Doc: |
+    ! -> CLASS OF QualifiedIdent
+ClassType:
+  Doc: |
+    ! -> CLASS
+    !    [ABSTRACT | SEALED]
+    !    ['(' (QualifiedIdent [','])+ ')']
+    // The remainder is optional, but only if the base class is specified and lookahead shows that the next token is a semicolon
+    !    (VisibilitySection)*
+    !    END
+ConstantDecl:
+  Doc: |
+    ! -> Ident
+    !    [':' Type]
+    !    '=' TypedConstant
+    !    (PortabilityDirective)*
+    !    ';'
+ConstSection:
+  Doc: |
+    ! -> (CONST|RESOURCESTRING)
+    !    (ConstantDecl)+
+Directive:
+  Doc: |
+    ! -> [';'] ABSTRACT
+    ! -> [';'] ASSEMBLER
+    ! -> [';'] CDECL
+    ! -> [';'] DISPID Expression
+    ! -> [';'] DYNAMIC
+    ! -> [';'] EXPORT
+    ! -> [';'] EXTERNAL [Expression (ExportsSpecifier)*]
+    ! -> [';'] FAR
+    ! -> [';'] FINAL
+    ! -> [';'] FORWARD
+    ! -> [';'] INLINE
+    ! -> [';'] LOCAL
+    ! -> [';'] MESSAGE Expression
+    ! -> [';'] NEAR
+    ! -> [';'] OVERLOAD
+    ! -> [';'] OVERRIDE
+    ! -> [';'] PASCAL
+    ! -> [';'] REGISTER
+    ! -> [';'] REINTRODUCE
+    ! -> [';'] SAFECALL
+    ! -> [';'] STATIC
+    ! -> [';'] STDCALL
+    ! -> [';'] VARARGS
+    ! -> [';'] VIRTUAL
+    ! -> [';'] PortabilityDirective
+EnumeratedType:
+  Doc: |
+    ! -> '(' (EnumeratedTypeElement [','])+ ')'
+EnumeratedTypeElement:
+  Doc: |
+    ! -> Ident [ '=' Expression ]
+ExceptionItem:
+  Doc: |
+    ! -> ON
+    !    [Ident ':']
+    !    QualifiedIdent DO
+    !    [Statement]
+    !    [';']
+ExportsItem:
+  Doc: |
+    ! -> Ident (ExportsSpecifier)*
+ExportsSpecifier:
+  Doc: |
+    ! -> (INDEX | NAME) Expression
+ExportsStatement:
+  Doc: |
+    ! -> EXPORTS (ExportsItem [','])+ ';'
+Expression:
+  Doc: |
+    ! -> SimpleExpression (RelOp SimpleExpression)*
+ExpressionList:
+  Doc: |
+    ! -> (Expression [','])+
+ExpressionOrAssignment:
+  Doc: |
+    ! -> Expression
+    ! -> Expression ':=' Expression
+ExpressionOrRange:
+  Doc: |
+    ! -> SimpleExpression ['..' SimpleExpression]
+ExpressionOrRangeList:
+  Doc: |
+    ! -> (ExpressionOrRange [','])+
+ExtendedIdent:
+  Doc: |
+    ! -> Ident
+    ! -> <keyword>
+Factor:
+  Doc: |
+    ! -> Atom
+    ! -> UnaryOperator Factor
+FancyBlock:
+  Doc: |
+    ! -> (ImplementationDecl)*
+    !    Block
+FieldDecl:
+  Doc: |
+    ! -> IdentList ':' Type (PortabilityDirective)* [';']
+FieldSection:
+  Doc: |
+    ! -> [[CLASS] VAR]
+    !    (FieldDecl)*
+FileType:
+  Doc: |
+    ! -> FILE
+    ! -> FILE OF QualifiedIdent
+ForStatement:
+  Doc: |
+    ! -> FOR Ident ':=' Expression (TO | DOWNTO) Expression DO [Statement]
+    ! -> FOR Ident IN Expression DO [Statement]
+Goal:
+  Doc: |
+    ! -> Program
+    ! -> Package
+    ! -> Unit
+GotoStatement:
+  Doc: |
+    ! -> GOTO LabelId
+Ident:
+  Doc: |
+    ! -> <identifier>
+    ! -> <semikeyword>
+    ! -> '&' <identifier>
+    ! -> '&' <semikeyword>
+    ! -> '&' <keyword>
+IdentList:
+  Doc: |
+    ! -> (Ident [','])+
+IfStatement:
+  Doc: |
+    ! -> IF Expression THEN [Statement]
+    !    [ELSE [Statement]]
+ImplementationDecl:
+  Doc: |
+    ! -> LabelDeclSection
+    ! -> ConstSection
+    ! -> TypeSection
+    ! -> VarSection
+    ! -> MethodImplementation
+    ! -> ExportsStatement
+    ! -> AssemblyAttribute
+ImplementationSection:
+  Doc: |
+    ! -> IMPLEMENTATION
+    !    [UsesClause]
+    !    (ImplementationDecl)*
+InitSection:
+  Doc: |
+    ! -> END
+    ! -> Block
+    ! -> INITIALIZATION
+    !    [StatementList]
+    !    [FINALIZATION
+    !    [StatementList]]
+    !    END
+InterfaceDecl:
+  Doc: |
+    ! -> ConstSection
+    ! -> TypeSection
+    ! -> VarSection
+    ! -> MethodHeading
+InterfaceSection:
+  Doc: |
+    ! -> INTERFACE
+    !    [UsesClause]
+    !    (InterfaceDecl)*
+InterfaceType:
+  Doc: |
+    ! -> (INTERFACE | DISPINTERFACE)
+    !    ['(' QualifiedIdent ')']
+    !    ['[' Expression ']']
+    !    (MethodOrProperty)*
+    !    END
+LabelDeclSection:
+  Doc: |
+    ! -> LABEL (LabelId [','])+ ';'
+LabelId:
+  Doc: |
+    ! -> <number>
+    ! -> Ident
+MethodHeading:
+  Doc: |
+    ! -> [CLASS]
+    !    (PROCEDURE | FUNCTION | CONSTRUCTOR | DESTRUCTOR | OPERATOR)
+    !    QualifiedIdent
+    !    (
+    !      ['(' (Parameter [';'])* ')']
+    !      [':' MethodReturnType]
+    !      (Directive)*
+    !    | '=' Ident
+    !    )
+    !    [';']
+MethodImplementation:
+  Doc: |
+    // If the MethodHeading does not include 'external' or 'forward':
+    ! -> MethodHeading
+    !    FancyBlock ';'
+    // If the MethodHeading does include 'external' or 'forward':
+    ! -> MethodHeading
+MethodOrProperty:
+  Doc: |
+    ! -> MethodHeading
+    ! -> Property
+MethodReturnType:
+  Doc: |
+    ! -> QualifiedIdent
+    ! -> STRING
+MulOp:
+  Doc: |
+    ! -> '*'
+    ! -> '/'
+    ! -> DIV
+    ! -> MOD
+    ! -> AND
+    ! -> SHL
+    ! -> SHR
+OpenArray:
+  Doc: |
+    ! -> ARRAY OF QualifiedIdent
+    ! -> ARRAY OF STRING
+    ! -> ARRAY OF FILE
+    ! -> ARRAY OF CONST
+Package:
+  Doc: |
+    ! -> PACKAGE QualifiedIdent ';'
+    !    [RequiresClause]
+    !    [UsesClause]
+    !    (AssemblyAttribute)*
+    !    END '.'
+PackedType:
+  Doc: |
+    ! -> PACKED Type
+Parameter:
+  Doc: |
+    ! -> [VAR | CONST | OUT]
+    !    IdentList
+    !    [':' ParameterType]
+    !    ['=' Expression]
+ParameterExpression:
+  Doc: |
+    ! -> Expression [':' Expression [':' Expression]]
+ParameterType:
+  Doc: |
+    ! -> QualifiedIdent
+    ! -> STRING
+    ! -> FILE
+    ! -> OpenArray
+ParenthesizedExpression:
+  Doc: |
+    ! -> '(' Expression ')'
+Particle:
+  Doc: |
+    ! -> <number>
+    ! -> <stringliteral>
+    ! -> Ident
+    ! -> NIL
+    ! -> ParenthesizedExpression
+    ! -> SetLiteral
+    ! -> STRING
+    ! -> FILE
+PointerType:
+  Doc: |
+    ! -> '^' Type
+PortabilityDirective:
+  Doc: |
+    ! -> platform
+    ! -> deprecated
+    ! -> library
+    ! -> experimental
+ProcedureType:
+  Doc: |
+    ! -> (PROCEDURE | FUNCTION)
+    !    ['(' (Parameter [';'])* ')']
+    !    [':' MethodReturnType]
+    !    (Directive)*
+    !    [OF OBJECT]
+    !    (Directive)*
+Program:
+  Doc: |
+    ! -> (PROGRAM | LIBRARY) Ident ['(' IdentList ')'] ';'
+    ! -> [UsesClause]
+    !    (ImplementationDecl)*
+    !    InitSection '.'
+Property:
+  Doc: |
+    ! -> [CLASS]
+    !    PROPERTY Ident
+    !    ['[' (Parameter [';'])+ ']']
+    !    [':' MethodReturnType]
+    !    (PropertyDirective)*
+    !    ';'
+PropertyDirective:
+  Doc: |
+    ! -> ';' DEFAULT
+    ! -> DEFAULT Expression
+    ! -> DISPID Expression
+    ! -> IMPLEMENTS (QualifiedIdent [','])+
+    ! -> INDEX Expression
+    ! -> NODEFAULT
+    ! -> READ Expression
+    ! -> READONLY
+    ! -> STORED Expression
+    ! -> WRITE Expression
+    ! -> WRITEONLY
+QualifiedIdent:
+  Doc: |
+    ! -> Ident ('.' ExtendedIdent)*
+RaiseStatement:
+  Doc: |
+    ! -> RAISE [Expression [AT Expression]]
+RecordHelperType:
+  Doc: |
+    ! -> RECORD HELPER FOR QualifiedIdent
+    !    (VisibilitySection)*
+    !    END
+RecordType:
+  Doc: |
+    ! -> RECORD
+    !    (VisibilitySection)*
+    !    [VariantSection]
+    !    END
+RelOp:
+  Doc: |
+    ! -> '='
+    ! -> '>'
+    ! -> '<'
+    ! -> '<='
+    ! -> '>='
+    ! -> '<>'
+    ! -> IN
+    ! -> IS
+    ! -> AS
+RepeatStatement:
+  Doc: |
+    ! -> REPEAT [StatementList] UNTIL Expression
+RequiresClause:
+  Doc: |
+    ! -> REQUIRES (QualifiedIdent [','])+ ';'
+SetLiteral:
+  Doc: |
+    ! -> '[' [ExpressionOrRangeList] ']'
+SetType:
+  Doc: |
+    ! -> SET OF Type
+SimpleExpression:
+  Doc: |
+    ! -> Term (AddOp Term)*
+SimpleStatement:
+  Doc: |
+    ! -> BareInherited
+    ! -> ExpressionOrAssignment
+    ! -> GotoStatement
+    ! -> Block
+    ! -> IfStatement
+    ! -> CaseStatement
+    ! -> RepeatStatement
+    ! -> WhileStatement
+    ! -> ForStatement
+    ! -> WithStatement
+    ! -> TryStatement
+    ! -> RaiseStatement
+Statement:
+  Doc: |
+    ! -> LabelId ':' [SimpleStatement]
+    ! -> SimpleStatement
+StatementList:
+  Doc: |
+    ! -> ([Statement] [';'])+
+StringType:
+  Doc: |
+    ! -> STRING
+    ! -> STRING '[' Expression ']'
+Term:
+  Doc: |
+    ! -> Factor (MulOp Factor)*
+TryStatement:
+  Doc: |
+    ! -> TRY
+    !      [StatementList]
+    !    ( FINALLY [StatementList]
+    !    | EXCEPT (
+    !      [StatementList] |
+    !      (ExceptionItem)* [ELSE [StatementList]]
+    !    )
+    !    END
+Type:
+  Doc: |
+    // Note: Delphi assumes that a Type starting with '(' is an enum, not an expression.
+    ! -> EnumeratedType
+    ! -> ExpressionOrRange
+    ! -> ArrayType
+    ! -> SetType
+    ! -> FileType
+    ! -> RecordHelperType
+    ! -> RecordType
+    ! -> PointerType
+    ! -> StringType
+    ! -> ProcedureType
+    ! -> ClassHelperType
+    ! -> ClassOfType
+    ! -> ClassType
+    ! -> InterfaceType
+    ! -> PackedType
+TypedConstant:
+  Doc: |
+    ! -> Expression
+    ! -> '(' (QualifiedIdent ':' TypedConstant [';'])+ ')'
+    ! -> '(' (TypedConstant [','])+ ')'
+    ! -> '(' ')'
+TypeDecl:
+  Doc: |
+    ! -> Ident '=' [TYPE] Type (PortabilityDirective)* ';'
+    ! -> Ident '=' CLASS ';'
+    ! -> Ident '=' DISPINTERFACE ';'
+    ! -> Ident '=' INTERFACE ';'
+TypeSection:
+  Doc: |
+    ! -> TYPE (TypeDecl)+
+UnaryOperator:
+  Doc: |
+    ! -> NOT
+    ! -> '+'
+    ! -> '-'
+    ! -> '@'
+    ! -> INHERITED
+Unit:
+  Doc: |
+    ! -> UNIT Ident (PortabilityDirective)* ';'
+    !    InterfaceSection
+    !    ImplementationSection
+    !    InitSection '.'
+UsesClause:
+  Doc: |
+    ! -> (USES | CONTAINS)
+    !    (UsedUnit [','])+ ';'
+UsedUnit:
+  Doc: |
+    ! -> Ident
+    ! -> Ident IN <stringliteral>
+VarDecl:
+  Doc: |
+    ! -> IdentList ':' Type
+    !    (PortabilityDirective)*
+    !    [ABSOLUTE Expression | '=' TypedConstant]
+    !    (PortabilityDirective)*
+    !    ';'
+VariantGroup:
+  Doc: |
+    ! -> ExpressionList ':'
+    !    '('
+    ! -> (FieldDecl)*
+    !    [VariantSection]
+    !    ')' [';']
+VariantSection:
+  Doc: |
+    ! -> CASE [Ident ':'] QualifiedIdent OF
+    !    (VariantGroup)+
+VarSection:
+  Doc: |
+    ! -> (VAR | THREADVAR) (VarDecl)+
+Visibility:
+  Doc: |
+    ! -> STRICT PRIVATE
+    ! -> STRICT PROTECTED
+    ! -> PRIVATE
+    ! -> PROTECTED
+    ! -> PUBLIC
+    ! -> PUBLISHED
+VisibilitySection:
+  Doc: |
+    ! -> [Visibility]
+    !    (VisibilitySectionContent)*
+VisibilitySectionContent:
+  Doc: |
+    ! -> FieldSection
+    ! -> MethodOrProperty
+    ! -> ConstSection
+    ! -> TypeSection
+WhileStatement:
+  Doc: |
+    ! -> WHILE Expression DO [Statement]
+WithStatement:
+  Doc: |
+    ! -> WITH ExpressionList DO [Statement]

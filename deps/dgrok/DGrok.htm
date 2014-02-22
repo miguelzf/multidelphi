@@ -1,0 +1,144 @@
+<html>
+<head><title>DGrok</title>
+</head>
+<body>
+<h1>DGrok Delphi parser</h1>
+
+<h3>What is DGrok?</h3>
+<p><b>The grammar:</b> The
+  "<a href="http://www.excastle.com/dgrok/Grammar.html">DGrok Delphi grammar</a>"
+  is the Delphi grammar that I've reverse-engineered (since CodeGear doesn't
+  publish an official Delphi grammar &mdash; or at least, not an accurate one).</p>
+<p><b>The parser:</b> The "DGrok Delphi parser" is an open-source parser
+  that can read Delphi code and build a syntax tree from it. The parser itself
+  is written in C#. (<a href="#why_not_in_delphi">Why?</a>)</p>
+<p><b>The tools:</b> The "DGrok tools" are a set of open-source tools, currently under
+  development, for parsing Delphi source code and doing cool stuff with it:
+  smart and lightning-fast searches, tracking down weird code constructs, refactoring, etc.
+  See the "List of DGrok tools" below.</p>
+
+<h3>Downloads</h3>
+<p><a href="http://dgrok.excastle.com/Grammar.html">Current DGrok Delphi grammar</a>
+  (online version; may correspond to unreleased code)</p>
+<p><a href="http://dgrok.excastle.com/downloads/">DGrok downloads</a>
+  (grammar, parser, tools, and all source code)</p>
+
+<h3>List of DGrok tools</h3>
+<p>DGrok comes with a demo app, which you can use to parse one or more
+  directory trees, and then analyze the code looking for patterns.</p>
+<p>Here's the current list of patterns it can look for. It's no
+  <a href="http://msdn.microsoft.com/en-us/library/bb429476(VS.80).aspx">
+  FxCop</a>, but it's a start.</p>
+<ul>
+  <li>Best Practice Violations</li>
+  <ul>
+    <li><b>Find Global Variables.</b> Avoid globals when possible. (When you
+      can't avoid it, at least use <code>class var</code> instead of unit
+      globals.) This tool lists all the global variables in your code, so you
+      can see how bad things are and start cleaning them up.</li>
+    <li><b>Find Nested Methods.</b> Nested methods can lead to much confusion.
+      Use them with care, or not at all. This tool lists all the nested methods
+      in your code.</li>
+    <li><b>Find "With" Statements.</b> <code>with</code> statements make for
+      confusing code. Avoid them. This tool lists all the <code>with</code>
+      statements in your code.</li>
+  </ul>
+  <li>.NET Compatibilty</li>
+  <ul>
+    <li><b>Find Asm Blocks.</b> x86 assembler is not allowed in managed code.
+      This tool lists all the <code>asm</code> blocks in your code.</li>
+    <li><b>Find Variant Records.</b> Variant records are not typesafe, and are
+      not allowed in managed code. This tool lists all the variant records in
+      your code.</li>
+  </ul>
+</ul>
+<p>You can also add code to look for patterns of your own. See the classes in
+  the DGrok.Framework\Visitors directory for examples.</p>
+
+<h3>Project status</h3>
+<p>Currently the parser is fully capable of parsing Delphi 2007 source code,
+  but can't read code that uses new Delphi 2009 features like string locales or generics.
+  (The DGrok grammar doesn't document these new features either.)
+  There's also no symbol table support yet, so the tools can't do refactorings or
+  Find References.</p>
+<p>More information is available in the
+  <a href="http://blog.excastle.com/tag/dgrok/">DGrok posts
+  on my blog</a>.</p>
+<p><a href="http://dgrok.excastle.com/Grammar.html">Delphi grammar and project status</a></p>
+
+<h3>Frequently Asked Question</h3>
+<h4>
+  <a name="why_not_in_delphi">Why isn't DGrok written in Delphi?</a>
+</h4>
+<p>DGrok is written in C#, not Delphi. Sometimes people ask why.</p>
+<p>When I first started the
+  <a href="http://blog.excastle.com/2004/10/09/searching-through-delphi-code/">
+    project that was to become DGrok</a>,
+  it was just a fancy Find tool, and I wrote it in .NET because .NET came with
+  a regular-expression library. Later I tried using a
+  <a href="http://blog.excastle.com/2006/04/16/integrating-antlr-with-visual-studio-builds/">
+    parser generator</a>,
+  and there really aren't any good ones that produce Delphi code, so I stuck
+  with C#. And when I eventually switched to a hand-coded recursive descent
+  parser, well, I already had all these unit tests written in C#.</p>
+<p>Besides that, C# has a lot of language niceties Delphi didn't.
+  DGrok uses things like generics, anonymous methods, and iterators, none
+  of which existed in Delphi back in 2004-2007 when I was writing DGrok.</p>
+<p>I also like working in a garbage-collected environment; writing this in
+  Delphi for Win32 would have required adding a lot of memory-management
+  code that would just clutter things up. There was a Delphi for .NET in
+  2007, but they hadn't been giving it a lot of love; I don't think it
+  even supported .NET 2.0 yet. They finally gave up on it and started
+  reselling Oxygene instead, but that wasn't until later.</p>
+<p>Plus, you can get a C# compiler for free. That's a bonus. I'm all in
+  favor of free-as-in-speech tools that only have free-as-in-beer
+  dependencies. (I suppose I could have looked into FreePascal, but I
+  didn't have a strong desire to keep my code compilable in two
+  different environments.)</p>
+<p>The Ruby dependencies are mainly because it was easier and quicker to
+  write those parts in Ruby. I'm all for using the right tool for the
+  job, and interpreted languages are a great choice for codegen, because
+  you can run them during your build process without needing to compile
+  the code generator first. It's also easy and quick to hack on, which
+  was really nice when I was
+  <a href="http://blog.excastle.com/2007/08/28/generating-the-grammar-document/">
+    bootstrapping the grammar</a>
+  and using Ruby to build my HTML documentation that also served as my
+  what-to-do-next list.</p>
+<p>Anyway, there's no technical reason you couldn't write DGrok in
+  Delphi. If anyone wants to translate the code (or to otherwise enhance
+  it or build on it, for that matter), I'd be happy to link to you. Or I
+  could post the code on GitHub so you could fork it, if that would be useful.
+  <a href="http://blog.excastle.com/contact/">Let me know</a>.</p>
+
+<h4>
+  <a name="why_not_antlr">Why doesn't DGrok use a parser generator like ANTLR?</a>
+</h4>
+<p><a href="http://www.antlr.org/">ANTLR</a> is a fine tool, but it has
+  problems with ambiguous grammars. It wants to be able to read from left to
+  right, one token at a time, and always know what type of construct it's
+  dealing with based only on what it's seen so far. (There's support for
+  lookahead but it's extremely limited.)</p>
+<p>That isn't good enough for the Delphi grammar. Delphi is <i>full</i> of
+  ambiguity.</p>
+<p>For example, take the humble semicolon. Most of the time, it's an
+  unambiguous statement separator. That is, until you see
+  <a href="http://blog.excastle.com/2007/09/20/parsing-directives/">
+  a semicolon in the <i>middle</i> of a variable declaration</a>:</p>
+<pre>var
+  Foo: procedure; stdcall = nil;</pre>
+<p>So when you see the first semicolon, you don't know whether you're done with the
+  variable declaration or not. ANTLR doesn't take well to that sort of thing.</p>
+<p>Once you start digging into the
+  <a href="http://dgrok.excastle.com/Grammar.html">grammar</a>, it becomes
+  obvious that the Delphi grammar grew organically over time, rather than being
+  designed from the beginning to be easy to write tools for.</p>
+<p>DGrok uses a hand-coded recursive-descent parser. It's hard to tell a
+  <i>tool</i> how to deal with the grammar ambiguity if it wasn't designed
+  for it, but it's easy to write <i>code</i> to deal with the ambiguity.</p>
+
+<h3>Contacting me</h3>
+<p>DGrok was written by <a href="http://blog.excastle.com/">Joe White</a>.
+  If you have any comments, corrections, questions, suggestions, etc., please feel free to use my
+  <a href="http://blog.excastle.com/contact/">contact form</a> to get in touch with me.</p>
+</body></html>
