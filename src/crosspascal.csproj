@@ -60,9 +60,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AST\ASTProcessor.cs" />
-    <Compile Include="AST\ASTVisitorTraverser.cs" />
-    <Compile Include="AST\ASTMapTraverser.cs" />
+    <Compile Include="AST\Processor.cs" />
+    <Compile Include="AST\VisitorTraverser.cs" />
+    <Compile Include="AST\MapTraverser.cs" />
     <Compile Include="AST\GenericTraverser.cs" />
     <Compile Include="AST\PrintAST.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
