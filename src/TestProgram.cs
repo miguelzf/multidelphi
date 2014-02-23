@@ -29,13 +29,13 @@ namespace crosspascal
 				Parser parser = Parser.FromText(text, fileName, CompilerDefines.CreateStandard(), new MemoryFileLoader());
 				AstNode tree = parser.ParseRule(_ruleType);
 
-				String treestr = printTree(tree, typeof(MapTraverser), 4);
+			//	String treestr = printTree(tree, typeof(MapTraverser), 4);
 			/*	PrintAST proc = new PrintAST();
 				new MapTraverser(proc);
 				proc.Visit(tree);
 				String treestr = proc.ToString();
 			*/	
-				Logger.log.Write(treestr);
+				Logger.log.Write(tree.Inspect());
 			}
 			catch (DGrokException ex)
 			{

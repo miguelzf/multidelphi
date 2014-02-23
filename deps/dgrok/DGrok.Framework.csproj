@@ -46,6 +46,7 @@
     <Compile Include="DelphiNodes\DirectiveNode.cs" />
     <Compile Include="DelphiNodes\FieldDeclNode.cs" />
     <Compile Include="DelphiNodes\GeneratedNodes.cs" />
+    <Compile Include="DelphiNodes\Identifier.cs" />
     <Compile Include="DelphiNodes\ITypeDeclaration.cs" />
     <Compile Include="DelphiNodes\MethodHeadingNode.cs" />
     <Compile Include="DelphiNodes\TypeDeclNode.cs" />
