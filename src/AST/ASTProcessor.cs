@@ -6,28 +6,38 @@ using System.Threading.Tasks;
 using DGrok.Framework;
 using DGrok.DelphiNodes;
 
-namespace crosspascal
+namespace crosspascal.AST
 {
 	// Defines a general AST Visitor, defining all DGrok.Visitor requeriments,
 	// but without requiring the implementation of a Visitor pattern. 
 	// Uses a Delegate to a generic Tree Traversal method instead
 
-	delegate void TreeTraverser(AstNode n);
+	delegate void TreeTraverse(AstNode n);
 
 	abstract class ASTProcessor : DGrok.Framework.Visitor
 	{
-		public TreeTraverser traverse { get; set; }
+		public TreeTraverse traverse { get; set; }
 
-		// Create with default traverser
-		public ASTProcessor()
+		// dummy
+		void emptyTraverse(AstNode n) {	}
+
+		// Instantiate Traverser class
+		public ASTProcessor(Type t)
 		{
-			
+			if (t == null || !t.IsSubclassOf(typeof(GenericTraverser)))
+				return;
+
+			GenericTraverser instance = (GenericTraverser) Activator.CreateInstance(t, new object[] {this});
+			traverse = instance.traverse;
 		}
 
-		// Create with given traverser
-		public ASTProcessor(TreeTraverser t)
+		// Create with given traverser function
+		public ASTProcessor(TreeTraverse t = null)
 		{
-			traverse = t;
+			if (t == null)
+				traverse = emptyTraverse;
+			else
+				traverse = t;
 		}
 
 
@@ -37,27 +47,28 @@ namespace crosspascal
 
 		// Tokens are not processed... Dgrok shouldn't have included them in the AST
 
-		public void VisitNode(AstNode node)
-		{
-			// CHECK: should never come here right..!??
-
-			if (node != null)
-				traverse(node);
-		}
 		public override void VisitDelimitedItemNode(AstNode node, AstNode item, Token delimiter)
 		{
 			traverse(item);
 			traverse(delimiter);
 		}
+
 		public override void VisitListNode(AstNode node, IEnumerable<AstNode> items)
 		{
 			foreach (AstNode item in items)
 				traverse(item);
 		}
+
+		// Only called from Visit(CodeBase codeBase)
 		public override void VisitSourceFile(string fileName, AstNode node)
 		{
 			traverse(node);
 		}
+
+
+		// =========================================================================
+		// Normal processor methods
+
 		public override void VisitToken(Token token)
 		{
 			// CHECK that this is never called

@@ -47,10 +47,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>
-    </StartupObject>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="DGrok.Framework">
       <HintPath>..\deps\dgrok\DGrok.Framework.dll</HintPath>
@@ -64,12 +60,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ASTProcessor.cs" />
-    <Compile Include="ASTVisitorTraverser.cs" />
-    <Compile Include="ASTMapTraverser.cs" />
+    <Compile Include="AST\ASTProcessor.cs" />
+    <Compile Include="AST\ASTVisitorTraverser.cs" />
+    <Compile Include="AST\ASTMapTraverser.cs" />
+    <Compile Include="AST\GenericTraverser.cs" />
+    <Compile Include="AST\PrintAST.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
+    <Compile Include="TestProgram.cs" />
     <Compile Include="testunits\TestDriver.cs" />
     <Compile Include="utils\Logger.cs" />
     <Compile Include="Program.cs" />
