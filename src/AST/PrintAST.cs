@@ -11,7 +11,7 @@ namespace crosspascal.AST
 
 	// For debug, prints the whole tree
 
-	class PrintAST : ASTProcessor
+	class PrintAST : Processor
 	{
 		private int identLevel = 0;
 		private StringBuilder builder = new StringBuilder();

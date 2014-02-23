@@ -10,11 +10,11 @@ namespace crosspascal.AST
 {
 	// Delivers a Mapping with which to traverse the AST
 
-	class ASTMapTraverser : GenericTraverser
+	class MapTraverser : GenericTraverser
 	{
 		Dictionary<Type, MethodInfo> methodMapping;
 
-		public ASTMapTraverser(ASTProcessor processor) : base(processor)
+		public MapTraverser(Processor processor) : base(processor)
 		{
 			methodMapping = new Dictionary<Type, MethodInfo>();
 

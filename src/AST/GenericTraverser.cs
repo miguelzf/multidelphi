@@ -9,9 +9,9 @@ namespace crosspascal.AST
 {
 	abstract class GenericTraverser
 	{
-		protected ASTProcessor Processor { get; set; }
+		protected Processor Processor { get; set; }
 
-		public GenericTraverser(ASTProcessor processor)
+		public GenericTraverser(Processor processor)
 		{
 			Processor = processor;
 		}

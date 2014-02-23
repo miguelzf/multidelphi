@@ -9,7 +9,7 @@ using crosspascal.AST;
 
 namespace crosspascal.cpp
 {
-	class CppCodegen : ASTProcessor
+	class CppCodegen : Processor
 	{
 
 		public CppCodegen(Type t) : base(t) { }

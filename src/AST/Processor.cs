@@ -14,7 +14,7 @@ namespace crosspascal.AST
 
 	delegate void TreeTraverse(AstNode n);
 
-	abstract class ASTProcessor : DGrok.Framework.Visitor
+	abstract class Processor : DGrok.Framework.Visitor
 	{
 		public TreeTraverse traverse { get; set; }
 
@@ -22,7 +22,7 @@ namespace crosspascal.AST
 		void emptyTraverse(AstNode n) {	}
 
 		// Instantiate Traverser class
-		public ASTProcessor(Type t)
+		public Processor(Type t)
 		{
 			if (t == null || !t.IsSubclassOf(typeof(GenericTraverser)))
 				return;
@@ -32,7 +32,7 @@ namespace crosspascal.AST
 		}
 
 		// Create with given traverser function
-		public ASTProcessor(TreeTraverse t = null)
+		public Processor(TreeTraverse t = null)
 		{
 			if (t == null)
 				traverse = emptyTraverse;

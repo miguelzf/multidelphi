@@ -25,7 +25,7 @@ namespace crosspascal
 				
 				PrintAST proc = new PrintAST();
 				//new ASTVisitorTraverser(proc);
-				proc.traverse = new ASTVisitorTraverser(proc).traverse;
+				proc.traverse = new VisitorTraverser(proc).traverse;
 				proc.Visit(tree);
 				Console.WriteLine(proc.ToString());
 			}

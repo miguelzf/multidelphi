@@ -9,9 +9,9 @@ namespace crosspascal.AST
 {
 	// Delivers a visitor pattern with which to traverse the AST
 
-	class ASTVisitorTraverser : GenericTraverser
+	class VisitorTraverser : GenericTraverser
 	{
-		public ASTVisitorTraverser(ASTProcessor processor) : base(processor) { }
+		public VisitorTraverser(Processor processor) : base(processor) { }
 
 		public override void traverse(AstNode n)
 		{
