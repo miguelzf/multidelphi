@@ -6,20 +6,16 @@ using System.Threading.Tasks;
 using DGrok.Framework;
 using System.Reflection;
 
-namespace crosspascal
+namespace crosspascal.AST
 {
 	// Delivers a Mapping with which to traverse the AST
 
-	class ASTMapTraverser
+	class MapTraverser : GenericTraverser
 	{
 		Dictionary<Type, MethodInfo> methodMapping;
 
-		ASTProcessor Processor { get; set; }
-
-		public ASTMapTraverser(ASTProcessor processor)
+		public MapTraverser(Processor processor) : base(processor)
 		{
-			Processor = processor;
-
 			methodMapping = new Dictionary<Type, MethodInfo>();
 
 			// Add most methods - 1 argument, derived from AstNode
@@ -29,13 +25,24 @@ namespace crosspascal
 					Type paramType = mi.GetParameters()[0].ParameterType;
 					methodMapping.Add(paramType, mi);
 				}
-				
-			// Add multi-argument methods
-			//... TODO
 		}
 
-		public void traverse(AstNode n)
+		public override void traverse(AstNode n)
 		{
+			if (n == null)
+				return;
+
+			if (n.GetType().IsGenericType)
+			{
+				Type nodetype = n.GetType();
+				Type paramType = nodetype.GenericTypeArguments[0];
+
+//				if (nodetype.FullName.Contains("ListNode"))
+	
+				n.Accept(Processor);	// fallback to basic visitor
+				return;
+			}
+
 			MethodInfo mi = methodMapping[n.GetType()];
 			mi.Invoke(Processor, new object[] { n });
 		}

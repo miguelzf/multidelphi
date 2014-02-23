@@ -3,616 +3,686 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DGrok.Framework;
 using DGrok.DelphiNodes;
+using DGrok.Framework;
 
-namespace crosspascal
+namespace crosspascal.AST
 {
-	// Defines a general AST Visitor, defining all DGrok.Visitor requeriments,
-	// but without requiring the implementation of a Visitor pattern. 
-	// Uses a Delegate to a generic Tree Traversal method instead
 
-	delegate void TreeTraverser(AstNode n);
+	// For debug, prints the whole tree
 
-	abstract class ASTProcessor : DGrok.Framework.Visitor
+	class PrintAST : Processor
 	{
-		public TreeTraverser traverse { get; set; }
+		private int identLevel = 0;
+		private StringBuilder builder = new StringBuilder();
 
-		// Create with default traverser
-		public ASTProcessor()
+
+		// =================================================
+		// Public interface
+
+		public PrintAST(Type t) : base(t) { }
+
+		public PrintAST(TreeTraverse t = null) : base(t) { }
+
+		public override string ToString()
 		{
-			
+			return builder.ToString();
 		}
 
-		// Create with given traverser
-		public ASTProcessor(TreeTraverser t)
+		public string GetRepresenation()
 		{
-			traverse = t;
+			return this.ToString();
 		}
 
-
-		// =========================================================================
-		//	Complete interface from DGrok.Framework.Visitor, to be implemented
-		// =========================================================================
-
-		// Tokens are not processed... Dgrok shouldn't have included them in the AST
-
-		public void VisitNode(AstNode node)
+		public void Reset()
 		{
-			// CHECK: should never come here right..!??
-
-			if (node != null)
-				traverse(node);
+			identLevel = 0;
+			builder.Clear();
 		}
+
+		// =================================================
+
+		// Printing helper
+		private void EnterNode(AstNode n)
+		{
+			string name = n.GetType().Name;
+			builder.Append(' ', identLevel);
+			builder.AppendLine(name);
+			identLevel++;
+		}
+
+		private void LeaveNode(AstNode n)
+		{
+			identLevel--;
+		}
+
 		public override void VisitDelimitedItemNode(AstNode node, AstNode item, Token delimiter)
 		{
+			EnterNode(node);
 			traverse(item);
-			traverse(delimiter);
+			LeaveNode(node);
 		}
+
 		public override void VisitListNode(AstNode node, IEnumerable<AstNode> items)
 		{
+			EnterNode(node);
 			foreach (AstNode item in items)
 				traverse(item);
+			LeaveNode(node);
 		}
+
+		// Only called from Visit(CodeBase codeBase)
 		public override void VisitSourceFile(string fileName, AstNode node)
 		{
+			EnterNode(node);
 			traverse(node);
+			LeaveNode(node);
 		}
-		public override void VisitToken(Token token)
-		{
-			// CHECK that this is never called
-			// CHECK that the virtual parent method (fallback) is also never called
 
-			// Ignore tokens. Do nothing
-		}
 		public override void VisitArrayTypeNode(ArrayTypeNode node)
 		{
-			traverse(node.ArrayKeywordNode);
-			traverse(node.OpenBracketNode);
+			EnterNode(node);
 			traverse(node.IndexListNode);
-			traverse(node.CloseBracketNode);
-			traverse(node.OfKeywordNode);
 			traverse(node.TypeNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitAssemblerStatementNode(AssemblerStatementNode node)
 		{
-			traverse(node.AsmKeywordNode);
-			traverse(node.EndKeywordNode);
+			EnterNode(node);
+			LeaveNode(node);
 		}
+
 		public override void VisitAttributeNode(AttributeNode node)
 		{
-			traverse(node.OpenBracketNode);
+			EnterNode(node);
 			traverse(node.ScopeNode);
-			traverse(node.ColonNode);
 			traverse(node.ValueNode);
-			traverse(node.CloseBracketNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitBinaryOperationNode(BinaryOperationNode node)
 		{
+			EnterNode(node);
 			traverse(node.LeftNode);
 			traverse(node.OperatorNode);
 			traverse(node.RightNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitBlockNode(BlockNode node)
 		{
-			traverse(node.BeginKeywordNode);
+			EnterNode(node);
 			traverse(node.StatementListNode);
-			traverse(node.EndKeywordNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitCaseSelectorNode(CaseSelectorNode node)
 		{
+			EnterNode(node);
 			traverse(node.ValueListNode);
-			traverse(node.ColonNode);
 			traverse(node.StatementNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitCaseStatementNode(CaseStatementNode node)
 		{
-			traverse(node.CaseKeywordNode);
+			EnterNode(node);
 			traverse(node.ExpressionNode);
-			traverse(node.OfKeywordNode);
 			traverse(node.SelectorListNode);
-			traverse(node.ElseKeywordNode);
 			traverse(node.ElseStatementListNode);
-			traverse(node.EndKeywordNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitClassOfNode(ClassOfNode node)
 		{
-			traverse(node.ClassKeywordNode);
-			traverse(node.OfKeywordNode);
+			EnterNode(node);
 			traverse(node.TypeNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitClassTypeNode(ClassTypeNode node)
 		{
-			traverse(node.ClassKeywordNode);
+			EnterNode(node);
 			traverse(node.DispositionNode);
-			traverse(node.OpenParenthesisNode);
 			traverse(node.InheritanceListNode);
-			traverse(node.CloseParenthesisNode);
 			traverse(node.ContentListNode);
-			traverse(node.EndKeywordNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitConstantDeclNode(ConstantDeclNode node)
 		{
+			EnterNode(node);
 			traverse(node.NameNode);
-			traverse(node.ColonNode);
 			traverse(node.TypeNode);
-			traverse(node.EqualSignNode);
 			traverse(node.ValueNode);
 			traverse(node.PortabilityDirectiveListNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitConstantListNode(ConstantListNode node)
 		{
-			traverse(node.OpenParenthesisNode);
+			EnterNode(node);
 			traverse(node.ItemListNode);
-			traverse(node.CloseParenthesisNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitConstSectionNode(ConstSectionNode node)
 		{
-			traverse(node.ConstKeywordNode);
+			EnterNode(node);
 			traverse(node.ConstListNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitDirectiveNode(DirectiveNode node)
 		{
-			traverse(node.SemicolonNode);
-			traverse(node.KeywordNode);
+			EnterNode(node);
 			traverse(node.ValueNode);
 			traverse(node.DataNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitEnumeratedTypeElementNode(EnumeratedTypeElementNode node)
 		{
+			EnterNode(node);
 			traverse(node.NameNode);
-			traverse(node.EqualSignNode);
 			traverse(node.ValueNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitEnumeratedTypeNode(EnumeratedTypeNode node)
 		{
-			traverse(node.OpenParenthesisNode);
+			EnterNode(node);
 			traverse(node.ItemListNode);
-			traverse(node.CloseParenthesisNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitExceptionItemNode(ExceptionItemNode node)
 		{
-			traverse(node.OnSemikeywordNode);
+			EnterNode(node);
 			traverse(node.NameNode);
-			traverse(node.ColonNode);
 			traverse(node.TypeNode);
-			traverse(node.DoKeywordNode);
 			traverse(node.StatementNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitExportsItemNode(ExportsItemNode node)
 		{
+			EnterNode(node);
 			traverse(node.NameNode);
 			traverse(node.SpecifierListNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitExportsSpecifierNode(ExportsSpecifierNode node)
 		{
-			traverse(node.KeywordNode);
+			EnterNode(node);
 			traverse(node.ValueNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitExportsStatementNode(ExportsStatementNode node)
 		{
-			traverse(node.ExportsKeywordNode);
+			EnterNode(node);
 			traverse(node.ItemListNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitFancyBlockNode(FancyBlockNode node)
 		{
+			EnterNode(node);
 			traverse(node.DeclListNode);
 			traverse(node.BlockNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitFieldDeclNode(FieldDeclNode node)
 		{
+			EnterNode(node);
 			traverse(node.NameListNode);
-			traverse(node.ColonNode);
 			traverse(node.TypeNode);
 			traverse(node.PortabilityDirectiveListNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitFieldSectionNode(FieldSectionNode node)
 		{
-			traverse(node.ClassKeywordNode);
-			traverse(node.VarKeywordNode);
+			EnterNode(node);
 			traverse(node.FieldListNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitFileTypeNode(FileTypeNode node)
 		{
-			traverse(node.FileKeywordNode);
-			traverse(node.OfKeywordNode);
+			EnterNode(node);
 			traverse(node.TypeNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitForInStatementNode(ForInStatementNode node)
 		{
-			traverse(node.ForKeywordNode);
+			EnterNode(node);
 			traverse(node.LoopVariableNode);
-			traverse(node.InKeywordNode);
 			traverse(node.ExpressionNode);
-			traverse(node.DoKeywordNode);
 			traverse(node.StatementNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitForStatementNode(ForStatementNode node)
 		{
-			traverse(node.ForKeywordNode);
+			EnterNode(node);
 			traverse(node.LoopVariableNode);
-			traverse(node.ColonEqualsNode);
+
 			traverse(node.StartingValueNode);
 			traverse(node.DirectionNode);
 			traverse(node.EndingValueNode);
-			traverse(node.DoKeywordNode);
 			traverse(node.StatementNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitGotoStatementNode(GotoStatementNode node)
 		{
-			traverse(node.GotoKeywordNode);
+			EnterNode(node);
 			traverse(node.LabelIdNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitIfStatementNode(IfStatementNode node)
 		{
-			traverse(node.IfKeywordNode);
+			EnterNode(node);
 			traverse(node.ConditionNode);
-			traverse(node.ThenKeywordNode);
 			traverse(node.ThenStatementNode);
-			traverse(node.ElseKeywordNode);
 			traverse(node.ElseStatementNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitInitSectionNode(InitSectionNode node)
 		{
-			traverse(node.InitializationKeywordNode);
+			EnterNode(node);
 			traverse(node.InitializationStatementListNode);
-			traverse(node.FinalizationKeywordNode);
 			traverse(node.FinalizationStatementListNode);
-			traverse(node.EndKeywordNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitInterfaceTypeNode(InterfaceTypeNode node)
 		{
-			traverse(node.InterfaceKeywordNode);
-			traverse(node.OpenParenthesisNode);
+			EnterNode(node);
 			traverse(node.BaseInterfaceNode);
-			traverse(node.CloseParenthesisNode);
-			traverse(node.OpenBracketNode);
 			traverse(node.GuidNode);
-			traverse(node.CloseBracketNode);
 			traverse(node.MethodAndPropertyListNode);
-			traverse(node.EndKeywordNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitLabelDeclSectionNode(LabelDeclSectionNode node)
 		{
-			traverse(node.LabelKeywordNode);
+			EnterNode(node);
 			traverse(node.LabelListNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitLabeledStatementNode(LabeledStatementNode node)
 		{
+			EnterNode(node);
 			traverse(node.LabelIdNode);
-			traverse(node.ColonNode);
 			traverse(node.StatementNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitMethodHeadingNode(MethodHeadingNode node)
 		{
-			traverse(node.ClassKeywordNode);
+			EnterNode(node);
 			traverse(node.MethodTypeNode);
 			traverse(node.NameNode);
-			traverse(node.OpenParenthesisNode);
 			traverse(node.ParameterListNode);
-			traverse(node.CloseParenthesisNode);
-			traverse(node.ColonNode);
 			traverse(node.ReturnTypeNode);
 			traverse(node.DirectiveListNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitMethodImplementationNode(MethodImplementationNode node)
 		{
+			EnterNode(node);
 			traverse(node.MethodHeadingNode);
 			traverse(node.FancyBlockNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitMethodResolutionNode(MethodResolutionNode node)
 		{
+			EnterNode(node);
 			traverse(node.MethodTypeNode);
 			traverse(node.InterfaceMethodNode);
 			traverse(node.EqualSignNode);
 			traverse(node.ImplementationMethodNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitNumberFormatNode(NumberFormatNode node)
 		{
+			EnterNode(node);
 			traverse(node.ValueNode);
-			traverse(node.SizeColonNode);
 			traverse(node.SizeNode);
-			traverse(node.PrecisionColonNode);
 			traverse(node.PrecisionNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitOpenArrayNode(OpenArrayNode node)
 		{
-			traverse(node.ArrayKeywordNode);
-			traverse(node.OfKeywordNode);
+			EnterNode(node);
 			traverse(node.TypeNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitPackageNode(PackageNode node)
 		{
-			traverse(node.PackageKeywordNode);
+			EnterNode(node);
 			traverse(node.NameNode);
-			traverse(node.SemicolonNode);
 			traverse(node.RequiresClauseNode);
 			traverse(node.ContainsClauseNode);
 			traverse(node.AttributeListNode);
-			traverse(node.EndKeywordNode);
-			traverse(node.DotNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitPackedTypeNode(PackedTypeNode node)
 		{
-			traverse(node.PackedKeywordNode);
+			EnterNode(node);
 			traverse(node.TypeNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitParameterizedNode(ParameterizedNode node)
 		{
-			traverse(node.LeftNode);
-			traverse(node.OpenDelimiterNode);
+			EnterNode(node);
 			traverse(node.ParameterListNode);
-			traverse(node.CloseDelimiterNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitParameterNode(ParameterNode node)
 		{
+			EnterNode(node);
 			traverse(node.ModifierNode);
 			traverse(node.NameListNode);
-			traverse(node.ColonNode);
 			traverse(node.TypeNode);
-			traverse(node.EqualSignNode);
 			traverse(node.DefaultValueNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitParenthesizedExpressionNode(ParenthesizedExpressionNode node)
 		{
-			traverse(node.OpenParenthesisNode);
+			EnterNode(node);
 			traverse(node.ExpressionNode);
-			traverse(node.CloseParenthesisNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitPointerDereferenceNode(PointerDereferenceNode node)
 		{
+			EnterNode(node);
 			traverse(node.OperandNode);
-			traverse(node.CaretNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitPointerTypeNode(PointerTypeNode node)
 		{
-			traverse(node.CaretNode);
+			EnterNode(node);
 			traverse(node.TypeNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitProcedureTypeNode(ProcedureTypeNode node)
 		{
+			EnterNode(node);
 			traverse(node.MethodTypeNode);
-			traverse(node.OpenParenthesisNode);
 			traverse(node.ParameterListNode);
-			traverse(node.CloseParenthesisNode);
-			traverse(node.ColonNode);
 			traverse(node.ReturnTypeNode);
 			traverse(node.FirstDirectiveListNode);
-			traverse(node.OfKeywordNode);
-			traverse(node.ObjectKeywordNode);
 			traverse(node.SecondDirectiveListNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitProgramNode(ProgramNode node)
 		{
-			traverse(node.ProgramKeywordNode);
+			EnterNode(node);
 			traverse(node.NameNode);
-			traverse(node.NoiseOpenParenthesisNode);
-			traverse(node.NoiseContentListNode);
-			traverse(node.NoiseCloseParenthesisNode);
-			traverse(node.SemicolonNode);
 			traverse(node.UsesClauseNode);
 			traverse(node.DeclarationListNode);
 			traverse(node.InitSectionNode);
 			traverse(node.DotNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitPropertyNode(PropertyNode node)
 		{
-			traverse(node.ClassKeywordNode);
-			traverse(node.PropertyKeywordNode);
+			EnterNode(node);
 			traverse(node.NameNode);
-			traverse(node.OpenBracketNode);
 			traverse(node.ParameterListNode);
-			traverse(node.CloseBracketNode);
-			traverse(node.ColonNode);
 			traverse(node.TypeNode);
 			traverse(node.DirectiveListNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitRaiseStatementNode(RaiseStatementNode node)
 		{
-			traverse(node.RaiseKeywordNode);
+			EnterNode(node);
 			traverse(node.ExceptionNode);
-			traverse(node.AtSemikeywordNode);
 			traverse(node.AddressNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitRecordFieldConstantNode(RecordFieldConstantNode node)
 		{
+			EnterNode(node);
 			traverse(node.NameNode);
-			traverse(node.ColonNode);
 			traverse(node.ValueNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitRecordTypeNode(RecordTypeNode node)
 		{
-			traverse(node.RecordKeywordNode);
+			EnterNode(node);
 			traverse(node.ContentListNode);
 			traverse(node.VariantSectionNode);
-			traverse(node.EndKeywordNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitRepeatStatementNode(RepeatStatementNode node)
 		{
-			traverse(node.RepeatKeywordNode);
+			EnterNode(node);
 			traverse(node.StatementListNode);
-			traverse(node.UntilKeywordNode);
 			traverse(node.ConditionNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitRequiresClauseNode(RequiresClauseNode node)
 		{
-			traverse(node.RequiresSemikeywordNode);
+			EnterNode(node);
 			traverse(node.PackageListNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitSetLiteralNode(SetLiteralNode node)
 		{
+			EnterNode(node);
 			traverse(node.OpenBracketNode);
 			traverse(node.ItemListNode);
 			traverse(node.CloseBracketNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitSetOfNode(SetOfNode node)
 		{
-			traverse(node.SetKeywordNode);
-			traverse(node.OfKeywordNode);
+			EnterNode(node);
 			traverse(node.TypeNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitStringOfLengthNode(StringOfLengthNode node)
 		{
-			traverse(node.StringKeywordNode);
+			EnterNode(node);
 			traverse(node.OpenBracketNode);
 			traverse(node.LengthNode);
 			traverse(node.CloseBracketNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitTryExceptNode(TryExceptNode node)
 		{
-			traverse(node.TryKeywordNode);
+			EnterNode(node);
 			traverse(node.TryStatementListNode);
-			traverse(node.ExceptKeywordNode);
 			traverse(node.ExceptionItemListNode);
-			traverse(node.ElseKeywordNode);
 			traverse(node.ElseStatementListNode);
-			traverse(node.EndKeywordNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitTryFinallyNode(TryFinallyNode node)
 		{
-			traverse(node.TryKeywordNode);
+			EnterNode(node);
 			traverse(node.TryStatementListNode);
-			traverse(node.FinallyKeywordNode);
 			traverse(node.FinallyStatementListNode);
-			traverse(node.EndKeywordNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitTypeDeclNode(TypeDeclNode node)
 		{
+			EnterNode(node);
 			traverse(node.NameNode);
 			traverse(node.EqualSignNode);
-			traverse(node.TypeKeywordNode);
 			traverse(node.TypeNode);
 			traverse(node.PortabilityDirectiveListNode);
-			traverse(node.SemicolonNode);
+
 		}
+
 		public override void VisitTypeForwardDeclarationNode(TypeForwardDeclarationNode node)
 		{
+			EnterNode(node);
 			traverse(node.NameNode);
 			traverse(node.EqualSignNode);
 			traverse(node.TypeNode);
-			traverse(node.SemicolonNode);
+
 		}
+
 		public override void VisitTypeHelperNode(TypeHelperNode node)
 		{
-			traverse(node.TypeKeywordNode);
-			traverse(node.HelperSemikeywordNode);
-			traverse(node.OpenParenthesisNode);
+			EnterNode(node);
 			traverse(node.BaseHelperTypeNode);
-			traverse(node.CloseParenthesisNode);
-			traverse(node.ForKeywordNode);
 			traverse(node.TypeNode);
 			traverse(node.ContentListNode);
-			traverse(node.EndKeywordNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitTypeSectionNode(TypeSectionNode node)
 		{
-			traverse(node.TypeKeywordNode);
+			EnterNode(node);
 			traverse(node.TypeListNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitUnaryOperationNode(UnaryOperationNode node)
 		{
+			EnterNode(node);
 			traverse(node.OperatorNode);
 			traverse(node.OperandNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitUnitNode(UnitNode node)
 		{
-			traverse(node.UnitKeywordNode);
+			EnterNode(node);
 			traverse(node.UnitNameNode);
 			traverse(node.PortabilityDirectiveListNode);
-			traverse(node.SemicolonNode);
 			traverse(node.InterfaceSectionNode);
 			traverse(node.ImplementationSectionNode);
 			traverse(node.InitSectionNode);
 			traverse(node.DotNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitUnitSectionNode(UnitSectionNode node)
 		{
-			traverse(node.HeaderKeywordNode);
+			EnterNode(node);
 			traverse(node.UsesClauseNode);
 			traverse(node.ContentListNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitUsedUnitNode(UsedUnitNode node)
 		{
+			EnterNode(node);
 			traverse(node.NameNode);
-			traverse(node.InKeywordNode);
 			traverse(node.FileNameNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitUsesClauseNode(UsesClauseNode node)
 		{
-			traverse(node.UsesKeywordNode);
+			EnterNode(node);
 			traverse(node.UnitListNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitVarDeclNode(VarDeclNode node)
 		{
+			EnterNode(node);
 			traverse(node.NameListNode);
-			traverse(node.ColonNode);
 			traverse(node.TypeNode);
 			traverse(node.FirstPortabilityDirectiveListNode);
-			traverse(node.AbsoluteSemikeywordNode);
 			traverse(node.AbsoluteAddressNode);
-			traverse(node.EqualSignNode);
 			traverse(node.ValueNode);
 			traverse(node.SecondPortabilityDirectiveListNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitVariantGroupNode(VariantGroupNode node)
 		{
+			EnterNode(node);
 			traverse(node.ValueListNode);
-			traverse(node.ColonNode);
-			traverse(node.OpenParenthesisNode);
 			traverse(node.FieldDeclListNode);
 			traverse(node.VariantSectionNode);
-			traverse(node.CloseParenthesisNode);
-			traverse(node.SemicolonNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitVariantSectionNode(VariantSectionNode node)
 		{
-			traverse(node.CaseKeywordNode);
+			EnterNode(node);
 			traverse(node.NameNode);
-			traverse(node.ColonNode);
+
 			traverse(node.TypeNode);
-			traverse(node.OfKeywordNode);
 			traverse(node.VariantGroupListNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitVarSectionNode(VarSectionNode node)
 		{
-			traverse(node.VarKeywordNode);
+			EnterNode(node);
 			traverse(node.VarListNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitVisibilityNode(VisibilityNode node)
 		{
-			traverse(node.StrictSemikeywordNode);
-			traverse(node.VisibilityKeywordNode);
+			EnterNode(node);
+
 		}
+
 		public override void VisitVisibilitySectionNode(VisibilitySectionNode node)
 		{
+			EnterNode(node);
 			traverse(node.VisibilityNode);
 			traverse(node.ContentListNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitWhileStatementNode(WhileStatementNode node)
 		{
-			traverse(node.WhileKeywordNode);
+			EnterNode(node);
 			traverse(node.ConditionNode);
-			traverse(node.DoKeywordNode);
 			traverse(node.StatementNode);
+			LeaveNode(node);
 		}
+
 		public override void VisitWithStatementNode(WithStatementNode node)
 		{
-			traverse(node.WithKeywordNode);
+			EnterNode(node);
 			traverse(node.ExpressionListNode);
-			traverse(node.DoKeywordNode);
 			traverse(node.StatementNode);
 		}
 	}
