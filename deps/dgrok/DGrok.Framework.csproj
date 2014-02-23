@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{DFB43477-AB65-4108-B880-928816A347E4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DGrok</RootNamespace>
+    <AssemblyName>DGrok.Framework</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\Bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DelphiNodes\ConstantDeclNode.cs" />
+    <Compile Include="DelphiNodes\DirectiveNode.cs" />
+    <Compile Include="DelphiNodes\FieldDeclNode.cs" />
+    <Compile Include="DelphiNodes\GeneratedNodes.cs" />
+    <Compile Include="DelphiNodes\ITypeDeclaration.cs" />
+    <Compile Include="DelphiNodes\MethodHeadingNode.cs" />
+    <Compile Include="DelphiNodes\TypeDeclNode.cs" />
+    <Compile Include="DelphiNodes\VarDeclNode.cs" />
+    <Compile Include="Framework\CategoryType.cs" />
+    <Compile Include="Framework\CancelException.cs" />
+    <Compile Include="Framework\Catalog.cs" />
+    <Compile Include="Framework\Category.cs" />
+    <Compile Include="Framework\CodeBase.cs" />
+    <Compile Include="Framework\CodeBaseActionAttribute.cs" />
+    <Compile Include="Framework\CodeBaseActionProxy.cs" />
+    <Compile Include="Framework\CodeBaseOptions.cs" />
+    <Compile Include="Framework\CodeBaseWorker.cs" />
+    <Compile Include="Framework\CompilerOptions.cs" />
+    <Compile Include="Framework\ConsumerScheduler.cs" />
+    <Compile Include="Framework\DelimitedItemNode.cs" />
+    <Compile Include="Framework\DuplicateFileNameException.cs" />
+    <Compile Include="Framework\GeneratedVisitor.cs" />
+    <Compile Include="Framework\ICodeBaseAction.cs" />
+    <Compile Include="Framework\IFileLoader.cs" />
+    <Compile Include="Framework\FileLoader.cs" />
+    <Compile Include="Framework\ITokenSet.cs" />
+    <Compile Include="Framework\Location.cs" />
+    <Compile Include="Framework\MemoryFileLoader.cs" />
+    <Compile Include="Framework\NamedContent.cs" />
+    <Compile Include="Framework\SingleTokenTokenSet.cs" />
+    <Compile Include="Framework\Visitor.cs" />
+    <Compile Include="Properties\AssemblyVersion.cs" />
+    <Compile Include="Framework\Alternator.cs" />
+    <Compile Include="Framework\AstNode.cs" />
+    <Compile Include="Framework\CompilerDefines.cs" />
+    <Compile Include="Framework\DGrokException.cs" />
+    <Compile Include="Framework\Frame.cs" />
+    <Compile Include="Framework\Parser.cs" />
+    <Compile Include="Framework\ListNode.cs" />
+    <Compile Include="Framework\IFrame.cs" />
+    <Compile Include="Framework\LexException.cs" />
+    <Compile Include="Framework\LexScanner.cs" />
+    <Compile Include="Framework\Lexer.cs" />
+    <Compile Include="Framework\NonterminalNode.cs" />
+    <Compile Include="Framework\EofFrame.cs" />
+    <Compile Include="Framework\ParseException.cs" />
+    <Compile Include="Framework\PreprocessorException.cs" />
+    <Compile Include="Framework\RuleType.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Framework\Token.cs" />
+    <Compile Include="Framework\TokenFilter.cs" />
+    <Compile Include="Framework\TokenSet.cs" />
+    <Compile Include="Framework\TokenSets.cs" />
+    <Compile Include="Framework\TokenType.cs" />
+    <Compile Include="Framework\Rule.cs" />
+    <Compile Include="Framework\RuleDelegate.cs" />
+    <Compile Include="Framework\Hit.cs" />
+    <Compile Include="Visitors\FindAsmBlocks.cs" />
+    <Compile Include="Visitors\FindGlobalVariables.cs" />
+    <Compile Include="Visitors\FindNestedMethods.cs" />
+    <Compile Include="Visitors\FindVariantRecords.cs" />
+    <Compile Include="Visitors\FindWithStatements.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy $(ProjectDir)bin\debug\DGrok.Framework.dll $(ProjectDir)</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
