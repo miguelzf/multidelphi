@@ -64,6 +64,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ASTProcessor.cs" />
+    <Compile Include="ASTVisitorTraverser.cs" />
+    <Compile Include="ASTMapTraverser.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
