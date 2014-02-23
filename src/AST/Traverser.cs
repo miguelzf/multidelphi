@@ -7,13 +7,16 @@ using DGrok.Framework;
 
 namespace crosspascal.AST
 {
-	abstract class GenericTraverser
+	abstract class Traverser
 	{
-		protected Processor Processor { get; set; }
+		public virtual Processor Processor { get; set; }
 
-		public GenericTraverser(Processor processor)
+		public Traverser() { }
+
+		public Traverser(Processor processor)
 		{
 			Processor = processor;
+			processor.traverse = this.traverse;
 		}
 
 		public abstract void traverse(AstNode n);

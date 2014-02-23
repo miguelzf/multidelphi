@@ -14,7 +14,10 @@ namespace crosspascal.cpp
 
 		public CppCodegen(Type t) : base(t) { }
 
+		public CppCodegen(Traverser t) : base(t) { }
+
 		public CppCodegen(TreeTraverse t = null) : base(t) { }
+
 
 		// TODO
 

@@ -5,45 +5,78 @@ using System.Text;
 using System.Threading.Tasks;
 using DGrok.Framework;
 using System.Reflection;
+using crosspascal.utils;
 
 namespace crosspascal.AST
 {
 	// Delivers a Mapping with which to traverse the AST
 
-	class MapTraverser : GenericTraverser
+	class MapTraverser : Traverser
 	{
 		Dictionary<Type, MethodInfo> methodMapping;
 
-		public MapTraverser(Processor processor) : base(processor)
+		private void CreateMappings(Processor proc)
 		{
 			methodMapping = new Dictionary<Type, MethodInfo>();
 
+			Type procType = proc.GetType();
+
 			// Add most methods - 1 argument, derived from AstNode
-			foreach (MethodInfo mi in processor.GetType().GetMethods())
-				if (mi.GetParameters().Length == 1)
+			foreach (MethodInfo mi in procType.GetMethods())
+				if (mi.DeclaringType == procType && mi.GetParameters().Length == 1)
 				{
 					Type paramType = mi.GetParameters()[0].ParameterType;
 					methodMapping.Add(paramType, mi);
 				}
 		}
 
+		public override Processor Processor
+		{
+			set { base.Processor = value; CreateMappings(value); }
+		}
+
+		public MapTraverser() : base() { }
+
+		public MapTraverser(Processor processor) : base(processor)	{}
+
+
 		public override void traverse(AstNode n)
 		{
 			if (n == null)
 				return;
 
-			if (n.GetType().IsGenericType)
+			Type nodeType = n.GetType();
+
+			if (nodeType.IsGenericType)
 			{
 				Type nodetype = n.GetType();
 				Type paramType = nodetype.GenericTypeArguments[0];
 
-//				if (nodetype.FullName.Contains("ListNode"))
-	
-				n.Accept(Processor);	// fallback to basic visitor
+				Logger.log.Write(nodetype.Name);
+
+				if (nodetype.Name.StartsWith("ListNode"))
+				{
+				//	ListNode<AstNode> actualNode = (ListNode<AstNode> actualNode) Convert.ChangeType(n, nodetype);
+					dynamic actualNode = n;
+					Processor.VisitListNode(n, actualNode.ItemsAsBase);
+				}
+				else if (nodetype.Name.StartsWith("DelimitedItemNode"))
+				{
+				//	DelimitedItemNode<AstNode> actualNode = n as DelimitedItemNode<AstNode>;
+					dynamic actualNode = n;
+					Processor.VisitDelimitedItemNode(n, actualNode.ItemNode, actualNode.DelimiterNode);
+				}
+				else
+				{	// should never happen
+					n.Accept(Processor);	// fallback to basic visitor
+				}
 				return;
 			}
 
-			MethodInfo mi = methodMapping[n.GetType()];
+			if (!methodMapping.ContainsKey(nodeType))
+				return;		// method not mapped. Nothing to do
+
+			MethodInfo mi = methodMapping[nodeType];
 			mi.Invoke(Processor, new object[] { n });
 		}
 	}

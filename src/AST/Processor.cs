@@ -19,16 +19,22 @@ namespace crosspascal.AST
 		public TreeTraverse traverse { get; set; }
 
 		// dummy
-		void emptyTraverse(AstNode n) {	}
+		protected void emptyTraverse(AstNode n) {	}
 
 		// Instantiate Traverser class
 		public Processor(Type t)
 		{
-			if (t == null || !t.IsSubclassOf(typeof(GenericTraverser)))
+			if (t == null || !t.IsSubclassOf(typeof(Traverser)))
 				return;
 
-			GenericTraverser instance = (GenericTraverser) Activator.CreateInstance(t, new object[] {this});
+			Traverser instance = (Traverser) Activator.CreateInstance(t, new object[] {this});
 			traverse = instance.traverse;
+		}
+
+		// Create with given traverser object
+		public Processor(Traverser trav)
+		{
+			traverse = trav.traverse;
 		}
 
 		// Create with given traverser function
