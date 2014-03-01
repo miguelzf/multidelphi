@@ -22,7 +22,10 @@ namespace crosspascal.AST
 
 		public PrintAST(System.Type t) : base(t) { }
 
+		public PrintAST(Traverser t) : base(t) { }
+
 		public PrintAST(TreeTraverse t = null) : base(t) { }
+
 
 		public override string ToString()
 		{
