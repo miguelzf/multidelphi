@@ -12,11 +12,68 @@ namespace crosspascal.cpp
 	class CppCodegen : Processor
 	{
 
-		public CppCodegen(Type t) : base(t) { }
+		//public CppCodegen(Type t) : base(t) { }
 
 		public CppCodegen(TreeTraverse t = null) : base(t) { }
 
-		// TODO
+		#region OutputUtils
+		private int identLevel = 0;
+
+		// Printing helper
+		private void EnterNode(AstNode n)
+		{
+			string name = n.GetType().Name;			
+			identLevel++;
+		}
+
+		private void LeaveNode(AstNode n)
+		{
+			identLevel--;
+		}
+
+
+		private void BeginLine(string s)
+		{
+			for (int i = 0; i < identLevel; i++)
+				Console.Write(" ");
+			Console.Write(s);
+		}
+
+		private void EndLine(string s)
+		{
+			Console.WriteLine(s);
+		}
+
+		private void Output(string s)
+		{
+			Console.Write(s);
+		}
+		#endregion
+
+		public override void VisitToken(Token token)
+		{
+			//this.Output(token.Text);
+		}
+
+		public void EmitTokenOrExpression(AstNode node)
+		{
+			//this.Output(node.ToString());
+			if (node is Token)
+				this.Output((node as Token).Text);
+			else
+				traverse(node);
+		}
+
+		public override void VisitDelimitedItemNode(AstNode node, AstNode item, Token delimiter)
+		{
+			EmitTokenOrExpression(item);
+			
+			if (delimiter == null)
+				this.EndLine(";");
+			else
+				this.Output(delimiter.Text);
+
+		}
 
 		public override void VisitArrayTypeNode(ArrayTypeNode node)
 		{
@@ -36,15 +93,19 @@ namespace crosspascal.cpp
 		}
 
 		public override void VisitBinaryOperationNode(BinaryOperationNode node)
-		{
-			traverse(node.LeftNode);
+		{			
+			EmitTokenOrExpression(node.LeftNode);
 			traverse(node.OperatorNode);
-			traverse(node.RightNode);
+			this.Output(DelphiToCpp.Operator(node.OperatorNode.Text));
+			EmitTokenOrExpression(node.RightNode);			
 		}
 
 		public override void VisitBlockNode(BlockNode node)
 		{
+			this.BeginLine("");
+			this.EndLine("{");
 			traverse(node.StatementListNode);
+			this.EndLine("}");
 		}
 
 		public override void VisitCaseSelectorNode(CaseSelectorNode node)
@@ -438,12 +499,16 @@ namespace crosspascal.cpp
 
 		public override void VisitVarDeclNode(VarDeclNode node)
 		{
+			//this.BeginLine(node.TypeNode);
+			EmitTokenOrExpression(node.TypeNode);
+
 			traverse(node.NameListNode);
-			traverse(node.TypeNode);
+			
 			traverse(node.FirstPortabilityDirectiveListNode);
 			traverse(node.AbsoluteAddressNode);
 			traverse(node.ValueNode);
 			traverse(node.SecondPortabilityDirectiveListNode);
+			this.EndLine(";");
 		}
 
 		public override void VisitVariantGroupNode(VariantGroupNode node)
