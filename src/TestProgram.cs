@@ -52,7 +52,7 @@ namespace crosspascal
 
 		// Usage example of processors and traversers
 
-		static string printTree(AstNode tree, Type traverserType, int method)
+		static string printTree(AstNode tree, System.Type traverserType, int method)
 		{
 			PrintAST proc;
 

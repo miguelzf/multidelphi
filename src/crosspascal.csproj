@@ -71,7 +71,9 @@
     <Compile Include="AST\PrintAST.cs" />
     <Compile Include="cpp\DelphiToCpp.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
-    <Compile Include="parser\PreProcessor.cs" />
+    <Compile Include="parser\DelphiParser.cs" />
+    <Compile Include="parser\DelphiScanner.cs" />
+    <Compile Include="parser\PreProcessor-v0.cs" />
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
     <Compile Include="TestProgram.cs" />
@@ -82,6 +84,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="parser\DelphiGrammar.y" />
+    <None Include="parser\DelphiLex.l" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
