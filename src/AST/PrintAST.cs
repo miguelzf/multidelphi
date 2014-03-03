@@ -20,7 +20,7 @@ namespace crosspascal.AST
 		// =================================================
 		// Public interface
 
-		public PrintAST(Type t) : base(t) { }
+		public PrintAST(System.Type t) : base(t) { }
 
 		public PrintAST(Traverser t) : base(t) { }
 

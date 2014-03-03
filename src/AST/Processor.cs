@@ -22,7 +22,7 @@ namespace crosspascal.AST
 		protected void emptyTraverse(AstNode n) {	}
 
 		// Instantiate Traverser class
-		public Processor(Type t)
+		public Processor(System.Type t)
 		{
 			if (t == null || !t.IsSubclassOf(typeof(Traverser)))
 				return;

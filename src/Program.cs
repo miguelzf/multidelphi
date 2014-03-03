@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using DGrok.DelphiNodes;
 using DGrok.Framework;
 using DGrok.Visitors;
+using crosspascal.cpp;
+using crosspascal.AST;
+using crosspascal.parser;
 
 namespace crosspascal
 {
@@ -14,14 +17,31 @@ namespace crosspascal
 	{
 		static void Main(string[] args)
 		{
-			RuleType _ruleType = RuleType.Goal;
+			string test = "Program bla; {$DEFINE foo} const a = 2; {$IFDEF FOO} const b = 3; {$ENDIF}"
+				+ "{$IFDEF BAR} const c = 4;{$ENDIF} {$IFDEF BAR} LOL = 3; {$ELSE} LOL = 4; {$ENDIF}";
+
+			PreProcessor pp = new PreProcessor();
+			string result = pp.PreProcess(test);
+			Console.WriteLine("RESULT:");
+			Console.WriteLine(result);
+			Console.ReadLine();
+
+			/*RuleType _ruleType = RuleType.Goal;
 			try
 			{
-				string fileName = "tests/test_record_with_methods.dpr";
+				string fileName = "tests/basic_test.dpr";
 				string text = File.ReadAllText(fileName);
 				Parser parser = Parser.FromText(text, fileName, CompilerDefines.CreateStandard(), new MemoryFileLoader());
 				AstNode tree = parser.ParseRule(_ruleType);
+				
 				Console.WriteLine(tree.Inspect());
+
+				CppCodegen proc = new CppCodegen();
+				proc.traverse = new VisitorTraverser(proc).traverse;
+				proc.Visit(tree);
+				
+				Console.WriteLine("Done!");
+
 			}
 			catch (DGrokException ex)
 			{
@@ -31,7 +51,7 @@ namespace crosspascal
 				Console.WriteLine(error);
 			}
 			Console.ReadLine();
-
+			*/
 		}
 	}
 }

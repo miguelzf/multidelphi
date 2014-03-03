@@ -47,9 +47,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>crosspascal.Program</StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="DGrok.Framework">
-      <HintPath>..\deps\dgrok\DGrok.Framework.dll</HintPath>
+      <HintPath>..\deps\dgrok\bin\Debug\DGrok.Framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -60,12 +63,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AST\Nodes.cs" />
     <Compile Include="AST\Processor.cs" />
     <Compile Include="AST\VisitorTraverser.cs" />
     <Compile Include="AST\MapTraverser.cs" />
     <Compile Include="AST\Traverser.cs" />
     <Compile Include="AST\PrintAST.cs" />
+    <Compile Include="cpp\DelphiToCpp.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
+    <Compile Include="parser\PreProcessor.cs" />
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
     <Compile Include="TestProgram.cs" />

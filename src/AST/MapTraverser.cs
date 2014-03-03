@@ -13,11 +13,11 @@ namespace crosspascal.AST
 
 	class MapTraverser : Traverser
 	{
-		Dictionary<Type, MethodInfo> methodMapping;
+		Dictionary<System.Type, MethodInfo> methodMapping;
 
 		private void CreateMappings(Processor proc)
 		{
-			methodMapping = new Dictionary<Type, MethodInfo>();
+			methodMapping = new Dictionary<System.Type, MethodInfo>();
 
 			Type procType = proc.GetType();
 
@@ -25,7 +25,7 @@ namespace crosspascal.AST
 			foreach (MethodInfo mi in procType.GetMethods())
 				if (mi.DeclaringType == procType && mi.GetParameters().Length == 1)
 				{
-					Type paramType = mi.GetParameters()[0].ParameterType;
+					System.Type paramType = mi.GetParameters()[0].ParameterType;
 					methodMapping.Add(paramType, mi);
 				}
 		}
@@ -49,8 +49,8 @@ namespace crosspascal.AST
 
 			if (nodeType.IsGenericType)
 			{
-				Type nodetype = n.GetType();
-				Type paramType = nodetype.GenericTypeArguments[0];
+				System.Type nodetype = n.GetType();
+				System.Type paramType = nodetype.GenericTypeArguments[0];
 
 				Logger.log.Write(nodetype.Name);
 
