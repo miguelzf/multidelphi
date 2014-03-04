@@ -110,7 +110,7 @@ namespace crosspascal.AST
     public ModuleFunction parent;
   }
 
-  class Type 
+  class TypeNode 
   {
     public string name;
 	public string type;
@@ -120,7 +120,7 @@ namespace crosspascal.AST
     public int elementCount;
   }
 
-  class RecordType : Type
+  class RecordType : TypeNode
   {
 	public bool isPacked;
     public List<Variable> variables;
@@ -132,12 +132,12 @@ namespace crosspascal.AST
     public int value;
   }
 
-  class EnumType : Type
+  class EnumType : TypeNode
   {
     public List<EnumEntry> values;
   }
 
-  class FunctionType : Type
+  class FunctionType : TypeNode
   {
     public FunctionSignature signature;
   }
@@ -151,7 +151,7 @@ namespace crosspascal.AST
     public VariableType type;
   }
   
-  class ClassSignature : Type
+  class ClassSignature : TypeNode
   {
     public ClassSignature ancestor;
 
@@ -253,8 +253,11 @@ namespace crosspascal.AST
 		}
 	}
 
-	class Expression: Statement
+	class Expression		// : Statement
 	{
+		public ModuleFunction parent;
+		public ModuleSection section;
+
 		public virtual Expression Reduce()
 		{
 			return this;
@@ -791,7 +794,7 @@ namespace crosspascal.AST
 
     public List<Variable> variables;
     public List<Constant> constants;
-    public List<Type> types;
+    public List<TypeNode> types;
     public List<ModuleFunction> functions;
     
     public ModuleFunction parent;
@@ -837,7 +840,7 @@ namespace crosspascal.AST
 		|| s.Equals("shortint") || s.Equals("word") || s.Equals("smallint") || s.Equals("string") )
 			return true;
 
-		foreach (Type t in types) 
+		foreach (TypeNode t in types) 
 		if (t.name.Equals(s))
 			return true;
 
@@ -850,10 +853,10 @@ namespace crosspascal.AST
 		return signature.name.ToLower().Equals(s);
 	}
 
-	public Type GetType(string s)
+	public TypeNode GetType(string s)
 	{
 		s = s.ToLower();
-		foreach (Type t in types)
+		foreach (TypeNode t in types)
 		if (t.name.ToLower().Equals(s))
 			return t;
 		
@@ -951,7 +954,7 @@ namespace crosspascal.AST
 		
 		public List<Variable> variables;
 		public List<Constant> constants;
-		public List<Type> types;
+		public List<TypeNode> types;
 		public List<ModuleFunction> functions;
 
 		public Statement body;
@@ -1043,16 +1046,16 @@ namespace crosspascal.AST
 			return null;
 		}
 
-		public Type GetType(string s)
+		public TypeNode GetType(string s)
 		{
 			s = s.ToLower();
-			foreach (Type t in types)
+			foreach (TypeNode t in types)
 			if (t.name.ToLower().Equals(s)) 
 				return t;
 			
 			foreach (ModuleFunction f in functions)
 			{
-				Type result = f.GetType(s);
+				TypeNode result = f.GetType(s);
 				if (result!=null) 
 					return result;
 			}
@@ -1160,7 +1163,7 @@ namespace crosspascal.AST
 		public ClassSignature GetClass(ModuleSection section, string Name)
 		{
 			name = name.ToLower();
-			foreach (Type t in section.types)
+			foreach (TypeNode t in section.types)
 			{
 				if (t.type.Equals("class") && t.name.Equals(name))
 					return t as ClassSignature;
@@ -1168,9 +1171,9 @@ namespace crosspascal.AST
 			return null;
 		}
 
-		public Type GetType(string s)
+		public TypeNode GetType(string s)
 		{
-			Type result;
+			TypeNode result;
 			s = s.ToLower();
 			if (interfaceSection!=null) 
 			{
@@ -1205,11 +1208,11 @@ namespace crosspascal.AST
 			paths = null;
 		}
 
-		public Type GetType(string s)
+		public TypeNode GetType(string s)
 		{
 			foreach (Module mod in modules)
 			{
-				Type result = mod.GetType(s);
+				TypeNode result = mod.GetType(s);
 				if (result!=null)
 					return result;
 			}

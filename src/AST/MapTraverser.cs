@@ -45,7 +45,7 @@ namespace crosspascal.AST
 			if (n == null)
 				return;
 
-			Type nodeType = n.GetType();
+			System.Type nodeType = n.GetType();
 
 			if (nodeType.IsGenericType)
 			{

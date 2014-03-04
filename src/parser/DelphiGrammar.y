@@ -5,7 +5,7 @@ using System.Collections;
 using System.IO;
 using System.Text;
 
-namespace crosspascal
+namespace crosspascal.parser
 {
 
 	namespace yydebug
