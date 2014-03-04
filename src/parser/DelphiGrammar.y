@@ -8,82 +8,7 @@ using System.Text;
 namespace crosspascal.parser
 {
 
-	namespace yydebug
-	{
-		class yyErrorTrace : yyDebug
-		{
-			const int yyFinal = 6;
-			
-			void println (string s) {
-				Console.Error.WriteLine (s);
-			}
-			
-			void printchecked(int state, string s)
-			{
-				if (state == 0 || state == yyFinal)
-					println(s);
-			}
-
-			void printchecked(int from, int to, string s)
-			{
-				if (from == 0 || from == yyFinal || to == 0 || to == yyFinal)
-					println(s);
-			}
-			
-			public void push (int state, Object value) {
-				printchecked (state, "push\tstate "+state+"\tvalue "+value);
-			}
-			
-			public void lex (int state, int token, string name, Object value) {
-				 printchecked (state, "lex\tstate "+state+"\treading "+name+"\tvalue "+value);
-			}
-			
-			public void shift (int from, int to, int errorFlag)
-			{
-					switch (errorFlag) {
-					default:				// normally
-						printchecked (from, to, "shift\tfrom state "+from+" to "+to);
-						break;
-					case 0: case 1: case 2:		// in error recovery
-						printchecked (from, to,"shift\tfrom state "+from+" to "+to +"\t"+errorFlag+" left to recover");
-						break;
-					case 3:				// normally
-						printchecked (from, to, "shift\tfrom state "+from+" to "+to+"\ton error");
-						break;
-					}
-			}
-			
-			public void pop (int state) {
-				printchecked (state,"pop\tstate "+state+"\ton error");
-			}
-			
-			public void discard (int state, int token, string name, Object value) {
-				printchecked (state,"discard\tstate "+state+"\ttoken "+name+"\tvalue "+value);
-			}
-			
-			public void reduce (int from, int to, int rule, string text, int len) {
-				printchecked (from, to, "reduce\tstate "+from+"\tuncover "+to +"\trule ("+rule+") "+text);
-			}
-			
-			public void shift (int from, int to) {
-				printchecked (from, to, "goto\tfrom state "+from+" to "+to);
-			}
-			
-			public void accept (Object value) {
-				println("accept\tvalue "+value);
-			}
-			
-			public void error (string message) {
-				println("error\t"+message);
-			}
-			
-			public void reject () {
-				println("reject");
-			}
-			
-		}
-	}
-
+	// Open main Parser class
 	public class DelphiParser
 	{
 		// #define YYDEBUG 0
@@ -100,32 +25,29 @@ namespace crosspascal.parser
 		
 		int yacc_verbose_flag = 1;
 
-		public static void Main(string[] args)
-		{
-			DelphiParser parser = new DelphiParser();
-			parser.eof_token = DelphiScanner.ScannerEOF;
-		
-			try {
-				foreach (string s in args)
-					parser.yyparse(	new DelphiScanner(new StreamReader(s)), new yydebug.yyErrorTrace());
-				
-			} catch (Exception e)
-			{
-				Console.Out.WriteLine(e);
-				// printf("Parsing finished ok\n");
-				// printf("Parsing failed\n");
-			}
-		}
-
 		
 %}
 
 	// ==============================================================
-	// YACC term declarations, precedence and associativity
+	// Rules declarations
 	// ==============================================================
 
 %start goal
 	// file type
+	
+	// EXEMPLOS!:
+	
+	// %type<String> string_const id
+	// %type<Int32> intliteral 
+	// %type<Statement> stmt  nonlbl_stmt
+
+
+
+	
+	// ==============================================================
+	// Tokens declarations
+	// ==============================================================
+
 %token KW_LIBRARY KW_UNIT  KW_PROGRAM
 	// packages
 %token KW_PACKAGE KW_REQUIRES KW_CONTAINS
@@ -164,9 +86,13 @@ namespace crosspascal.parser
 %token TYPE_CHAR TYPE_PCHAR TYPE_WIDECHAR TYPE_WIDESTR TYPE_STR TYPE_RSCSTR TYPE_SHORTSTR
 %token TYPE_FLOAT TYPE_REAL48 TYPE_DOUBLE TYPE_EXTENDED
 %token TYPE_BOOL TYPE_COMP TYPE_CURRENCY TYPE_OLEVAR TYPE_VAR TYPE_ARRAY TYPE_CURR TYPE_FILE TYPE_PTR TYPE_SET
-
 	// pseudo, hints, added, etc
 %token ASM_OP
+
+
+	// ==============================================================
+	// Precedence and associativity
+	// ==============================================================
 
 		// lowest precedence |
 		//					 v
@@ -1330,5 +1256,84 @@ casttype
 
 %%
 
-}	// close parser class
+	}	// close parser class
+	
+	namespace yydebug
+	{
+		// Internal for Debug prints
+		class yyErrorTrace : yyDebug
+		{
+			const int yyFinal = 6;
+			
+			void println (string s) {
+				Console.Error.WriteLine (s);
+			}
+			
+			void printchecked(int state, string s)
+			{
+				if (state == 0 || state == yyFinal)
+					println(s);
+			}
 
+			void printchecked(int from, int to, string s)
+			{
+				if (from == 0 || from == yyFinal || to == 0 || to == yyFinal)
+					println(s);
+			}
+			
+			public void push (int state, Object value) {
+				printchecked (state, "push\tstate "+state+"\tvalue "+value);
+			}
+			
+			public void lex (int state, int token, string name, Object value) {
+				 printchecked (state, "lex\tstate "+state+"\treading "+name+"\tvalue "+value);
+			}
+			
+			public void shift (int from, int to, int errorFlag)
+			{
+					switch (errorFlag) {
+					default:				// normally
+						printchecked (from, to, "shift\tfrom state "+from+" to "+to);
+						break;
+					case 0: case 1: case 2:		// in error recovery
+						printchecked (from, to,"shift\tfrom state "+from+" to "+to +"\t"+errorFlag+" left to recover");
+						break;
+					case 3:				// normally
+						printchecked (from, to, "shift\tfrom state "+from+" to "+to+"\ton error");
+						break;
+					}
+			}
+			
+			public void pop (int state) {
+				printchecked (state,"pop\tstate "+state+"\ton error");
+			}
+			
+			public void discard (int state, int token, string name, Object value) {
+				printchecked (state,"discard\tstate "+state+"\ttoken "+name+"\tvalue "+value);
+			}
+			
+			public void reduce (int from, int to, int rule, string text, int len) {
+				printchecked (from, to, "reduce\tstate "+from+"\tuncover "+to +"\trule ("+rule+") "+text);
+			}
+			
+			public void shift (int from, int to) {
+				printchecked (from, to, "goto\tfrom state "+from+" to "+to);
+			}
+			
+			public void accept (Object value) {
+				println("accept\tvalue "+value);
+			}
+			
+			public void error (string message) {
+				println("error\t"+message);
+			}
+			
+			public void reject () {
+				println("reject");
+			}
+			
+		}
+	}
+
+// already defined in template
+//	} // close outermost namespace
