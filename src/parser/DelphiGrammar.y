@@ -204,15 +204,15 @@ namespace crosspascal.parser
 %%
 
 goal: file KW_DOT		{ // YYACCEPT; 
-						
+							$$.val = new Node($$1.val); 
 						}
 	;
 
 file
-	: program
-	| package
-	| library
-	| unit
+	: program	{ $$.val = $$1.val; }
+	| package	{ $$.val = $$1.val; }
+	| library	{ $$.val = $$1.val; }
+	| unit		{ $$.val = $$1.val; }
 	;
 
 	/*
@@ -234,43 +234,43 @@ file
 	// ========================================================================
 
 program
-	: KW_PROGRAM id SEMICOL	usesclauseopt main_block
-	| 						usesclauseopt main_block
+	: KW_PROGRAM id SEMICOL	usesclauseopt main_block	{ $$.val = new ProgramNode($$2.val, $$4.val, $$5.val); }
+	| 						usesclauseopt main_block	{ $$.val = new ProgramNode("untitled", $$1.val, $$2.val); }
 	;
 
 library
-	: KW_LIBRARY id SEMICOL usesclauseopt main_block
+	: KW_LIBRARY id SEMICOL usesclauseopt main_block	{ $$.val = new LibraryNode($$2.val, $$4.val, $$5.val); }
 	;
 
 unit
-	: KW_UNIT id /*port_opt*/ SEMICOL interfsec implementsec initsec
+	: KW_UNIT id /*port_opt*/ SEMICOL interfsec implementsec initsec	{ $$.val = new UnitNode($$2.val, $$4.val, $$5.val, $$6.val); }
 	;
 
 package
-	: id id SEMICOL requiresclause containsclause KW_END
+	: id id SEMICOL requiresclause containsclause KW_END	{ $$.val = new PackageNode($$2.val, $$4.val, $$5.val); }
 	;
 
 requiresclause
-	: id idlist SEMICOL
+	: id idlist SEMICOL	{ $$.val = new UsesNode($$1.val, $$2.val);}
 	;
 
 containsclause
-	: id idlist SEMICOL
+	: id idlist SEMICOL	{ $$.val = new UsesNode($$1.val, $$2.val);}
 	;
 
 usesclauseopt
-	: 
-	| KW_USES useidlist SEMICOL
+	:							{ $$.val = null; }
+	| KW_USES useidlist SEMICOL	{ $$.val = $$2.val; }
 	;
 
 useidlist
-	: useid
-	| useidlist COMMA useid
+	: useid						{ $$.val = new UsesNode($$1.val, null);}
+	| useidlist COMMA useid		{ $$.val = new UsesNode($$1.val, $$3.val);}
 	;
 	
 useid
-	: id
-	| id KW_IN string_const
+	: id						{ $$.val = new IdentifierNode($$1.val);}
+	| id KW_IN string_const		{ $$.val = new IdentifierNodeWithLocation($$1.val, $$3.val);}
 	;
 
 implementsec
@@ -774,8 +774,8 @@ lvalue
 	;
 
 expr
-	: literal
-	| lvalue
+	: literal							{ $$.val = $$1.val; }
+	| lvalue							{ $$.val = new LValueNode($$1.val); }
 	| setconstructor
 	| KW_ADDR expr
 	| KW_NOT expr
@@ -787,42 +787,42 @@ expr
 	;
 
 sign
-	: KW_SUB
-	| KW_SUM
+	: KW_SUB		{ $$.val = new OperatorNode("-");}
+	| KW_SUM		{ $$.val = new OperatorNode("+");}
 	;
 mulop
-	: KW_MUL
-	| KW_DIV
-	| KW_QUOT
-	| KW_MOD
-	| KW_SHR
-	| KW_SHL
-	| KW_AND
+	: KW_MUL		{ $$.val = new OperatorNode("*");}
+	| KW_DIV		{ $$.val = new OperatorNode("/");}
+	| KW_QUOT		{ $$.val = new OperatorNode("div");}
+	| KW_MOD		{ $$.val = new OperatorNode("mod");}
+	| KW_SHR		{ $$.val = new OperatorNode("shr");}
+	| KW_SHL		{ $$.val = new OperatorNode("shl");}
+	| KW_AND		{ $$.val = new OperatorNode("and");}
 	;
 addop
-	: KW_SUB
-	| KW_SUM
-	| KW_OR
-	| KW_XOR
+	: KW_SUB	{ $$.val = new OperatorNode("-");}
+	| KW_SUM	{ $$.val = new OperatorNode("+");}
+	| KW_OR		{ $$.val = new OperatorNode("or");}
+	| KW_XOR	{ $$.val = new OperatorNode("xor");}
 	;
 relop
-	: KW_EQ
-	| KW_DIFF
-	| KW_LT
-	| KW_LE
-	| KW_GT
-	| KW_GE
-	| KW_IN
-	| KW_IS
-	| KW_AS
+	: KW_EQ		{ $$.val = new OperatorNode("=");}
+	| KW_DIFF	{ $$.val = new OperatorNode("<>");}
+	| KW_LT		{ $$.val = new OperatorNode("<");}
+	| KW_LE		{ $$.val = new OperatorNode("<=");}
+	| KW_GT		{ $$.val = new OperatorNode(">");}
+	| KW_GE		{ $$.val = new OperatorNode(">=");}
+	| KW_IN		{ $$.val = new OperatorNode("in");}
+	| KW_IS		{ $$.val = new OperatorNode("is");}
+	| KW_AS		{ $$.val = new OperatorNode("as");}
 	;
 
 literal
-	: CONST_INT
-	| CONST_BOOL
-	| CONST_REAL
-	| CONST_NIL
-	| string_const
+	: CONST_INT		{ $$.val = new IntegerLiteralNode($$1.val);}
+	| CONST_BOOL	{ $$.val = new BoolLiteralNode($$1.val);}
+	| CONST_REAL	{ $$.val = new RealLiteralNode($$1.val);}
+	| CONST_NIL		{ $$.val = new NilLiteralNode($$1.val);}
+	| string_const	{ $$.val = new StringLiteralNode($$1.val);}
 	;
 
 discrete
