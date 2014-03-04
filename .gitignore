@@ -120,3 +120,7 @@ UpgradeLog*.XML
 /src/parser/y.output
 /src/parser/DelphiScanner.cs
 /src/parser/DelphiParser.cs
+/src/parser/*~
+/src/parser/yacc.*
+
+

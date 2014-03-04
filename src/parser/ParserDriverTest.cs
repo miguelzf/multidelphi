@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Text;
+using crosspascal.AST;
 
 namespace crosspascal.parser
 {
@@ -12,7 +13,7 @@ namespace crosspascal.parser
 		{
 			DelphiParser parser = new DelphiParser();
 			parser.eof_token = DelphiScanner.ScannerEOF;
-		
+				
 			try {
 				foreach (string s in args)
 					parser.yyparse(	new DelphiScanner(new StreamReader(s)), new yydebug.yyErrorTrace());
@@ -25,5 +26,7 @@ namespace crosspascal.parser
 			}
 		}
 	}
+
+
 }
 

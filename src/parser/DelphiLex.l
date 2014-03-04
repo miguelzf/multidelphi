@@ -62,7 +62,8 @@ namespace crosspascal.parser
 			Should not be called if advance() returned false.
 			@return value for token().
 		*/
-		Object yylval;
+		
+		Object yylval;	// value of last token
 		public Object value ()
 		{
 			return yylval;
@@ -71,15 +72,21 @@ namespace crosspascal.parser
 		public const int ScannerEOF = 0;
 		
 	// **********************************************
+	// Make CSFlex compatible with Yacc:
 	
+		void BEGIN(int state) { yybegin(state); }
+		public void unput(char c) { yypushback(1); }
+		const int INITIAL = YYINITIAL;
+		
+		// HACK!! FIXME!!! Should call the Parser's yyerror!
+		void yyerror(Func<String>yytext) { Console.Error.WriteLine(yytext()); System.Environment.Exit(0); }
+		
+		Int32 GetInt(String yytext, int numbase) { return Convert.ToInt32(yytext, numbase); }
+		Double GetReal(String yytext) { return Convert.ToDouble(yytext); }
 
-	// Make CSFlex compatible with Yacc
-	void BEGIN(int state) { yybegin(state); }
-	public void unput(char c) { yypushback(1); }
-	const int INITIAL = YYINITIAL;
-	// Should call the Parser's yyerror!
-	void yyerror(Func<String>yytext) { Console.Error.WriteLine(yytext()); System.Environment.Exit(0); }
-	
+		// TODO set yylval to null before each executing each rule's action
+		
+	// **********************************************
 	
 	int insideObj = 0;
 
@@ -195,7 +202,7 @@ private		{ return KW_PRIVATE; }
 	/* function call types */
 cdecl		{ return KW_CDECL; }
 pascal		{ return KW_PASCAL; }
-mwpascal		{ return KW_PASCAL; }
+mwpascal	{ return KW_PASCAL; }
 register	{ return KW_REGISTER; }
 safecall	{ return KW_SAFECALL; }
 stdcall		{ return KW_STDCALL; }
@@ -306,23 +313,25 @@ asm						{	BEGIN(ASMCODESEC);
 
 
 
-	/* literals: numeric */
-[0-9]+				{ return CONST_INT; }
-\$[0-9a-fA-F]+		{ return CONST_INT; }		// convert hex=>int here
-nil					{ return CONST_NIL; }
-[0-9]+\.[0-9]+		{ return CONST_REAL; }
-[0-9]+e[+-]?[0-9]+	{ return CONST_REAL; }
-[0-9]+\.[0-9]+e[+-]?[0-9]+	{ return CONST_REAL; }
-	
-	/* literals: alpha */
-\'.\'				{ return CONST_CHAR; }
-\#[0-9]+			{ return CONST_CHAR; }
-\#\$[0-9a-fA-F]+	{ return CONST_CHAR; }
-''					{ return CONST_STR; }
-'[^']*'				{ return CONST_STR; }
 
-true				{ return CONST_BOOL; }
-false				{ return CONST_BOOL; }
+	/* literals: numeric */
+[0-9]+				{ yylval = GetInt(yytext(),10); return CONST_INT; }
+\$[0-9a-fA-F]+		{ yylval = GetInt(yytext()+1, 16); return CONST_INT; }
+nil					{ return CONST_NIL; }
+[0-9]+\.[0-9]+		{ yylval = GetReal(yytext()); return CONST_REAL; }
+[0-9]+e[+-]?[0-9]+	{ yylval = GetReal(yytext()); return CONST_REAL; }
+[0-9]+\.[0-9]+e[+-]?[0-9]+	{ yylval = GetReal(yytext()); return CONST_REAL; }
+	
+	/* literals: alphanumeric */
+\'.\'				{ yylval = yytext()[1]; return CONST_CHAR; }
+	// check that num < 255
+\#[0-9]+			{ yylval = GetInt(yytext().Substring(1), 10); return CONST_CHAR; }
+\#\$[0-9a-fA-F]+	{ yylval = GetInt(yytext().Substring(2), 16); return CONST_CHAR; }
+''					{ yylval = ""; return CONST_STR; }
+'[^']*'				{ yylval = yytext().Substring(1, yylength()-2); return CONST_STR; }
+
+true				{ yylval = true;  return CONST_BOOL; }
+false				{ yylval = false; return CONST_BOOL; }
 
 
 	/* separators */
@@ -372,12 +381,12 @@ is			{ return KW_IS; }	// type comp
 in			{ return KW_IN; }	// is in set
 
 
-[_a-zA-Z][_a-zA-Z0-9]*	{ return IDENTIFIER; }
+[_a-zA-Z][_a-zA-Z0-9]*	{ yylval = yytext(); return IDENTIFIER; }
 
-\{\$[^}]\}		{ }	/* ignore compiler funcdirectives */
+\{\$[^}]\}		{ }	// ignore compiler funcdirectives
 
 
-"//".*			{ } 	// single line comment
+"//".*			{ } // single line comment
 
 				/* multi-line comments */
 \{				{ BEGIN(XCOMMENT1); }
