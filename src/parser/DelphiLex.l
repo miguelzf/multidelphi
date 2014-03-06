@@ -13,22 +13,26 @@ namespace crosspascal.parser
  
 %%
 
+	// TODO make a debug option programatically configurable
+	
+// %debug
+// %standalone
+
 	// %final
 	// %public
 %class DelphiScanner
 %implements Token, yyParser.yyInput
 %function token
 
-	// %debug
 %integer
-
 %eofval{
 	return ScannerEOF;
 %eofval}
-
 	// %type Int32
-	// %unicode
 
+%8bit
+	// %unicode
+	
 %column
 %line
 %eofclose
@@ -69,31 +73,43 @@ namespace crosspascal.parser
 			return yylval;
 		}
 		
-		public const int ScannerEOF = 0;
+		public int ScannerEOF = 0;
 		
 	// **********************************************
-	// Make CSFlex compatible with Yacc:
+	// Make CSFlex compatible with FLex:
 	
 		void BEGIN(int state) { yybegin(state); }
-		public void unput(char c) { yypushback(1); }
+		void unput(char c) { yypushback(1); }
 		const int INITIAL = YYINITIAL;
 		
-		// HACK!! FIXME!!! Should call the Parser's yyerror!
-		void yyerror(Func<String>yytext) { Console.Error.WriteLine(yytext()); System.Environment.Exit(0); }
+		void yyerror(String msg = "Lexical Error")
+		{
+			throw new ScannerException(yyline, yycolumn, msg);
+		}
+		
+		// Finished scanning and accepts
+		public int Accept()
+		{
+			zzDoEOF();
+			return ScannerEOF;
+		}
+		
+		public int yylineno() {
+			return yyline;
+		}
+			
+		
+	// **********************************************
 		
 		Int32 GetInt(String yytext, int numbase) { return Convert.ToInt32(yytext, numbase); }
 		Double GetReal(String yytext) { return Convert.ToDouble(yytext); }
 
 		// TODO set yylval to null before each executing each rule's action
-		
-	// **********************************************
 	
-	int insideObj = 0;
-
-	int linenum = 1;	// custom, adjusted for includes
-
 	//#define YY_USER_ACTION printf("[line %d] READ: %s | 1st char: %c %d |\n",  yylinenum, yytext, yytext[0], yytext[1]);
+	
 
+	
 %}
 
 %init{
@@ -308,7 +324,7 @@ asm						{	BEGIN(ASMCODESEC);
 							BEGIN(INITIAL);
 							return KW_END;
 						}
-<ASMCODESEC>\n			{ linenum++; }
+<ASMCODESEC>\n			{ }
 <ASMCODESEC>.			{ return ASM_OP; }	// ASM unknown char
 
 
@@ -316,7 +332,7 @@ asm						{	BEGIN(ASMCODESEC);
 
 	/* literals: numeric */
 [0-9]+				{ yylval = GetInt(yytext(),10); return CONST_INT; }
-\$[0-9a-fA-F]+		{ yylval = GetInt(yytext()+1, 16); return CONST_INT; }
+\$[0-9a-fA-F]+		{ yylval = GetInt(yytext().Substring(1), 16); return CONST_INT; }
 nil					{ return CONST_NIL; }
 [0-9]+\.[0-9]+		{ yylval = GetReal(yytext()); return CONST_REAL; }
 [0-9]+e[+-]?[0-9]+	{ yylval = GetReal(yytext()); return CONST_REAL; }
@@ -391,26 +407,53 @@ in			{ return KW_IN; }	// is in set
 				/* multi-line comments */
 \{				{ BEGIN(XCOMMENT1); }
 <XCOMMENT1>\}	{ BEGIN(INITIAL); }
-<XCOMMENT1>.	{ } //Console.WriteLine("READ comment state1: " + yytext() + "<<"); }
-<XCOMMENT1>\n	{ linenum++; }
+<XCOMMENT1>.	{ }  // Console.WriteLine("READ comment state1: " + yytext() + " ascii: " + (int) yytext()[0] + " <<"); }
+<XCOMMENT1>\n	{ }
 
 \(\*			{ BEGIN(XCOMMENT2); }
 <XCOMMENT2>\*\)	{ BEGIN(INITIAL); }
-<XCOMMENT2>.	{ } // Console.WriteLine("READ comment state2: " + yytext() + "<<"); }
-<XCOMMENT2>\n	{ linenum++; }
+<XCOMMENT2>.	{ }  // Console.WriteLine("READ comment state2: " + yytext() + " ascii: " + (int) yytext()[0] + " <<"); }
+<XCOMMENT2>\n	{ }
 
 
 
 
 [ \r\t]+        { }     /* ignore whitespace */
 
-\n				{ linenum++; }
+\n				{ }
 
-.               { yyerror(yytext); }
+.				{
+					string text = yytext();
+					yyerror("Unknown char + " + text + " (ascii: " + text[0]+")"); 
+				}
 				
-
 
 %%
 
+	
+	// Auxiliary 
+
+	class LexErrorMessages
+	{
+		const string UnkownChar = "Unknown character";
+		
+		const string InvalidInteger = "Invalid Integer Format";
+		const string InvalidReal = "Invalid Real Format";
+		const string UnterminatedComment = "Block Comment not closed";
+		
+		// TODO all the Scanner's error messages here
+	}
+
+		
+	class ScannerException : Exception
+	{
+		internal ScannerException(int line, int col, string msg = "Scanner Error")
+			: base(msg + " in line " + line + ", column " + col) { }
+		
+		internal ScannerException(int line, string msg = "Scanner Error")
+			: base(msg + " in line " + line) { }
+
+		internal ScannerException(string msg = "Scanner Error") : base(msg) { }
+	}
 
 }	// close outermost namespace

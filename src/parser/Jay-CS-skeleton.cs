@@ -14,7 +14,7 @@
 .  /** error output stream.
 .      It should be changeable.
 .    */
-.  public System.IO.TextWriter ErrorOutput = System.Console.Out;
+.  public System.IO.TextWriter ErrorOutput = System.Console.Error;
 .
 .  /** simplified error message.
 .      @see <a href="#yyerror(java.lang.String, java.lang.String[])">yyerror</a>
@@ -53,7 +53,7 @@ t  internal yydebug.yyDebug debug;
 .      @return token name or [illegal] or [unknown].
 .    */
 t  public static string yyname (int token) {
-t    if ((token < 0) || (token > yyNames.Length)) return "[illegal]";
+t    if ((token < 0) || (token > yyNames.Length)) return "[illegal token: " + token + "]";
 t    string name;
 t    if ((name = yyNames[token]) != null) return name;
 t    return "[unknown]";
@@ -129,14 +129,16 @@ t    this.debug = (yydebug.yyDebug)yyd;
 .      @return result of the last reduction, if any.
 .      @throws yyException on irrecoverable parse error.
 .    */
+.		// miguelzf: Moved outside yyparse, to allow other methods to manipulate these parse state vars
+.	private int yyState = 0;                                   // state stack ptr
+.	private Object yyVal = null;                               // value stack ptr
+.	private int yyToken = -1;					// current input
+.
 .  internal Object yyparse (yyParser.yyInput yyLex)
 .  {
 .    if (yyMax <= 0) yyMax = 256;			// initial size
-.    int yyState = 0;                                   // state stack ptr
 .    int [] yyStates = new int[yyMax];	                // state stack 
-.    Object yyVal = null;                               // value stack ptr
 .    Object [] yyVals = new Object[yyMax];	        // value stack
-.    int yyToken = -1;					// current input
 .    int yyErrorFlag = 0;				// #tks to shift
 .
  local		## %{ ... %} after the first %%

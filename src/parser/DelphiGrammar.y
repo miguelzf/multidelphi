@@ -11,20 +11,55 @@ namespace crosspascal.parser
 	// Open main Parser class
 	public class DelphiParser
 	{
-		// #define YYDEBUG 0
-		// extern int yylineno;	// absolute, from flex
-		// extern int linenum;		// custom, adjusted for includes
-
 		/*
-		extern int yydebug;
 		void yyerror(char *s) {
 			fprintf(stdout, "Line %d %s\n", linenum, s);
 		}
 		*/
 		
+		// Emulate YACC
 		
-		int yacc_verbose_flag = 1;
-
+		void ACCEPT()
+		{	// make scanner emit EOF, ends scanning and parsing
+			lexer.Accept();
+			yyState = yyFinal;
+		}
+		
+		void REJECT(string msg = "")
+		{	
+			throw new yyParser.yyInputRejected(msg, lexer.yylineno());
+		}
+		
+		
+		DelphiScanner lexer;
+		int yacc_verbose_flag = 0;
+		
+		// Entry point: wrapper for yyparse
+		internal Object Parse(string fname, yydebug.yyDebug dgb = null)
+		{
+			StreamReader sr;
+			try {
+				sr = new StreamReader(fname, Encoding.GetEncoding("iso-8859-1"));
+				//	Encoding.Default);	// typically Single-Bye char set
+				// TODO change charset to unicode, use %unicode in flex
+				Console.WriteLine("File " + fname + " has enconding: " + sr.CurrentEncoding);
+			} 
+			catch (IOException ioe) {
+				Console.Error.WriteLine("Failure to open input file: " + fname);
+				return null;
+			}
+			
+			if (dgb != null) {
+				this.debug = (yydebug.yyDebug) dgb;
+				yacc_verbose_flag = 1;
+			}
+			
+			lexer = new DelphiScanner(sr);
+			eof_token = lexer.ScannerEOF;
+			
+			Object ret = yyparse(lexer);
+			return ret;
+		}
 		
 %}
 
@@ -1256,7 +1291,8 @@ casttype
 
 %%
 
-	}	// close parser class
+	}	// close parser class, opened in prolog
+	
 	
 	namespace yydebug
 	{
@@ -1332,6 +1368,16 @@ casttype
 				println("reject");
 			}
 			
+		}
+	}
+	
+	namespace yyParser
+	{
+		internal class yyInputRejected : yyException 
+		{
+			public yyInputRejected (string message = "Input invalid - Parsing terminated by REJECT action",
+									int lineno = -1) 
+				: base ("Line " + ((lineno >= 0)? lineno+"" : "unknown") + ": " + message)  { }
 		}
 	}
 
