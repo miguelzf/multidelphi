@@ -30,9 +30,144 @@ namespace crosspascal.AST
 	{
 	}
 
+	public class Statement : Node
+	{
+		public string label;
+
+		public void SetLabel(string label)
+		{
+			this.label = label;
+		}
+	}
+
+	public class AssignementStatement : Statement
+	{
+		public LValueNode lvalue;
+		public ExpressionNode expr;
+		public bool inherited;
+
+		public AssignementStatement(LValueNode lvalue, ExpressionNode expr, bool inherited)
+		{
+			this.lvalue = lvalue;
+			this.expr = expr;
+			this.inherited = inherited;
+		}
+	}
+
+	public class GotoStatement : Statement
+	{
+		public LabelNode label;
+
+		public GotoStatement(LabelNode label)
+		{
+			this.label = label;				 
+		}
+	}
+
+	public class IfStatement : Statement
+	{
+		public ExpressionNode condition;
+		public Statement ifTrue;
+		public Statement ifFalse;
+
+		public IfStatement(ExpressionNode condition, Statement ifTrue, Statement ifFalse)
+		{
+			this.condition = condition;
+			this.ifTrue = ifTrue;
+			this.ifFalse = ifFalse;
+		}
+	}
+
+	public class CaseLabel : Node
+	{
+		public ExpressionNode minRange;
+		public ExpressionNode maxRange;
+
+		public CaseLabel(ExpressionNode minRange, ExpressionNode maxRange)
+		{
+			this.minRange = minRange;
+			this.maxRange = maxRange;
+		}
+	}
+
+	public class CaseLabelList : Node
+	{ 
+		public CaseLabel caselabel;
+		public CaseLabelList next;
+
+		public CaseLabelList(CaseLabel caselabel, CaseLabelList next)
+		{
+			this.caselabel = caselabel;
+			this.next = next;
+		}
+	}
+
+	public class CaseSelectorNode : Node
+	{
+		public CaseLabelList list;
+		public Statement stmt;
+
+		public CaseSelectorNode(CaseLabelList list, Statement stmt)
+		{
+			this.list = list;
+			this.stmt = stmt;
+		}
+	}
+
+	public class CaseSelectorList : Node
+	{ 
+
+	}
+
+	public class CaseStatement : Statement
+	{
+		public ExpressionNode condition;
+		public CaseSelectorList selectors;
+		public Statement caseelse;
+
+		public CaseStatement(ExpressionNode condition, CaseSelectorList selectors, Statement caseelse)
+		{
+			this.condition = condition;
+			this.selectors = selectors;
+			this.caseelse = caseelse;
+		}
+
+	}
+
+	public enum CallConvention
+	{
+		Pascal,
+		SafeCall,
+		StdCall,
+		CDecl,
+		Register
+	}
+
+	public class CallConventionNode : Node
+	{
+		public CallConvention convention;
+
+		public CallConventionNode(CallConvention convention)
+		{
+			this.convention = convention;
+		}
+	}
+
 	public abstract class LiteralNode : Node
 	{ 
 		
+	}
+
+	public abstract class DeclarationNode : Node
+	{
+
+	}
+
+	public class UnfinishedNode : Node
+	{
+
+		public UnfinishedNode()
+		{}
 	}
 
 	public class IntegerLiteralNode : LiteralNode
@@ -40,6 +175,16 @@ namespace crosspascal.AST
 		public int value;
 
 		public IntegerLiteralNode(int value)
+		{
+			this.value = value;
+		}
+	}
+
+	public class CharLiteralNode : LiteralNode
+	{
+		public char value;
+
+		public CharLiteralNode(char value)
 		{
 			this.value = value;
 		}
@@ -79,6 +224,265 @@ namespace crosspascal.AST
 	{
 	}
 
+
+	public class PropertyReadNode : Node
+	{
+		public IdentifierNode ident;
+
+		public PropertyReadNode(IdentifierNode ident)
+		{
+			this.ident = ident;
+		}
+	}
+
+	public class PropertyWriteNode : Node
+	{
+		public IdentifierNode ident;
+
+		public PropertyWriteNode(IdentifierNode ident)
+		{
+			this.ident = ident;
+		}
+	}
+
+	public class PropertySpecifierNode : Node
+	{
+		public PropertyReadNode read;
+		public PropertyWriteNode write;
+		// add more here as necessary
+
+		public PropertySpecifierNode(PropertyReadNode read, PropertyWriteNode write)
+		{
+			this.read = read;
+			this.write = write;
+		}
+	}
+
+	public class FileType : Type
+	{
+		public TypeNode type;
+
+		public FileType(TypeNode type)
+		{
+			this.type = type;
+		}
+	}
+
+	public abstract class LabelNode : Node
+	{ 
+	}
+
+	public class StringLabel : LabelNode
+	{
+		IdentifierNode name;
+
+		public StringLabel(IdentifierNode name)
+		{
+			this.name = name;
+		}
+	}
+
+	public class NumberLabel : LabelNode
+	{
+		int number;
+
+		public NumberLabel(int number)
+		{
+			this.number = number;
+		}
+	}
+
+	public class LabelDeclarationNode : DeclarationNode
+	{
+		LabelNode label;
+		LabelDeclarationNode next;
+
+		public LabelDeclarationNode(LabelNode label, LabelDeclarationNode next)
+		{
+			this.label = label;
+			this.next = next;
+		}
+	}
+
+	public class ExportItem : DeclarationNode
+	{
+		IdentifierNode ident;
+		string name;
+		ExpressionNode index;
+
+		public ExportItem(IdentifierNode ident, string name, ExpressionNode index)
+		{
+			this.ident = ident;
+			this.name = name;
+			this.index = index;
+		}
+	}
+
+	public class ExportItemListNode : DeclarationNode
+	{
+		ExportItem export;
+		ExportItemListNode next;
+
+
+	}
+
+	public class TypeDeclarationNode : DeclarationNode
+	{
+		public IdentifierNode ident;
+		public TypeNode type;
+
+		public TypeDeclarationNode(IdentifierNode ident, TypeNode type)
+		{
+			this.ident = ident;
+			this.type = type;
+		}
+	}
+
+	public class TypeDeclarationListNode : DeclarationNode
+	{
+		public TypeDeclarationNode decl;
+		public TypeDeclarationListNode next;
+
+		public TypeDeclarationListNode(TypeDeclarationNode decl, TypeDeclarationListNode next)
+		{
+			this.decl = decl;
+			this.next = next;
+		}
+	}
+
+	public class ProcedureTypeDeclarationNode : TypeDeclarationNode
+	{
+		public ProcedureDirectiveList dirs;
+
+		public ProcedureTypeDeclarationNode(IdentifierNode ident, TypeNode type, ProcedureDirectiveList dirs)
+			: base(ident, type)
+		{
+			this.dirs = dirs;
+		}
+	}
+
+	public abstract class ParameterQualifierNode : Node	
+	{
+	}
+
+	public class ConstParameterQualifier : ParameterQualifierNode
+	{
+	}
+
+	public class VarParameterQualifier : ParameterQualifierNode
+	{
+	}
+
+	public class OutParameterQualifier : ParameterQualifierNode
+	{
+	}
+	
+	public class ParameterNode : Node
+	{
+		public IdentifierListNode idlist;
+		public IdentifierNode type;
+		public ParameterQualifierNode qualifier;
+		public ExpressionNode init;
+
+		public ParameterNode(ParameterQualifierNode qualifier, IdentifierListNode idlist, IdentifierNode type, ExpressionNode init)
+		{
+			this.idlist = idlist;
+			this.type = type;
+			this.qualifier = qualifier;
+			this.init = init;
+		}
+	}
+
+	public class ParameterNodeList : Node
+	{
+		public ParameterNode param;
+		public ParameterNodeList next;
+
+		public ParameterNodeList(ParameterNode param, ParameterNodeList next)
+		{
+			this.param = param;
+			this.next = next;
+		}
+	}
+
+	public class PointerType : Type
+	{
+	}
+
+	public class IntegerType : Type
+	{
+	}
+
+	public class FloatingPointType : Type
+	{ 
+	}
+
+	public class FloatType : FloatingPointType
+	{
+	}
+
+	public class DoubleType : FloatingPointType
+	{
+	}
+
+	public class ExtendedType : FloatingPointType
+	{
+	}
+
+	public class CurrencyType : FloatingPointType
+	{
+	}
+
+	public class CharType : Type
+	{
+	}
+
+	public class BoolType : Type
+	{
+	}
+
+	public class UnsignedInt8Type : IntegerType // byte
+	{
+	}
+
+	public class UnsignedInt16Type : IntegerType // word
+	{
+	}
+
+	public class UnsignedInt32Type : IntegerType // cardinal
+	{
+	}
+
+	public class UnsignedInt64Type : IntegerType // uint64
+	{
+	}
+
+	public class SignedInt8Type : IntegerType // smallint
+	{
+	}
+
+	public class SignedInt16Type : IntegerType // smallint
+	{
+	}
+
+	public class SignedInt32Type : IntegerType // integer
+	{
+	}
+
+	public class SignedInt64Type : IntegerType // int64
+	{
+	}
+
+	public class StringType : Type
+	{
+		public ExpressionNode size;
+
+		public StringType(ExpressionNode size)
+		{
+			this.size = size;
+		}
+	}
+
 	public class LValueNode : Node
 	{
 		public string ident;
@@ -89,6 +493,82 @@ namespace crosspascal.AST
 		}
 	}
 
+	public class StatementBlock : Statement
+	{
+		public Statement stmt;
+		public StatementBlock next;
+
+		public StatementBlock(Statement stmt, StatementBlock next)
+		{
+			this.stmt = stmt;
+			this.next = next;
+		}
+	}
+
+	public class WithStatement : Statement
+	{
+		public Statement body;
+		public ExpressionNode with;
+
+		public WithStatement(ExpressionNode with, Statement body)
+		{
+			this.body = body;
+			this.with = with;
+		}
+	}
+
+	public class WhileStatement : Statement
+	{
+		public ExpressionNode expr;
+		public Statement body;
+
+		public WhileStatement(ExpressionNode expr, Statement body)
+		{
+			this.expr = expr;
+			this.body = body;
+		}
+	}
+
+	public class ForStatement : Statement
+	{
+		public Statement body;
+		public IdentifierNode var;
+		public ExpressionNode start;
+		public ExpressionNode end;
+		public int direction;
+
+		public ForStatement(IdentifierNode var, ExpressionNode start, ExpressionNode end, Statement body)
+		{
+			this.body = body;
+			this.var = var;
+			this.start = start;
+			this.end = end;
+		}
+	}
+
+	public class TryFinallyStatement : Statement
+	{
+		public Statement body;
+		public Statement final;
+
+		public TryFinallyStatement(Statement body, Statement final)
+		{
+			this.body = body;
+			this.final = final;
+		}
+	}
+
+	public class TryExceptStatement : Statement
+	{
+		public Statement body;
+		public Statement final;
+
+		public TryExceptStatement(Statement body, Statement final)
+		{
+			this.body = body;
+			this.final = final;
+		}
+	}
 
 	public class OperatorNode : Node
 	{
@@ -96,6 +576,279 @@ namespace crosspascal.AST
 
 		public OperatorNode(string op)
 		{
+			this.op = op;
+		}
+	}
+
+	public class ExpressionNode : Node
+	{
+	}
+
+	public class ExpressionListNode : Node
+	{
+		ExpressionNode exp;
+		ExpressionListNode next;
+
+		public ExpressionListNode(ExpressionNode exp, ExpressionListNode next)
+		{
+			this.exp = exp;
+			this.next = next;
+		}
+	}
+
+	public class NegationNode : Node
+	{
+		public ExpressionNode exp;
+
+		public NegationNode(ExpressionNode exp)
+		{
+			this.exp = exp;
+		}
+	}
+
+	public class AddressNode : Node
+	{
+		public ExpressionNode exp;
+
+		public AddressNode(ExpressionNode exp)
+		{
+			this.exp = exp;
+		}
+	}
+
+	public class ArrayAccessNode : Node
+	{
+		public LValueNode lvalue;
+		public ExpressionListNode acessors;
+
+		public ArrayAccessNode(LValueNode lvalue, ExpressionListNode acessors)
+		{
+			this.lvalue = lvalue;
+			this.acessors = acessors;
+		}
+	}
+
+	public class PointerDereferenceNode : Node
+	{
+		public ExpressionNode expr;
+
+		public PointerDereferenceNode(ExpressionNode expr)
+		{
+			this.expr = expr;
+		}
+	}
+
+	public class TypeNode : Node
+	{
+		public string name;
+
+		public TypeNode(string name)
+		{
+			this.name = name;
+		}
+	}
+
+	public class TypeCastNode : Node
+	{
+		public ExpressionNode expr;
+		public TypeNode type;
+
+		public TypeCastNode(TypeNode type, ExpressionNode expr)
+		{
+			this.type = type;
+			this.expr = expr;
+		}
+	}
+
+	public class FunctionCallNode : Node
+	{
+		public LValueNode function;
+		public ExpressionListNode arguments;
+
+		public FunctionCallNode(LValueNode function, ExpressionListNode arguments)
+		{
+			this.function = function;
+			this.arguments = arguments;
+		}
+	}
+
+	public class FieldAcessNode : Node
+	{
+		public LValueNode obj;
+		public IdentifierNode field;
+
+		public FieldAcessNode(LValueNode obj, IdentifierNode field)
+		{
+			this.obj = obj;
+			this.field = field;
+		}
+	}
+
+	public class IdentifierListNode : Node
+	{
+		public IdentifierNode ident;
+		public IdentifierListNode next;
+
+		public IdentifierListNode(IdentifierNode ident, IdentifierListNode next)
+		{
+			this.ident = ident;
+			this.next = next;
+		}
+	}
+
+	public class VarDeclarationOption : Node
+	{
+	}
+
+	public class VariableInitNode : VarDeclarationOption
+	{
+		public ExpressionNode expr;
+
+		public VariableInitNode(ExpressionNode expr)
+		{
+			this.expr = expr;
+		}
+	}
+
+	public class VarDeclarationNode : DeclarationNode
+	{
+		public IdentifierListNode ids;
+		public TypeNode type;
+		public VarDeclarationOption option;
+
+		public VarDeclarationNode(IdentifierListNode ids, TypeNode type, VarDeclarationOption option)
+		{
+			this.ids = ids;
+			this.type = type;
+			this.option = option;
+		}
+	}
+
+	public class VarDeclarationList : DeclarationNode
+	{
+		public VarDeclarationNode vardecl;
+		public VarDeclarationList next;
+
+		public VarDeclarationList(VarDeclarationNode vardecl, VarDeclarationList next)
+		{
+			this.vardecl = vardecl;
+			this.next = next;
+		}
+	}
+
+	public class AssemblerListNode : Node
+	{
+		public string asmop;
+		public AssemblerListNode next;
+
+		public AssemblerListNode(string asmop, AssemblerListNode next)
+		{
+			this.asmop = asmop;
+			this.next = next;
+		}
+
+	}
+
+	public class ProcedureHeaderNode : Node
+	{
+		// TODO
+	}
+
+	public enum ProcedureDirectiveEnum
+	{ 
+		Absolute,
+		Abstract,
+		Assembler,
+		Dynamic,
+		Export,
+		Inline,
+		Override,
+		Overload,
+		Reintroduce,
+		External,
+		Forward,
+		Virtual,
+		VarArgs		
+	}
+
+	public class ProcedureDirective : Node
+	{
+		public ProcedureDirectiveEnum type;
+
+		public ProcedureDirective(ProcedureDirectiveEnum type)
+		{
+			this.type = type;
+		}
+	}
+
+	public class ProcedureDirectiveList : Node
+	{
+		public ProcedureDirective dir;
+		public ProcedureDirectiveList next;
+
+		public ProcedureDirectiveList(ProcedureDirective dir, ProcedureDirectiveList next)
+		{
+			this.dir = dir;
+			this.next = next;
+		}
+	}
+
+	public class ExternalProcedureDirective : ProcedureDirective
+	{
+		public IdentifierNode importLib;
+		public string importName;
+		
+		public ExternalProcedureDirective(IdentifierNode importLib, string importName) : base (ProcedureDirectiveEnum.External)
+		{
+			this.importLib = importLib;
+			this.importName = importName;
+		}
+	}
+
+	public class ProcedureNode : Node
+	{
+		// TODO
+	}
+
+	public class ProcedurePointerDeclarationNode : Node
+	{
+		public IdentifierListNode ids;
+		public ProcedureHeaderNode proc;
+		public ProcedureDirectiveList dirs;
+		public ProcedureNode init;
+
+		public ProcedurePointerDeclarationNode(IdentifierListNode ids, ProcedureHeaderNode proc, ProcedureDirectiveList dirs, ProcedureNode init)
+		{
+			this.ids = ids;
+			this.proc = proc;
+			this.dirs = dirs;
+			this.init = init;
+		}
+	}
+
+
+	public class UnaryOperationNode : Node
+	{
+		public ExpressionNode a;
+		public OperatorNode op;
+
+		public UnaryOperationNode(ExpressionNode a, OperatorNode op)
+		{
+			this.a = a;
+			this.op = op;
+		}
+	}
+
+	public class BinaryOperationNode : Node
+	{
+		public ExpressionNode a;
+		public ExpressionNode b;
+		public OperatorNode op;
+
+		public BinaryOperationNode(ExpressionNode a, ExpressionNode b, OperatorNode op)
+		{
+			this.a = a;
+			this.b = b;
 			this.op = op;
 		}
 	}
@@ -132,13 +885,25 @@ namespace crosspascal.AST
 		}
 	}
 
+	public class BlockWithDeclarationsNode : Node
+	{
+		public DeclarationNode decls;
+		public StatementBlock block;
+
+		public BlockWithDeclarationsNode(DeclarationNode decls, StatementBlock block)
+		{
+			this.decls = decls;
+			this.block = block;
+		}
+	}
+
 	public class ProgramNode : GoalNode
 	{
 		public IdentifierNode identifier;
-		public Node body;
+		public BlockWithDeclarationsNode body;
 		public UsesNode uses;
 
-		public ProgramNode(IdentifierNode ident, UsesNode uses, Node body)
+		public ProgramNode(IdentifierNode ident, UsesNode uses, BlockWithDeclarationsNode body)
 		{
 			this.identifier = ident;
 			this.uses = uses;
@@ -149,10 +914,10 @@ namespace crosspascal.AST
 	public class LibraryNode: GoalNode
 	{
 		public IdentifierNode identifier;
-		public Node body;
+		public BlockWithDeclarationsNode body;
 		public UsesNode uses;
 
-		public LibraryNode(IdentifierNode ident, UsesNode uses, Node body)
+		public LibraryNode(IdentifierNode ident, UsesNode uses, BlockWithDeclarationsNode body)
 		{
 			this.identifier = ident;
 			this.uses = uses;
@@ -160,26 +925,64 @@ namespace crosspascal.AST
 		}
 	}
 
-	public class InterfaceNode: Node
+	public class DeclarationListNode : DeclarationNode
 	{
+		public DeclarationNode decl;
+		public DeclarationListNode next;
+
+		public DeclarationListNode(DeclarationNode decl, DeclarationListNode next)
+		{
+			this.decl = decl;
+			this.next = next;
+		}
 	}
 
-	public class ImplementationNode : Node
+	public class UnitInterfaceNode: Node
 	{
+		public UsesNode uses;
+		public DeclarationNode decls;
+
+		public UnitInterfaceNode(UsesNode uses, DeclarationNode decls)
+		{
+			this.uses = uses;
+			this.decls = decls;
+		}
+	}
+
+	public class UnitImplementationNode : Node
+	{
+		public UsesNode uses;
+		public DeclarationNode decls;
+
+		public UnitImplementationNode(UsesNode uses, DeclarationNode decls)
+		{
+			this.uses = uses;
+			this.decls = decls;
+		}
+	}
+
+	public class UnitInitialization : Node
+	{
+		public Statement initialization;
+		public Statement finalization;
+
+		public UnitInitialization(Statement initialization, Statement finalization)
+		{
+			this.initialization = initialization;
+			this.finalization = finalization;
+		}
 	}
 
 	public class UnitNode : GoalNode
 	{
-		public IdentifierNode identifier;
-		public UsesNode uses;
-		public InterfaceNode interfce;
-		public ImplementationNode implementation;
+		public IdentifierNode identifier;		
+		public UnitInterfaceNode interfce;
+		public UnitImplementationNode implementation;
 		public Node init;
 
-		public UnitNode(IdentifierNode ident, UsesNode uses, InterfaceNode interfce, ImplementationNode impl, Node init)
+		public UnitNode(IdentifierNode ident, UnitInterfaceNode interfce, UnitImplementationNode impl, Node init)
 		{
 			this.identifier = ident;
-			this.uses = uses;
 			this.interfce = interfce;
 			this.implementation = impl;
 			this.init = init;

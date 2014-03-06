@@ -265,6 +265,7 @@ longword	{ return TYPE_LONGWORD; }
 longint		{ return TYPE_LONGINT; }
 int64		{ return TYPE_INT64; }
 uint64		{ return TYPE_UINT64; }
+comp		{ return TYPE_COMP; }
 
 	/* types: floats */
 single		{ return TYPE_FLOAT; }
@@ -288,7 +289,6 @@ resourcestring	{ return TYPE_RSCSTR; }
 boolean		{ return TYPE_BOOL; }
 olevariant	{ return TYPE_OLEVAR; }
 variant		{ return TYPE_VAR; }
-comp		{ return TYPE_COMP; }
 currency	{ return TYPE_CURR; }
 array		{ return TYPE_ARRAY; }
 pointer		{ return TYPE_PTR; }

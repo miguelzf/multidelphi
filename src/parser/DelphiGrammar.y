@@ -130,15 +130,15 @@ namespace crosspascal.parser
 %%
 
 goal: file KW_DOT		{ // YYACCEPT; 
-							$$.val = new Node($$1.val); 
+							$$ = new Node($1); 
 						}
 	;
 
 file
-	: program	{ $$.val = $$1.val; }
-	| package	{ $$.val = $$1.val; }
-	| library	{ $$.val = $$1.val; }
-	| unit		{ $$.val = $$1.val; }
+	: program	{ $$ = $1; }
+	| package	{ $$ = $1; }
+	| library	{ $$ = $1; }
+	| unit		{ $$ = $1; }
 	;
 
 	/*
@@ -160,80 +160,80 @@ file
 	// ========================================================================
 
 program
-	: KW_PROGRAM id SEMICOL	usesclauseopt main_block	{ $$.val = new ProgramNode($$2.val, $$4.val, $$5.val); }
-	| 						usesclauseopt main_block	{ $$.val = new ProgramNode("untitled", $$1.val, $$2.val); }
+	: KW_PROGRAM id SEMICOL	usesclauseopt main_block	{ $$ = new ProgramNode($2, $4, $5); }
+	| 						usesclauseopt main_block	{ $$ = new ProgramNode("untitled", $1, $2); }
 	;
 
 library
-	: KW_LIBRARY id SEMICOL usesclauseopt main_block	{ $$.val = new LibraryNode($$2.val, $$4.val, $$5.val); }
+	: KW_LIBRARY id SEMICOL usesclauseopt main_block	{ $$ = new LibraryNode($2, $4, $5); }
 	;
 
 unit
-	: KW_UNIT id /*port_opt*/ SEMICOL interfsec implementsec initsec	{ $$.val = new UnitNode($$2.val, $$4.val, $$5.val, $$6.val); }
+	: KW_UNIT id /*port_opt*/ SEMICOL interfsec implementsec initsec	{ $$ = new UnitNode($2, $4, $5, $6); }
 	;
 
 package
-	: id id SEMICOL requiresclause containsclause KW_END	{ $$.val = new PackageNode($$2.val, $$4.val, $$5.val); }
+	: id id SEMICOL requiresclause containsclause KW_END	{ $$ = new PackageNode($2, $4, $5); }
 	;
 
 requiresclause
-	: id idlist SEMICOL	{ $$.val = new UsesNode($$1.val, $$2.val);}
+	: id idlist SEMICOL	{ $$ = new UsesNode($1, $2);}
 	;
 
 containsclause
-	: id idlist SEMICOL	{ $$.val = new UsesNode($$1.val, $$2.val);}
+	: id idlist SEMICOL	{ $$ = new UsesNode($1, $2);}
 	;
 
 usesclauseopt
-	:							{ $$.val = null; }
-	| KW_USES useidlist SEMICOL	{ $$.val = $$2.val; }
+	:							{ $$ = null; }
+	| KW_USES useidlist SEMICOL	{ $$ = $2; }
 	;
 
 useidlist
-	: useid						{ $$.val = new UsesNode($$1.val, null);}
-	| useidlist COMMA useid		{ $$.val = new UsesNode($$1.val, $$3.val);}
+	: useid						{ $$ = new UsesNode($1, null);}
+	| useidlist COMMA useid		{ $$ = new UsesNode($1, $3);}
 	;
 	
 useid
-	: id						{ $$.val = new IdentifierNode($$1.val);}
-	| id KW_IN string_const		{ $$.val = new IdentifierNodeWithLocation($$1.val, $$3.val);}
+	: id						{ $$ = new IdentifierNode($1);}
+	| id KW_IN string_const		{ $$ = new IdentifierNodeWithLocation($1, $3);}
 	;
 
 implementsec
-	: KW_IMPL usesclauseopt	maindecllist
-	| KW_IMPL usesclauseopt
+	: KW_IMPL usesclauseopt	maindecllist	{ $$ = new UnitImplementationNode($2, $3);}
+	| KW_IMPL usesclauseopt					{ $$ = new UnitImplementationNode($2, null);}
 	;
 
 interfsec
-	: KW_INTERF usesclauseopt interfdecllist
+	: KW_INTERF usesclauseopt interfdecllist	{ $$ = new UnitInterfaceNode($2, $3);}
 	;
 
 interfdecllist
-	:
-	| interfdecllist interfdecl
+	:								{ $$ = null;}
+	| interfdecllist interfdecl		{ $$ = new DeclarationListNode($2, $1);}
 	;
 
 initsec
-	: KW_INIT stmtlist KW_END
-	| KW_FINALIZ stmtlist KW_END
-	| KW_INIT stmtlist KW_FINALIZ stmtlist KW_END
-	| block
-	| KW_END
+	: KW_INIT stmtlist KW_END							{ $$ = new UnitInitialization($2, null);}
+	| KW_FINALIZ stmtlist KW_END						{ $$ = new UnitInitialization(null, $2);}
+	| KW_INIT stmtlist KW_FINALIZ stmtlist KW_END		{ $$ = new UnitInitialization($2, $4);}
+	| block												{ $$ = new UnitInitialization($1, null);}
+	| KW_END											{ $$ = null;}
 	;
 
 main_block
-	: maindecllist	block
-	|				block
+	: maindecllist	block	{ $$ = new BlockWithDeclarationsNode($1, $2);}
+	|				block	{ $$ = new BlockWithDeclarationsNode(null, $1);}
 	;
 	
 maindecllist
-	: maindeclsec
-	| maindecllist maindeclsec
+	: maindeclsec				{ $$ = new DeclarationListNode($1, null);}
+	| maindecllist maindeclsec	{ $$ = new DeclarationListNode($2, $1);}
 	;
 
 declseclist
-	: funcdeclsec
-	| declseclist funcdeclsec
+	: funcdeclsec				{ $$ = new UnfinishedNode($1);}
+	| declseclist funcdeclsec	{ $$ = new UnfinishedNode($2);}
 	;
 
 	
@@ -243,71 +243,71 @@ declseclist
 	// ========================================================================
 
 interfdecl
-	: basicdeclsec
-	| staticclassopt procproto
-	| thrvarsec
-//	| rscstringsec
+	: basicdeclsec					{ $$ = $1;}
+	| staticclassopt procproto		{ $$ = $1;}
+	| thrvarsec						{ $$ = $1;}
+//	| rscstringsec				
 	;
 
 maindeclsec
-	: basicdeclsec
-	| thrvarsec
-	| exportsec
-	| staticclassopt procdeclnondef
-	| staticclassopt procdefinition
-	| labeldeclsec
+	: basicdeclsec					{ $$ = $1;}
+	| thrvarsec						{ $$ = $1;}
+	| exportsec						{ $$ = $1;}
+	| staticclassopt procdeclnondef	{ $$ = $2;}
+	| staticclassopt procdefinition	{ $$ = $2;}
+	| labeldeclsec					{ $$ = $1;}
 	;
 
 funcdeclsec
-	: basicdeclsec
-	| labeldeclsec
-	| procdefinition
-	| procdeclnondef
+	: basicdeclsec			{ $$ = $1;}
+	| labeldeclsec			{ $$ = $1;}
+	| procdefinition		{ $$ = $1;}
+	| procdeclnondef		{ $$ = $1;}
 	;
 
 basicdeclsec
-	: constsec
-	| typesec
-	| varsec
+	: constsec		{ $$ = $1;}
+	| typesec		{ $$ = $1;}
+	| varsec		{ $$ = $1;}
 	;
 
 typesec
-	: KW_TYPE typedecl
-	| typesec typedecl
+	: KW_TYPE typedecl		{ $$ = $2; }
+	| typesec typedecl		{ $$ = new TypeDeclarationListNode($2, $1); }
 	;
 
 	
 	// labels
 	
 labeldeclsec
-	: KW_LABEL labelidlist SEMICOL
+	: KW_LABEL labelidlist SEMICOL	{$$ = $2; }
 	;
 	
 labelidlist 
-	: labelid
-	| labelidlist COMMA labelid
+	: labelid						{ $$ = new LabelDeclarationNode($1, null); }
+	| labelidlist COMMA labelid		{ $$ = new LabelDeclarationNode($3, $1); }
 	;
 
 labelid
-	: CONST_INT /* must be decimal integer in the range 0..9999 */
-	| id
+	: CONST_INT /* must be decimal integer in the range 0..9999 */	{ $$ = new NumberLabelNode($1); }
+	| id															{ $$ = new StringLabelNode($1); }
 	;
 
 	// Exports
 		
-exportsec
-	: KW_EXPORTS exportsitemlist
+exportsec	
+	: KW_EXPORTS exportsitemlist		{ $$ = $1; }
 	;
 
 exportsitemlist
-	: exportsitem
-	| exportsitemlist COMMA exportsitem
+	: exportsitem							{ $$ = $1; }
+	| exportsitemlist COMMA exportsitem		{ $$ = $1; }
 	;
 
 exportsitem
-	: id
-	| id KW_NAME  string_const
-	| id KW_INDEX expr
+	: id							{ $$ = new ExportItem($1, null, null); }
+	| id KW_NAME  string_const		{ $$ = new ExportItem($1, $3, null); }
+	| id KW_INDEX expr				{ $$ = new ExportItem($1, null, $3); }
 	;
 	
 
@@ -339,20 +339,20 @@ procproto
 	;
 
 funcretopt
-	:
-	| COLON funcrettype 
+	:						{ $$ = null;}
+	| COLON funcrettype		{ $$ = $2;}
 	;
 
 staticclassopt
-	:
-	| KW_CLASS
+	:							{ $$ = null;}
+	| KW_CLASS					{ $$ = $1;}
 	;
 
 procbasickind
-	: KW_FUNCTION
-	| KW_PROCEDURE
-	| KW_CONSTRUCTOR
-	| KW_DESTRUCTOR
+	: KW_FUNCTION				{ $$ = $1;}
+	| KW_PROCEDURE				{ $$ = $1;}
+	| KW_CONSTRUCTOR			{ $$ = $1;}
+	| KW_DESTRUCTOR				{ $$ = $1;}
 	;
 
 proceduretype
@@ -379,120 +379,118 @@ func_block
 	;
 
 formalparams
-	: 
-	| LPAREN RPAREN
-	| LPAREN formalparamslist RPAREN
+	:										{ $$ = null; }
+	| LPAREN RPAREN							{ $$ = null; }
+	| LPAREN formalparamslist RPAREN		{ $$ = $2; }
 	;
 
 formalparamslist
-	: formalparm
-	| formalparamslist SEMICOL formalparm
+	: formalparm							{ $$ = new ParameterNodeList($1, null); }
+	| formalparamslist SEMICOL formalparm	{ $$ = new ParameterNodeList($3, $1); }
 	;
 
 formalparm
-	: paramqualif	idlist paramtypeopt
-	| 				idlist paramtypespec paraminitopt
-	| KW_CONST		idlist paramtypeopt paraminitopt
+	: paramqualif	idlist paramtypeopt					{ $$ = new ParameterNode($1, $2, $3, null); } 
+	| 				idlist paramtypespec paraminitopt	{ $$ = new ParameterNode(null, $1, $2, $3); }
+	| KW_CONST		idlist paramtypeopt paraminitopt	{ $$ = new ParameterNode(new ConstParameterQualifier(), $1, $2, $3); }
 	;
 
 paramqualif
-	: KW_VAR
-	| KW_OUT
+	: KW_VAR		{ $$ = new VarParameterQualifier();}
+	| KW_OUT		{ $$ = new OutParameterQualifier();}
 	;
 
 paramtypeopt
-	: 
-	| paramtypespec
+	:					{ $$ = null; }
+	| paramtypespec		{ $$ = $1; }
 	;
 
 paramtypespec
-	: COLON funcparamtype
+	: COLON funcparamtype	{ $$ = $2; }
 	;
 
 paraminitopt
-	: 
-	| KW_EQ expr	// evaluates to constant
+	:											{ $$ = null; }
+	| KW_EQ expr	// evaluates to constant	{ $$ = $2; }
 	;
 
 	
 	// Function directives
 	
 funcdirectopt
-	:
-	| funcdirective_list SEMICOL
+	:										{ $$ = null; }
+	| funcdirective_list SEMICOL			{ $$ = $1; }
 	;
 
 funcdirectopt_nonterm
-	:
-	| funcdirective_list 
+	:							{ $$ = null; }
+	| funcdirective_list		{ $$ = $1; }
 	;
 
 funcdir_strict_opt
-	: 
-	| funcdir_strict_list
+	:							{ $$ = null; }
+	| funcdir_strict_list		{ $$ = $1; }
 	;
 
 funcdirective_list
-	: funcdirective 
-	| funcdirective_list SEMICOL funcdirective
+	: funcdirective									{ $$ = new ProcedureDirectiveList($1, null); }
+	| funcdirective_list SEMICOL funcdirective		{ $$ = new ProcedureDirectiveList($3, $1); }
 	;
 
 funcdir_strict_list
-	: funcdir_strict SEMICOL
-	| funcdir_strict_list funcdir_strict SEMICOL
+	: funcdir_strict SEMICOL						{ $$ = new ProcedureDirectiveList($1, null); }
+	| funcdir_strict_list funcdir_strict SEMICOL	{ $$ = new ProcedureDirectiveList($2, $1); }
 	;
 
-func_nondef_list
-	: funcdir_nondef SEMICOL
-	| func_nondef_list funcdir_nondef SEMICOL 
+func_nondef_list									
+	: funcdir_nondef SEMICOL						{ $$ = new ProcedureDirectiveList($1, null); }
+	| func_nondef_list funcdir_nondef SEMICOL		{ $$ = new ProcedureDirectiveList($2, $1); }
 	;
 
 funcdirective
-	: funcdir_strict
-	| funcdir_nondef
+	: funcdir_strict	{ $$ = $1; }
+	| funcdir_nondef	{ $$ = $1; }
 	;
 
 funcdir_strict
-	: funcqualif
-	| funccallconv
+	: funcqualif		{ $$ = $1; }
+	| funccallconv		{ $$ = $1; }
 	;
 
 funcdir_nondef
-	: KW_EXTERNAL string_const externarg
-	| KW_EXTERNAL qualid externarg
-	| KW_EXTERNAL
-	| KW_FORWARD
+	: KW_EXTERNAL string_const externarg		{ $$ = new ExternalProcedureDirective(new IdentifierNode($2), $3); }
+	| KW_EXTERNAL qualid externarg				{ $$ = new ExternalProcedureDirective($2, $3); }
+	| KW_EXTERNAL								{ $$ = new ExternalProcedureDirective(null, null); }
+	| KW_FORWARD								{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Forward); }
 	;
 
 externarg
-	: 
-	| id string_const 	// id == NAME
-	| id qualid		 	// id == NAME
+	:					{$$ = null; }
+	| id string_const 	{$$ = new IdentifierNode($2);}	// id == NAME		
+	| id qualid		 	{$$ = $2;}  // id == NAME		
 	;
 
 funcqualif
-	: KW_ABSOLUTE
-	| KW_ABSTRACT
-	| KW_ASSEMBLER
-	| KW_DYNAMIC
-	| KW_EXPORT
-	| KW_INLINE
-	| KW_OVERRIDE
-	| KW_OVERLOAD
-	| KW_REINTRODUCE
-	| KW_VIRTUAL
-	| KW_VARARGS
+	: KW_ABSOLUTE			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Absolute); }
+	| KW_ABSTRACT			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Abstract); }
+	| KW_ASSEMBLER			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Assembler); }
+	| KW_DYNAMIC			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Dynamic); }
+	| KW_EXPORT				{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Export); }
+	| KW_INLINE				{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Inline); }
+	| KW_OVERRIDE			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Override); }
+	| KW_OVERLOAD			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Overload); }
+	| KW_REINTRODUCE		{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Reintroduce); }
+	| KW_VIRTUAL			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Virtual); }
+	| KW_VARARGS			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.VarArgs); }
 	;
 
 funccallconv
-	: KW_PASCAL
-	| KW_SAFECALL
-	| KW_STDCALL
-	| KW_CDECL
-	| KW_REGISTER
+	: KW_PASCAL			{ $$ = new CallConventionNode(CallConvention.Pascal); }
+	| KW_SAFECALL		{ $$ = new CallConventionNode(CallConvention.SafeCall); }
+	| KW_STDCALL		{ $$ = new CallConventionNode(CallConvention.StdCall); }
+	| KW_CDECL			{ $$ = new CallConventionNode(CallConvention.CDecl); }
+	| KW_REGISTER		{ $$ = new CallConventionNode(CallConvention.Register); }
 	;
-
-
 
 	
 	// ========================================================================
@@ -500,34 +498,34 @@ funccallconv
 	// ========================================================================
 	
 block
-	: KW_BEGIN stmtlist KW_END
+	: KW_BEGIN stmtlist KW_END		{ $$ = $1; }
 	;
 
 stmtlist
-	: stmt SEMICOL stmtlist
-	| stmt
+	: stmt SEMICOL stmtlist			{ $$ = new StatementBlock($3, $1); }
+	| stmt							{ $$ = new StatementBlock($1, null); }
 	;
 
 stmt
-	: nonlbl_stmt
-	| labelid COLON nonlbl_stmt
+	: nonlbl_stmt					{ $$ = $1; }
+	| labelid COLON nonlbl_stmt		{ $3.SetLabel($1); $$ = $1; }
 	;
 
 nonlbl_stmt
-	:
-	| inheritstmts
-	| goto_stmt
-	| block
-	| ifstmt
-	| casestmt
-	| repeatstmt
-	| whilestmt
-	| forstmt
-	| with_stmt
-	| tryexceptstmt		// purely Delphi stuff!
-	| tryfinallystmt
-	| raisestmt
-	| assemblerstmt
+	:						{ $$ = null;}
+	| inheritstmts			{ $$ = $1; }
+	| goto_stmt				{ $$ = $1; }
+	| block					{ $$ = $1; }
+	| ifstmt				{ $$ = $1; }
+	| casestmt				{ $$ = $1; }
+	| repeatstmt			{ $$ = $1; }
+	| whilestmt				{ $$ = $1; }
+	| forstmt				{ $$ = $1; }
+	| with_stmt				{ $$ = $1; }
+	| tryexceptstmt			{ $$ = $1; } // purely Delphi stuff!
+	| tryfinallystmt		{ $$ = $1; }
+	| raisestmt				{ $$ = $1; }
+	| assemblerstmt			{ $$ = $1; }
 	;
 
 inheritstmts
@@ -539,49 +537,49 @@ inheritstmts
 	;
 
 assign
-	: lvalue KW_ASSIGN expr
-	| lvalue KW_ASSIGN KW_INHERITED expr
+	: lvalue KW_ASSIGN expr					{ $$ = new AssignementStatement($1, $3, false); }
+	| lvalue KW_ASSIGN KW_INHERITED expr	{ $$ = new AssignementStatement($1, $3, true); }
 	;
 
 
 goto_stmt
-	: KW_GOTO labelid
+	: KW_GOTO labelid	{ $$ = new GotoStatement($2); }
 	;
 
 ifstmt
-	: KW_IF expr KW_THEN nonlbl_stmt KW_ELSE nonlbl_stmt
-	| KW_IF expr KW_THEN nonlbl_stmt
+	: KW_IF expr KW_THEN nonlbl_stmt KW_ELSE nonlbl_stmt		{ $$ = new IfStatement($2, $4, $6); }
+	| KW_IF expr KW_THEN nonlbl_stmt							{ $$ = new IfStatement($2, $4, null); }
 	;
 
 casestmt
-	: KW_CASE expr KW_OF caseselectorlist else_case KW_END
+	: KW_CASE expr KW_OF caseselectorlist else_case KW_END	{ $$ = new CaseStatement($2, $4, $5); }
 	;
 
 else_case
-	:
-	| KW_ELSE nonlbl_stmt
-	| KW_ELSE nonlbl_stmt SEMICOL
+	:								{ $$ = null;}	
+	| KW_ELSE nonlbl_stmt			{ $$ = $2; }
+	| KW_ELSE nonlbl_stmt SEMICOL	{ $$ = $2; }
 	;
 
 caseselectorlist
-	: caseselector
-	| caseselectorlist SEMICOL caseselector
+	: caseselector								{ $$ = new CaseSelectorList($1, null); }
+	| caseselectorlist SEMICOL caseselector		{ $$ = new CaseSelectorList($3, $1); }
 	;
 
 caseselector
-	:
-	| caselabellist COLON nonlbl_stmt
+	:										{ $$ = null; }
+	| caselabellist COLON nonlbl_stmt		{ $$ = new CaseSelector($1, $3); }
 	;
 
 caselabellist
-	: caselabel
-	| caselabellist COMMA caselabel
+	: caselabel							{ $$ = new CaseLabelList($1, null); }
+	| caselabellist COMMA caselabel		{ $$ = new CaseLabelList($3, $1); }
 	;
 
 	// all exprs must be evaluate to const
 caselabel
-	: expr
-	| expr KW_RANGE expr
+	: expr								{ $$ = new CaseLabel($1, null); }
+	| expr KW_RANGE expr				{ $$ = new CaseLabel($1, $2); }
 	;
 
 repeatstmt
@@ -593,53 +591,53 @@ whilestmt
 	;
 
 forstmt
-	: KW_FOR id KW_ASSIGN expr KW_TO	 expr KW_DO nonlbl_stmt
-	| KW_FOR id KW_ASSIGN expr KW_DOWNTO expr KW_DO nonlbl_stmt
+	: KW_FOR id KW_ASSIGN expr KW_TO	 expr KW_DO nonlbl_stmt	{ $$ = new ForStatement($2, $4, $6, $8, 1); }
+	| KW_FOR id KW_ASSIGN expr KW_DOWNTO expr KW_DO nonlbl_stmt { $$ = new ForStatement($2, $4, $6, $8, -1); }
 	;
 
 	// expr must yield a ref to a record, object, class, interface or class type
 with_stmt
-	: KW_WITH exprlist KW_DO nonlbl_stmt
+	: KW_WITH exprlist KW_DO nonlbl_stmt		{ $$ = new WithStatement($2, $4); }
 	;
 
 tryexceptstmt
-	: KW_TRY stmtlist KW_EXCEPT exceptionblock KW_END
+	: KW_TRY stmtlist KW_EXCEPT exceptionblock KW_END		{ $$ = new TryExceptStatement($2, $4); }
 	;
 
 exceptionblock
-	: onlist KW_ELSE stmtlist
-	| onlist
-	| stmtlist
+	: onlist KW_ELSE stmtlist						{ $$ = new UnfinishedNode($1); }
+	| onlist										{ $$ = new UnfinishedNode($1); }
+	| stmtlist										{ $$ = $1; }
 	;
 
 onlist
-	: ondef
-	| onlist ondef
+	: ondef											{ $$ = new UnfinishedNode($1); }
+	| onlist ondef									{ $$ = new UnfinishedNode($1); }
 	;
 
 ondef
-	: KW_ON id COLON id KW_DO nonlbl_stmt SEMICOL
-	| KW_ON 		 id KW_DO nonlbl_stmt SEMICOL
+	: KW_ON id COLON id KW_DO nonlbl_stmt SEMICOL	{ $$ = new UnfinishedNode($1); }
+	| KW_ON 		 id KW_DO nonlbl_stmt SEMICOL	{ $$ = new UnfinishedNode($1); }
 	;
 
 tryfinallystmt
-	: KW_TRY  stmtlist KW_FINALLY stmtlist KW_END
+	: KW_TRY  stmtlist KW_FINALLY stmtlist KW_END		{ $$ = new TryFinallyStatement($2, $4); }
 	;
 
 raisestmt
-	: KW_RAISE
-	| KW_RAISE lvalue
-	| KW_RAISE			KW_AT expr
-	| KW_RAISE lvalue	KW_AT expr
+	: KW_RAISE							{ $$ = new UnfinishedNode($2); }
+	| KW_RAISE lvalue					{ $$ = new UnfinishedNode($2); }
+	| KW_RAISE			KW_AT expr		{ $$ = new UnfinishedNode($2); }
+	| KW_RAISE lvalue	KW_AT expr		{ $$ = new UnfinishedNode($2); }
 	;
 
 assemblerstmt
-	: KW_ASM asmcode KW_END		// not supported
+	: KW_ASM asmcode KW_END		{ $$ = $2; }
 	;
 
 asmcode
-	: ASM_OP
-	| asmcode ASM_OP
+	: ASM_OP					{ $$ = new AssemblerListNode($1, null); }
+	| asmcode ASM_OP			{ $$ = new AssemblerListNode($2, $1); }
 	;
 
 
@@ -651,16 +649,16 @@ asmcode
 	// ========================================================================
 
 varsec
-	: KW_VAR vardecllist
+	: KW_VAR vardecllist		{ $$ = $1; }
 	;
 	
 thrvarsec
-	: KW_THRVAR vardecllist
+	: KW_THRVAR vardecllist		{ $$ = $1; }
 	;
 
 vardecllist
-	: vardecl
-	| vardecllist vardecl
+	: vardecl					{ $$ = new VarDeclarationListNode($1, null); }
+	| vardecllist vardecl		{ $$ = new VarDeclarationListNode($2, $1); }
 	;
 
 	/* VarDecl
@@ -669,117 +667,118 @@ vardecllist
 	*/
 
 vardecl
-	: idlist COLON vartype vardeclopt SEMICOL
-	| idlist COLON proceduretype SEMICOL funcdirectopt
-	| idlist COLON proceduretype SEMICOL funcdirectopt_nonterm KW_EQ CONST_NIL SEMICOL
+	: idlist COLON vartype vardeclopt SEMICOL				{ $$ = new VarDeclarationNode($1, $3, $4); }
+	| idlist COLON proceduretype SEMICOL funcdirectopt		{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, null); }
+	| idlist COLON proceduretype SEMICOL funcdirectopt_nonterm KW_EQ CONST_NIL SEMICOL	{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, null); }
+	| idlist COLON proceduretype SEMICOL funcdirectopt_nonterm KW_EQ id SEMICOL	{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, $7); }
 	;
 
 vardeclopt
 	: /*port_opt*/
-	| KW_ABSOLUTE id  /*port_opt*/
-	| KW_EQ constexpr /*portabilityonapt*/
+	| KW_ABSOLUTE id  /*port_opt*/				{ $$ = new UnfinishedNode($2); }
+	| KW_EQ constexpr /*portabilityonapt*/		{ $$ = new VariableInitNode($2); }
 	;
 
 	// func call, type cast or identifier
 proccall
-	: id
-	| lvalue KW_DOT id						// field access
-	| lvalue LPAREN exprlistopt RPAREN
-	| lvalue LPAREN casttype RPAREN			// for funcs like High, Low, Sizeof etc
+	: id									{ $$ = new FunctionCallNode($1, null); }
+	| lvalue KW_DOT id						{ $$ = new FieldAcessNode($1, $3); } // field access
+	| lvalue LPAREN exprlistopt RPAREN		{ $$ = new FunctionCallNode($1, $3); } // pointer deref
+	| lvalue LPAREN casttype RPAREN			{ $$ = new FunctionCallNode($1, $3); }// for funcs like High, Low, Sizeof etc
 	;
 
 lvalue
-	: proccall						// proc_call or cast
+	: proccall								{ $$ = $1; }	// proc_call or cast
 //	| KW_INHERITED proccall		// TODO
-	| expr KW_DEREF 						// pointer deref
-	| lvalue LBRAC exprlist RBRAC			// array access
-	| string_const LBRAC exprlist RBRAC		// string access
-	| casttype LPAREN exprlistopt RPAREN	// cast with pre-defined type
+	| expr KW_DEREF 						{ $$ = new PointerDereferenceNode($1); } // pointer deref
+	| lvalue LBRAC exprlist RBRAC			{ $$ = new ArrayAccessNode($1, $3); }	// array access
+	| string_const LBRAC exprlist RBRAC		{ $$ = new ArrayAccessNode($1, $3); } // string access
+	| casttype LPAREN exprlistopt RPAREN	{ $$ = new TypeCastNode($1, $3); } // cast with pre-defined type
 
 //	| LPAREN lvalue RPAREN		// TODO
 	;
 
 expr
-	: literal							{ $$.val = $$1.val; }
-	| lvalue							{ $$.val = new LValueNode($$1.val); }
-	| setconstructor
-	| KW_ADDR expr
-	| KW_NOT expr
-	| sign	 expr %prec UNARY
-	| LPAREN expr RPAREN
-	| expr relop expr %prec KW_EQ
-	| expr addop expr %prec KW_SUB
-	| expr mulop expr %prec KW_MUL
+	: literal							{ $$ = $1; }
+	| lvalue							{ $$ = new LValueNode($1); }
+	| setconstructor					{ $$ = new UnfinishedNode($1); }
+	| KW_ADDR expr						{ $$ = new AddressNode($2); }
+	| KW_NOT expr						{ $$ = new NegationNode($2); }
+	| sign	 expr %prec UNARY			{ $$ = new UnaryOperationNode($2, $1); }
+	| LPAREN expr RPAREN				{ $$ = $1; }
+	| expr relop expr %prec KW_EQ		{ $$ = new BinaryOperationNode($1, $3, $2); }
+	| expr addop expr %prec KW_SUB		{ $$ = new BinaryOperationNode($1, $3, $2); }
+	| expr mulop expr %prec KW_MUL		{ $$ = new BinaryOperationNode($1, $3, $2); }
 	;
 
 sign
-	: KW_SUB		{ $$.val = new OperatorNode("-");}
-	| KW_SUM		{ $$.val = new OperatorNode("+");}
+	: KW_SUB		{ $$ = new OperatorNode("-");}
+	| KW_SUM		{ $$ = new OperatorNode("+");}
 	;
 mulop
-	: KW_MUL		{ $$.val = new OperatorNode("*");}
-	| KW_DIV		{ $$.val = new OperatorNode("/");}
-	| KW_QUOT		{ $$.val = new OperatorNode("div");}
-	| KW_MOD		{ $$.val = new OperatorNode("mod");}
-	| KW_SHR		{ $$.val = new OperatorNode("shr");}
-	| KW_SHL		{ $$.val = new OperatorNode("shl");}
-	| KW_AND		{ $$.val = new OperatorNode("and");}
+	: KW_MUL		{ $$ = new OperatorNode("*");}
+	| KW_DIV		{ $$ = new OperatorNode("/");}
+	| KW_QUOT		{ $$ = new OperatorNode("div");}
+	| KW_MOD		{ $$ = new OperatorNode("mod");}
+	| KW_SHR		{ $$ = new OperatorNode("shr");}
+	| KW_SHL		{ $$ = new OperatorNode("shl");}
+	| KW_AND		{ $$ = new OperatorNode("and");}
 	;
 addop
-	: KW_SUB	{ $$.val = new OperatorNode("-");}
-	| KW_SUM	{ $$.val = new OperatorNode("+");}
-	| KW_OR		{ $$.val = new OperatorNode("or");}
-	| KW_XOR	{ $$.val = new OperatorNode("xor");}
+	: KW_SUB	{ $$ = new OperatorNode("-");}
+	| KW_SUM	{ $$ = new OperatorNode("+");}
+	| KW_OR		{ $$ = new OperatorNode("or");}
+	| KW_XOR	{ $$ = new OperatorNode("xor");}
 	;
 relop
-	: KW_EQ		{ $$.val = new OperatorNode("=");}
-	| KW_DIFF	{ $$.val = new OperatorNode("<>");}
-	| KW_LT		{ $$.val = new OperatorNode("<");}
-	| KW_LE		{ $$.val = new OperatorNode("<=");}
-	| KW_GT		{ $$.val = new OperatorNode(">");}
-	| KW_GE		{ $$.val = new OperatorNode(">=");}
-	| KW_IN		{ $$.val = new OperatorNode("in");}
-	| KW_IS		{ $$.val = new OperatorNode("is");}
-	| KW_AS		{ $$.val = new OperatorNode("as");}
+	: KW_EQ		{ $$ = new OperatorNode("=");}
+	| KW_DIFF	{ $$ = new OperatorNode("<>");}
+	| KW_LT		{ $$ = new OperatorNode("<");}
+	| KW_LE		{ $$ = new OperatorNode("<=");}
+	| KW_GT		{ $$ = new OperatorNode(">");}
+	| KW_GE		{ $$ = new OperatorNode(">=");}
+	| KW_IN		{ $$ = new OperatorNode("in");}
+	| KW_IS		{ $$ = new OperatorNode("is");}
+	| KW_AS		{ $$ = new OperatorNode("as");}
 	;
 
 literal
-	: CONST_INT		{ $$.val = new IntegerLiteralNode($$1.val);}
-	| CONST_BOOL	{ $$.val = new BoolLiteralNode($$1.val);}
-	| CONST_REAL	{ $$.val = new RealLiteralNode($$1.val);}
-	| CONST_NIL		{ $$.val = new NilLiteralNode($$1.val);}
-	| string_const	{ $$.val = new StringLiteralNode($$1.val);}
+	: CONST_INT		{ $$ = new IntegerLiteralNode($1);}
+	| CONST_BOOL	{ $$ = new BoolLiteralNode($1);}
+	| CONST_REAL	{ $$ = new RealLiteralNode($1);}
+	| CONST_NIL		{ $$ = new NilLiteralNode();}
+	| string_const	{ $$ = new StringLiteralNode($1);}
 	;
 
 discrete
-	: CONST_INT
-	| CONST_CHAR
-	| CONST_BOOL
+	: CONST_INT		{ $$ = new IntegerLiteralNode($1);}
+	| CONST_CHAR	{ $$ = new CharLiteralNode($1);}
+	| CONST_BOOL	{ $$ = new BoolLiteralNode($1);}
 	;
 
 string_const
-	: CONST_STR
-	| CONST_CHAR 
-	| string_const CONST_STR
-	| string_const CONST_CHAR
+	: CONST_STR					{ $$ = $1; }
+	| CONST_CHAR				{ $$ = $1; }
+	| string_const CONST_STR	{ $$ = $1 + $2; }
+	| string_const CONST_CHAR	{ $$ = $1 + $2; }
 	;
 
-id	: IDENTIFIER
+id	: IDENTIFIER	{ $$ = new IdentifierNode($1); }
 	;
 
 idlist
-	: id
-	| idlist COMMA id
+	: id				{ $$ = new IdentifierListNode($1, null); }
+	| idlist COMMA id	{ $$ = new IdentifierListNode($3, $1); }
 	;
 
 qualid
-	: id
-	| qualid KW_DOT id
+	: id				{ $$ = new IdentifierListNode($1, null); }
+	| qualid KW_DOT id	{ $$ = new UnfinishedNode($1); }
 	;
 	
 exprlist
-	: expr
-	| exprlist COMMA expr
+	: expr					{ $$ = new ExpressionListNode($1, null); }
+	| exprlist COMMA expr	{ $$ = new ExpressionListNode($3, $1); }
 	;
 
 exprlistopt
@@ -1061,33 +1060,33 @@ propspecifiers
 /*	// Properties directive: emitted as ids since they are not real keywords
 
 	propspecifiers
-		: indexspecopt readacessoropt writeacessoropt storedspecopt defaultspecopt implementsspecopt
+		: indexspecopt readacessoropt writeacessoropt storedspecopt defaultspecopt implementsspecopt	{ $$ = new PropertySpecifierNode($2, $3); }
 		;
 
 	storedspecopt
 		:
-		| KW_STORED id
+		| KW_STORED id			{ $$ = new UnfinishedNode($2); }
 		;
 
 	defaultspecopt
 		:
-		| KW_DEFAULT literal
+		| KW_DEFAULT literal	{ $$ = new UnfinishedNode($2); }
 	//	| KW_NODEFAULT	not supported by now
 		;
 
 	implementsspecopt
 		:
-		| KW_IMPLEMENTS id
+		| KW_IMPLEMENTS id	{ $$ = new UnfinishedNode($2); }
 		;
 
 	readacessoropt
 		:
-		| KW_READ	id
+		| KW_READ	id		{ $$ = new PropertyReadNode($2); }
 		;
 
 	writeacessoropt
 		:
-		| KW_WRITE	id
+		| KW_WRITE	id		{ $$ = new PropertyWriteNode($2); }
 		;
 	*/
 
@@ -1098,159 +1097,159 @@ propspecifiers
 	// ========================================================================
 
 typedecl
-	: id KW_EQ typeopt vartype /*port_opt*/ SEMICOL
-	| id KW_EQ typeopt proceduretype /*port_opt*/ SEMICOL funcdirectopt 
+	: id KW_EQ typeopt vartype /*port_opt*/ SEMICOL							{ $$ = new TypeDeclarationNode($1, $4); }
+	| id KW_EQ typeopt proceduretype /*port_opt*/ SEMICOL funcdirectopt		{ $$ = new ProcedureTypeDeclarationNode($1, $4); }
 	;
 
 typeopt
 	:
-	| KW_TYPE
+	| KW_TYPE						{ $$ = new UnfinishedNode($1); }
 	;
 
 type
-	: vartype
-	| proceduretype
+	: vartype						{ $$ = $1; }
+	| proceduretype					{ $$ = $1; }
 	;
 
 vartype
-	: simpletype
-	| enumtype
-	| rangetype
-	| varianttype
-	| refpointertype
+	: simpletype					{ $$ = $1; }
+	| enumtype						{ $$ = $1; }
+	| rangetype						{ $$ = $1; }
+	| varianttype					{ $$ = $1; }
+	| refpointertype				{ $$ = $1; }
 	// metaclasse
-	| classreftype
-	// object definition
-	| KW_PACKED  packedtype
-	| packedtype
+	| classreftype					{ $$ = $1; }
+	// object definition		
+	| KW_PACKED  packedtype			{ $$ = $1; }
+	| packedtype					{ $$ = $1; }
 	;
 
 packedtype
-	: structype
-	| restrictedtype
+	: structype						{ $$ = new UnfinishedNode($1); }
+	| restrictedtype				{ $$ = new UnfinishedNode($1); }
 	;
 
 classreftype
-	: KW_CLASS KW_OF scalartype
+	: KW_CLASS KW_OF scalartype		{ $$ = new UnfinishedNode($1); }
 	;
 
 simpletype
-	: scalartype
-	| realtype
-	| stringtype
-	| TYPE_PTR
+	: scalartype				{ $$ = $1; }
+	| realtype					{ $$ = $1; }
+	| stringtype				{ $$ = $1; }
+	| TYPE_PTR					{ $$ = new PointerType(); }
 	;
 
 ordinaltype
-	: enumtype
-	| rangetype
-	| scalartype
+	: enumtype					{ $$ = $1; }
+	| rangetype					{ $$ = $1; }
+	| scalartype				{ $$ = $1; }
 	;
 
 scalartype
-	: inttype
-	| chartype
-	| qualid		// user-defined type
+	: inttype								{ $$ = $1; }
+	| chartype								{ $$ = $1; }
+	| qualid		// user-defined type	{ $$ = $1; }
 	;
 
 realtype
-	: TYPE_REAL48
-	| TYPE_FLOAT
-	| TYPE_DOUBLE
-	| TYPE_EXTENDED
-	| TYPE_CURR
-	| TYPE_COMP
+	: TYPE_REAL48		{ $$ = new DoubleType(); }
+	| TYPE_FLOAT		{ $$ = new FloatType(); }
+	| TYPE_DOUBLE		{ $$ = new DoubleType(); }
+	| TYPE_EXTENDED		{ $$ = new ExtendedType(); }
+	| TYPE_CURR			{ $$ = new CurrencyType(); }
 	;
 
 inttype
-	: TYPE_BYTE
-	| TYPE_BOOL
-	| TYPE_INT
-	| TYPE_SHORTINT
-	| TYPE_SMALLINT
-	| TYPE_LONGINT
-	| TYPE_INT64
-	| TYPE_UINT64
-	| TYPE_WORD
-	| TYPE_LONGWORD
-	| TYPE_CARDINAL
+	: TYPE_BYTE				{ $$ = new UnsignedInt8Type(); }
+	| TYPE_BOOL				{ $$ = new BoolType(); }
+	| TYPE_INT				{ $$ = new SignedInt32Type(); }
+	| TYPE_SHORTINT			{ $$ = new SignedInt8Type(); }
+	| TYPE_SMALLINT			{ $$ = new SignedInt16Type(); }
+	| TYPE_LONGINT			{ $$ = new SignedInt32Type(); }
+	| TYPE_INT64			{ $$ = new SignedInt64Type(); }
+	| TYPE_UINT64			{ $$ = new UnsignedInt64Type(); }
+	| TYPE_WORD				{ $$ = new UnsignedInt16Type(); }
+	| TYPE_LONGWORD			{ $$ = new UnsignedInt32Type(); }
+	| TYPE_CARDINAL			{ $$ = new UnsignedInt32Type(); }
+	| TYPE_COMP				{ $$ = new SignedInt64Type(); }
 	;
 
 chartype
-	: TYPE_CHAR
-	| TYPE_WIDECHAR
+	: TYPE_CHAR						{ $$ = new CharType(); }
+	| TYPE_WIDECHAR					{ $$ = new CharType(); }
 	;
 
 stringtype
-	: TYPE_STR		// dynamic size
-	| TYPE_PCHAR
-	| TYPE_STR LBRAC expr RBRAC
-	| TYPE_SHORTSTR
-	| TYPE_WIDESTR
+	: TYPE_STR		// dynamic size	{ $$ = new StringType(null); }
+	| TYPE_PCHAR					{ $$ = new StringType(null); }
+	| TYPE_STR LBRAC expr RBRAC		{ $$ = new StringType($3); }
+	| TYPE_SHORTSTR					{ $$ = new StringType(null); }
+	| TYPE_WIDESTR					{ $$ = new StringType(null); }
 	;
 
 varianttype
-	: TYPE_VAR
-	| TYPE_OLEVAR
+	: TYPE_VAR			{ $$ = new UnfinishedNode($1); }
+	| TYPE_OLEVAR		{ $$ = new UnfinishedNode($1); }
 	;
 
 structype
-	: arraytype
-	| settype
-	| filetype
+	: arraytype			{ $$ = new UnfinishedNode($1); }
+	| settype			{ $$ = new UnfinishedNode($1); }
+	| filetype			{ $$ = new UnfinishedNode($1); }
 	;
 	
 restrictedtype
-	: classtype
-	| interftype
+	: classtype								{ $$ = new UnfinishedNode($1); }
+	| interftype							{ $$ = new UnfinishedNode($1); }
 	;
 
 arraysizelist
-	: rangetype
-	| arraysizelist COMMA rangetype
+	: rangetype								{ $$ = new UnfinishedNode($1); }
+	| arraysizelist COMMA rangetype			{ $$ = new UnfinishedNode($1); }
 	;
 
 arraytype
-	: TYPE_ARRAY LBRAC arraytypedef RBRAC KW_OF type /*port_opt*/
-	| TYPE_ARRAY KW_OF type /*port_opt*/
+	: TYPE_ARRAY LBRAC arraytypedef RBRAC KW_OF type /*port_opt*/	{ $$ = new UnfinishedNode($1); }
+	| TYPE_ARRAY KW_OF type /*port_opt*/	{ $$ = new UnfinishedNode($1); }
 	;
 
 arraytypedef
-	: arraysizelist
-	| inttype
-	| chartype
-	| qualid
+	: arraysizelist		{ $$ = new UnfinishedNode($1); }
+	| inttype			{ $$ = new UnfinishedNode($1); }
+	| chartype			{ $$ = new UnfinishedNode($1); }
+	| qualid			{ $$ = new UnfinishedNode($1); }
 	;
 
 settype
-	: TYPE_SET KW_OF ordinaltype /*port_opt*/
+	: TYPE_SET KW_OF ordinaltype /*port_opt*/		{ $$ = new UnfinishedNode($1); }
 	;
 
 filetype
-	: TYPE_FILE KW_OF type /*port_opt*/
-	| TYPE_FILE
+	: TYPE_FILE KW_OF type /*port_opt*/		{ $$ = new FileType($3); }
+	| TYPE_FILE								{ $$ = new FileType(null); }
 	;
 
 refpointertype
-	: KW_DEREF type /*port_opt*/
+	: KW_DEREF type /*port_opt*/				{ $$ = new UnfinishedNode($1); }
 	;
 
 funcparamtype
-	: simpletype
-	| TYPE_ARRAY KW_OF simpletype /*port_opt*/
+	: simpletype								{ $$ = new UnfinishedNode($1); }
+	| TYPE_ARRAY KW_OF simpletype /*port_opt*/	{ $$ = new UnfinishedNode($1); }
 	;
 
 funcrettype
-	: simpletype
+	: simpletype		{ $$ = new UnfinishedNode($1); }
 	;
 	
 	// simpletype w/o user-defined types
 casttype
-	: inttype
-	| chartype
-	| realtype
-	| stringtype
-	| TYPE_PTR
+	: inttype			{ $$ = new UnfinishedNode($1); }
+	| chartype			{ $$ = new UnfinishedNode($1); }
+	| realtype			{ $$ = new UnfinishedNode($1); }
+	| stringtype		{ $$ = new UnfinishedNode($1); }
+	| TYPE_PTR			{ $$ = new UnfinishedNode($1); }
 	;
 
 
