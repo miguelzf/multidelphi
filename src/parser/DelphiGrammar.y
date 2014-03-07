@@ -279,7 +279,7 @@ declseclist
 
 interfdecl
 	: basicdeclsec					{ $$ = $1;}
-	| staticclassopt procproto		{ $$ = $1;}
+	| staticclassopt procproto		{ $2.isStatic = $1; $$ = $2;}
 	| thrvarsec						{ $$ = $1;}
 //	| rscstringsec				
 	;
@@ -288,8 +288,8 @@ maindeclsec
 	: basicdeclsec					{ $$ = $1;}
 	| thrvarsec						{ $$ = $1;}
 	| exportsec						{ $$ = $1;}
-	| staticclassopt procdeclnondef	{ $$ = $2;}
-	| staticclassopt procdefinition	{ $$ = $2;}
+	| staticclassopt procdeclnondef	{ $2.isStatic = $1; $$ = $2;}
+	| staticclassopt procdefinition	{ $2.isStatic = $1; $$ = $2;}
 	| labeldeclsec					{ $$ = $1;}
 	;
 
@@ -360,17 +360,17 @@ procdeclnondef
 	;
 
 procdefinition
-	: procdefproto proc_define SEMICOL
+	: procdefproto proc_define SEMICOL	{ $$ = new ProcedureDefinitionNode($1, $2); } 
 	;
 
 	// proc proto for definitions or external/forward decls
 procdefproto
-	: procbasickind qualid formalparams funcretopt SEMICOL funcdir_strict_opt
+	: procbasickind qualid formalparams funcretopt SEMICOL funcdir_strict_opt	{ $$ = new ProcedureHeaderNode($1, $2, $3, $4, null, $6); }
 	;
 
 	// check that funcrecopt is null for every kind except FUNCTION
 procproto
-	: procbasickind qualid formalparams funcretopt SEMICOL funcdirectopt  /*port_opt*/ 
+	: procbasickind qualid formalparams funcretopt SEMICOL funcdirectopt  /*port_opt*/	{ $$ = new ProcedureHeaderNode($1, $2, $3, $4, null, $6); }
 	;
 
 funcretopt
@@ -379,38 +379,38 @@ funcretopt
 	;
 
 staticclassopt
-	:							{ $$ = null;}
-	| KW_CLASS					{ $$ = $1;}
+	:							{ $$ = false;}
+	| KW_CLASS					{ $$ = true;}
 	;
 
 procbasickind
-	: KW_FUNCTION				{ $$ = $1;}
-	| KW_PROCEDURE				{ $$ = $1;}
-	| KW_CONSTRUCTOR			{ $$ = $1;}
-	| KW_DESTRUCTOR				{ $$ = $1;}
+	: KW_FUNCTION				{ $$ = FunctionClass.Function;}
+	| KW_PROCEDURE				{ $$ = FunctionClass.Procedure;}
+	| KW_CONSTRUCTOR			{ $$ = FunctionClass.Constructor;}
+	| KW_DESTRUCTOR				{ $$ = FunctionClass.Destructor;}
 	;
 
 proceduretype
-	: KW_PROCEDURE formalparams ofobjectopt
-	| KW_FUNCTION  formalparams COLON funcrettype ofobjectopt
+	: KW_PROCEDURE formalparams ofobjectopt		{ $$ = new ProcedureHeaderNode(FunctionKind.Procedure, null, $2, null, $3, null); }
+	| KW_FUNCTION  formalparams COLON funcrettype ofobjectopt { $$ = new ProcedureHeaderNode(FunctionKind.Function, null, $2, $4, $5, null); }
 	;
 
 ofobjectopt
-	:
-	| KW_OF KW_OBJECT
+	:						{ return false; }
+	| KW_OF KW_OBJECT		{ return true; }
 	;
 
 	// Function blocks and parameters
 
 proc_define
-	: func_block
-	| assemblerstmt
+	: func_block			{ $$ = $1; }
+	| assemblerstmt			{ $$ = new AssemblerProcedureBodyNode($1); }
 	;
 
 
 func_block
-	: declseclist block
-	| 			  block
+	: declseclist block			{ $$ = new ProcedureBodyNode($1, $2); }
+	| 			  block			{ $$ = new ProcedureBodyNode(null, $2); }
 	;
 
 formalparams
@@ -564,11 +564,11 @@ nonlbl_stmt
 	;
 
 inheritstmts
-	: KW_INHERITED
-	| KW_INHERITED assign
-	| KW_INHERITED proccall
-	| proccall
-	| assign
+	: KW_INHERITED				{ $$ = new InheritedStatement(null); }
+	| KW_INHERITED assign		{ $$ = new InheritedStatement($2); }
+	| KW_INHERITED proccall		{ $$ = new InheritedStatement($2); }
+	| proccall					{ $$ = $1; }
+	| assign					{ $$ = $1; }
 	;
 
 assign
@@ -618,11 +618,11 @@ caselabel
 	;
 
 repeatstmt
-	: KW_REPEAT stmtlist KW_UNTIL expr
+	: KW_REPEAT stmtlist KW_UNTIL expr	{ $$ = new RepeatStatement($2, $4); }
 	;
 
 whilestmt
-	: KW_WHILE expr KW_DO nonlbl_stmt
+	: KW_WHILE expr KW_DO nonlbl_stmt	{ $$ = new WhileStatement($2, $4); }
 	;
 
 forstmt
@@ -640,19 +640,19 @@ tryexceptstmt
 	;
 
 exceptionblock
-	: onlist KW_ELSE stmtlist						{ $$ = new UnfinishedNode($1); }
-	| onlist										{ $$ = new UnfinishedNode($1); }
+	: onlist KW_ELSE stmtlist						{ $$ = new ExceptionBlockNode($1, $3); }
+	| onlist										{ $$ = new ExceptionBlockNode($1, null); }
 	| stmtlist										{ $$ = $1; }
 	;
 
 onlist
-	: ondef											{ $$ = new UnfinishedNode($1); }
-	| onlist ondef									{ $$ = new UnfinishedNode($1); }
+	: ondef											{ $$ = new OnListNode($1, null); }
+	| onlist ondef									{ $$ = new OnListNode($2, $1); }
 	;
 
 ondef
-	: KW_ON id COLON id KW_DO nonlbl_stmt SEMICOL	{ $$ = new UnfinishedNode($1); }
-	| KW_ON 		 id KW_DO nonlbl_stmt SEMICOL	{ $$ = new UnfinishedNode($1); }
+	: KW_ON id COLON id KW_DO nonlbl_stmt SEMICOL	{ $$ = new OnStatement($2, $4, $6); }
+	| KW_ON 		 id KW_DO nonlbl_stmt SEMICOL	{ $$ = new OnStatement(null, $2, $4); }
 	;
 
 tryfinallystmt
@@ -660,10 +660,10 @@ tryfinallystmt
 	;
 
 raisestmt
-	: KW_RAISE							{ $$ = new UnfinishedNode($2); }
-	| KW_RAISE lvalue					{ $$ = new UnfinishedNode($2); }
-	| KW_RAISE			KW_AT expr		{ $$ = new UnfinishedNode($2); }
-	| KW_RAISE lvalue	KW_AT expr		{ $$ = new UnfinishedNode($2); }
+	: KW_RAISE							{ $$ = new RaiseStatement(null, null); }
+	| KW_RAISE lvalue					{ $$ = new RaiseStatement($2, null); }
+	| KW_RAISE			KW_AT expr		{ $$ = new RaiseStatement(null, $2); }
+	| KW_RAISE lvalue	KW_AT expr		{ $$ = new RaiseStatement($2, $4); }
 	;
 
 assemblerstmt
@@ -710,16 +710,16 @@ vardecl
 
 vardeclopt
 	: /*port_opt*/
-	| KW_ABSOLUTE id  /*port_opt*/				{ $$ = new UnfinishedNode($2); }
+	| KW_ABSOLUTE id  /*port_opt*/				{ $$ = new VariableAbsoluteNode($2); }
 	| KW_EQ constexpr /*portabilityonapt*/		{ $$ = new VariableInitNode($2); }
 	;
 
-	// func call, type cast or identifier
+	// func call, type cast or identifier //  TODO TODO TODO TODO
 proccall
-	: id									{ $$ = new FunctionCallNode($1, null); }
-	| lvalue KW_DOT id						{ $$ = new FieldAcessNode($1, $3); } // field access
-	| lvalue LPAREN exprlistopt RPAREN		{ $$ = new FunctionCallNode($1, $3); } // pointer deref
-	| lvalue LPAREN casttype RPAREN			{ $$ = new FunctionCallNode($1, $3); }// for funcs like High, Low, Sizeof etc
+	: id									{ $$ = new ProcedureCallNode($1, null); }
+	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); } // field access
+	| lvalue LPAREN exprlistopt RPAREN		{ $$ = new ProcedureCallNode($1, $3); } // pointer deref
+	| lvalue LPAREN casttype RPAREN			{ $$ = new ProcedureCallNode($1, $3); }// for funcs like High, Low, Sizeof etc
 	;
 
 lvalue
@@ -736,7 +736,7 @@ lvalue
 expr
 	: literal							{ $$ = $1; }
 	| lvalue							{ $$ = new LValueNode($1); }
-	| setconstructor					{ $$ = new UnfinishedNode($1); }
+	| setconstructor					{ $$ = $1; }
 	| KW_ADDR expr						{ $$ = new AddressNode($2); }
 	| KW_NOT expr						{ $$ = new NegationNode($2); }
 	| sign	 expr %prec UNARY			{ $$ = new UnaryOperationNode($2, $1); }
@@ -817,12 +817,9 @@ exprlist
 	;
 
 exprlistopt
-	:
-	| exprlist
+	:						{ $$ = null; }
+	| exprlist				{ $$ = $1; }
 	;
-
-
-
 
 
 	// ========================================================================
@@ -895,59 +892,59 @@ setelem
 	// Resource strings, windows-only
 
 	rscstringsec
-		: TYPE_RSCSTR  constrscdecllist
+		: TYPE_RSCSTR  constrscdecllist		{ $$ = $1; }
 		;
 
 	constrscdecllist
-		: constrscdecl
-		| constrscdecllist constrscdecl
+		: constrscdecl							{$$ = new ConstDeclarationList($1, null); }
+		| constrscdecllist constrscdecl			{$$ = new ConstDeclarationList($2, $1); }
 		;
 
 	constrscdecl
-		: id KW_EQ literal SEMICOL
+		: id KW_EQ literal SEMICOL		{$$ = new ConstDeclarationNode($1, null, $3); }
 		;	
 	
 	// --------------------------------
 	*/
 	
 constsec
-	: KW_CONST constdecl
-	| constsec constdecl
+	: KW_CONST constdecl	{ $$ = new ConstDeclarationList($2, null); }
+	| constsec constdecl	{ $$ = new ConstDeclarationList($2, $1); }
 	;
 
 constdecl
-	: id KW_EQ constexpr /*port_opt*/ SEMICOL			// true const
-	| id COLON vartype KW_EQ constexpr /*port_opt*/ SEMICOL		// typed const
+	: id KW_EQ constexpr /*port_opt*/ SEMICOL	{ $$ = new ConstDeclarationNode($1, null, $3);}			// true const
+	| id COLON vartype KW_EQ constexpr /*port_opt*/ SEMICOL	{ $$ = new ConstDeclarationNode($1, $3, $5);}	// typed const
 	;
 
 constexpr
-	: expr
-	| arrayconst
-	| recordconst
+	: expr				{ $$ = $1; }
+	| arrayconst		{ $$ = $1; }
+	| recordconst		{ $$ = $1; }
 	;
 
 	// 1 or more exprs
 arrayconst
-	: LPAREN constexpr COMMA constexprlist RPAREN
+	: LPAREN constexpr COMMA constexprlist RPAREN	{ $$ = new ExpressionListNode($2, $4); }
 	;
 
 constexprlist
-	: constexpr
-	| constexprlist COMMA constexpr
+	: constexpr							{ $$ = new ExpressionListNode($1, null); }
+	| constexprlist COMMA constexpr		{ $$ = new ExpressionListNode($3, $1); }
 	;
 
 recordconst
-	: LPAREN fieldconstlist RPAREN
-	| LPAREN fieldconstlist SEMICOL RPAREN
+	: LPAREN fieldconstlist RPAREN				{$$ = $2; }
+	| LPAREN fieldconstlist SEMICOL RPAREN		{$$ = $2; }
 	;
 
 fieldconstlist
-	: fieldconst
-	| fieldconstlist SEMICOL fieldconst
+	: fieldconst							{ $$ = FieldInitList($1, null);}
+	| fieldconstlist SEMICOL fieldconst		{ $$ = FieldInitList($3, $1);}
 	;
 
 fieldconst
-	: id COLON constexpr 
+	: id COLON constexpr		{ $$ = new FieldInit($1, $3); }
 	;
 
 
@@ -961,72 +958,72 @@ fieldconst
 	// Records and objects are treated as classes
 	
 classtype
-	: class_keyword heritage class_struct_opt KW_END
-	| class_keyword heritage		// forward decl
+	: class_keyword heritage class_struct_opt KW_END		{ $$ = new ClassDefinition($1, $2, $3); }
+	| class_keyword heritage								{ $$ = new ClassDefinition($1, $2, null); } // forward decl			
 	;
 
 class_keyword
-	: KW_CLASS
-	| KW_OBJECT
-	| KW_RECORD
+	: KW_CLASS		{ $$ = ClassType.Class; }
+	| KW_OBJECT		{ $$ = ClassType.Object; }
+	| KW_RECORD		{ $$ = ClassType.Record; }
 	;
 
 heritage
 	:
-	| LPAREN idlist RPAREN		// inheritance from class and interf(s) 
+	| LPAREN idlist RPAREN	{ $$ = $2; }		// inheritance from class and interf(s)			
 	;
 
 class_struct_opt
-	: fieldlist complist scopeseclist
+	: fieldlist complist scopeseclist	{ $$ = new ClassStruct(Scope.Public, $2, $3);  }
 	;
 
 scopeseclist
-	: 
-	| scopeseclist scopesec
+	:							{ $$ = null; }
+	| scopeseclist scopesec		{ $$ = new ClassContentList($2, $1);  }
 	;
 
 scopesec
-	: scope_decl fieldlist complist
+	: scope_decl fieldlist complist	{ $$ = new ClassStruct($1, $2, $3);  }
 	;
 
 scope_decl
-	: KW_PUBLISHED
-	| KW_PUBLIC
-	| KW_PROTECTED
-	| KW_PRIVATE
+	: KW_PUBLISHED			{ $$ = Scope.Published; }
+	| KW_PUBLIC				{ $$ = Scope.Public; }
+	| KW_PROTECTED			{ $$ = Scope.Protected; }
+	| KW_PRIVATE			{ $$ = Scope.Private; }
 	;
 
 fieldlist
-	: 
-	| fieldlist objfield
+	:						{ $$ = null;}
+	| fieldlist objfield	{ $$ = new ClassFieldList($2, $1); }
 	;
 		
 complist
-	:
-	| complist class_comp
+	:							{ $$ = null; }
+	| complist class_comp		{ $$ = new ClassContentList($2, $1); }
 	;
 
 objfield
-	: idlist COLON type SEMICOL
+	: idlist COLON type SEMICOL	{ $$ = new VarDeclarationNode($1, $3, null); }
 	;
 	
 class_comp
-	: staticclassopt procproto
-	| property
+	: staticclassopt procproto	{ $2.isStatic = $1; $$ = $2; }
+	| property					{ $$ = $1; }
 	;
 
 interftype
-	: KW_INTERF heritage classmethodlistopt classproplistopt KW_END
+	: KW_INTERF heritage classmethodlistopt classproplistopt KW_END	 { $$ = new InterfaceDefinition($2, $3, $4); }
 	;
 
 classmethodlistopt
-	: methodlist
-	|
+	: methodlist		{ $$ = $1; }
+	|					{ $$ = null; }
 	;
 
 methodlist
-	: procproto
-	| methodlist procproto
+	: procproto					{ $$ = new ClassContentList(new ClassMethod($1), null); }
+	| methodlist procproto		{ $$ = new ClassContentList(new ClassMethod($2), $1); }
 	;
 
 
@@ -1039,18 +1036,18 @@ methodlist
 	
 	
 classproplistopt
-	: classproplist
-	|
+	: classproplist		{ $$ = $1; }
+	|					{ $$ = null; }
 	;
 
 classproplist
-	: property
-	| classproplist property
+	: property					{ $$ = new ClassContentList($1, null); }
+	| classproplist property	{ $$ = new ClassContentList($2, $1); }
 	;
 
 property
-	: KW_PROPERTY id SEMICOL
-	| KW_PROPERTY id propinterfopt COLON funcrettype indexspecopt propspecifiers SEMICOL defaultdiropt
+	: KW_PROPERTY id SEMICOL		{ $$ = null; }
+	| KW_PROPERTY id propinterfopt COLON funcrettype indexspecopt propspecifiers SEMICOL defaultdiropt { $$ = new ClassProperty($2, $3, $4, $6); }
 	;
 
 defaultdiropt
@@ -1100,28 +1097,28 @@ propspecifiers
 
 	storedspecopt
 		:
-		| KW_STORED id			{ $$ = new UnfinishedNode($2); }
+		| KW_STORED id			
 		;
 
 	defaultspecopt
 		:
-		| KW_DEFAULT literal	{ $$ = new UnfinishedNode($2); }
+		| KW_DEFAULT literal	
 	//	| KW_NODEFAULT	not supported by now
 		;
 
 	implementsspecopt
 		:
-		| KW_IMPLEMENTS id	{ $$ = new UnfinishedNode($2); }
+		| KW_IMPLEMENTS id	
 		;
 
 	readacessoropt
 		:
-		| KW_READ	id		{ $$ = new PropertyReadNode($2); }
+		| KW_READ	id		
 		;
 
 	writeacessoropt
 		:
-		| KW_WRITE	id		{ $$ = new PropertyWriteNode($2); }
+		| KW_WRITE	id		
 		;
 	*/
 
@@ -1133,12 +1130,12 @@ propspecifiers
 
 typedecl
 	: id KW_EQ typeopt vartype /*port_opt*/ SEMICOL							{ $$ = new TypeDeclarationNode($1, $4); }
-	| id KW_EQ typeopt proceduretype /*port_opt*/ SEMICOL funcdirectopt		{ $$ = new ProcedureTypeDeclarationNode($1, $4); }
+	| id KW_EQ typeopt proceduretype /*port_opt*/ SEMICOL funcdirectopt		{ $$ = new ProcedureTypeDeclarationNode($1, $4, $6); }
 	;
 
 typeopt
-	:
-	| KW_TYPE						{ $$ = new UnfinishedNode($1); }
+	:								{ $$ = null; }
+	| KW_TYPE						{ $$ = null; }
 	;
 
 type
@@ -1235,12 +1232,12 @@ structype
 	;
 	
 restrictedtype
-	: classtype								{ $$ = new UnfinishedNode($1); }
-	| interftype							{ $$ = new UnfinishedNode($1); }
+	: classtype								{ $$ = $1; }
+	| interftype							{ $$ = $1; }
 	;
 
 arraysizelist
-	: rangetype								{ $$ = new UnfinishedNode($1); }
+	: rangetype								{ $$ = $1; }
 	| arraysizelist COMMA rangetype			{ $$ = new UnfinishedNode($1); }
 	;
 
@@ -1250,10 +1247,10 @@ arraytype
 	;
 
 arraytypedef
-	: arraysizelist		{ $$ = new UnfinishedNode($1); }
-	| inttype			{ $$ = new UnfinishedNode($1); }
-	| chartype			{ $$ = new UnfinishedNode($1); }
-	| qualid			{ $$ = new UnfinishedNode($1); }
+	: arraysizelist		{ $$ = $1; }
+	| inttype			{ $$ = $1; }
+	| chartype			{ $$ = $1; }
+	| qualid			{ $$ = $1; }
 	;
 
 settype

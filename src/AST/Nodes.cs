@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace crosspascal.AST
 {
-	public enum FunctionClass
+	public enum FunctionKind
 	{
 		Procedure,
 		Function,
@@ -78,6 +78,66 @@ namespace crosspascal.AST
 		}
 	}
 
+	public class InheritedStatement : Statement
+	{
+		public Statement body;
+
+		public InheritedStatement(Statement body)
+		{
+			this.body = body;
+		}
+	}
+
+	public class OnStatement : Statement
+	{
+		public IdentifierNode ident;
+		public IdentifierNode type;
+		public Statement body;
+
+		public OnStatement(IdentifierNode ident, IdentifierNode type, Statement body)
+		{
+			this.ident = ident;
+			this.type = type;
+			this.body = body;
+		}
+	}
+
+	public class OnListNode : Node
+	{
+		public OnStatement stmt;
+		public OnListNode next;
+
+		public OnListNode(OnStatement stmt, OnListNode next)
+		{
+			this.stmt = stmt;
+			this.next = next;
+		}
+	}
+
+	public class ExceptionBlockNode : Node
+	{
+		public OnListNode stmts;
+		public Statement onElse;
+
+		public ExceptionBlockNode(OnListNode stmts, Statement onElse)
+		{
+			this.stmts = stmts;
+			this.onElse = onElse;
+		}
+	}
+
+	public class RaiseStatement : Statement
+	{
+		public LValueNode lvalue;
+		public ExpressionNode expr;
+
+		public RaiseStatement(LValueNode lvalue, ExpressionNode expr)
+		{
+			this.lvalue = lvalue;
+			this.expr = expr;
+		}
+	}
+
 	public class CaseLabel : Node
 	{
 		public ExpressionNode minRange;
@@ -131,7 +191,30 @@ namespace crosspascal.AST
 			this.selectors = selectors;
 			this.caseelse = caseelse;
 		}
+	}
 
+	public class RepeatStatement : Statement
+	{
+		public ExpressionNode condition;
+		public Statement block;
+
+		public RepeatStatement(Statement block, ExpressionNode condition)
+		{
+			this.condition = condition;
+			this.block = block;
+		}
+	}
+
+	public class WhileStatement : Statement
+	{
+		public ExpressionNode condition;
+		public Statement block;
+
+		public WhileStatement(ExpressionNode condition, Statement block)
+		{
+			this.condition = condition;
+			this.block = block;
+		}
 	}
 
 	public enum CallConvention
@@ -258,7 +341,7 @@ namespace crosspascal.AST
 		}
 	}
 
-	public class FileType : Type
+	public class FileType : TypeNode
 	{
 		public TypeNode type;
 
@@ -405,15 +488,15 @@ namespace crosspascal.AST
 		}
 	}
 
-	public class PointerType : Type
+	public class PointerType : TypeNode
 	{
 	}
 
-	public class IntegerType : Type
+	public class IntegerType : TypeNode
 	{
 	}
 
-	public class FloatingPointType : Type
+	public class FloatingPointType : TypeNode
 	{ 
 	}
 
@@ -433,11 +516,11 @@ namespace crosspascal.AST
 	{
 	}
 
-	public class CharType : Type
+	public class CharType : TypeNode
 	{
 	}
 
-	public class BoolType : Type
+	public class BoolType : TypeNode
 	{
 	}
 
@@ -473,7 +556,7 @@ namespace crosspascal.AST
 	{
 	}
 
-	public class StringType : Type
+	public class StringType : TypeNode
 	{
 		public ExpressionNode size;
 
@@ -485,9 +568,9 @@ namespace crosspascal.AST
 
 	public class LValueNode : Node
 	{
-		public string ident;
+		public IdentifierNode ident;
 
-		public LValueNode(string ident)
+		public LValueNode(IdentifierNode ident)
 		{
 			this.ident = ident;
 		}
@@ -596,7 +679,137 @@ namespace crosspascal.AST
 		}
 	}
 
-	public class NegationNode : Node
+	public class FieldInit : Node
+	{
+		IdentifierNode ident;
+		ExpressionNode expr;
+
+		public FieldInit(IdentifierNode ident, ExpressionNode expr)
+		{
+			this.ident = ident;
+			this.expr = expr;
+		}
+	}
+
+	public class FieldInitList : Node
+	{
+		FieldInit init;
+		FieldInitList next;
+
+		public FieldInitList(FieldInit init, FieldInitList next)
+		{
+			this.init = init;
+			this.next = next;
+		}
+	}
+
+	public enum ClassType
+	{ 
+		Record,
+		Object,
+		Class
+	}
+
+	public class ClassFieldList : Node
+	{
+		public VarDeclarationNode decl;
+		public ClassFieldList next;
+
+		public ClassFieldList(VarDeclarationNode decl, ClassFieldList next)
+		{
+			this.decl = decl;
+			this.next = next;
+		}
+	}
+
+	public abstract class ClassContent : Node
+	{ 
+
+	}
+
+	public class ClassContentList : ClassContent
+	{
+		public ClassContent content;
+		public ClassContentList next;
+
+		public ClassContentList(ClassContent content, ClassContentList next)
+		{
+			this.content = content;
+			this.next = next;
+		}
+	}
+
+	public class ClassMethod : ClassContent
+	{
+		public ProcedureHeaderNode decl;
+
+		public ClassMethod(ProcedureHeaderNode decl)
+		{
+			this.decl = decl;
+		}
+	}
+
+	public class ClassProperty : ClassContent
+	{
+		
+	}
+
+	public enum Scope
+	{
+		Public,
+		Protected,
+		Private,
+		Published
+	}
+
+	public class ClassStruct : ClassContent
+	{
+		public Scope scope;
+		public ClassFieldList fields;
+		public ClassContentList content;
+
+		public ClassStruct(Scope scope, ClassFieldList fields, ClassContentList content)
+		{
+			this.scope = scope;
+			this.fields = fields;
+			this.content = content;
+		}
+	}
+
+	public class ClassDefinition : TypeNode
+	{
+		public ClassType classType;
+		public IdentifierListNode heritage;
+		public ClassStruct classStruct;
+
+		public ClassDefinition(ClassType classType, IdentifierListNode heritage, ClassStruct classStruct)
+			: base()
+		{
+			this.classType = classType;
+			this.heritage = heritage;
+			this.classStruct = classStruct;
+		}
+
+	}
+
+
+	public class InterfaceDefinition : TypeNode
+	{
+		public IdentifierListNode heritage;
+		public ClassContentList methods;
+		public ClassContentList properties;
+
+		public InterfaceDefinition(IdentifierListNode heritage, ClassContentList methods, ClassContentList properties)
+			: base()
+		{			
+			this.heritage = heritage;
+			this.methods = methods;
+			this.properties = properties;
+		}
+
+	}
+
+	public class NegationNode : ExpressionNode
 	{
 		public ExpressionNode exp;
 
@@ -606,7 +819,7 @@ namespace crosspascal.AST
 		}
 	}
 
-	public class AddressNode : Node
+	public class AddressNode : ExpressionNode
 	{
 		public ExpressionNode exp;
 
@@ -640,12 +853,7 @@ namespace crosspascal.AST
 
 	public class TypeNode : Node
 	{
-		public string name;
-
-		public TypeNode(string name)
-		{
-			this.name = name;
-		}
+		
 	}
 
 	public class TypeCastNode : Node
@@ -660,24 +868,24 @@ namespace crosspascal.AST
 		}
 	}
 
-	public class FunctionCallNode : Node
+	public class ProcedureCallNode : Statement
 	{
 		public LValueNode function;
 		public ExpressionListNode arguments;
 
-		public FunctionCallNode(LValueNode function, ExpressionListNode arguments)
+		public ProcedureCallNode(LValueNode function, ExpressionListNode arguments)
 		{
 			this.function = function;
 			this.arguments = arguments;
 		}
 	}
 
-	public class FieldAcessNode : Node
+	public class FieldAcessNode : LValueNode
 	{
 		public LValueNode obj;
 		public IdentifierNode field;
 
-		public FieldAcessNode(LValueNode obj, IdentifierNode field)
+		public FieldAcessNode(LValueNode obj, IdentifierNode field) : base(obj.ident)
 		{
 			this.obj = obj;
 			this.field = field;
@@ -710,6 +918,16 @@ namespace crosspascal.AST
 		}
 	}
 
+	public class VariableAbsoluteNode : VarDeclarationOption
+	{
+		public IdentifierNode ident;
+
+		public VariableAbsoluteNode(IdentifierNode ident)
+		{
+			this.ident = ident;
+		}
+	}
+
 	public class VarDeclarationNode : DeclarationNode
 	{
 		public IdentifierListNode ids;
@@ -736,6 +954,32 @@ namespace crosspascal.AST
 		}
 	}
 
+	public class ConstDeclarationNode : DeclarationNode
+	{
+		public IdentifierNode ident;
+		public ExpressionNode expr;
+		public TypeNode type;
+
+		public ConstDeclarationNode(IdentifierNode ident, TypeNode type, ExpressionNode expr)
+		{
+			this.ident = ident;
+			this.type = type;
+			this.expr = expr;
+		}
+	}
+
+	public class ConstDeclarationList : DeclarationNode
+	{
+		public ConstDeclarationNode constdecl;
+		public ConstDeclarationList next;
+
+		public ConstDeclarationList(ConstDeclarationNode constdecl, ConstDeclarationList next)
+		{
+			this.constdecl = constdecl;
+			this.next = next;
+		}
+	}
+
 	public class AssemblerListNode : Node
 	{
 		public string asmop;
@@ -746,12 +990,63 @@ namespace crosspascal.AST
 			this.asmop = asmop;
 			this.next = next;
 		}
-
 	}
+
 
 	public class ProcedureHeaderNode : Node
 	{
-		// TODO
+		public bool isStatic;
+		public FunctionKind kind;
+		public IdentifierNode ident;
+		public TypeNode returnType;
+		public bool obj; 
+		public ParameterNodeList parameters;
+		public ProcedureDirectiveList directives;
+
+		public ProcedureHeaderNode(FunctionKind kind, IdentifierNode ident, ParameterNodeList parameters, TypeNode returnType, bool obj, ProcedureDirectiveList directives)
+		{
+			this.isStatic = false;
+			this.kind = kind;
+			this.ident = ident;
+			this.obj = obj;
+			this.parameters = parameters;
+			this.returnType = returnType;
+			this.directives = directives;
+		}
+	}
+
+	public class ProcedureBodyNode : Node
+	{
+		public DeclarationListNode decls;
+		public StatementBlock body;
+
+		public ProcedureBodyNode(DeclarationListNode decls, StatementBlock body)
+		{
+			this.decls = decls;
+			this.body = body;
+		}
+	}
+
+	public class AssemblerProcedureBodyNode : ProcedureBodyNode
+	{
+		AssemblerListNode asm;
+
+		public AssemblerProcedureBodyNode(AssemblerListNode asm) : base(null, null)
+		{
+			this.asm = asm;
+		}
+	}
+
+	public class ProcedureDefinitionNode : Node
+	{
+		public ProcedureHeaderNode header;
+		public ProcedureBodyNode body;
+
+		public ProcedureDefinitionNode(ProcedureHeaderNode header, ProcedureBodyNode body)		
+		{
+			this.header = header;
+			this.body = body;
+		}
 	}
 
 	public enum ProcedureDirectiveEnum
@@ -805,29 +1100,23 @@ namespace crosspascal.AST
 		}
 	}
 
-	public class ProcedureNode : Node
-	{
-		// TODO
-	}
-
-	public class ProcedurePointerDeclarationNode : Node
+	public class ProcedurePointerDeclarationNode : DeclarationNode
 	{
 		public IdentifierListNode ids;
 		public ProcedureHeaderNode proc;
 		public ProcedureDirectiveList dirs;
-		public ProcedureNode init;
-
-		public ProcedurePointerDeclarationNode(IdentifierListNode ids, ProcedureHeaderNode proc, ProcedureDirectiveList dirs, ProcedureNode init)
+		
+		public ProcedurePointerDeclarationNode(IdentifierListNode ids, ProcedureHeaderNode proc, ProcedureDirectiveList dirs, Node init)
 		{
 			this.ids = ids;
 			this.proc = proc;
 			this.dirs = dirs;
-			this.init = init;
+			//this.init = init;
 		}
 	}
 
 
-	public class UnaryOperationNode : Node
+	public class UnaryOperationNode : ExpressionNode
 	{
 		public ExpressionNode a;
 		public OperatorNode op;
@@ -839,7 +1128,7 @@ namespace crosspascal.AST
 		}
 	}
 
-	public class BinaryOperationNode : Node
+	public class BinaryOperationNode : ExpressionNode
 	{
 		public ExpressionNode a;
 		public ExpressionNode b;
