@@ -60,12 +60,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AST\Nodes.cs" />
-    <Compile Include="AST\Processor.cs" />
-    <Compile Include="AST\VisitorTraverser.cs" />
-    <Compile Include="AST\MapTraverser.cs" />
-    <Compile Include="AST\Traverser.cs" />
-    <Compile Include="AST\PrintAST.cs" />
+    <Compile Include="ast\Nodes.cs" />
+    <Compile Include="ast\Processor.cs" />
+    <Compile Include="ast\VisitorTraverser.cs" />
+    <Compile Include="ast\MapTraverser.cs" />
+    <Compile Include="ast\Traverser.cs" />
+    <Compile Include="ast\PrintAST.cs" />
     <Compile Include="cpp\DelphiToCpp.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
     <Compile Include="parser\DelphiParser.cs" />

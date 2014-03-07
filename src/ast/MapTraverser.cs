@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using crosspascal.utils;
 
-namespace crosspascal.AST
+namespace crosspascal.ast
 {
 	// Delivers a Mapping with which to traverse the AST
 

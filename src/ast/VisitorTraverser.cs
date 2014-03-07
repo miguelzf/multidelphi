@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace crosspascal.AST
+namespace crosspascal.ast
 {
 	// Delivers a visitor pattern with which to traverse the AST
 

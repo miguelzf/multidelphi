@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace crosspascal.AST
+namespace crosspascal.ast
 {
 	public abstract class Traverser
 	{
