@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Text;
+using System.Diagnostics;
 
 namespace crosspascal.parser
 {
@@ -11,13 +12,10 @@ namespace crosspascal.parser
 	// Open main Parser class
 	public class DelphiParser
 	{
-		/*
-		void yyerror(char *s) {
-			fprintf(stdout, "Line %d %s\n", linenum, s);
-		}
-		*/
 		
 		// Emulate YACC
+		
+		int yacc_verbose_flag = 0;
 		
 		void ACCEPT()
 		{	// make scanner emit EOF, ends scanning and parsing
@@ -27,25 +25,72 @@ namespace crosspascal.parser
 		
 		void REJECT(string msg = "")
 		{	
-			throw new yyParser.yyInputRejected(msg, lexer.yylineno());
+			throw new yyParser.InputRejected(msg, lexer.yylineno());
 		}
 		
 		
-		DelphiScanner lexer;
-		int yacc_verbose_flag = 0;
 		
-		// Entry point: wrapper for yyparse
+		// Internal helper functions
+		
+		string GetErrorMessage(yyParser.yyException e)
+		{
+			StackTrace st = new StackTrace(e, true);
+			StackFrame frame = st.GetFrame(st.FrameCount-1);
+			return "[ERROR] " + e.Message + " in " + Path.GetFileName(frame.GetFileName())
+					+ ": line " + frame.GetFileLineNumber();
+		}
+
+		
+		//	Encoding.Default);	// typically Single-Bye char set
+		// TODO change charset to unicode, use %unicode in flex
+		public static readonly Encoding DefaultEncoding = Encoding.GetEncoding("iso-8859-1");
+
+		
+		// Parser-Lexer communication
+			
+		PreProcessor preproc = new PreProcessor();
+		DelphiScanner lexer;
+		
+		public void AddIncludePath(string path)
+		{
+			preproc.AddPath(path);
+		}
+
+		public void LoadIncludePaths(string fname)
+		{
+			string line;
+			using (StreamReader file = new StreamReader(fname, DefaultEncoding))
+				while((line = file.ReadLine()) != null)
+				{
+					string path = line.Trim();
+					if (path.Length > 0 && Directory.Exists(path))
+						preproc.AddPath(path);
+				}
+		}
+		
+		// Entry point and public interface
+		
+		internal DelphiParser(yydebug.yyDebug dgb = null)
+		{
+			if (dgb != null) {
+				this.debug = (yydebug.yyDebug) dgb;
+				yacc_verbose_flag = 1;
+			}
+			
+			eof_token = DelphiScanner.YYEOF;
+			
+		}
+		
+		// wrapper for yyparse
 		internal Object Parse(string fname, yydebug.yyDebug dgb = null)
 		{
 			StreamReader sr;
 			try {
-				sr = new StreamReader(fname, Encoding.GetEncoding("iso-8859-1"));
-				//	Encoding.Default);	// typically Single-Bye char set
-				// TODO change charset to unicode, use %unicode in flex
-				Console.WriteLine("File " + fname + " has enconding: " + sr.CurrentEncoding);
+				sr = new StreamReader(fname, DefaultEncoding);
+				// Console.WriteLine("File " + fname + " has enconding: " + sr.CurrentEncoding);
 			} 
 			catch (IOException ioe) {
-				Console.Error.WriteLine("Failure to open input file: " + fname);
+				ErrorOutput.WriteLine("Failure to open input file: " + fname);
 				return null;
 			}
 			
@@ -53,15 +98,23 @@ namespace crosspascal.parser
 				this.debug = (yydebug.yyDebug) dgb;
 				yacc_verbose_flag = 1;
 			}
-			
+
 			lexer = new DelphiScanner(sr);
-			eof_token = lexer.ScannerEOF;
+			lexer.preproc = this.preproc;
 			
-			Object ret = yyparse(lexer);
-			return ret;
+			try {
+				Object ret = yyparse(lexer);
+				return ret;
+			} 
+			catch (yyParser.yyException yye) {
+				// ErrorOutput.WriteLine(GetErrorMessage(yye));
+				// only clean way to signal error. null is the default yyVal
+				throw new yyParser.InputRejected(GetErrorMessage(yye));
+			}
 		}
 		
 %}
+
 
 	// ==============================================================
 	// Rules declarations
@@ -164,8 +217,8 @@ namespace crosspascal.parser
 
 %%
 
-goal: file KW_DOT		{ // YYACCEPT; 
-							$$.val = new Node($$1.val); 
+goal: file KW_DOT		{	$$.val = new Node($$1.val); 
+							YYACCEPT();
 						}
 	;
 
@@ -1373,9 +1426,9 @@ casttype
 	
 	namespace yyParser
 	{
-		internal class yyInputRejected : yyException 
+		internal class InputRejected : yyException 
 		{
-			public yyInputRejected (string message = "Input invalid - Parsing terminated by REJECT action",
+			public InputRejected (string message = "Input invalid - Parsing terminated by REJECT action",
 									int lineno = -1) 
 				: base ("Line " + ((lineno >= 0)? lineno+"" : "unknown") + ": " + message)  { }
 		}
