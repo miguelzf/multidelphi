@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DGrok.DelphiNodes;
-using DGrok.Framework;
 using crosspascal.AST;
 
 namespace crosspascal.cpp
@@ -20,13 +18,13 @@ namespace crosspascal.cpp
 		private int identLevel = 0;
 
 		// Printing helper
-		private void EnterNode(AstNode n)
+		private void EnterNode(Node n)
 		{
 			string name = n.GetType().Name;			
 			identLevel++;
 		}
 
-		private void LeaveNode(AstNode n)
+		private void LeaveNode(Node n)
 		{
 			identLevel--;
 		}
@@ -50,12 +48,13 @@ namespace crosspascal.cpp
 		}
 		#endregion
 
-		public override void VisitToken(Token token)
+/*
+ * public override void VisitToken(Token token)
 		{
 			//this.Output(token.Text);
 		}
 
-		public void EmitTokenOrExpression(AstNode node)
+		public void EmitTokenOrExpression(Node node)
 		{
 			//this.Output(node.ToString());
 			if (node is Token)
@@ -64,7 +63,7 @@ namespace crosspascal.cpp
 				traverse(node);
 		}
 
-		public override void VisitDelimitedItemNode(AstNode node, AstNode item, Token delimiter)
+		public override void VisitDelimitedItemNode(Node node, Node item, Token delimiter)
 		{
 			EmitTokenOrExpression(item);
 			
@@ -553,5 +552,6 @@ namespace crosspascal.cpp
 			traverse(node.ExpressionListNode);
 			traverse(node.StatementNode);
 		}
+*/
 	}
 }

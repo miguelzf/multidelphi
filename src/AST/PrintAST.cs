@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DGrok.DelphiNodes;
-using DGrok.Framework;
 
 namespace crosspascal.AST
 {
@@ -46,7 +44,7 @@ namespace crosspascal.AST
 		// =================================================
 
 		// Printing helper
-		private void EnterNode(AstNode n)
+		private void EnterNode(Node n)
 		{
 			string name = n.GetType().Name;
 			builder.Append(' ', identLevel);
@@ -54,28 +52,28 @@ namespace crosspascal.AST
 			identLevel++;
 		}
 
-		private void LeaveNode(AstNode n)
+		private void LeaveNode(Node n)
 		{
 			identLevel--;
 		}
 
-		public override void VisitDelimitedItemNode(AstNode node, AstNode item, Token delimiter)
+/*		public override void VisitDelimitedItemNode(Node node, Node item, Token delimiter)
 		{
 			EnterNode(node);
 			traverse(item);
 			LeaveNode(node);
 		}
 
-		public override void VisitListNode(AstNode node, IEnumerable<AstNode> items)
+		public override void VisitListNode(Node node, IEnumerable<Node> items)
 		{
 			EnterNode(node);
-			foreach (AstNode item in items)
+			foreach (Node item in items)
 				traverse(item);
 			LeaveNode(node);
 		}
 
 		// Only called from Visit(CodeBase codeBase)
-		public override void VisitSourceFile(string fileName, AstNode node)
+		public override void VisitSourceFile(string fileName, Node node)
 		{
 			EnterNode(node);
 			traverse(node);
@@ -688,5 +686,6 @@ namespace crosspascal.AST
 			traverse(node.ExpressionListNode);
 			traverse(node.StatementNode);
 		}
+ */
 	}
 }

@@ -4,11 +4,9 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
-using DGrok.DelphiNodes;
-using DGrok.Framework;
-using DGrok.Visitors;
 using crosspascal.AST;
 using crosspascal.utils;
+using crosspascal.parser;
 
 
 namespace crosspascal
@@ -18,7 +16,7 @@ namespace crosspascal
 
 		static void Main(string[] args)
 		{
-			RuleType _ruleType = RuleType.Goal;
+		//	RuleType _ruleType = RuleType.Goal;
 			Logger.log.AddFile("compiler-log.txt");		// general log
 			Logger.log.UseConsole(true);
 
@@ -26,8 +24,8 @@ namespace crosspascal
 			{
 				string fileName = "tests/test_record_with_methods.dpr";
 				string text = File.ReadAllText(fileName);
-				Parser parser = Parser.FromText(text, fileName, CompilerDefines.CreateStandard(), new MemoryFileLoader());
-				AstNode tree = parser.ParseRule(_ruleType);
+				// Parser parser = Parser.FromText(text, fileName, CompilerDefines.CreateStandard(), new MemoryFileLoader());
+			//	Node tree = parser.ParseRule(_ruleType);
 
 			//	String treestr = printTree(tree, typeof(MapTraverser), 4);
 			/*	PrintAST proc = new PrintAST();
@@ -35,14 +33,12 @@ namespace crosspascal
 				proc.Visit(tree);
 				String treestr = proc.ToString();
 			*/	
-				Logger.log.Write(tree.Inspect());
+			//	Logger.log.Write(tree.Inspect());
 			}
-			catch (DGrokException ex)
+			catch (Exception ex)
 			{
-				string error = "Filename: " + ex.Location.FileName + Environment.NewLine +
-					"Offset: " + ex.Location.Offset + Environment.NewLine +
-					ex.Message;
-				Console.WriteLine(error);
+			// string error = "Filename: " + ex.Location.FileName + Environment.NewLine + "Offset: " + ex.Location.Offset + Environment.NewLine + ex.Message;
+			//	Console.WriteLine(error);
 			}
 			Console.ReadLine();
 
@@ -52,7 +48,7 @@ namespace crosspascal
 
 		// Usage example of processors and traversers
 
-		static string printTree(AstNode tree, System.Type traverserType, int method)
+		static string printTree(Node tree, System.Type traverserType, int method)
 		{
 			PrintAST proc;
 
@@ -92,7 +88,7 @@ namespace crosspascal
 					return "";
 			}
 
-			proc.Visit(tree);
+		//	proc.Visit(tree);
 			return proc.ToString();
 		}
 

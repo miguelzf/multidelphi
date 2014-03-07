@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DGrok.Framework;
 
 namespace crosspascal.AST
 {
-	abstract class Traverser
+	public abstract class Traverser
 	{
 		public virtual Processor Processor { get; set; }
 
@@ -19,6 +18,6 @@ namespace crosspascal.AST
 			processor.traverse = this.traverse;
 		}
 
-		public abstract void traverse(AstNode n);
+		public abstract void traverse(Node n);
 	}
 }

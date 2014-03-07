@@ -4,9 +4,6 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
-using DGrok.DelphiNodes;
-using DGrok.Framework;
-using DGrok.Visitors;
 using crosspascal.cpp;
 using crosspascal.AST;
 using crosspascal.parser;
@@ -20,10 +17,6 @@ namespace crosspascal
 			string test = "Program bla; {$DEFINE foo} const a = 2; {$IFDEF FOO} const b = 3; {$ENDIF}"
 				+ "{$IFDEF BAR} const c = 4;{$ENDIF} {$IFDEF BAR} LOL = 3; {$ELSE} LOL = 4; {$ENDIF}";
 
-			PreProcessor pp = new PreProcessor();
-			string result = pp.PreProcess(test);
-			Console.WriteLine("RESULT:");
-			Console.WriteLine(result);
 			Console.ReadLine();
 
 			/*RuleType _ruleType = RuleType.Goal;

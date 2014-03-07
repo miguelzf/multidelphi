@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DGrok.Framework;
 using System.Reflection;
 using crosspascal.utils;
 
@@ -40,7 +39,7 @@ namespace crosspascal.AST
 		public MapTraverser(Processor processor) : base(processor)	{}
 
 
-		public override void traverse(AstNode n)
+		public override void traverse(Node n)
 		{
 			if (n == null)
 				return;
@@ -54,7 +53,7 @@ namespace crosspascal.AST
 
 				Logger.log.Write(nodetype.Name);
 
-				if (nodetype.Name.StartsWith("ListNode"))
+		/*		if (nodetype.Name.StartsWith("ListNode"))
 				{
 				//	ListNode<AstNode> actualNode = (ListNode<AstNode> actualNode) Convert.ChangeType(n, nodetype);
 					dynamic actualNode = n;
@@ -71,6 +70,7 @@ namespace crosspascal.AST
 					n.Accept(Processor);	// fallback to basic visitor
 				}
 				return;
+		 */
 			}
 
 			if (!methodMapping.ContainsKey(nodeType))
