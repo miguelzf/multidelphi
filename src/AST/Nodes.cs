@@ -23,7 +23,15 @@ namespace crosspascal.AST
 	}
 
 	public abstract class Node
-	{ 
+	{
+		/// <summary>
+		/// TODO make abstract
+		/// </summary>
+		/// <param name="visitor"></param>
+		public virtual void Accept(Processor visitor)
+		{
+
+		}
 	}
 
 	public abstract class GoalNode : Node
@@ -56,11 +64,11 @@ namespace crosspascal.AST
 
 	public class GotoStatement : Statement
 	{
-		public LabelNode label;
+		public LabelNode gotolabel;
 
 		public GotoStatement(LabelNode label)
 		{
-			this.label = label;				 
+			this.gotolabel = label;				 
 		}
 	}
 
@@ -597,18 +605,6 @@ namespace crosspascal.AST
 		{
 			this.body = body;
 			this.with = with;
-		}
-	}
-
-	public class WhileStatement : Statement
-	{
-		public ExpressionNode expr;
-		public Statement body;
-
-		public WhileStatement(ExpressionNode expr, Statement body)
-		{
-			this.expr = expr;
-			this.body = body;
 		}
 	}
 

@@ -3,23 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DGrok.Framework;
-using DGrok.DelphiNodes;
 
 namespace crosspascal.AST
 {
-	// Defines a general AST Visitor, defining all DGrok.Visitor requeriments,
-	// but without requiring the implementation of a Visitor pattern. 
+	// Defines a general AST Processor, without requiring the implementation of a Visitor pattern. 
 	// Uses a Delegate to a generic Tree Traversal method instead
 
-	delegate void TreeTraverse(AstNode n);
+	public delegate void TreeTraverse(Node n);
 
-	abstract class Processor : DGrok.Framework.Visitor
+	public abstract class Processor
 	{
 		public TreeTraverse traverse { get; set; }
 
 		// dummy
-		protected void emptyTraverse(AstNode n) {	}
+		protected void emptyTraverse(Node n) {	}
 
 		// Instantiate Traverser class
 		public Processor(System.Type t)
@@ -46,27 +43,19 @@ namespace crosspascal.AST
 				traverse = t;
 		}
 
-
+/*
 		// =========================================================================
-		//	Complete interface from DGrok.Framework.Visitor, to be implemented
+		//	Complete interface to be implemented by any specific AST processor
 		// =========================================================================
 
-		// Tokens are not processed... Dgrok shouldn't have included them in the AST
-
-		public override void VisitDelimitedItemNode(AstNode node, AstNode item, Token delimiter)
+		public override void VisitListNode(Node node, IEnumerable<Node> items)
 		{
-			traverse(item);
-			traverse(delimiter);
-		}
-
-		public override void VisitListNode(AstNode node, IEnumerable<AstNode> items)
-		{
-			foreach (AstNode item in items)
+			foreach (Node item in items)
 				traverse(item);
 		}
 
 		// Only called from Visit(CodeBase codeBase)
-		public override void VisitSourceFile(string fileName, AstNode node)
+		public override void VisitSourceFile(string fileName, Node node)
 		{
 			traverse(node);
 		}
@@ -75,13 +64,6 @@ namespace crosspascal.AST
 		// =========================================================================
 		// Normal processor methods
 
-		public override void VisitToken(Token token)
-		{
-			// CHECK that this is never called
-			// CHECK that the virtual parent method (fallback) is also never called
-
-			// Ignore tokens. Do nothing
-		}
 		public override void VisitArrayTypeNode(ArrayTypeNode node)
 		{
 			traverse(node.ArrayKeywordNode);
@@ -632,5 +614,6 @@ namespace crosspascal.AST
 			traverse(node.DoKeywordNode);
 			traverse(node.StatementNode);
 		}
+ */
 	}
 }

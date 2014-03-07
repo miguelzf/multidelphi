@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -53,7 +54,7 @@ namespace crosspascal.parser
 	//Delphi is case insensitive
 %ignorecase
 
-%x XCOMMENT1 XCOMMENT2 ASMCODESEC XINCLUDED XINC_COM1 XINC_COM2
+%x XCOMMENT1 XCOMMENT2 ASMCODESEC XNOTDEF
 
 
 %{
@@ -63,12 +64,12 @@ namespace crosspascal.parser
 	
 		public PreProcessor preproc;
 	
-		Stack<Bool> defines = new Stack<Bool>();
+		Stack<Boolean> defines = new Stack<Boolean>();
 	
-		bool TestDefineDir(string dir)
+		bool IsDefinedDir(string dir)
 		{
 			Boolean defined = preproc.IsDefined(GetDirectiveArg(dir));
-			defines.push(defined);
+			defines.Push(defined);
 			return defined;
 		}
 
@@ -117,13 +118,13 @@ namespace crosspascal.parser
 		void yyerror(String msg = "Unknown lexical error")
 		{
 		//	throw new ScannerException(yyline, msg);
-			Console.Error.WriteLine("[ERROR lexical] " + msg + " in line " + line);
+			Console.Error.WriteLine("[ERROR lexical] " + msg + " in line " + yyline);
 		}
 		
 		void pperror(String msg = "Unknown preprocessing error")
 		{
 		//	throw new PreprocessorException(yyline, msg);
-			Console.Error.WriteLine("[ERROR preprocessor] " + msg + " in line " + line);
+			Console.Error.WriteLine("[ERROR preprocessor] " + msg + " in line " + yyline);
 		}
 
 		// Finish scanning
@@ -262,7 +263,7 @@ on			{ return KW_ON; }
 	/**************************************************************
 	 * Directives:
 	 * Should be treated as identifiers instead of reserved keywords
-	/**************************************************************/
+	 **************************************************************/
 
 	/*	properties keywords 
 	default		{ return KW_DEFAULT; }
@@ -347,7 +348,6 @@ longword	{ return TYPE_LONGWORD; }
 longint		{ return TYPE_LONGINT; }
 int64		{ return TYPE_INT64; }
 uint64		{ return TYPE_UINT64; }
-comp		{ return TYPE_COMP; }
 
 	/* types: floats */
 single		{ return TYPE_FLOAT; }
@@ -371,6 +371,7 @@ resourcestring	{ return TYPE_RSCSTR; }
 boolean		{ return TYPE_BOOL; }
 olevariant	{ return TYPE_OLEVAR; }
 variant		{ return TYPE_VAR; }
+comp		{ return TYPE_COMP; }
 currency	{ return TYPE_CURR; }
 array		{ return TYPE_ARRAY; }
 pointer		{ return TYPE_PTR; }
@@ -489,7 +490,7 @@ in			{ return KW_IN; }	// is in set
 							}
 							finally {
 								yypushStream(sr);
-								yyprint("PUshed stream from " + fpath + "");
+								yyprint("Pushed stream from " + fpath + "");
 							}
 						}
 					}
@@ -512,32 +513,32 @@ in			{ return KW_IN; }	// is in set
 							BEGIN(XNOTDEF);
 					}
 
-"{$else"[^}]\}		{	Boolean def = defines.pop();
+"{$else"[^}]\}		{	Boolean def = defines.Pop();
 						if (!def)
 							BEGIN(XNOTDEF);
-						defines.push(!def);
+						defines.Push(!def);
 					}
 
-"{$endif"[^}]\}		{	Boolean def = defines.pop(); }
+"{$endif"[^}]\}		{	Boolean def = defines.Pop(); }
 
 
 	/* not-defined code section */
 <XNOTDEF> {
 					/* push true to signal that these defines are within a non-defined section */
- "{$ifdef "[^}]\}	{	defines.push(true);	}
+ "{$ifdef "[^}]\}	{	defines.Push(true);	}
 
- "{$ifopt "[^}]\}	{	defines.push(true);	}
+ "{$ifopt "[^}]\}	{	defines.Push(true);	}
 
- "{$ifndef "[^}]\}	{	defines.push(true);	}
+ "{$ifndef "[^}]\}	{	defines.Push(true);	}
 
  "{$else"[^}]\}		{	if (defines.Peek() == false)	// at the non-def section start, must leave
 						{	BEGIN(INITIAL);
-							defines.pop();
-							defines.push(true);
+							defines.Pop();
+							defines.Push(true);
 						} // else, leave the top def as true
 					}
 
- "{$endif"[^}]\}	{	Boolean def = defines.pop(); 
+ "{$endif"[^}]\}	{	Boolean def = defines.Pop(); 
 						if (def == false)
 							BEGIN(INITIAL);
 					}
@@ -585,7 +586,7 @@ in			{ return KW_IN; }	// is in set
 					else
 					{
 						if (defines.Count > 0)
-							throw new ScannerException(yyline, "Encountered EOF while inside a compiler directive"); }
+							throw new ScannerException(yyline, "Encountered EOF while inside a compiler directive");
 						else
 							return Accept(); /* top-level yyclose() */
 					}

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DGrok.Framework;
 
 namespace crosspascal.AST
 {
@@ -15,7 +14,7 @@ namespace crosspascal.AST
 
 		public VisitorTraverser(Processor processor) : base(processor) { }
 
-		public override void traverse(AstNode n)
+		public override void traverse(Node n)
 		{
 			if (n != null)
 				n.Accept(Processor);

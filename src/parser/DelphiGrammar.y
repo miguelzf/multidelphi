@@ -25,7 +25,7 @@ namespace crosspascal.parser
 		
 		void REJECT(string msg = "")
 		{	
-			throw new yyParser.InputRejected(msg, lexer.yylineno());
+			throw new yyParser.InputRejected(lexer.yylineno(), msg);
 		}
 		
 		
@@ -1504,9 +1504,11 @@ casttype
 	{
 		internal class InputRejected : yyException 
 		{
-			public InputRejected (string message = "Input invalid - Parsing terminated by REJECT action",
-									int lineno = -1) 
-				: base ("Line " + ((lineno >= 0)? lineno+"" : "unknown") + ": " + message)  { }
+			public InputRejected (int lineno, string message = "Input invalid - Parsing terminated by REJECT action") 
+				: base ("Line " + lineno + ": " + message)  { }
+			
+			public InputRejected (string message = "Input invalid - Parsing terminated by REJECT action") 
+				: base (message)  { }
 		}
 	}
 

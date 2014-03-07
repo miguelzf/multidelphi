@@ -51,9 +51,6 @@
     <StartupObject>crosspascal.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DGrok.Framework">
-      <HintPath>..\deps\dgrok\bin\Debug\DGrok.Framework.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -74,7 +71,7 @@
     <Compile Include="parser\DelphiParser.cs" />
     <Compile Include="parser\DelphiScanner.cs" />
     <Compile Include="parser\ParserDriverTest.cs" />
-    <Compile Include="parser\PreProcessor-v0.cs" />
+    <Compile Include="parser\PreProcessor.cs" />
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
     <Compile Include="TestProgram.cs" />
