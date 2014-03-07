@@ -130,6 +130,86 @@ namespace crosspascal.parser
 	// %type<Statement> stmt  nonlbl_stmt
 
 
+%type<bool>  staticclassopt ofobjectopt
+%type<ProgramNode> program
+%type<LibraryNode> library
+%type<UnitNode> unit
+%type<PackageNode> package
+%type<UsesNode> requiresclause containsclause usesclauseopt useidlist
+%type<IdentifierNode> id useid externarg qualid
+%type<UnitImplementationNode> implementsec
+%type<UnitInterfaceNode> interfsec
+%type<DeclarationListNode> interfdecllist maindecllist
+%type<UnitInitialization> initsec
+%type<BlockWithDeclarationsNode> main_block
+%type<DeclarationNode> interfdecl maindeclsec funcdeclsec basicdeclsec typesec labeldeclsec labelidlist  varsec thrvarsec vardecllist vardecl constdecl typedecl
+%type<LabelNode> labelid
+%type<ExportItem> exportsec	 exportsitemlist exportsitem
+%type<ProcedureDefinitionNode> procdefinition
+%type<ProcedureHeaderNode> procdefproto procproto proceduretype
+%type<ProcedureBodyNode> proc_define func_block
+%type<TypeNode> funcrettype simpletype funcretopt funcparamtype paramtypeopt paramtypespec
+%type<FunctionClass> procbasickind
+%type<ParameterNodeList> formalparams formalparamslist
+%type<ParamterNode> formalparm
+%type<VarParameterQualifier> paramqualif
+%type<Expression> paraminitopt expr rangetype  rangestart constexpr
+%type<ProcedureDirectiveList> funcdirectopt funcdirectopt_nonterm funcdir_strict_opt funcdirective_list funcdir_strict_list func_nondef_list									
+%type<ProcedureDirective> funcdirective funcdir_strict funcdir_nondef funcqualif
+%type<CallConventionNode> funccallconv
+%type<StatementBlock> block stmtlist
+%type<Statement> stmt nonlbl_stmt inheritstmts assign goto_stmt ifstmt casestmt else_case repeatstmt whilestmt forstmt with_stmt tryexceptstmt tryfinallystmt raisestmt assemblerstmt asmcode
+%type<CaseSelectorList> caseselectorlist
+%type<CaseSelector> caseselector
+%type<CaseLabelList> caselabellist
+%type<CaseLabel> caselabel
+%type<ExceptionBlockNode> exceptionblock
+%type<OnListNode> onlist
+%type<OnStatement> ondef
+%type<VarDeclarationOption> vardeclopt
+%type<ProcedureCallNode> proccall
+%type<LValue> lvalue
+%type<OperatorNode> sign mulop addop relop
+%type<LiteralNode> literal discrete string_const
+%type<IdentifierListNode> idlist heritage
+%type<ExpressionListNode> exprlist exprlistopt
+%type<EmumList> enumtype enumtypeellist
+%type<FieldInit> enumtypeel fieldconst
+%type<SetList> setconstructor setlist
+%type<SetElement> setelem
+%type<Literal> rscstringsec constrscdecllist constrscdecl
+%type<ConstDeclarationList> constsec
+%type<ExpressionListNode> arrayconst constexprlist
+%type<FieldInitList>  recordconst fieldconstlist
+%type<ClassDefinition> classtype
+%type<ClassType> class_keyword
+%type<ClassStruct> class_struct_opt scopesec
+%type<ClassContentList> scopeseclist complist classmethodlistopt methodlist classproplistopt classproplist
+%type<ClassContent> class_comp
+%type<Scope> scope_decl
+%type<ClassFieldList> fieldlist
+%type<VarDeclarationNode> objfield
+%type<InterfaceDefinition> interftype
+%type<ClassProperty> property
+%type<bool> typeopt
+%type<TypeNode> type vartype packedtype classreftype simpletype ordinaltype
+%type<TypeNode> scalartype realtype inttype chartype stringtype varianttype funcrettype
+%type<TypeNode> structype restrictedtype arraytype settype filetype refpointertype funcparamtype 
+
+/*!!missing:
+declseclist
+procdeclnondef
+defaultdiropt
+propinterfopt
+idlisttypeidlist
+idlisttypeid
+indexspecopt
+propspecifiers
+arraysizelist
+arraytypedef
+casttype
+*/
+		
 
 	
 	// ==============================================================
@@ -893,44 +973,44 @@ exprlistopt
 	*/
 
 rangetype
-	: sign rangestart KW_RANGE expr
-	| rangestart KW_RANGE expr
+	: sign rangestart KW_RANGE expr		{ $$ = new SetElement($2, $4); }	
+	| rangestart KW_RANGE expr			{ $$ = new SetElement($1, $3); }
 	;
 
 rangestart
-	: discrete
-	| qualid
-	| id LPAREN casttype RPAREN
-	| id LPAREN literal RPAREN
+	: discrete						{ $$ = $1; }
+	| qualid						{ $$ = $1; }
+	| id LPAREN casttype RPAREN		{ $$ = ProcedureCall($1, $3); }
+	| id LPAREN literal RPAREN		{ $$ = ProcedureCall($1, $3); }
 	;
 
 enumtype
-	: LPAREN enumtypeellist RPAREN
+	: LPAREN enumtypeellist RPAREN		{ $$ = $2; }
 	;
 
 enumtypeellist
-	: enumtypeel
-	| enumtypeellist COMMA enumtypeel
+	: enumtypeel							{ $$ = new EnumList($1, null); }
+	| enumtypeellist COMMA enumtypeel		{ $$ = new EnumList($3, $1); }
 	;
 
 enumtypeel
-	: id 
-	| id KW_EQ expr
+	: id					{ $$ = new FieldInit($1, null); }
+	| id KW_EQ expr			{ $$ = new FieldInit($1, $3); }
 	;
 
 setconstructor
-	: LBRAC	RBRAC
-	| LBRAC setlist	RBRAC
+	: LBRAC	RBRAC				{ $$ = null;}
+	| LBRAC setlist	RBRAC		{ $$ = $2; }
 	;
 
 setlist
-	: setelem
-	| setlist COMMA setelem
+	: setelem					{ $$ = new SetList($1, null); }
+	| setlist COMMA setelem		{ $$ = new SetList($3, $1); }
 	;
 	
 setelem
-	: expr
-	| expr KW_RANGE expr
+	: expr					{ $$ = new SetElement($1, null); }
+	| expr KW_RANGE expr	{ $$ = new SetElement($1, $3); }
 	;
 
 
@@ -1187,8 +1267,8 @@ typedecl
 	;
 
 typeopt
-	:								{ $$ = null; }
-	| KW_TYPE						{ $$ = null; }
+	:								{ $$ = true; }
+	| KW_TYPE						{ $$ = true; }
 	;
 
 type
@@ -1325,7 +1405,7 @@ funcparamtype
 	;
 
 funcrettype
-	: simpletype		{ $$ = new UnfinishedNode($1); }
+	: simpletype		{ $$ = $1; }
 	;
 	
 	// simpletype w/o user-defined types

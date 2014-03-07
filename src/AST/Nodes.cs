@@ -679,6 +679,18 @@ namespace crosspascal.AST
 		}
 	}
 
+	public class EnumList : DeclarationNode
+	{
+		public FieldInit element;
+		public EnumList next;
+
+		public EnumList(FieldInit element, EnumList next)
+		{
+			this.element = element;
+			this.next = next;
+		}
+	}
+
 	public class FieldInit : Node
 	{
 		IdentifierNode ident;
@@ -1291,5 +1303,33 @@ namespace crosspascal.AST
 			this.contains = contains;
 		}
 	}
+
+
+	public class SetElement : Node
+	{
+		public ExpressionNode min;
+		public ExpressionNode max;
+
+		public SetElement(ExpressionNode min, ExpressionNode max)
+		{
+			this.min = min;
+			this.max = max;
+		}
+
+	}
+
+	public class SetList : Node
+	{
+		public SetElement element;
+		public SetList next;
+
+		public SetList(SetElement element, SetList next)
+		{
+			this.element = element;
+			this.next = next;
+		}
+
+	}
+
 
 }
