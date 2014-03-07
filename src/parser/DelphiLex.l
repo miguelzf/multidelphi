@@ -13,39 +13,67 @@ namespace crosspascal.parser
  
 %%
 
-	// TODO make a debug option programatically configurable
-	
+	// TODO make a debug option programatically configurable	
 // %debug
 // %standalone
 
-	// %final
-	// %public
+	
+	// %public %abstract
 %class DelphiScanner
 %implements Token, yyParser.yyInput
+//%extends 
 %function token
-
-%integer
-%eofval{
-	return ScannerEOF;
-%eofval}
-	// %type Int32
 
 %8bit
 	// %unicode
-	
-%column
+
+// ------------------------------------------------------
+// EOF treatment:
+%integer	// eof type. same as: %type Int32
+
+/*	// Use explicit <<EOF>> rules instead 
+%eofval{
+	// code to be injected in non-specified <STATE><<EOF>> rules
+	return YYEOF;
+%eofval}
+*/
+
+// %eofclose	// close the stream at EOF
+%eof{
+	// code to be injected in zzDoEOF() if (!zzEOfDone)
+	zzEOFDone = false;	// revert changes of zzDoEOF()! Should only apply to the top-level stream
+%eof}
+// ------------------------------------------------------
+
+	// useless for C#
+	// %yylexthrow ScannerException
+
+//%column
 %line
-%eofclose
 	//Delphi is case insensitive
 %ignorecase
 
-%x XCOMMENT1 XCOMMENT2 ASMCODESEC
+%x XCOMMENT1 XCOMMENT2 ASMCODESEC XINCLUDED XINC_COM1 XINC_COM2
 
 
 %{
+	
+	// **********************************************
+	// Preprocessing
+	
+		public PreProcessor preproc;
+	
+		Stack<Bool> defines = new Stack<Bool>();
+	
+		bool TestDefineDir(string dir)
+		{
+			Boolean defined = preproc.IsDefined(GetDirectiveArg(dir));
+			defines.push(defined);
+			return defined;
+		}
 
 	// **********************************************
-	// yyParser.yyDebug interface:
+	// yyParser.yyLex interface:
 	
 		/** move on to next token.
 			@return false if positioned beyond tokens.
@@ -73,56 +101,95 @@ namespace crosspascal.parser
 			return yylval;
 		}
 		
-		public int ScannerEOF = 0;
 		
 	// **********************************************
 	// Make CSFlex compatible with FLex:
-	
-		void BEGIN(int state) { yybegin(state); }
+		
+	  	void BEGIN(int state) { yybegin(state); }
 		void unput(char c) { yypushback(1); }
 		const int INITIAL = YYINITIAL;
-		
-		void yyerror(String msg = "Lexical Error")
+
+		void yyprint(String msg)
 		{
-			throw new ScannerException(yyline, yycolumn, msg);
+			Console.Out.WriteLine("[Line " + yyline + "] " + msg);
 		}
 		
-		// Finished scanning and accepts
+		void yyerror(String msg = "Unknown lexical error")
+		{
+		//	throw new ScannerException(yyline, msg);
+			Console.Error.WriteLine("[ERROR lexical] " + msg + " in line " + line);
+		}
+		
+		void pperror(String msg = "Unknown preprocessing error")
+		{
+		//	throw new PreprocessorException(yyline, msg);
+			Console.Error.WriteLine("[ERROR preprocessor] " + msg + " in line " + line);
+		}
+
+		// Finish scanning
 		public int Accept()
 		{
-			zzDoEOF();
-			return ScannerEOF;
+		    if (!zzEOFDone) {
+				zzEOFDone = true;
+				yyclose();
+			}
+			return YYEOF;
 		}
 		
 		public int yylineno() {
 			return yyline;
 		}
-			
 		
-	// **********************************************
+
+		// **********************************************
 		
-		Int32 GetInt(String yytext, int numbase) { return Convert.ToInt32(yytext, numbase); }
-		Double GetReal(String yytext) { return Convert.ToDouble(yytext); }
+		// Internal helper functions
+		
+		// Avoid repeated string creations in yytext. Must reset text to null before each rule's action.
+		string _text;
+		string text {
+			get { 
+				if (_text == null)
+					_text = yytext();
+				return _text;
+			}
+			set { _text = value; }
+		}
+		
+		Int32 GetInt(string str, int numbase) { return Convert.ToInt32(str, numbase); }
+		Double GetReal(string str) { return Convert.ToDouble(str); }
 
-		// TODO set yylval to null before each executing each rule's action
+		string GetDirectiveArg(string directive)
+		{
+			int ignlen = directive.Length + 2; // from: "{$"
+			return yytext().Substring(ignlen, yylength()-1-ignlen).Trim();
+		}
 	
-	//#define YY_USER_ACTION printf("[line %d] READ: %s | 1st char: %c %d |\n",  yylinenum, yytext, yytext[0], yytext[1]);
-	
-
 	
 %}
 
 %init{
-	yyreset(@in);	// Inits the scanner
+	// code injected in the constructor
+
+	// Inits the scanner
+	yyreset(@in);
+	// set yylval and text to null before each executing each rule's action
+	PRE_ACTION_DEFAULT = () => { yylval = null; text = null; };
+
 %init}
 
-	/*
-	digit   = [0-9]
-	hexa	= [0-9a-fA-F]
-	alfa	= [a-zA-Z]
-	*/
+DEC     = [0-9]
+HEXA    = [0-9a-fA-F]
+ALPH	= [a-zA-Z]
+ID      = [0-9a-zA-Z_]
+NL      = (\r|\n|\r\n)
 	
+
 %%
+
+
+	/**************************************************************/
+	/* Reserved keywords	*/
 
 	/* file type */
 library		{ return KW_LIBRARY; }
@@ -192,11 +259,10 @@ finally		{ return KW_FINALLY; }
 on			{ return KW_ON; }
 
 
-	/*****************************************************************
+	/**************************************************************
 	 * Directives:
 	 * Should be treated as identifiers instead of reserved keywords
-	 *****************************************************************
-	 */
+	/**************************************************************/
 
 	/*	properties keywords 
 	default		{ return KW_DEFAULT; }
@@ -312,6 +378,7 @@ file		{ return TYPE_FILE; }
 set			{ return TYPE_SET; }
 	
 
+	/**************************************************************/
 	/* ASM x86 */
 
 asm						{	BEGIN(ASMCODESEC);
@@ -324,25 +391,26 @@ asm						{	BEGIN(ASMCODESEC);
 							BEGIN(INITIAL);
 							return KW_END;
 						}
-<ASMCODESEC>\n			{ }
+<ASMCODESEC>{NL}		{ }
 <ASMCODESEC>.			{ return ASM_OP; }	// ASM unknown char
 
 
-
-
-	/* literals: numeric */
-[0-9]+				{ yylval = GetInt(yytext(),10); return CONST_INT; }
-\$[0-9a-fA-F]+		{ yylval = GetInt(yytext().Substring(1), 16); return CONST_INT; }
-nil					{ return CONST_NIL; }
-[0-9]+\.[0-9]+		{ yylval = GetReal(yytext()); return CONST_REAL; }
-[0-9]+e[+-]?[0-9]+	{ yylval = GetReal(yytext()); return CONST_REAL; }
-[0-9]+\.[0-9]+e[+-]?[0-9]+	{ yylval = GetReal(yytext()); return CONST_REAL; }
+	/**************************************************************/
+	/* Literals	*/
 	
-	/* literals: alphanumeric */
+	/* literals: numeric */
+{DEC}+				{ yylval = GetInt(yytext(),10); return CONST_INT; }
+\${HEXA}+			{ yylval = GetInt(yytext().Substring(1), 16); return CONST_INT; }
+nil					{ return CONST_NIL; }
+{DEC}+\.{DEC}+		{ yylval = GetReal(yytext()); return CONST_REAL; }
+{DEC}+e[+-]?{DEC}+	{ yylval = GetReal(yytext()); return CONST_REAL; }
+{DEC}+\.{DEC}+e[+-]?{DEC}+	{ yylval = GetReal(yytext()); return CONST_REAL; }
+	
+	/* literals: ALPHnumeric */
 \'.\'				{ yylval = yytext()[1]; return CONST_CHAR; }
 	// check that num < 255
-\#[0-9]+			{ yylval = GetInt(yytext().Substring(1), 10); return CONST_CHAR; }
-\#\$[0-9a-fA-F]+	{ yylval = GetInt(yytext().Substring(2), 16); return CONST_CHAR; }
+\#{DEC}+			{ yylval = GetInt(yytext().Substring(1), 10); return CONST_CHAR; }
+\#\${HEXA}+			{ yylval = GetInt(yytext().Substring(2), 16); return CONST_CHAR; }
 ''					{ yylval = ""; return CONST_STR; }
 '[^']*'				{ yylval = yytext().Substring(1, yylength()-2); return CONST_STR; }
 
@@ -350,15 +418,17 @@ true				{ yylval = true;  return CONST_BOOL; }
 false				{ yylval = false; return CONST_BOOL; }
 
 
+	/**************************************************************/
+	/* Operators	*/
+	
 	/* separators */
 ":"			{ return COLON; }
 ","			{ return COMMA; }
-";"			{ return SEMICOL; }
+";"			{ return SEMICOL;}
 "["			{ return LBRAC; }
-"("			{ return LPAREN; }
-"]"			{ return RBRAC; }
-")"			{ return RPAREN; }
-
+"("			{ return LPAREN;}
+"]"			{ return RBRAC;	}
+")"			{ return RPAREN;}
 
 	/* expr: general */
 ":="		{ return KW_ASSIGN; }
@@ -375,7 +445,7 @@ as			{ return KW_AS; }	// cast
 "+"			{ return KW_SUM; }
 "/"			{ return KW_DIV; }
 "*"			{ return KW_MUL; }
-div			{ return KW_QUOT; }
+div			{ return KW_QUOT;}
 mod			{ return KW_MOD; }
 
 	/* expr: logical operators */
@@ -397,36 +467,133 @@ is			{ return KW_IS; }	// type comp
 in			{ return KW_IN; }	// is in set
 
 
-[_a-zA-Z][_a-zA-Z0-9]*	{ yylval = yytext(); return IDENTIFIER; }
 
-\{\$[^}]\}		{ }	// ignore compiler funcdirectives
+	/**************************************************************/
+	/* PreProcessor - process compiler directives */
+	
+	/* includes */
+"{$i "[^}]+\}		{
+						string fpath = GetDirectiveArg("i");
+						string incpath = preproc.SearchFile(fpath);
+						
+						if (incpath == null)
+							pperror("Include file " + incpath + " not found");
+						else
+						{
+							StreamReader sr = null;
+							try {
+								sr = new StreamReader(incpath, DelphiParser.DefaultEncoding);
+							} 
+							catch (IOException ioe) {
+								pperror("Include file " + fpath + " could not be read: " + ioe.Message);
+							}
+							finally {
+								yypushStream(sr);
+								yyprint("PUshed stream from " + fpath + "");
+							}
+						}
+					}
+
+	/* defines */
+"{$define "[^}]\}	{	preproc.AddDefine(GetDirectiveArg("define"));	}
+
+"{$undef "[^}]\}	{	preproc.RemoveDefine(GetDirectiveArg("undef"));	}
+
+	/* ifdefs */
+"{$ifdef "[^}]\}	{	if (!IsDefinedDir("ifdef"))
+							BEGIN(XNOTDEF);
+					}
+
+"{$ifopt "[^}]\}	{	if (!IsDefinedDir("ifopt"))
+							BEGIN(XNOTDEF);
+					}
+
+"{$ifndef "[^}]\}	{	if (IsDefinedDir("ifndef"))
+							BEGIN(XNOTDEF);
+					}
+
+"{$else"[^}]\}		{	Boolean def = defines.pop();
+						if (!def)
+							BEGIN(XNOTDEF);
+						defines.push(!def);
+					}
+
+"{$endif"[^}]\}		{	Boolean def = defines.pop(); }
 
 
+	/* not-defined code section */
+<XNOTDEF> {
+					/* push true to signal that these defines are within a non-defined section */
+ "{$ifdef "[^}]\}	{	defines.push(true);	}
+
+ "{$ifopt "[^}]\}	{	defines.push(true);	}
+
+ "{$ifndef "[^}]\}	{	defines.push(true);	}
+
+ "{$else"[^}]\}		{	if (defines.Peek() == false)	// at the non-def section start, must leave
+						{	BEGIN(INITIAL);
+							defines.pop();
+							defines.push(true);
+						} // else, leave the top def as true
+					}
+
+ "{$endif"[^}]\}	{	Boolean def = defines.pop(); 
+						if (def == false)
+							BEGIN(INITIAL);
+					}
+ 
+ .|\n				{ }
+ <<EOF>>			{	throw new ScannerException(yyline, "Encountered EOF while inside a compiler directive"); }
+}
+
+	/* Other compiler directives: ignored */
+"{$"[^}]\}		{ }
+
+
+
+
+	/**************************************************************/
+	/* Comments		*/
+	
 "//".*			{ } // single line comment
 
 				/* multi-line comments */
 \{				{ BEGIN(XCOMMENT1); }
 <XCOMMENT1>\}	{ BEGIN(INITIAL); }
-<XCOMMENT1>.	{ }  // Console.WriteLine("READ comment state1: " + yytext() + " ascii: " + (int) yytext()[0] + " <<"); }
-<XCOMMENT1>\n	{ }
 
 \(\*			{ BEGIN(XCOMMENT2); }
 <XCOMMENT2>\*\)	{ BEGIN(INITIAL); }
-<XCOMMENT2>.	{ }  // Console.WriteLine("READ comment state2: " + yytext() + " ascii: " + (int) yytext()[0] + " <<"); }
-<XCOMMENT2>\n	{ }
+
+<XCOMMENT2,XCOMMENT1>{NL}	{ }
+<XCOMMENT2,XCOMMENT1>.		{ }  // Console.WriteLine("READ comment state: " + yytext() + " ascii: " + (int) yytext()[0] + " <<"); }
 
 
 
+	/**************************************************************/
 
-[ \r\t]+        { }     /* ignore whitespace */
+[_a-zA-Z]{ID}*	{ yylval = yytext(); return IDENTIFIER; }
 
-\n				{ }
 
-.				{
-					string text = yytext();
-					yyerror("Unknown char + " + text + " (ascii: " + text[0]+")"); 
+[ \t]+			{ }     /* ignore whitespace */
+
+{NL}			{ }
+
+<<EOF>>			{	if (yymoreStreams())
+					{	yypopStream();
+						yyprint("Popped stream and began initial state");
+					}
+					else
+					{
+						if (defines.Count > 0)
+							throw new ScannerException(yyline, "Encountered EOF while inside a compiler directive"); }
+						else
+							return Accept(); /* top-level yyclose() */
+					}
 				}
-				
+					
+
+.				{ yyerror("Unknown char: " + text + " (ASCII " + ((int) text[0]) +")"); }
+
 
 %%
 
@@ -447,13 +614,19 @@ in			{ return KW_IN; }	// is in set
 		
 	class ScannerException : Exception
 	{
-		internal ScannerException(int line, int col, string msg = "Scanner Error")
-			: base(msg + " in line " + line + ", column " + col) { }
-		
 		internal ScannerException(int line, string msg = "Scanner Error")
 			: base(msg + " in line " + line) { }
-
+		
 		internal ScannerException(string msg = "Scanner Error") : base(msg) { }
 	}
+	
+	class PreprocessorException : Exception
+	{
+		internal PreprocessorException(int line, string msg = "Preprocessor Error")
+			: base(msg + " in line " + line) { }
+
+		internal PreprocessorException(string msg = "Preprocessor Error") : base(msg) { }
+	}
+
 
 }	// close outermost namespace
