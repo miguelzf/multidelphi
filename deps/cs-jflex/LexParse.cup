@@ -1,0 +1,1322 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * C# Flex 1.4                                                             *
+ * Copyright (C) 2004-2005  Jonathan Gilbert <logic@deltaq.org>            *
+ * Derived from:                                                           *
+ *                                                                         *
+ *   JFlex 1.4                                                             *
+ *   Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                  *
+ *   All rights reserved.                                                  *
+ *                                                                         *
+ * This program is free software; you can redistribute it and/or modify    *
+ * it under the terms of the GNU General Public License. See the file      *
+ * COPYRIGHT for more information.                                         *
+ *                                                                         *
+ * This program is distributed in the hope that it will be useful,         *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License along *
+ * with this program; if not, write to the Free Software Foundation, Inc., *
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA                 *
+ *                                                                         *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+package CSFlex;
+
+import System.Collections;
+
+/* customizing code */
+
+action code {:
+
+  internal LexScan     scanner;
+  internal CharClasses charClasses = new CharClasses(127);
+  internal RegExps     regExps     = new RegExps();
+  internal Macros      macros      = new Macros();
+  internal Integer     stateNumber;
+  internal Timer       t           = new Timer();
+  internal EOFActions  eofActions  = new EOFActions();
+
+  void fatalError(ErrorMessages message, int line, int col) {
+    syntaxError(message, line, col);
+    throw new GeneratorException();
+  }
+
+  void fatalError(ErrorMessages message) {
+    fatalError(message, scanner.currentLine(), -1);
+    throw new GeneratorException();
+  }
+
+  void syntaxError(ErrorMessages message) {
+    Out.error(scanner.file, message, scanner.currentLine(), -1);
+  }
+  
+  void syntaxError(ErrorMessages message, int line) {
+    Out.error(scanner.file, message, line, -1);
+  }
+
+  void syntaxError(ErrorMessages message, int line, int col) {
+    Out.error(scanner.file, message, line, col);
+  }
+
+  private static readonly char[] jletter_ranges = new char[]
+    {
+      '$', '$',
+      'A', 'Z',
+      '_', '_',
+      'a', 'z',
+      (char)162, (char)165,
+      (char)170, (char)170,
+      (char)181, (char)181,
+      (char)186, (char)186,
+      (char)192, (char)214,
+      (char)216, (char)246,
+      (char)248, (char)543,
+      (char)546, (char)563,
+      (char)592, (char)685,
+      (char)688, (char)696,
+      (char)699, (char)705,
+      (char)720, (char)721,
+      (char)736, (char)740,
+      (char)750, (char)750,
+      (char)890, (char)890,
+      (char)902, (char)902,
+      (char)904, (char)906,
+      (char)908, (char)908,
+      (char)910, (char)929,
+      (char)931, (char)974,
+      (char)976, (char)983,
+      (char)986, (char)1011,
+      (char)1024, (char)1153,
+      (char)1164, (char)1220,
+      (char)1223, (char)1224,
+      (char)1227, (char)1228,
+      (char)1232, (char)1269,
+      (char)1272, (char)1273,
+      (char)1329, (char)1366,
+      (char)1369, (char)1369,
+      (char)1377, (char)1415,
+      (char)1488, (char)1514,
+      (char)1520, (char)1522,
+      (char)1569, (char)1594,
+      (char)1600, (char)1610,
+      (char)1649, (char)1747,
+      (char)1749, (char)1749,
+      (char)1765, (char)1766,
+      (char)1786, (char)1788,
+      (char)1808, (char)1808,
+      (char)1810, (char)1836,
+      (char)1920, (char)1957,
+      (char)2309, (char)2361,
+      (char)2365, (char)2365,
+      (char)2384, (char)2384,
+      (char)2392, (char)2401,
+      (char)2437, (char)2444,
+      (char)2447, (char)2448,
+      (char)2451, (char)2472,
+      (char)2474, (char)2480,
+      (char)2482, (char)2482,
+      (char)2486, (char)2489,
+      (char)2524, (char)2525,
+      (char)2527, (char)2529,
+      (char)2544, (char)2547,
+      (char)2565, (char)2570,
+      (char)2575, (char)2576,
+      (char)2579, (char)2600,
+      (char)2602, (char)2608,
+      (char)2610, (char)2611,
+      (char)2613, (char)2614,
+      (char)2616, (char)2617,
+      (char)2649, (char)2652,
+      (char)2654, (char)2654,
+      (char)2674, (char)2676,
+      (char)2693, (char)2699,
+      (char)2701, (char)2701,
+      (char)2703, (char)2705,
+      (char)2707, (char)2728,
+      (char)2730, (char)2736,
+      (char)2738, (char)2739,
+      (char)2741, (char)2745,
+      (char)2749, (char)2749,
+      (char)2768, (char)2768,
+      (char)2784, (char)2784,
+      (char)2821, (char)2828,
+      (char)2831, (char)2832,
+      (char)2835, (char)2856,
+      (char)2858, (char)2864,
+      (char)2866, (char)2867,
+      (char)2870, (char)2873,
+      (char)2877, (char)2877,
+      (char)2908, (char)2909,
+      (char)2911, (char)2913,
+      (char)2949, (char)2954,
+      (char)2958, (char)2960,
+      (char)2962, (char)2965,
+      (char)2969, (char)2970,
+      (char)2972, (char)2972,
+      (char)2974, (char)2975,
+      (char)2979, (char)2980,
+      (char)2984, (char)2986,
+      (char)2990, (char)2997,
+      (char)2999, (char)3001,
+      (char)3077, (char)3084,
+      (char)3086, (char)3088,
+      (char)3090, (char)3112,
+      (char)3114, (char)3123,
+      (char)3125, (char)3129,
+      (char)3168, (char)3169,
+      (char)3205, (char)3212,
+      (char)3214, (char)3216,
+      (char)3218, (char)3240,
+      (char)3242, (char)3251,
+      (char)3253, (char)3257,
+      (char)3294, (char)3294,
+      (char)3296, (char)3297,
+      (char)3333, (char)3340,
+      (char)3342, (char)3344,
+      (char)3346, (char)3368,
+      (char)3370, (char)3385,
+      (char)3424, (char)3425,
+      (char)3461, (char)3478,
+      (char)3482, (char)3505,
+      (char)3507, (char)3515,
+      (char)3517, (char)3517,
+      (char)3520, (char)3526,
+      (char)3585, (char)3632,
+      (char)3634, (char)3635,
+      (char)3647, (char)3654,
+      (char)3713, (char)3714,
+      (char)3716, (char)3716,
+      (char)3719, (char)3720,
+      (char)3722, (char)3722,
+      (char)3725, (char)3725,
+      (char)3732, (char)3735,
+      (char)3737, (char)3743,
+      (char)3745, (char)3747,
+      (char)3749, (char)3749,
+      (char)3751, (char)3751,
+      (char)3754, (char)3755,
+      (char)3757, (char)3760,
+      (char)3762, (char)3763,
+      (char)3773, (char)3773,
+      (char)3776, (char)3780,
+      (char)3782, (char)3782,
+      (char)3804, (char)3805,
+      (char)3840, (char)3840,
+      (char)3904, (char)3911,
+      (char)3913, (char)3946,
+      (char)3976, (char)3979,
+      (char)4096, (char)4129,
+      (char)4131, (char)4135,
+      (char)4137, (char)4138,
+      (char)4176, (char)4181,
+      (char)4256, (char)4293,
+      (char)4304, (char)4342,
+      (char)4352, (char)4441,
+      (char)4447, (char)4514,
+      (char)4520, (char)4601,
+      (char)4608, (char)4614,
+      (char)4616, (char)4678,
+      (char)4680, (char)4680,
+      (char)4682, (char)4685,
+      (char)4688, (char)4694,
+      (char)4696, (char)4696,
+      (char)4698, (char)4701,
+      (char)4704, (char)4742,
+      (char)4744, (char)4744,
+      (char)4746, (char)4749,
+      (char)4752, (char)4782,
+      (char)4784, (char)4784,
+      (char)4786, (char)4789,
+      (char)4792, (char)4798,
+      (char)4800, (char)4800,
+      (char)4802, (char)4805,
+      (char)4808, (char)4814,
+      (char)4816, (char)4822,
+      (char)4824, (char)4846,
+      (char)4848, (char)4878,
+      (char)4880, (char)4880,
+      (char)4882, (char)4885,
+      (char)4888, (char)4894,
+      (char)4896, (char)4934,
+      (char)4936, (char)4954,
+      (char)5024, (char)5108,
+      (char)5121, (char)5740,
+      (char)5743, (char)5750,
+      (char)5761, (char)5786,
+      (char)5792, (char)5866,
+      (char)6016, (char)6067,
+      (char)6176, (char)6263,
+      (char)6272, (char)6312,
+      (char)7680, (char)7835,
+      (char)7840, (char)7929,
+      (char)7936, (char)7957,
+      (char)7960, (char)7965,
+      (char)7968, (char)8005,
+      (char)8008, (char)8013,
+      (char)8016, (char)8023,
+      (char)8025, (char)8025,
+      (char)8027, (char)8027,
+      (char)8029, (char)8029,
+      (char)8031, (char)8061,
+      (char)8064, (char)8116,
+      (char)8118, (char)8124,
+      (char)8126, (char)8126,
+      (char)8130, (char)8132,
+      (char)8134, (char)8140,
+      (char)8144, (char)8147,
+      (char)8150, (char)8155,
+      (char)8160, (char)8172,
+      (char)8178, (char)8180,
+      (char)8182, (char)8188,
+      (char)8255, (char)8256,
+      (char)8319, (char)8319,
+      (char)8352, (char)8363,
+      (char)8450, (char)8450,
+      (char)8455, (char)8455,
+      (char)8458, (char)8467,
+      (char)8469, (char)8469,
+      (char)8473, (char)8477,
+      (char)8484, (char)8484,
+      (char)8486, (char)8486,
+      (char)8488, (char)8488,
+      (char)8490, (char)8493,
+      (char)8495, (char)8497,
+      (char)8499, (char)8505,
+      (char)12293, (char)12294,
+      (char)12337, (char)12341,
+      (char)12353, (char)12436,
+      (char)12445, (char)12446,
+      (char)12449, (char)12538,
+      (char)12540, (char)12542,
+      (char)12549, (char)12588,
+      (char)12593, (char)12686,
+      (char)12704, (char)12727,
+      (char)13312, (char)19893,
+      (char)19968, (char)40869,
+      (char)40960, (char)42124,
+      (char)44032, (char)55203,
+      (char)63744, (char)64045,
+      (char)64256, (char)64262,
+      (char)64275, (char)64279,
+      (char)64285, (char)64285,
+      (char)64287, (char)64296,
+      (char)64298, (char)64310,
+      (char)64312, (char)64316,
+      (char)64318, (char)64318,
+      (char)64320, (char)64321,
+      (char)64323, (char)64324,
+      (char)64326, (char)64433,
+      (char)64467, (char)64829,
+      (char)64848, (char)64911,
+      (char)64914, (char)64967,
+      (char)65008, (char)65019,
+      (char)65075, (char)65076,
+      (char)65101, (char)65103,
+      (char)65129, (char)65129,
+      (char)65136, (char)65138,
+      (char)65140, (char)65140,
+      (char)65142, (char)65276,
+      (char)65284, (char)65284,
+      (char)65313, (char)65338,
+      (char)65343, (char)65343,
+      (char)65345, (char)65370,
+      (char)65382, (char)65470,
+      (char)65474, (char)65479,
+      (char)65482, (char)65487,
+      (char)65490, (char)65495,
+      (char)65498, (char)65500,
+      (char)65504, (char)65505,
+      (char)65509, (char)65510,
+    };
+
+  private static readonly char[] jletterdigit_ranges = new char[]
+    {
+      (char)0, (char)8,
+      (char)14, (char)27,
+      '$', '$',
+      '0', '9',
+      'A', 'Z',
+      '_', '_',
+      'a', 'z',
+      (char)127, (char)159,
+      (char)162, (char)165,
+      (char)170, (char)170,
+      (char)178, (char)179,
+      (char)181, (char)181,
+      (char)185, (char)186,
+      (char)192, (char)214,
+      (char)216, (char)246,
+      (char)248, (char)543,
+      (char)546, (char)563,
+      (char)592, (char)685,
+      (char)688, (char)696,
+      (char)699, (char)705,
+      (char)720, (char)721,
+      (char)736, (char)740,
+      (char)750, (char)750,
+      (char)768, (char)837,
+      (char)864, (char)865,
+      (char)890, (char)890,
+      (char)902, (char)902,
+      (char)904, (char)906,
+      (char)908, (char)908,
+      (char)910, (char)929,
+      (char)931, (char)974,
+      (char)976, (char)983,
+      (char)986, (char)1011,
+      (char)1024, (char)1153,
+      (char)1155, (char)1158,
+      (char)1164, (char)1220,
+      (char)1223, (char)1224,
+      (char)1227, (char)1228,
+      (char)1232, (char)1269,
+      (char)1272, (char)1273,
+      (char)1329, (char)1366,
+      (char)1369, (char)1369,
+      (char)1377, (char)1415,
+      (char)1425, (char)1465,
+      (char)1467, (char)1469,
+      (char)1471, (char)1471,
+      (char)1473, (char)1474,
+      (char)1476, (char)1476,
+      (char)1488, (char)1514,
+      (char)1520, (char)1522,
+      (char)1569, (char)1594,
+      (char)1600, (char)1618,
+      (char)1632, (char)1641,
+      (char)1648, (char)1747,
+      (char)1749, (char)1756,
+      (char)1759, (char)1768,
+      (char)1770, (char)1773,
+      (char)1776, (char)1788,
+      (char)1808, (char)1808,
+      (char)1810, (char)1836,
+      (char)1920, (char)1957,
+      (char)2305, (char)2307,
+      (char)2309, (char)2361,
+      (char)2364, (char)2381,
+      (char)2384, (char)2388,
+      (char)2392, (char)2403,
+      (char)2406, (char)2415,
+      (char)2433, (char)2435,
+      (char)2437, (char)2444,
+      (char)2447, (char)2448,
+      (char)2451, (char)2472,
+      (char)2474, (char)2480,
+      (char)2482, (char)2482,
+      (char)2486, (char)2489,
+      (char)2492, (char)2492,
+      (char)2494, (char)2500,
+      (char)2503, (char)2504,
+      (char)2507, (char)2509,
+      (char)2519, (char)2519,
+      (char)2524, (char)2525,
+      (char)2527, (char)2531,
+      (char)2534, (char)2551,
+      (char)2553, (char)2553,
+      (char)2562, (char)2562,
+      (char)2565, (char)2570,
+      (char)2575, (char)2576,
+      (char)2579, (char)2600,
+      (char)2602, (char)2608,
+      (char)2610, (char)2611,
+      (char)2613, (char)2614,
+      (char)2616, (char)2617,
+      (char)2620, (char)2620,
+      (char)2622, (char)2626,
+      (char)2631, (char)2632,
+      (char)2635, (char)2637,
+      (char)2649, (char)2652,
+      (char)2654, (char)2654,
+      (char)2662, (char)2676,
+      (char)2689, (char)2691,
+      (char)2693, (char)2699,
+      (char)2701, (char)2701,
+      (char)2703, (char)2705,
+      (char)2707, (char)2728,
+      (char)2730, (char)2736,
+      (char)2738, (char)2739,
+      (char)2741, (char)2745,
+      (char)2748, (char)2757,
+      (char)2759, (char)2761,
+      (char)2763, (char)2765,
+      (char)2768, (char)2768,
+      (char)2784, (char)2784,
+      (char)2790, (char)2799,
+      (char)2817, (char)2819,
+      (char)2821, (char)2828,
+      (char)2831, (char)2832,
+      (char)2835, (char)2856,
+      (char)2858, (char)2864,
+      (char)2866, (char)2867,
+      (char)2870, (char)2873,
+      (char)2876, (char)2883,
+      (char)2887, (char)2893,
+      (char)2902, (char)2903,
+      (char)2908, (char)2909,
+      (char)2911, (char)2913,
+      (char)2918, (char)2927,
+      (char)2946, (char)2947,
+      (char)2949, (char)2954,
+      (char)2958, (char)2960,
+      (char)2962, (char)2965,
+      (char)2969, (char)2970,
+      (char)2972, (char)2972,
+      (char)2974, (char)2975,
+      (char)2979, (char)2980,
+      (char)2984, (char)2986,
+      (char)2990, (char)2997,
+      (char)2999, (char)3001,
+      (char)3006, (char)3140,
+      (char)3142, (char)3144,
+      (char)3146, (char)3149,
+      (char)3157, (char)3158,
+      (char)3168, (char)3169,
+      (char)3174, (char)3183,
+      (char)3202, (char)3203,
+      (char)3205, (char)3212,
+      (char)3214, (char)3216,
+      (char)3218, (char)3240,
+      (char)3242, (char)3251,
+      (char)3253, (char)3257,
+      (char)3262, (char)3268,
+      (char)3270, (char)3272,
+      (char)3274, (char)3277,
+      (char)3285, (char)3286,
+      (char)3294, (char)3294,
+      (char)3296, (char)3297,
+      (char)3302, (char)3311,
+      (char)3330, (char)3331,
+      (char)3333, (char)3340,
+      (char)3342, (char)3344,
+      (char)3346, (char)3368,
+      (char)3370, (char)3385,
+      (char)3390, (char)3395,
+      (char)3398, (char)3400,
+      (char)3402, (char)3405,
+      (char)3415, (char)3415,
+      (char)3424, (char)3425,
+      (char)3430, (char)3439,
+      (char)3461, (char)3478,
+      (char)3482, (char)3505,
+      (char)3507, (char)3515,
+      (char)3517, (char)3517,
+      (char)3520, (char)3526,
+      (char)3585, (char)3642,
+      (char)3647, (char)3662,
+      (char)3664, (char)3673,
+      (char)3713, (char)3714,
+      (char)3716, (char)3716,
+      (char)3719, (char)3720,
+      (char)3722, (char)3722,
+      (char)3725, (char)3725,
+      (char)3732, (char)3735,
+      (char)3737, (char)3743,
+      (char)3745, (char)3747,
+      (char)3749, (char)3749,
+      (char)3751, (char)3751,
+      (char)3754, (char)3755,
+      (char)3757, (char)3769,
+      (char)3771, (char)3773,
+      (char)3776, (char)3780,
+      (char)3782, (char)3782,
+      (char)3784, (char)3789,
+      (char)3792, (char)3801,
+      (char)3804, (char)3805,
+      (char)3840, (char)3840,
+      (char)3864, (char)3865,
+      (char)3872, (char)3881,
+      (char)3893, (char)3893,
+      (char)3895, (char)3895,
+      (char)3897, (char)3897,
+      (char)3902, (char)3911,
+      (char)3913, (char)3946,
+      (char)3953, (char)3979,
+      (char)3984, (char)3989,
+      (char)3991, (char)3991,
+      (char)3993, (char)4013,
+      (char)4017, (char)4023,
+      (char)4025, (char)4025,
+      (char)4096, (char)4129,
+      (char)4131, (char)4135,
+      (char)4137, (char)4138,
+      (char)4176, (char)4181,
+      (char)4256, (char)4293,
+      (char)4304, (char)4342,
+      (char)4352, (char)4441,
+      (char)4447, (char)4514,
+      (char)4520, (char)4601,
+      (char)4608, (char)4614,
+      (char)4616, (char)4678,
+      (char)4680, (char)4680,
+      (char)4682, (char)4685,
+      (char)4688, (char)4694,
+      (char)4696, (char)4696,
+      (char)4698, (char)4701,
+      (char)4704, (char)4742,
+      (char)4744, (char)4744,
+      (char)4746, (char)4749,
+      (char)4752, (char)4782,
+      (char)4784, (char)4784,
+      (char)4786, (char)4789,
+      (char)4792, (char)4798,
+      (char)4800, (char)4800,
+      (char)4802, (char)4805,
+      (char)4808, (char)4814,
+      (char)4816, (char)4822,
+      (char)4824, (char)4846,
+      (char)4848, (char)4878,
+      (char)4880, (char)4880,
+      (char)4882, (char)4885,
+      (char)4888, (char)4894,
+      (char)4896, (char)4934,
+      (char)4936, (char)4954,
+      (char)5024, (char)5108,
+      (char)5121, (char)5740,
+      (char)5743, (char)5750,
+      (char)5761, (char)5786,
+      (char)5792, (char)5866,
+      (char)6016, (char)6067,
+      (char)6176, (char)6263,
+      (char)6272, (char)6312,
+      (char)7680, (char)7835,
+      (char)7840, (char)7929,
+      (char)7936, (char)7957,
+      (char)7960, (char)7965,
+      (char)7968, (char)8005,
+      (char)8008, (char)8013,
+      (char)8016, (char)8023,
+      (char)8025, (char)8025,
+      (char)8027, (char)8027,
+      (char)8029, (char)8029,
+      (char)8031, (char)8061,
+      (char)8064, (char)8116,
+      (char)8118, (char)8124,
+      (char)8126, (char)8126,
+      (char)8130, (char)8132,
+      (char)8134, (char)8140,
+      (char)8144, (char)8147,
+      (char)8150, (char)8155,
+      (char)8160, (char)8172,
+      (char)8178, (char)8180,
+      (char)8182, (char)8188,
+      (char)8204, (char)8207,
+      (char)8234, (char)8238,
+      (char)8255, (char)8256,
+      (char)8298, (char)8304,
+      (char)8308, (char)8313,
+      (char)8319, (char)8329,
+      (char)8352, (char)8363,
+      (char)8400, (char)8412,
+      (char)8417, (char)8417,
+      (char)8450, (char)8450,
+      (char)8455, (char)8455,
+      (char)8458, (char)8467,
+      (char)8469, (char)8469,
+      (char)8473, (char)8477,
+      (char)8484, (char)8484,
+      (char)8486, (char)8486,
+      (char)8488, (char)8488,
+      (char)8490, (char)8493,
+      (char)8495, (char)8497,
+      (char)8499, (char)8505,
+      (char)8543, (char)8578,
+      (char)9312, (char)9371,
+      (char)9450, (char)9450,
+      (char)10102, (char)10131,
+      (char)12293, (char)12295,
+      (char)12321, (char)12335,
+      (char)12337, (char)12341,
+      (char)12353, (char)12436,
+      (char)12441, (char)12442,
+      (char)12445, (char)12446,
+      (char)12449, (char)12538,
+      (char)12540, (char)12542,
+      (char)12549, (char)12588,
+      (char)12593, (char)12686,
+      (char)12704, (char)12727,
+      (char)12928, (char)12937,
+      (char)13312, (char)19893,
+      (char)19968, (char)40869,
+      (char)40960, (char)42124,
+      (char)44032, (char)55203,
+      (char)63744, (char)64045,
+      (char)64256, (char)64262,
+      (char)64275, (char)64279,
+      (char)64285, (char)64285,
+      (char)64287, (char)64296,
+      (char)64298, (char)64310,
+      (char)64312, (char)64316,
+      (char)64318, (char)64318,
+      (char)64320, (char)64321,
+      (char)64323, (char)64324,
+      (char)64326, (char)64433,
+      (char)64467, (char)64829,
+      (char)64848, (char)64911,
+      (char)64914, (char)64967,
+      (char)65008, (char)65019,
+      (char)65075, (char)65076,
+      (char)65101, (char)65103,
+      (char)65129, (char)65129,
+      (char)65136, (char)65138,
+      (char)65140, (char)65140,
+      (char)65142, (char)65276,
+      (char)65279, (char)65279,
+      (char)65284, (char)65284,
+      (char)65296, (char)65305,
+      (char)65313, (char)65338,
+      (char)65343, (char)65343,
+      (char)65345, (char)65370,
+      (char)65382, (char)65470,
+      (char)65474, (char)65479,
+      (char)65482, (char)65487,
+      (char)65490, (char)65495,
+      (char)65498, (char)65500,
+      (char)65504, (char)65505,
+      (char)65509, (char)65510
+
+    };
+    
+
+
+    private static bool[] jletter_map, jletterdigit_map;
+
+    private bool check(int type, char c)
+    {
+    switch (type) {
+      case sym.JLETTERCLASS:
+        if (jletter_map == null)
+        {
+          jletter_map = new bool[65536];
+          for (int i=0; i < jletter_ranges.Length; i += 2)
+            for (char j=jletter_ranges[i]; j <= jletter_ranges[i + 1]; j++)
+              jletter_map[(int)j] = true;
+        }
+        return jletter_map[(int)c];
+
+      case sym.JLETTERDIGITCLASS:
+        if (jletterdigit_map == null)
+        {
+          jletterdigit_map = new bool[65536];
+          for (int i=0; i < jletterdigit_ranges.Length; i += 2)
+            for (char j=jletterdigit_ranges[i]; j <= jletterdigit_ranges[i + 1]; j++)
+              jletterdigit_map[(int)j] = true;
+        }
+        return jletterdigit_map[(int)c];
+
+      case sym.LETTERCLASS:
+        return char.IsLetter(c);
+        
+      case sym.DIGITCLASS:
+        return char.IsDigit(c);
+        
+      case sym.UPPERCLASS: 
+        return char.IsUpper(c);
+        
+      case sym.LOWERCLASS: 
+        return char.IsLower(c);
+        
+      default: return false;
+    }
+  }
+  
+  private ArrayList makePreClass(int type) {
+    
+    ArrayList result = new PrettyArrayList();
+    
+    char c = (char)0;
+    char start = (char)0;
+    char last = charClasses.getMaxCharCode();
+    
+    bool prev, current;
+    
+    prev = check(type,'\u0000');
+    
+    for (c = (char)1; c < last; c++) {
+      
+      current = check(type,c);
+      
+      if (!prev && current) start = c;
+      if (prev && !current) {
+        result.Add(new Interval(start, (char)(c-1)));
+      }
+      
+      prev = current;
+    }
+    
+    // the last iteration is moved out of the loop to
+    // avoid an endless loop if last == maxCharCode and
+    // last+1 == 0
+    current = check(type,c);
+    
+    if (!prev && current) result.Add(new Interval(c,c));
+    if (prev && current)  result.Add(new Interval(start, c));    
+    if (prev && !current) result.Add(new Interval(start, (char)(c-1)));
+
+    return result;
+  }
+  
+  private RegExp makeRepeat(RegExp r, int n1, int n2, int line, int col) {
+
+    if (n1 <= 0 && n2 <= 0) {
+      syntaxError(ErrorMessages.REPEAT_ZERO, line, col);
+      return null;
+    }
+
+    if (n1 > n2) {
+      syntaxError(ErrorMessages.REPEAT_GREATER, line, col);
+      return null;
+    }
+    
+    int i;
+    RegExp result;    
+
+    if (n1 > 0) {
+      result = r;
+      n1--; n2--; // we need one concatenation less than the number of expressions to match
+    }
+    else {
+      result = new RegExp1(sym.QUESTION,r);
+      n2--;
+    }
+
+    for (i = 0; i < n1; i++) 
+      result = new RegExp2(sym.CONCAT, result, r);
+      
+    n2-= n1;  
+    for (i = 0; i < n2; i++)
+      result = new RegExp2(sym.CONCAT, result, new RegExp1(sym.QUESTION,r));
+    
+    return result;
+  }
+
+  private RegExp makeNL() {
+    ArrayList list = new PrettyArrayList();
+    list.Add(new Interval('\n','\r'));
+    list.Add(new Interval('\u0085','\u0085'));
+    list.Add(new Interval('\u2028','\u2029'));
+
+	// assumption: line feeds are caseless
+    charClasses.makeClass(list, false);
+    charClasses.makeClass('\n', false);
+    charClasses.makeClass('\r', false);
+
+    RegExp1   c = new RegExp1(sym.CCLASS, list);
+    char      n = '\n';
+    char      r = '\r';
+
+    return new RegExp2(sym.BAR, 
+                       c, 
+                       new RegExp2(sym.CONCAT, 
+                                   new RegExp1(sym.CHAR, r), 
+                                   new RegExp1(sym.CHAR, n)));
+  }
+  
+:};
+
+parser code {:
+   public LexScan scanner;
+
+   public LexParse(LexScan scanner) : base(scanner) {
+     this.scanner = scanner;
+   }
+   
+   public CharClasses getCharClasses() {
+     return action_obj.charClasses;
+   }
+
+   public EOFActions getEOFActions() {
+     return action_obj.eofActions;
+   }
+       
+   public override void report_error(String message, Object info) {     
+     if ( info is java_cup.runtime.Symbol ) {
+       java_cup.runtime.Symbol s = (java_cup.runtime.Symbol) info;
+  
+       if (s.sym == sym.EOF) 
+         Out.error(ErrorMessages.UNEXPECTED_EOF);
+       else
+         Out.error(scanner.file, ErrorMessages.SYNTAX_ERROR, s.left, s.right);
+     }
+     else 
+       Out.error(ErrorMessages.UNKNOWN_SYNTAX);
+   }
+   
+   public override void report_fatal_error(String message, Object info) {
+     // report_error(message, info);
+     throw new GeneratorException();
+   }
+
+:};
+
+init with {:
+  action_obj.scanner = this.scanner;
+:};
+
+/* token declarations */
+
+terminal OPENBRACKET, CLOSEBRACKET, HAT, DOLLAR, OPENCLASS,
+         CLOSECLASS, DASH, DELIMITER, EQUALS, COMMA, LESSTHAN,
+         MORETHAN, LBRACE, RBRACE, FULL, UNICODE, REGEXPEND;
+
+terminal JLETTERCLASS, JLETTERDIGITCLASS, LETTERCLASS, DIGITCLASS, 
+         UPPERCLASS, LOWERCLASS, EOFRULE, NOACTION, LOOKAHEAD;
+         
+terminal Action ACTION;
+terminal String IDENT, USERCODE, EPILOGUE;
+terminal int REPEAT;
+
+/* tokens used in RegExp parse tree */
+terminal STAR, PLUS, BAR, QUESTION, POINT, BANG, TILDE;
+
+terminal char CHAR;
+terminal String STRING, MACROUSE;
+
+/* symbols *only* used in the parse tree (not in the grammar) */
+terminal CCLASS, CCLASSNOT, CONCAT;
+terminal STRING_I, CHAR_I;  /* case insensitive strings/chars */
+
+
+non terminal           macros, macro;
+non terminal Integer   rule;
+non terminal NFA       specification;
+non terminal RegExp    series, concs, nregexp, regexp, charclass, lookaheadOPT;
+non terminal Interval classcontentelem;
+non terminal ArrayList states, statesOPT, classcontent, preclass, rules;
+non terminal Boolean   hatOPT;
+non terminal Action    actions;
+
+
+/* grammar specification */
+start with specification;
+
+specification ::=  USERCODE
+                   /* delimiter is checked in lexer */
+                   macros
+                   DELIMITER 
+                   rules
+                   {:
+                     scanner.t.stop();
+
+                     Out.checkErrors();
+                     
+                     Out.time(ErrorMessages.PARSING_TOOK, t);
+                     
+                     macros.expand();
+                     IEnumerator unused = macros.unused();                     
+                     while ( unused.MoveNext() ) {
+                       Out.warning("Macro \""+unused.Current+"\" has been declared but never used.");
+                     }
+
+                     SemCheck.check(regExps, macros, charClasses.getMaxCharCode(), scanner.file);
+  
+                     regExps.checkActions();
+
+                     if (Options.dump) charClasses.dump();
+
+                     Out.print("Constructing NFA : ");
+
+                     t.start();
+                     int num = regExps.getNum();
+                     
+                     RESULT = new NFA(charClasses.getNumClasses(), 
+                                      scanner, regExps, macros, charClasses);
+                     
+                     eofActions.setNumLexStates(scanner.states.number());
+
+                     for (int i = 0; i < num; i++) {
+                       if (regExps.isEOF(i))
+                         eofActions.add( regExps.getStates(i), regExps.getAction(i) );
+                       else
+                         RESULT.addRegExp(i);
+                     }
+                     
+                     if (scanner.standalone) RESULT.addStandaloneRule();
+                     t.stop();
+       
+                     Out.time("");              
+	                 Out.time(ErrorMessages.NFA_TOOK, t);
+                     
+                   :}
+                 | USERCODE
+                   /* delimiter is checked in lexer */
+                   macros
+                   DELIMITER 
+                   rules
+                   DELIMITER
+                   EPILOGUE
+                   {:
+                     scanner.t.stop();
+
+                     Out.checkErrors();
+                     
+                     Out.time(ErrorMessages.PARSING_TOOK, t);
+                     
+                     macros.expand();
+                     IEnumerator unused = macros.unused();                     
+                     while ( unused.MoveNext() ) {
+                       Out.warning("Macro \""+unused.Current+"\" has been declared but never used.");
+                     }
+
+                     SemCheck.check(regExps, macros, charClasses.getMaxCharCode(), scanner.file);
+  
+                     regExps.checkActions();
+
+                     if (Options.dump) charClasses.dump();
+
+                     Out.print("Constructing NFA : ");
+
+                     t.start();
+                     int num = regExps.getNum();
+                     
+                     RESULT = new NFA(charClasses.getNumClasses(), 
+                                      scanner, regExps, macros, charClasses);
+                     
+                     eofActions.setNumLexStates(scanner.states.number());
+
+                     for (int i = 0; i < num; i++) {
+                       if (regExps.isEOF(i))
+                         eofActions.add( regExps.getStates(i), regExps.getAction(i) );
+                       else
+                         RESULT.addRegExp(i);
+                     }
+                     
+                     if (scanner.standalone) RESULT.addStandaloneRule();
+                     t.stop();
+       
+                     Out.time("");              
+	                 Out.time(ErrorMessages.NFA_TOOK, t);
+                     
+                   :}
+                 | /* emtpy spec. error */
+                   {: 
+                     fatalError(ErrorMessages.NO_LEX_SPEC);
+                   :}
+                 ;  
+
+macros        ::=  /* empty, most switches & state declarations are parsed in lexer */
+                | macros macro
+                | error;
+
+macro         ::=  FULL
+                   {: charClasses.setMaxCharCode(255); :}
+                |  UNICODE
+                   {: charClasses.setMaxCharCode(0xFFFF); :} 
+                |  IDENT:name EQUALS series:definition REGEXPEND
+                   {: macros.insert(name, definition); :} 
+                | IDENT EQUALS:e
+                   {: syntaxError(ErrorMessages.REGEXP_EXPECTED, eleft, eright); :}
+                ;
+                
+
+rules         ::=  rules:rlist rule:r
+                   {: rlist.Add(r.intValue()); RESULT = rlist; :}
+                |  rules:rlist1 LESSTHAN states:states MORETHAN LBRACE rules:rlist2 RBRACE
+                   {: 
+                     IEnumerator rs = rlist2.GetEnumerator();
+                     while ( rs.MoveNext() ) {
+                       int elem = (int) rs.Current;
+                       regExps.addStates( elem, states );
+                       rlist1.Add( elem );
+                     }                       
+                     RESULT = rlist1;
+                   :}
+                |  LESSTHAN states:states MORETHAN LBRACE rules:rlist RBRACE
+                   {: 
+                     IEnumerator rs = rlist.GetEnumerator();
+                     while ( rs.MoveNext() ) {
+                       int elem = (int) rs.Current;
+                       regExps.addStates( elem, states );
+                     }                       
+                     RESULT = rlist;
+                   :}
+                |  rule:r
+                   {: RESULT = new PrettyArrayList(); RESULT.Add(r.intValue()); :}
+                ;  
+
+rule          ::=  statesOPT:s hatOPT:bol series:r lookaheadOPT:l actions:a
+                   {: RESULT = new Integer(regExps.insert(rleft, s, r, a, bol, l)); :}
+                |  statesOPT:s EOFRULE ACTION:a
+                   {: RESULT = new Integer(regExps.insert(s, a)); :}
+                |  error
+                ;
+
+lookaheadOPT  ::=  DOLLAR
+                   {: RESULT = makeNL(); :}
+                |  LOOKAHEAD series:r
+                   {: RESULT = r; :}
+                |  /* empty */
+                   {: RESULT = null; :}
+                |  LOOKAHEAD series:s DOLLAR
+                   {: RESULT = new RegExp2(sym.CONCAT, s, makeNL()); :}
+                ;
+
+actions       ::=  REGEXPEND ACTION:a
+                   {: RESULT = a; :}
+                |  NOACTION
+                   {: RESULT = null; :}
+                ;
+
+                
+statesOPT     ::=  LESSTHAN states:list MORETHAN          
+                   {: RESULT = list; :}
+                |  /* empty */
+                   {: RESULT = new PrettyArrayList(); :}                   
+                ;
+                
+states        ::=  IDENT:id COMMA states:list
+                   {:
+                     stateNumber = scanner.states.getNumber( id );
+                     if ( stateNumber != null )
+                       list.Add( stateNumber.intValue() ); 
+                     else {
+                       throw new ScannerException(scanner.file, ErrorMessages.LEXSTATE_UNDECL, 
+                                                  idleft, idright);
+                     }
+                     RESULT = list;
+                   :}                
+                |  IDENT:id
+                   {:
+                     ArrayList list = new PrettyArrayList();
+                     stateNumber = scanner.states.getNumber( id );
+                     if ( stateNumber != null )
+                       list.Add( stateNumber.intValue() ); 
+                     else {
+                       throw new ScannerException(scanner.file, ErrorMessages.LEXSTATE_UNDECL, 
+                                                  idleft, idright);
+                     }
+                     RESULT = list;
+                   :}
+                 | IDENT COMMA:c
+                   {: syntaxError(ErrorMessages.REGEXP_EXPECTED, cleft, cright+1); :}
+                ;
+                
+hatOPT        ::=  HAT 
+                   {: // assumption: there is no upper case for \n
+                      charClasses.makeClass('\n', false); 
+                      RESULT = new Boolean(true); :}
+                |  /* empty */ 
+                   {: RESULT = new Boolean(false); :}
+                ;
+                
+series        ::= series:r1 BAR concs:r2
+                  {: RESULT = new RegExp2(sym.BAR, r1, r2); :}                 
+                | concs:r
+                  {: RESULT = r; :} 
+                | BAR:b
+                  {: syntaxError(ErrorMessages.REGEXP_EXPECTED, bleft, bright); :}
+                ;
+               
+concs         ::= concs:r1 nregexp:r2
+                  {: RESULT = new RegExp2(sym.CONCAT, r1, r2); :} 
+                | nregexp:r
+                  {: RESULT = r; :}
+                ;
+
+nregexp       ::= regexp:r
+                  {: RESULT = r; :}
+                | BANG nregexp:r
+                  {: RESULT = new RegExp1(sym.BANG, r); :}
+                | TILDE nregexp:r
+                  {: RESULT = new RegExp1(sym.TILDE, r); :}
+                ;
+
+regexp        ::=  regexp:r STAR
+                   {: RESULT = new RegExp1(sym.STAR, r); :}
+                |  regexp:r PLUS
+                   {: RESULT = new RegExp1(sym.PLUS, r); :}
+                |  regexp:r QUESTION
+                   {: RESULT = new RegExp1(sym.QUESTION, r); :}
+                |  regexp:r REPEAT:n RBRACE:b
+                   {: RESULT = makeRepeat(r, n, n, bleft, bright); :}
+                |  regexp:r REPEAT:n1 REPEAT:n2 RBRACE
+                   {: RESULT = makeRepeat(r, n1, n2, n1left, n2right); :}
+                |  OPENBRACKET series:r CLOSEBRACKET
+                   {: RESULT = r; :}
+                |  MACROUSE:ident
+                   {: 
+                      if ( !scanner.macroDefinition ) {
+                        if ( ! macros.markUsed(ident) ) 
+                          throw new ScannerException(scanner.file, ErrorMessages.MACRO_UNDECL, 
+                                                     identleft, identright);
+                      }
+                      RESULT = new RegExp1(sym.MACROUSE, ident); 
+                   :}
+                |  charclass:c
+                   {: RESULT = c; :}
+                |  preclass:list
+                   {:
+                     try {
+                       // assumption [correct?]: preclasses are already closed under case
+                       charClasses.makeClass(list, false);
+                     }
+                     catch (CharClassException) {
+                       syntaxError(ErrorMessages.CHARSET_2_SMALL, listleft);
+                     }
+                     RESULT = new RegExp1(sym.CCLASS, list);
+                   :}
+                |  STRING:str
+                   {: 
+                     try {
+                       if ( scanner.caseless ) {
+                         charClasses.makeClass(str, true);
+                         RESULT = new RegExp1(sym.STRING_I, str);
+                       }
+                       else {
+                         charClasses.makeClass(str, false);
+                         RESULT = new RegExp1(sym.STRING, str); 
+                       }
+                     }
+                     catch (CharClassException) {
+                       syntaxError(ErrorMessages.CS2SMALL_STRING, strleft, strright);
+                     }
+
+                   :}
+                |  POINT
+                   {: 
+                      ArrayList any = new PrettyArrayList();
+                      any.Add(new Interval('\n','\n'));
+                      // assumption: there is no upper case for \n
+                      charClasses.makeClass('\n', false);
+                      RESULT = new RegExp1(sym.CCLASSNOT, any); 
+                   :}
+                |  CHAR:c
+                   {: 
+                     try {
+                       if ( scanner.caseless ) {
+                         charClasses.makeClass(c, true);
+                         RESULT = new RegExp1(sym.CHAR_I, c);
+                       }
+                       else {
+                         charClasses.makeClass(c, false);
+                         RESULT = new RegExp1(sym.CHAR, c); 
+                       }
+                     }
+                     catch (CharClassException) {
+                       syntaxError(ErrorMessages.CS2SMALL_CHAR, cleft, cright);
+                     }
+                   :}
+                ;
+
+charclass     ::=  OPENCLASS CLOSECLASS
+                   {: 
+                     RESULT = new RegExp1(sym.CCLASS,null);
+                   :}
+                |  OPENCLASS classcontent:list CLOSECLASS:close
+                   {: 
+                     try {
+                       charClasses.makeClass(list, Options.jlex && scanner.caseless);
+                     }
+                     catch (CharClassException) {
+                       syntaxError(ErrorMessages.CHARSET_2_SMALL, closeleft, closeright);
+                     }
+                     RESULT = new RegExp1(sym.CCLASS,list);
+                   :}
+                |  OPENCLASS HAT CLOSECLASS:close
+                   {: 
+                     ArrayList list = new PrettyArrayList();
+                     list.Add(new Interval((char)0,CharClasses.maxChar));
+                     try {
+                       charClasses.makeClass(list, false);
+                     }
+                     catch (CharClassException) {
+                       syntaxError(ErrorMessages.CHARSET_2_SMALL, closeleft, closeright);
+                     }
+                     RESULT = new RegExp1(sym.CCLASS,list);
+                   :}
+                |  OPENCLASS HAT classcontent:list CLOSECLASS:close
+                   {: 
+                     try {
+                       charClasses.makeClassNot(list, Options.jlex && scanner.caseless);
+                     }
+                     catch (CharClassException) {
+                       syntaxError(ErrorMessages.CHARSET_2_SMALL, closeleft, closeright);
+                     }
+                     RESULT = new RegExp1(sym.CCLASSNOT,list);
+                   :}
+                | OPENCLASS DASH classcontent:list CLOSECLASS:close
+                   {: 
+                     try {
+                       list.Add(new Interval('-','-'));
+                       charClasses.makeClass(list, Options.jlex && scanner.caseless);
+                     }
+                     catch (CharClassException) {
+                       syntaxError(ErrorMessages.CHARSET_2_SMALL, closeleft, closeright);
+                     }
+                     RESULT = new RegExp1(sym.CCLASS,list);
+                   :}
+                |  OPENCLASS HAT DASH classcontent:list CLOSECLASS:close
+                   {: 
+                     try {
+                       list.Add(new Interval('-','-'));
+                       charClasses.makeClassNot(list, Options.jlex && scanner.caseless);
+                     }
+                     catch (CharClassException) {
+                       syntaxError(ErrorMessages.CHARSET_2_SMALL, closeleft, closeright);
+                     }
+                     RESULT = new RegExp1(sym.CCLASSNOT,list);
+                   :}
+                ;
+
+classcontent  ::=  classcontent:list classcontentelem:elem
+                   {:
+                     list.Add(elem);
+                     RESULT = list;
+                   :}
+                |  classcontentelem:elem
+                   {:
+                     ArrayList list = new PrettyArrayList();
+                     list.Add(elem);
+                     RESULT = list;
+                   :}
+                |  classcontent:list preclass:plist
+                   {:
+                     for (IEnumerator e = plist.GetEnumerator(); e.MoveNext();)
+                       list.Add(e.Current);
+                     RESULT = list;
+                   :}
+                |  preclass:list 
+                   {: RESULT = list; :}
+                |  classcontent:list STRING:s
+                   {: 
+                      for (int i = 0; i < s.Length; i++)
+                        list.Add(new Interval(s[i],s[i]));
+                      RESULT = list;
+                   :}
+                |  STRING:s
+                   {: 
+                      RESULT = new PrettyArrayList();
+                      for (int i = 0; i < s.Length; i++)
+                        RESULT.Add(new Interval(s[i],s[i]));
+                   :}
+                |  classcontent:list MACROUSE:ident
+                   {: 
+                     syntaxError(ErrorMessages.CHARCLASS_MACRO, identleft, identright);
+                   :}
+                |  MACROUSE:ident
+                   {: 
+                     syntaxError(ErrorMessages.CHARCLASS_MACRO, identleft, identright);
+                   :}
+                ;
+
+classcontentelem ::= CHAR:c1 DASH CHAR:c2
+                     {: RESULT = new Interval(c1, c2); :}
+                   | CHAR:c
+                     {: RESULT = new Interval(c, c); :}
+                   ;
+                   
+preclass ::= JLETTERCLASS
+             {: RESULT = makePreClass(sym.JLETTERCLASS); :}
+           | JLETTERDIGITCLASS 
+             {: RESULT = makePreClass(sym.JLETTERDIGITCLASS); :}
+           | LETTERCLASS
+             {: RESULT = makePreClass(sym.LETTERCLASS); :}
+           | DIGITCLASS
+             {: RESULT = makePreClass(sym.DIGITCLASS); :}
+           | UPPERCLASS
+             {: RESULT = makePreClass(sym.UPPERCLASS); :}
+           | LOWERCLASS
+             {: RESULT = makePreClass(sym.LOWERCLASS); :}
+           ;

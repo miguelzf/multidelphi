@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="ResMimeType">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="Version">
+    <value>1.0.0.0</value>
+  </resheader>
+  <resheader name="Reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=1.0.5000.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="Writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=1.0.5000.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="UNTERMINATED_STR">
+    <value>Unterminated string at end of line.</value>
+  </data>
+  <data name="EOF_WO_ACTION">
+    <value>&lt;&lt;EOF&gt;&gt; must be followed by an action.</value>
+  </data>
+  <data name="EOF_SINGLERULE">
+    <value>&lt;&lt;EOF&gt;&gt; can only be used as a single rule.</value>
+  </data>
+  <data name="UNKNOWN_OPTION">
+    <value>Unkown %-option</value>
+  </data>
+  <data name="UNEXPECTED_CHAR">
+    <value>Unexpected character </value>
+  </data>
+  <data name="UNEXPECTED_NL">
+    <value>Unexpected character &lt;newline&gt;</value>
+  </data>
+  <data name="LEXSTATE_UNDECL">
+    <value>Lexical state has not been declared.</value>
+  </data>
+  <data name="STATE_IDENT_EXP">
+    <value>State identifier expected.</value>
+  </data>
+  <data name="REPEAT_ZERO">
+    <value>Illegal repeat statement. At least one operand must be &gt; 0</value>
+  </data>
+  <data name="REPEAT_GREATER">
+    <value>Illegal repeat statement. First operand must not be greater than second one.</value>
+  </data>
+  <data name="REGEXP_EXPECTED">
+    <value>Regular expression expected.</value>
+  </data>
+  <data name="MACRO_UNDECL">
+    <value>Macro has not been declared.</value>
+  </data>
+  <data name="CHARSET_2_SMALL">
+    <value>Character set is too small for this class.</value>
+  </data>
+  <data name="CS2SMALL_STRING">
+    <value>Character set is too small for a charactor of this string.</value>
+  </data>
+  <data name="CS2SMALL_CHAR">
+    <value>Character set is too small for this character.</value>
+  </data>
+  <data name="CHARCLASS_MACRO">
+    <value>Macros in character classes are not supported.</value>
+  </data>
+  <data name="UNKNOWN_SYNTAX">
+    <value>Syntax error.</value>
+  </data>
+  <data name="SYNTAX_ERROR">
+    <value>Syntax error.</value>
+  </data>
+  <data name="NOT_AT_BOL">
+    <value>%-option is not at the beginning of the line.</value>
+  </data>
+  <data name="NO_MATCHING_BR">
+    <value>Didn't find matching bracket</value>
+  </data>
+  <data name="EOF_IN_ACTION">
+    <value>Unexpected end of file in action code</value>
+  </data>
+  <data name="EOF_IN_COMMENT">
+    <value>Unexpected end of file in comment</value>
+  </data>
+  <data name="EOF_IN_STRING">
+    <value>Unexpected end of file in string</value>
+  </data>
+  <data name="EOF_IN_MACROS">
+    <value>Unexpected end of file in macros</value>
+  </data>
+  <data name="EOF_IN_STATES">
+    <value>Unexpected end of file in state list</value>
+  </data>
+  <data name="EOF_IN_REGEXP">
+    <value>Unexpected end of file in regular expression</value>
+  </data>
+  <data name="UNEXPECTED_EOF">
+    <value>Unexpected end of file (maybe missing "*/" ")" "]" or "}")</value>
+  </data>
+  <data name="NO_LEX_SPEC">
+    <value>This seems not to be a lexical specification (first %% is missing)</value>
+  </data>
+  <data name="NO_LAST_ACTION">
+    <value>Last action in the specification must not be "|"</value>
+  </data>
+  <data name="LOOKAHEAD_ERROR">
+    <value>End of expression matches beginning of trailing context</value>
+  </data>
+  <data name="NO_DIRECTORY">
+    <value>No directory for -d option</value>
+  </data>
+  <data name="NO_SKEL_FILE">
+    <value>No file provided for -skel option</value>
+  </data>
+  <data name="WRONG_SKELETON">
+    <value>Incorrect skeleton file (wrong number of sections).</value>
+  </data>
+  <data name="OUT_OF_MEMORY">
+    <value>C# Flex has run out of memory.</value>
+  </data>
+  <data name="QUIL_INITTHROW">
+    <value>%initthrow needs a list of (qualified) identifiers</value>
+  </data>
+  <data name="QUIL_EOFTHROW">
+    <value>%eofthrow needs a list of (qualified) identifiers</value>
+  </data>
+  <data name="QUIL_YYLEXTHROW">
+    <value>%yylexthrow needs a list of (qualified) identifiers</value>
+  </data>
+  <data name="ZERO_STATES">
+    <value>Your scanner has zero states. Very funny.</value>
+  </data>
+  <data name="NO_BUFFER_SIZE">
+    <value>%buffer expects the size of the scanner buffer as decimal number</value>
+  </data>
+  <data name="NOT_READABLE">
+    <value>Could not open file.</value>
+  </data>
+  <data name="FILE_CYCLE">
+    <value>Cyclic file inclusion.</value>
+  </data>
+  <data name="FILE_WRITE">
+    <value>Error writing to file</value>
+  </data>
+  <data name="QUIL_SCANERROR">
+    <value>%scannerror needs a (qualified) identifier</value>
+  </data>
+  <data name="NEVER_MATCH">
+    <value>Rule can never be matched:</value>
+  </data>
+  <data name="QUIL_THROW">
+    <value>%throws needs a list of (qualified) identifiers</value>
+  </data>
+  <data name="EOL_IN_CHARCLASS">
+    <value>Unexpected newline in character class (closing "]" is missing)</value>
+  </data>
+  <data name="QUIL_CUPSYM">
+    <value>%cupsym needs a (qualified) identifier</value>
+  </data>
+  <data name="CUPSYM_AFTER_CUP">
+    <value>%cupsym should be used before %cup</value>
+  </data>
+  <data name="ALREADY_RUNNING">
+    <value>The generator is already running</value>
+  </data>
+  <data name="CANNOT_READ_SKEL">
+    <value>Cannot read skeleton file "{0}".</value>
+  </data>
+  <data name="READING_SKEL">
+    <value>Reading skeleton file "{0}".</value>
+  </data>
+  <data name="SKEL_IO_ERROR">
+    <value>IO problem reading skeleton file.</value>
+  </data>
+  <data name="SKEL_IO_ERROR_DEFAULT">
+    <value>IO problem reading default skeleton file.</value>
+  </data>
+  <data name="READING">
+    <value>Reading "{0}"</value>
+  </data>
+  <data name="CANNOT_OPEN">
+    <value>Sorry, couldn''t find the file "{0}".</value>
+  </data>
+  <data name="NFA_IS">
+    <value>NFA is</value>
+  </data>
+  <data name="NFA_STATES">
+    <value>{0} states in NFA</value>
+  </data>
+  <data name="DFA_TOOK">
+    <value>DFA construction took {0}</value>
+  </data>
+  <data name="DFA_IS">
+    <value>DFA is</value>
+  </data>
+  <data name="MIN_TOOK">
+    <value>Minimization took {0} </value>
+  </data>
+  <data name="MIN_DFA_IS">
+    <value>Miniminal DFA is</value>
+  </data>
+  <data name="WRITE_TOOK">
+    <value>Writing took {0}</value>
+  </data>
+  <data name="TOTAL_TIME">
+    <value>Overall scanner generation time: {0}</value>
+  </data>
+  <data name="IO_ERROR">
+    <value>An I/O-Error occured: {0}</value>
+  </data>
+  <data name="THIS_IS_CSFLEX">
+    <value>This is C# Flex {0}</value>
+  </data>
+  <data name="UNKNOWN_COMMANDLINE">
+    <value>Error: unknown option "{0}".</value>
+  </data>
+  <data name="MACRO_CYCLE">
+    <value>Macro {0} contains a cycle.</value>
+  </data>
+  <data name="MACRO_DEF_MISSING">
+    <value>Found no definition for '{{0}'} while expanding '{{1}'}</value>
+  </data>
+  <data name="PARSING_TOOK">
+    <value>Parsing took {0}</value>
+  </data>
+  <data name="NFA_TOOK">
+    <value>NFA construction took {0}</value>
+  </data>
+  <data name="NOT_CSHARP_SKELETON">
+    <value>Skeleton file is not C#-compatible</value>
+  </data>
+</root>
