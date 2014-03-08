@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="ast\Nodes.cs" />
     <Compile Include="ast\Processor.cs" />
+    <Compile Include="ast\ProcessorGenerated.cs" />
     <Compile Include="ast\VisitorTraverser.cs" />
     <Compile Include="ast\MapTraverser.cs" />
     <Compile Include="ast\Traverser.cs" />

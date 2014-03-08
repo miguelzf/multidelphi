@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 using crosspascal.cpp;
-using crosspascal.AST;
+using crosspascal.ast;
 using crosspascal.parser;
 
 namespace crosspascal

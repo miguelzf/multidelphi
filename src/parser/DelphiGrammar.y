@@ -5,6 +5,7 @@ using System.Collections;
 using System.IO;
 using System.Text;
 using System.Diagnostics;
+using crosspascal.parser.ast;
 
 namespace crosspascal.parser
 {

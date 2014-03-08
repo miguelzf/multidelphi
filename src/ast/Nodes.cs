@@ -14,12 +14,12 @@ namespace crosspascal.ast
 		Destructor
 	}
 
-	public enum Visibilty
+	public enum Scope
 	{
-		Published,
 		Public,
+		Protected,
 		Private,
-		Protected 
+		Published
 	}
 
 	public abstract class Node
@@ -365,7 +365,7 @@ namespace crosspascal.ast
 
 	public class StringLabel : LabelNode
 	{
-		IdentifierNode name;
+		public IdentifierNode name;
 
 		public StringLabel(IdentifierNode name)
 		{
@@ -375,7 +375,7 @@ namespace crosspascal.ast
 
 	public class NumberLabel : LabelNode
 	{
-		int number;
+		public int number;
 
 		public NumberLabel(int number)
 		{
@@ -385,8 +385,8 @@ namespace crosspascal.ast
 
 	public class LabelDeclarationNode : DeclarationNode
 	{
-		LabelNode label;
-		LabelDeclarationNode next;
+		public LabelNode label;
+		public LabelDeclarationNode next;
 
 		public LabelDeclarationNode(LabelNode label, LabelDeclarationNode next)
 		{
@@ -397,9 +397,9 @@ namespace crosspascal.ast
 
 	public class ExportItem : DeclarationNode
 	{
-		IdentifierNode ident;
-		string name;
-		ExpressionNode index;
+		public IdentifierNode ident;
+		public string name;
+		public ExpressionNode index;
 
 		public ExportItem(IdentifierNode ident, string name, ExpressionNode index)
 		{
@@ -411,8 +411,8 @@ namespace crosspascal.ast
 
 	public class ExportItemListNode : DeclarationNode
 	{
-		ExportItem export;
-		ExportItemListNode next;
+		public ExportItem export;
+		public ExportItemListNode next;
 
 
 	}
@@ -665,8 +665,8 @@ namespace crosspascal.ast
 
 	public class ExpressionListNode : Node
 	{
-		ExpressionNode exp;
-		ExpressionListNode next;
+		public ExpressionNode exp;
+		public ExpressionListNode next;
 
 		public ExpressionListNode(ExpressionNode exp, ExpressionListNode next)
 		{
@@ -689,8 +689,8 @@ namespace crosspascal.ast
 
 	public class FieldInit : Node
 	{
-		IdentifierNode ident;
-		ExpressionNode expr;
+		public IdentifierNode ident;
+		public ExpressionNode expr;
 
 		public FieldInit(IdentifierNode ident, ExpressionNode expr)
 		{
@@ -701,8 +701,8 @@ namespace crosspascal.ast
 
 	public class FieldInitList : Node
 	{
-		FieldInit init;
-		FieldInitList next;
+		public FieldInit init;
+		public FieldInitList next;
 
 		public FieldInitList(FieldInit init, FieldInitList next)
 		{
@@ -760,14 +760,6 @@ namespace crosspascal.ast
 	public class ClassProperty : ClassContent
 	{
 		
-	}
-
-	public enum Scope
-	{
-		Public,
-		Protected,
-		Private,
-		Published
 	}
 
 	public class ClassStruct : ClassContent
@@ -1037,7 +1029,7 @@ namespace crosspascal.ast
 
 	public class AssemblerProcedureBodyNode : ProcedureBodyNode
 	{
-		AssemblerListNode asm;
+		public AssemblerListNode asm;
 
 		public AssemblerProcedureBodyNode(AssemblerListNode asm) : base(null, null)
 		{

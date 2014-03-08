@@ -11,7 +11,7 @@ namespace crosspascal.ast
 
 	public delegate void TreeTraverse(Node n);
 
-	public abstract class Processor
+	public abstract partial class Processor
 	{
 		public TreeTraverse traverse { get; set; }
 

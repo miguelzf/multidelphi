@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
-using crosspascal.AST;
+using crosspascal.ast;
 using crosspascal.utils;
 using crosspascal.parser;
 
