@@ -132,6 +132,7 @@ namespace crosspascal.parser
 
 
 %type<bool>  staticclassopt ofobjectopt
+%type<GoalNode> goal file
 %type<ProgramNode> program
 %type<LibraryNode> library
 %type<UnitNode> unit
@@ -140,13 +141,13 @@ namespace crosspascal.parser
 %type<IdentifierNode> id useid externarg qualid
 %type<UnitImplementationNode> implementsec
 %type<UnitInterfaceNode> interfsec
-%type<DeclarationListNode> interfdecllist maindecllist
+%type<DeclarationListNode> interfdecllist maindecllist declseclist
 %type<UnitInitialization> initsec
 %type<BlockWithDeclarationsNode> main_block
 %type<DeclarationNode> interfdecl maindeclsec funcdeclsec basicdeclsec typesec labeldeclsec labelidlist  varsec thrvarsec vardecllist vardecl constdecl typedecl
 %type<LabelNode> labelid
 %type<ExportItem> exportsec	 exportsitemlist exportsitem
-%type<ProcedureDefinitionNode> procdefinition
+%type<ProcedureDefinitionNode> procdefinition procdeclnondef
 %type<ProcedureHeaderNode> procdefproto procproto proceduretype
 %type<ProcedureBodyNode> proc_define func_block
 %type<TypeNode> funcrettype simpletype funcretopt funcparamtype paramtypeopt paramtypespec
@@ -192,23 +193,20 @@ namespace crosspascal.parser
 %type<VarDeclarationNode> objfield
 %type<InterfaceDefinition> interftype
 %type<ClassProperty> property
-%type<bool> typeopt
-%type<TypeNode> type vartype packedtype classreftype simpletype ordinaltype
+%type<bool> typeopt 
+%type<TypeNode> type vartype packedtype classreftype simpletype ordinaltype casttype
 %type<TypeNode> scalartype realtype inttype chartype stringtype varianttype funcrettype
 %type<TypeNode> structype restrictedtype arraytype settype filetype refpointertype funcparamtype 
+%type<ArraySizeList>  arraysizelist
+%type<ArraySizeList> arraytypedef
 
 /*!!missing:
-declseclist
-procdeclnondef
 defaultdiropt
 propinterfopt
 idlisttypeidlist
 idlisttypeid
 indexspecopt
 propspecifiers
-arraysizelist
-arraytypedef
-casttype
 */
 		
 
@@ -298,9 +296,7 @@ casttype
 
 %%
 
-goal: file KW_DOT		{	$$.val = new Node($$1.val); 
-							YYACCEPT();
-						}
+goal: file KW_DOT		{	$$ = $1; YYACCEPT();	}
 	;
 
 file
@@ -401,8 +397,8 @@ maindecllist
 	;
 
 declseclist
-	: funcdeclsec				{ $$ = new UnfinishedNode($1);}
-	| declseclist funcdeclsec	{ $$ = new UnfinishedNode($2);}
+	: funcdeclsec				{ $$ = new DeclarationListNode($1, null);}
+	| declseclist funcdeclsec	{ $$ = new DeclarationListNode($2, $1);}
 	;
 
 	
@@ -458,14 +454,14 @@ labelidlist
 	;
 
 labelid
-	: CONST_INT /* must be decimal integer in the range 0..9999 */	{ $$ = new NumberLabelNode($1); }
+	: CONST_INT /* must be decimal integer in the range 0..9999 */	{ $$ = new NumberLabelNode(yyLex.value()); }
 	| id															{ $$ = new StringLabelNode($1); }
 	;
 
 	// Exports
 		
 exportsec	
-	: KW_EXPORTS exportsitemlist		{ $$ = $1; }
+	: KW_EXPORTS exportsitemlist		{ $$ = $2; }
 	;
 
 exportsitemlist
@@ -490,7 +486,7 @@ exportsitem
 
 	// proc decl for impl sections, needs a external/forward
 procdeclnondef
-	: procdefproto func_nondef_list funcdir_strict_opt
+	: procdefproto func_nondef_list funcdir_strict_opt	{ $$ = new ProcedureDefinitionNode($1, null); } 
 	;
 
 procdefinition
@@ -544,7 +540,7 @@ proc_define
 
 func_block
 	: declseclist block			{ $$ = new ProcedureBodyNode($1, $2); }
-	| 			  block			{ $$ = new ProcedureBodyNode(null, $2); }
+	| 			  block			{ $$ = new ProcedureBodyNode(null, $1); }
 	;
 
 formalparams
@@ -561,7 +557,7 @@ formalparamslist
 formalparm
 	: paramqualif	idlist paramtypeopt					{ $$ = new ParameterNode($1, $2, $3, null); } 
 	| 				idlist paramtypespec paraminitopt	{ $$ = new ParameterNode(null, $1, $2, $3); }
-	| KW_CONST		idlist paramtypeopt paraminitopt	{ $$ = new ParameterNode(new ConstParameterQualifier(), $1, $2, $3); }
+	| KW_CONST		idlist paramtypeopt paraminitopt	{ $$ = new ParameterNode(new ConstParameterQualifier(), $2, $3, $4); }
 	;
 
 paramqualif
@@ -667,7 +663,7 @@ funccallconv
 	// ========================================================================
 	
 block
-	: KW_BEGIN stmtlist KW_END		{ $$ = $1; }
+	: KW_BEGIN stmtlist KW_END		{ $$ = $2; }
 	;
 
 stmtlist
@@ -707,7 +703,7 @@ inheritstmts
 
 assign
 	: lvalue KW_ASSIGN expr					{ $$ = new AssignementStatement($1, $3, false); }
-	| lvalue KW_ASSIGN KW_INHERITED expr	{ $$ = new AssignementStatement($1, $3, true); }
+	| lvalue KW_ASSIGN KW_INHERITED expr	{ $$ = new AssignementStatement($1, $4, true); }
 	;
 
 
@@ -748,7 +744,7 @@ caselabellist
 	// all exprs must be evaluate to const
 caselabel
 	: expr								{ $$ = new CaseLabel($1, null); }
-	| expr KW_RANGE expr				{ $$ = new CaseLabel($1, $2); }
+	| expr KW_RANGE expr				{ $$ = new CaseLabel($1, $3); }
 	;
 
 repeatstmt
@@ -796,7 +792,7 @@ tryfinallystmt
 raisestmt
 	: KW_RAISE							{ $$ = new RaiseStatement(null, null); }
 	| KW_RAISE lvalue					{ $$ = new RaiseStatement($2, null); }
-	| KW_RAISE			KW_AT expr		{ $$ = new RaiseStatement(null, $2); }
+	| KW_RAISE			KW_AT expr		{ $$ = new RaiseStatement(null, $3); }
 	| KW_RAISE lvalue	KW_AT expr		{ $$ = new RaiseStatement($2, $4); }
 	;
 
@@ -805,8 +801,8 @@ assemblerstmt
 	;
 
 asmcode
-	: ASM_OP					{ $$ = new AssemblerListNode($1, null); }
-	| asmcode ASM_OP			{ $$ = new AssemblerListNode($2, $1); }
+	: ASM_OP					{ $$ = null; }
+	| asmcode ASM_OP			{ $$ = null; }
 	;
 
 
@@ -818,11 +814,11 @@ asmcode
 	// ========================================================================
 
 varsec
-	: KW_VAR vardecllist		{ $$ = $1; }
+	: KW_VAR vardecllist		{ $$ = $2; }
 	;
 	
 thrvarsec
-	: KW_THRVAR vardecllist		{ $$ = $1; }
+	: KW_THRVAR vardecllist		{ $$ = $2; }
 	;
 
 vardecllist
@@ -941,8 +937,8 @@ idlist
 	;
 
 qualid
-	: id				{ $$ = new IdentifierListNode($1, null); }
-	| qualid KW_DOT id	{ $$ = new UnfinishedNode($1); }
+	: id				{ $$ = $1; }
+	| qualid KW_DOT id	{ $$ = new IdentifierNodeWithField($3.value, $1.value); }
 	;
 	
 exprlist
@@ -1181,16 +1177,16 @@ classproplist
 
 property
 	: KW_PROPERTY id SEMICOL		{ $$ = null; }
-	| KW_PROPERTY id propinterfopt COLON funcrettype indexspecopt propspecifiers SEMICOL defaultdiropt { $$ = new ClassProperty($2, $3, $4, $6); }
+	| KW_PROPERTY id propinterfopt COLON funcrettype indexspecopt propspecifiers SEMICOL defaultdiropt { $$ = new ClassProperty($2, $5, $6, $4, $7, $9); }
 	;
 
 defaultdiropt
 	:
-	| id SEMICOL	// id == DEFAULT
+	| id SEMICOL	{ $$ = new PropertyDefault($1); }	// id == DEFAULT
 	;
 
 propinterfopt
-	:
+	:									{ $$ = null; }
 	| LBRAC idlisttypeidlist RBRAC
 	;
 	
@@ -1205,8 +1201,8 @@ idlisttypeid
 	;
 
 indexspecopt
-	:
-	| KW_INDEX expr
+	:					{ $$ = null; }
+	| KW_INDEX expr		{ $$ = new PropertyIndex($2); } 
 	;
 
 
@@ -1291,19 +1287,19 @@ vartype
 	;
 
 packedtype
-	: structype						{ $$ = new UnfinishedNode($1); }
-	| restrictedtype				{ $$ = new UnfinishedNode($1); }
+	: structype						{ $$ = $1; }
+	| restrictedtype				{ $$ = $1; }
 	;
 
 classreftype
-	: KW_CLASS KW_OF scalartype		{ $$ = new UnfinishedNode($1); }
+	: KW_CLASS KW_OF scalartype		{ $$ = new ClassType($3); }
 	;
 
 simpletype
 	: scalartype				{ $$ = $1; }
 	| realtype					{ $$ = $1; }
 	| stringtype				{ $$ = $1; }
-	| TYPE_PTR					{ $$ = new PointerType(); }
+	| TYPE_PTR					{ $$ = new PointerType(null); }
 	;
 
 ordinaltype
@@ -1355,14 +1351,14 @@ stringtype
 	;
 
 varianttype
-	: TYPE_VAR			{ $$ = new UnfinishedNode($1); }
-	| TYPE_OLEVAR		{ $$ = new UnfinishedNode($1); }
+	: TYPE_VAR			{ $$ = new VariantType($1); }
+	| TYPE_OLEVAR		{ $$ = new VariantType($1); }
 	;
 
 structype
-	: arraytype			{ $$ = new UnfinishedNode($1); }
-	| settype			{ $$ = new UnfinishedNode($1); }
-	| filetype			{ $$ = new UnfinishedNode($1); }
+	: arraytype			{ $$ = $1; }
+	| settype			{ $$ = $1; }
+	| filetype			{ $$ = $1; }
 	;
 	
 restrictedtype
@@ -1371,24 +1367,24 @@ restrictedtype
 	;
 
 arraysizelist
-	: rangetype								{ $$ = $1; }
-	| arraysizelist COMMA rangetype			{ $$ = new UnfinishedNode($1); }
+	: rangetype								{ $$ = new ArraySizeList($1, null); }
+	| arraysizelist COMMA rangetype			{ $$ = new ArraySizeList($3, $1); }
 	;
 
 arraytype
-	: TYPE_ARRAY LBRAC arraytypedef RBRAC KW_OF type /*port_opt*/	{ $$ = new UnfinishedNode($1); }
-	| TYPE_ARRAY KW_OF type /*port_opt*/	{ $$ = new UnfinishedNode($1); }
+	: TYPE_ARRAY LBRAC arraytypedef RBRAC KW_OF type /*port_opt*/	{ $$ = new ArrayType($3, $6); }
+	| TYPE_ARRAY KW_OF type /*port_opt*/	{ $$ = new ArrayType(null, $3); }
 	;
 
 arraytypedef
 	: arraysizelist		{ $$ = $1; }
-	| inttype			{ $$ = $1; }
-	| chartype			{ $$ = $1; }
-	| qualid			{ $$ = $1; }
+	| inttype			{ $$ = new ArrayTypeList($1); }
+	| chartype			{ $$ = new ArrayTypeList($1); }
+	| qualid			{ $$ = new ArrayTypeList($1); }
 	;
 
 settype
-	: TYPE_SET KW_OF ordinaltype /*port_opt*/		{ $$ = new UnfinishedNode($1); }
+	: TYPE_SET KW_OF ordinaltype /*port_opt*/		{ $$ = new SetType($3); }
 	;
 
 filetype
@@ -1397,12 +1393,12 @@ filetype
 	;
 
 refpointertype
-	: KW_DEREF type /*port_opt*/				{ $$ = new UnfinishedNode($1); }
+	: KW_DEREF type /*port_opt*/				{ $$ = new PointerType($2); }
 	;
 
 funcparamtype
-	: simpletype								{ $$ = new UnfinishedNode($1); }
-	| TYPE_ARRAY KW_OF simpletype /*port_opt*/	{ $$ = new UnfinishedNode($1); }
+	: simpletype								{ $$ = $1; }
+	| TYPE_ARRAY KW_OF simpletype /*port_opt*/	{ $$ = new ArrayType(null, $3); }
 	;
 
 funcrettype
@@ -1411,11 +1407,11 @@ funcrettype
 	
 	// simpletype w/o user-defined types
 casttype
-	: inttype			{ $$ = new UnfinishedNode($1); }
-	| chartype			{ $$ = new UnfinishedNode($1); }
-	| realtype			{ $$ = new UnfinishedNode($1); }
-	| stringtype		{ $$ = new UnfinishedNode($1); }
-	| TYPE_PTR			{ $$ = new UnfinishedNode($1); }
+	: inttype			{ $$ = $1; }
+	| chartype			{ $$ = $1; }
+	| realtype			{ $$ = $1; }
+	| stringtype		{ $$ = $1; }
+	| TYPE_PTR			{ $$ = $1; }
 	;
 
 
