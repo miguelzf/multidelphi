@@ -264,13 +264,20 @@ public class MainClass {
         continue;
       }
 
-	/*	// Miguel: only CSharp now
-      if ( (argv[i] == "--csharp") || (argv[i] == "-cs") ) 
-      {
-        Options.emit_csharp = true;
-        continue;
-      }
-	 */
+	// Miguel: create partial class
+	  if ((argv[i] == "--partial") || (argv[i] == "-partial"))
+	  { //$NON-NLS-1$ //$NON-NLS-2$
+		  Options.partialclass = true;
+		  continue;
+	  }
+	  
+		/*	// Miguel: only CSharp now
+		if ( (argv[i] == "--csharp") || (argv[i] == "-cs") ) 
+		{
+		  Options.emit_csharp = true;
+		  continue;
+		}
+	   */
       
       if ( argv[i].StartsWith("-") ) { //$NON-NLS-1$
         Out.error(ErrorMessages.UNKNOWN_COMMANDLINE, argv[i]);

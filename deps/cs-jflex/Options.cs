@@ -77,7 +77,9 @@ public class Options {
   /** If true, the output will be C# code instead of Java.  */
   public static bool emit_csharp;
 
-	static Options() { setDefaults();	}
+  public static bool partialclass;
+
+  static Options() { setDefaults(); }
 
 
   /**
@@ -131,6 +133,7 @@ public class Options {
     dot = false;
     dump = false;
 	emit_csharp = true;
+	partialclass = false;
   }
 
   public static void setSkeleton(File skel) {

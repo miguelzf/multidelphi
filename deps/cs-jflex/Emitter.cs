@@ -558,6 +558,9 @@ sealed public class Emitter {
         print("final ");
     }
     
+	if (Options.partialclass)
+		print("partial ");
+	
     print("class ");
     print(scanner.className);
     
