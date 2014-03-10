@@ -91,8 +91,12 @@ public class Skeleton {
   /**
    * Emits the next part of the skeleton
    */
-  public void emitNext() {
-    if (isCSharpSkeleton)
+  public void emitNext()
+  {
+	  // Miguel: only emit Csharp
+	  @out.Write(line[pos++]);
+	/* 
+	  if (isCSharpSkeleton)
     {
       if (Options.emit_csharp)
       {
@@ -115,6 +119,7 @@ public class Skeleton {
 
       @out.Write( line[pos++] );
     }
+	 */
   }
 
 
@@ -179,7 +184,7 @@ public class Skeleton {
    * @throws GeneratorException if the number of skeleton sections does not match 
    */
   public static void readSkel(TextReader reader) {
-    isCSharpSkeleton = false;
+    isCSharpSkeleton = true;
     notCSharpSkeletonWarned = false;
 
     ArrayList lines = new PrettyArrayList();
@@ -198,7 +203,7 @@ public class Skeleton {
 
     if (section.Length > 0)
       lines.Add(section.ToString());
-
+/*
     if (lines.Count != size) {
       if (lines.Count == size * 2) 
         isCSharpSkeleton = true;
@@ -208,7 +213,7 @@ public class Skeleton {
         throw new GeneratorException();
       }
     }
-
+*/
     line = new String[lines.Count];
     for (int i = 0; i < lines.Count; i++)
       line[i] = (String) lines[i];

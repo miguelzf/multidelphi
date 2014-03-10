@@ -51,6 +51,8 @@ public class Options {
 
 	// Miguel: disable generation of #line's by default
 	public static bool emitlines = true;
+	// Miguel: control debug code gen thru the cmdline
+	public static bool debug = false;
 
 	/** output directory */
 	private static File directory;
@@ -128,6 +130,7 @@ public class Options {
     time = false;
     dot = false;
     dump = false;
+	emit_csharp = true;
   }
 
   public static void setSkeleton(File skel) {

@@ -90,6 +90,9 @@ sealed public class Emitter {
 
     String name;
 
+	if (Options.debug)
+		parser.scanner.debugOption = true;
+
     if (Options.emit_csharp)
       name = parser.scanner.className + ".cs";
     else
