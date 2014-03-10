@@ -349,6 +349,27 @@ namespace crosspascal.ast
 		}
 	}
 
+	public class PropertyDefault : Node
+	{
+		public IdentifierNode ident;
+
+		public PropertyDefault(IdentifierNode ident)
+		{
+			this.ident = ident;
+		}
+	}
+
+	public class PropertyIndex : Node
+	{
+		public ExpressionNode expr;
+
+		public PropertyIndex(ExpressionNode expr)
+		{
+			this.expr = expr;
+		}
+	}
+
+
 	public class FileType : TypeNode
 	{
 		public TypeNode type;
@@ -357,6 +378,20 @@ namespace crosspascal.ast
 		{
 			this.type = type;
 		}
+	}
+
+	public class ClassType : TypeNode
+	{
+		public TypeNode baseType;
+
+		public ClassType(TypeNode baseType)
+		{
+			this.baseType = baseType;
+		}
+	}
+
+	public class VariantType : TypeNode
+	{ 
 	}
 
 	public abstract class LabelNode : Node
@@ -498,6 +533,12 @@ namespace crosspascal.ast
 
 	public class PointerType : TypeNode
 	{
+		public TypeNode type;
+
+		public PointerType(TypeNode type)
+		{
+			this.type = type;
+		}
 	}
 
 	public class IntegerType : TypeNode
@@ -759,7 +800,20 @@ namespace crosspascal.ast
 
 	public class ClassProperty : ClassContent
 	{
-		
+		public IdentifierNode ident;
+		public TypeNode type;
+		public PropertyIndex index;
+		public PropertySpecifierNode specs;
+		public PropertyDefault def;
+
+		public ClassProperty(IdentifierNode ident, TypeNode type, PropertyIndex index, PropertySpecifierNode specs, PropertyDefault def)
+		{
+			this.ident = ident;
+			this.type = type;
+			this.index = index;
+			this.specs = specs;
+			this.def = def;
+		}		
 	}
 
 	public class ClassStruct : ClassContent
@@ -1162,6 +1216,17 @@ namespace crosspascal.ast
 		}
 	}
 
+	public class IdentifierNodeWithField : IdentifierNode
+	{
+		public string qualid;
+
+		public IdentifierNodeWithField(string value, string qualid)
+			: base(value)
+		{
+			this.qualid = qualid;
+		}
+	}
+
 	public class UsesNode : Node
 	{
 		public IdentifierNode ident;
@@ -1319,5 +1384,52 @@ namespace crosspascal.ast
 
 	}
 
+	public class ArrayType : TypeNode
+	{
+		public ArraySizeList size;
+		public TypeNode type;
+
+		public ArrayType(ArraySizeList size, TypeNode type)
+		{
+			this.size = size;
+			this.type = type;
+		}
+	}
+
+	public class ArraySizeList : Node
+	{
+	}
+
+	public class ArrayRangeList : ArraySizeList
+	{
+		public SetElement range;
+		public ArraySizeList next;
+
+		public ArrayRangeList(SetElement range, ArraySizeList next)
+		{
+			this.range = range;
+			this.next = next;
+		}
+	}
+
+	public class ArrayTypeList : ArraySizeList
+	{ 
+		public TypeNode range;
+		
+		public ArrayTypeList(TypeNode range)
+		{
+			this.range = range;
+		}
+	}
+
+	public class SetType : TypeNode
+	{
+		public TypeNode type;
+
+		public SetType(TypeNode type)
+		{
+			this.type = type;
+		}
+	}
 
 }
