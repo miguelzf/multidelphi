@@ -11,6 +11,7 @@ end
 
 $genfile="ProcessorGenerated.cs"
 $genclassname="Processor"
+$genbasevisitor = true
 
 $srcfilename=ARGV[0]
 if !File.exist?($srcfilename)
@@ -33,7 +34,7 @@ ASTNode = Struct.new(:name, :fields) do
 end
 
 
-def gen_code(nodes, gen_method)
+def gen_code(nodes, gen_method, isbase)
 	arrcode = []
 	arrcode << "// ======================================================================"
 	arrcode << "// Base Processor/Visitor class, auto-generated							"
@@ -46,11 +47,16 @@ def gen_code(nodes, gen_method)
 	arrcode << ""
 	arrcode << "namespace crosspascal.ast"
 	arrcode << "{"
-	arrcode << "\t" + "public abstract partial class " + $genclassname
+	if isbase
+		arrcode << "\t" + "public abstract partial class " + $genclassname
+	elsif
+		arrcode << "\t" + "public class " + $genclassname + " : Processor"
+	end
 	arrcode << "\t{"
 	arrcode << "\t\t//	Complete interface to be implemented by any specific AST processor	"
 
-	codeLines = nodes.map { |x| gen_concrete_visit(x) }
+	nodesNames	= nodes.map { |x| x.name }
+	codeLines	= nodes.map { |x| gen_concrete_visit(x,nodesNames) }
 	codeLines.each do |x| x.insert(0, "\t\t") end
 	text = codeLines.join("\n\t\t")
 	arrcode << text
@@ -60,16 +66,26 @@ def gen_code(nodes, gen_method)
 	arrcode 
 end
 
-def gen_abstract_visit(node)
+def gen_abstract_visit(node,names)
 	cname = node.name
 	cfields = node.fields
-	
 	arrcode = []
 	arrcode << "public abstract void Visit(" + cname  + " node);"
 	arrcode 
 end
 
-def gen_concrete_visit(node)
+def gen_warning_visit(node,names)
+	cname = node.name
+	cfields = node.fields
+	arrcode = []
+	arrcode << "public virtual void Visit(" + cname  + " node)"
+	arrcode << "{"
+	arrcode << "\tConsole.Error.WriteLine(\"Visit("+cname + ") not yet implemented.\");"
+	arrcode << "}"
+	arrcode 
+end
+
+def gen_concrete_visit(node,names)
 	cname = node.name
 	cfields = node.fields
 	
@@ -77,12 +93,9 @@ def gen_concrete_visit(node)
 	arrcode << "public virtual void Visit(" + cname  + " node)"
 	arrcode << "{"
 	
-	primitypes = ['bool', 'int', 'char', 'float', 'double', 'long int', 'short int', 'string']
-	enums = ['FunctionKind', 'Scope', 'CallConvention', 'ClassType', 'ProcedureDirectiveEnum']
-	
 	for field in cfields
 		type,name = field.split(' ')[0,2];
-		if !primitypes.include? type and !enums.include? type
+		if names.include? type
 			arrcode << "\t" + "traverse(node." + name + ");"
 		end
 	end
@@ -117,7 +130,7 @@ dirpath = File.dirname($srcfilename)
 genfilename = dirpath+File::SEPARATOR+$genfile
 
 nodelines = File.readlines($srcfilename).each { |x| x.strip! }
-classes = Array.new
+nodes = Array.new
 
 for i in 0 ... nodelines.size
 	line = nodelines[i]
@@ -158,7 +171,7 @@ for i in 0 ... nodelines.size
 			fields = process_class(classname, classtext);
 			node = ASTNode.new(classname,fields)
 			#node.print
-			classes.push(node)
+			nodes.push(node)
 		end
 	end
 end
@@ -167,7 +180,7 @@ end
 genmethod = method(:gen_concrete_visit)	# to generate Visitors/Processors with virtual methods that traverse each field
 #genmethod = method(:gen_abstract_visit))	# to generate Visitors/Processors with abstract methods without body
 
-output = gen_code classes,genmethod
+output = gen_code nodes,genmethod,$genbasevisitor
 
 File.open(genfilename, "w").puts(output)
 
