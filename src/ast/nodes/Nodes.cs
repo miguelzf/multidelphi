@@ -102,9 +102,31 @@ namespace crosspascal.ast.nodes
 	///				enums, sets, ranges, initializers TODO
 	///				
 	///		Types
-	///			....	TODO
+	///			ArrayType
+	///			SetType		
+	///			FileType
+	///			ClassType
+	///			VariantType
+	///			CharType
+	///			BoolType
+	///			IntegerType
+	///				UnsignedInt8Type
+	///				UnsignedInt16Type
+	///				UnsignedInt32Type
+	///				UnsignedInt64Type
+	///				SignedInt8Type
+	///				SignedInt16Type
+	///				SignedInt32Type
+	///				SignedInt64Type
+	///			FloatingPointType
+	///				FloatType
+	///				DoubleType
+	///				ExtendedType
+	///				CurrencyType
+	///			StringType
+	///			InterfaceDefinition
 	///			
-	/// </summary>
+	///  </summary>
 
 
 
