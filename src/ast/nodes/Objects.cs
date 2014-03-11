@@ -15,7 +15,7 @@ namespace crosspascal.ast.nodes
 		Published
 	}
 
-	public class FieldInit : DelphiNode
+	public class FieldInit : Node
 	{
 		public IdentifierNode ident;
 		public DelphiExpression expr;
@@ -27,7 +27,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class FieldInitList : DelphiNode
+	public class FieldInitList : Node
 	{
 		public FieldInit init;
 		public FieldInitList next;
@@ -39,19 +39,19 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ClassFieldList : DelphiNode
+	public class ClassFieldList : Node
 	{
-		public VarDeclarationNode decl;
+		public VarDeclaration decl;
 		public ClassFieldList next;
 
-		public ClassFieldList(VarDeclarationNode decl, ClassFieldList next)
+		public ClassFieldList(VarDeclaration decl, ClassFieldList next)
 		{
 			this.decl = decl;
 			this.next = next;
 		}
 	}
 
-	public abstract class ClassContent : DelphiNode
+	public abstract class ClassContent : Node
 	{
 
 	}
@@ -70,9 +70,9 @@ namespace crosspascal.ast.nodes
 
 	public class ClassMethod : ClassContent
 	{
-		public ProcedureHeaderNode decl;
+		public RoutineDeclaration decl;
 
-		public ClassMethod(ProcedureHeaderNode decl)
+		public ClassMethod(RoutineDeclaration decl)
 		{
 			this.decl = decl;
 		}
@@ -96,13 +96,13 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ClassStruct : ClassContent
+	public class ClassBody : ClassContent
 	{
 		public Scope scope;
 		public ClassFieldList fields;
 		public ClassContentList content;
 
-		public ClassStruct(Scope scope, ClassFieldList fields, ClassContentList content)
+		public ClassBody(Scope scope, ClassFieldList fields, ClassContentList content)
 		{
 			this.scope = scope;
 			this.fields = fields;
@@ -111,7 +111,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public class PropertyReadNode : DelphiNode
+	public class PropertyReadNode : Node
 	{
 		public IdentifierNode ident;
 
@@ -121,7 +121,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class PropertyWriteNode : DelphiNode
+	public class PropertyWriteNode : Node
 	{
 		public IdentifierNode ident;
 
@@ -131,7 +131,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class PropertySpecifierNode : DelphiNode
+	public class PropertySpecifierNode : Node
 	{
 		public PropertyReadNode read;
 		public PropertyWriteNode write;
@@ -144,7 +144,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class PropertyDefault : DelphiNode
+	public class PropertyDefault : Node
 	{
 		public IdentifierNode ident;
 
@@ -154,7 +154,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class PropertyIndex : DelphiNode
+	public class PropertyIndex : Node
 	{
 		public DelphiExpression expr;
 

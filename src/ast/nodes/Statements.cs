@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace crosspascal.ast.nodes
 {
 
-	public class Statement : DelphiNode
+	public class Statement : Node
 	{
 		public string label;
 
@@ -18,7 +18,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public abstract class LabelNode : DelphiNode
+	public abstract class LabelNode : Node
 	{
 	}
 
@@ -42,12 +42,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class LabelDeclarationNode : DeclarationNode
+	public class LabelDeclaration : DeclarationNode
 	{
 		public LabelNode label;
-		public LabelDeclarationNode next;
+		public LabelDeclaration next;
 
-		public LabelDeclarationNode(LabelNode label, LabelDeclarationNode next)
+		public LabelDeclaration(LabelNode label, LabelDeclaration next)
 		{
 			this.label = label;
 			this.next = next;
@@ -57,11 +57,11 @@ namespace crosspascal.ast.nodes
 
 	public class AssignementStatement : Statement
 	{
-		public LValueNode lvalue;
+		public LvalueExpression lvalue;
 		public DelphiExpression expr;
 		public bool inherited;
 
-		public AssignementStatement(LValueNode lvalue, DelphiExpression expr, bool inherited)
+		public AssignementStatement(LvalueExpression lvalue, DelphiExpression expr, bool inherited)
 		{
 			this.lvalue = lvalue;
 			this.expr = expr;
@@ -117,24 +117,24 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class OnListNode : DelphiNode
+	public class OnNodeList : Node
 	{
 		public OnStatement stmt;
-		public OnListNode next;
+		public OnNodeList next;
 
-		public OnListNode(OnStatement stmt, OnListNode next)
+		public OnNodeList(OnStatement stmt, OnNodeList next)
 		{
 			this.stmt = stmt;
 			this.next = next;
 		}
 	}
 
-	public class ExceptionBlockNode : DelphiNode
+	public class ExceptionBlock : Node
 	{
-		public OnListNode stmts;
+		public OnNodeList stmts;
 		public Statement onElse;
 
-		public ExceptionBlockNode(OnListNode stmts, Statement onElse)
+		public ExceptionBlock(OnNodeList stmts, Statement onElse)
 		{
 			this.stmts = stmts;
 			this.onElse = onElse;
@@ -143,17 +143,17 @@ namespace crosspascal.ast.nodes
 
 	public class RaiseStatement : Statement
 	{
-		public LValueNode lvalue;
+		public LvalueExpression lvalue;
 		public DelphiExpression expr;
 
-		public RaiseStatement(LValueNode lvalue, DelphiExpression expr)
+		public RaiseStatement(LvalueExpression lvalue, DelphiExpression expr)
 		{
 			this.lvalue = lvalue;
 			this.expr = expr;
 		}
 	}
 
-	public class CaseLabel : DelphiNode
+	public class CaseLabel : Node
 	{
 		public DelphiExpression minRange;
 		public DelphiExpression maxRange;
@@ -165,7 +165,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class CaseLabelList : DelphiNode
+	public class CaseLabelList : Node
 	{
 		public CaseLabel caselabel;
 		public CaseLabelList next;
@@ -177,7 +177,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class CaseSelectorNode : DelphiNode
+	public class CaseSelectorNode : Node
 	{
 		public CaseLabelList list;
 		public Statement stmt;
@@ -189,7 +189,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class CaseSelectorList : DelphiNode
+	public class CaseSelectorList : Node
 	{
 
 	}
@@ -208,24 +208,24 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class RepeatStatement : Statement
+	public class RepeatLoop : Statement
 	{
 		public DelphiExpression condition;
 		public Statement block;
 
-		public RepeatStatement(Statement block, DelphiExpression condition)
+		public RepeatLoop(Statement block, DelphiExpression condition)
 		{
 			this.condition = condition;
 			this.block = block;
 		}
 	}
 
-	public class WhileStatement : Statement
+	public class WhileLoop : Statement
 	{
 		public DelphiExpression condition;
 		public Statement block;
 
-		public WhileStatement(DelphiExpression condition, Statement block)
+		public WhileLoop(DelphiExpression condition, Statement block)
 		{
 			this.condition = condition;
 			this.block = block;
@@ -262,7 +262,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ForStatement : Statement
+	public class ForLoop : Statement
 	{
 		public Statement body;
 		public IdentifierNode var;
@@ -270,7 +270,7 @@ namespace crosspascal.ast.nodes
 		public DelphiExpression end;
 		public int direction;
 
-		public ForStatement(IdentifierNode var, DelphiExpression start, DelphiExpression end, Statement body)
+		public ForLoop(IdentifierNode var, DelphiExpression start, DelphiExpression end, Statement body)
 		{
 			this.body = body;
 			this.var = var;
@@ -303,12 +303,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class AssemblerListNode : DelphiNode
+	public class AssemblerNodeList : Node
 	{
 		public string asmop;
-		public AssemblerListNode next;
+		public AssemblerNodeList next;
 
-		public AssemblerListNode(string asmop, AssemblerListNode next)
+		public AssemblerNodeList(string asmop, AssemblerNodeList next)
 		{
 			this.asmop = asmop;
 			this.next = next;

@@ -19,6 +19,6 @@ namespace crosspascal.ast
 			processor.traverse = this.traverse;
 		}
 
-		public abstract void traverse(DelphiNode n);
+		public abstract void traverse(Node n);
 	}
 }

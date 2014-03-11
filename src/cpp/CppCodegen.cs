@@ -19,13 +19,13 @@ namespace crosspascal.cpp
 		private int identLevel = 0;
 
 		// Printing helper
-		private void EnterNode(DelphiNode n)
+		private void EnterNode(Node n)
 		{
 			string name = n.GetType().Name;			
 			identLevel++;
 		}
 
-		private void LeaveNode(DelphiNode n)
+		private void LeaveNode(Node n)
 		{
 			identLevel--;
 		}

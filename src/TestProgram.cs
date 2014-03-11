@@ -49,7 +49,7 @@ namespace crosspascal
 
 		// Usage example of processors and traversers
 
-		static string printTree(DelphiNode tree, System.Type traverserType, int method)
+		static string printTree(Node tree, System.Type traverserType, int method)
 		{
 			PrintAST proc;
 

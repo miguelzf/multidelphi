@@ -239,7 +239,7 @@ on			{ return KW_ON; }
 				}
 	";"			{	switchstate(XFUNCDIRECTS);
 					yybegin(XFUNCDIRECTS);
-					return SEMICOL;
+					return SCOL;
 				}
 	":"			{	switchstate(XFUNCDIRECTS);
 					yypushstate(INITIAL);
@@ -261,7 +261,7 @@ on			{ return KW_ON; }
 	
 	";"			{	switchstate(XFUNCDIRECTS);
 					yybegin(XFUNCDIRECTS);
-					return SEMICOL;
+					return SCOL;
 				}
 				
 	[ \t\n\r]+	{ }
@@ -301,7 +301,7 @@ on			{ return KW_ON; }
 		// needs to chomp up the externa args
 	external	{ yypushstate(XFUNCEXTERN); return KW_EXTERNAL; }
 	
-	";"			{ return SEMICOL; }
+	";"			{ return SCOL; }
 	[ \t\n\r]+	{ }
 
 	// leave func directives:
@@ -318,7 +318,7 @@ on			{ return KW_ON; }
 	"."			{ return KW_DOT; }
 	[_a-zA-Z]{ID}*	{ yylval = yytext(); return IDENTIFIER; }
 	
-	";"			{ yypopstate(); return SEMICOL; }
+	";"			{ yypopstate(); return SCOL; }
 	[ \t\n\r]+	{ }
 	.			{ yyerror("Invalid char in external args: " + text + " (ASCII " + ((int) text[0]) +")"); }	
 } 
@@ -340,7 +340,7 @@ on			{ return KW_ON; }
 		
 	";" 		{ // signal to leave this state
 					yypopstate();
-					return SEMICOL;
+					return SCOL;
 				}
 }
 
@@ -455,7 +455,7 @@ false				{ yylval = false; return CONST_BOOL; }
 
 ";"			{	if (yylaststate() == XFUNCDIRECTS)
 					yypopstate();
-				return SEMICOL;
+				return SCOL;
 			}
 
 ")"			{	if (yylaststate() == XFUNCW_RET)
@@ -495,7 +495,7 @@ not			{ return KW_NOT; }
 ">="		{ return KW_GE; }
 "<="		{ return KW_LE; }
 "="			{ return KW_EQ; }
-"<>"		{ return KW_DIFF; }
+"<>"		{ return KW_NE; }
 is			{ return KW_IS; }	// type comp
 in			{ return KW_IN; }	// is in set
 

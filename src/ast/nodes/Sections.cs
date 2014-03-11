@@ -8,7 +8,7 @@ namespace crosspascal.ast.nodes
 {
 
 
-	public class UsesNode : DelphiNode
+	public class UsesNode : Node
 	{
 		public IdentifierNode ident;
 		public UsesNode next;
@@ -20,7 +20,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class BlockWithDeclarationsNode : DelphiNode
+	public class BlockWithDeclarationsNode : Node
 	{
 		public DeclarationNode decls;
 		public StatementBlock block;
@@ -60,48 +60,48 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class DeclarationListNode : DeclarationNode
+	public class DeclarationNodeList : DeclarationNode
 	{
 		public DeclarationNode decl;
-		public DeclarationListNode next;
+		public DeclarationNodeList next;
 
-		public DeclarationListNode(DeclarationNode decl, DeclarationListNode next)
+		public DeclarationNodeList(DeclarationNode decl, DeclarationNodeList next)
 		{
 			this.decl = decl;
 			this.next = next;
 		}
 	}
 
-	public class UnitInterfaceNode : DelphiNode
+	public class InterfaceSection : Node
 	{
 		public UsesNode uses;
 		public DeclarationNode decls;
 
-		public UnitInterfaceNode(UsesNode uses, DeclarationNode decls)
+		public InterfaceSection(UsesNode uses, DeclarationNode decls)
 		{
 			this.uses = uses;
 			this.decls = decls;
 		}
 	}
 
-	public class UnitImplementationNode : DelphiNode
+	public class ImplementationSection : Node
 	{
 		public UsesNode uses;
 		public DeclarationNode decls;
 
-		public UnitImplementationNode(UsesNode uses, DeclarationNode decls)
+		public ImplementationSection(UsesNode uses, DeclarationNode decls)
 		{
 			this.uses = uses;
 			this.decls = decls;
 		}
 	}
 
-	public class UnitInitialization : DelphiNode
+	public class InitializationSection : Node
 	{
 		public Statement initialization;
 		public Statement finalization;
 
-		public UnitInitialization(Statement initialization, Statement finalization)
+		public InitializationSection(Statement initialization, Statement finalization)
 		{
 			this.initialization = initialization;
 			this.finalization = finalization;
@@ -111,11 +111,11 @@ namespace crosspascal.ast.nodes
 	public class UnitNode : CompilationUnit
 	{
 		public IdentifierNode identifier;
-		public UnitInterfaceNode interfce;
-		public UnitImplementationNode implementation;
-		public DelphiNode init;
+		public InterfaceSection interfce;
+		public ImplementationSection implementation;
+		public Node init;
 
-		public UnitNode(IdentifierNode ident, UnitInterfaceNode interfce, UnitImplementationNode impl, DelphiNode init)
+		public UnitNode(IdentifierNode ident, InterfaceSection interfce, ImplementationSection impl, Node init)
 		{
 			this.identifier = ident;
 			this.interfce = interfce;
@@ -152,10 +152,10 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ExportItemListNode : DeclarationNode
+	public class ExportItemNodeList : DeclarationNode
 	{
 		public ExportItem export;
-		public ExportItemListNode next;
+		public ExportItemNodeList next;
 
 
 	}
@@ -172,12 +172,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class TypeDeclarationListNode : DeclarationNode
+	public class TypeDeclarationNodeList : DeclarationNode
 	{
 		public TypeDeclarationNode decl;
-		public TypeDeclarationListNode next;
+		public TypeDeclarationNodeList next;
 
-		public TypeDeclarationListNode(TypeDeclarationNode decl, TypeDeclarationListNode next)
+		public TypeDeclarationNodeList(TypeDeclarationNode decl, TypeDeclarationNodeList next)
 		{
 			this.decl = decl;
 			this.next = next;
@@ -187,7 +187,7 @@ namespace crosspascal.ast.nodes
 
 
 
-	public class VarDeclarationOption : DelphiNode
+	public class VarDeclarationOption : Node
 	{
 	}
 
@@ -211,13 +211,13 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class VarDeclarationNode : DeclarationNode
+	public class VarDeclaration : DeclarationNode
 	{
-		public IdentifierListNode ids;
+		public IdentifierNodeList ids;
 		public TypeNode type;
 		public VarDeclarationOption option;
 
-		public VarDeclarationNode(IdentifierListNode ids, TypeNode type, VarDeclarationOption option)
+		public VarDeclaration(IdentifierNodeList ids, TypeNode type, VarDeclarationOption option)
 		{
 			this.ids = ids;
 			this.type = type;
@@ -227,23 +227,23 @@ namespace crosspascal.ast.nodes
 
 	public class VarDeclarationList : DeclarationNode
 	{
-		public VarDeclarationNode vardecl;
+		public VarDeclaration vardecl;
 		public VarDeclarationList next;
 
-		public VarDeclarationList(VarDeclarationNode vardecl, VarDeclarationList next)
+		public VarDeclarationList(VarDeclaration vardecl, VarDeclarationList next)
 		{
 			this.vardecl = vardecl;
 			this.next = next;
 		}
 	}
 
-	public class ConstDeclarationNode : DeclarationNode
+	public class ConstDeclaration : DeclarationNode
 	{
 		public IdentifierNode ident;
 		public DelphiExpression expr;
 		public TypeNode type;
 
-		public ConstDeclarationNode(IdentifierNode ident, TypeNode type, DelphiExpression expr)
+		public ConstDeclaration(IdentifierNode ident, TypeNode type, DelphiExpression expr)
 		{
 			this.ident = ident;
 			this.type = type;
@@ -253,10 +253,10 @@ namespace crosspascal.ast.nodes
 
 	public class ConstDeclarationList : DeclarationNode
 	{
-		public ConstDeclarationNode constdecl;
+		public ConstDeclaration constdecl;
 		public ConstDeclarationList next;
 
-		public ConstDeclarationList(ConstDeclarationNode constdecl, ConstDeclarationList next)
+		public ConstDeclarationList(ConstDeclaration constdecl, ConstDeclarationList next)
 		{
 			this.constdecl = constdecl;
 			this.next = next;
