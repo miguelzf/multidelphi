@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using crosspascal.ast;
+using crosspascal.ast.nodes;
 
 namespace crosspascal.cpp
 {
@@ -18,13 +19,13 @@ namespace crosspascal.cpp
 		private int identLevel = 0;
 
 		// Printing helper
-		private void EnterNode(Node n)
+		private void EnterNode(DelphiNode n)
 		{
 			string name = n.GetType().Name;			
 			identLevel++;
 		}
 
-		private void LeaveNode(Node n)
+		private void LeaveNode(DelphiNode n)
 		{
 			identLevel--;
 		}

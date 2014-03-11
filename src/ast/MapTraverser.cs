@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using crosspascal.utils;
+using crosspascal.ast.nodes;
 
 namespace crosspascal.ast
 {
@@ -39,7 +40,7 @@ namespace crosspascal.ast
 		public MapTraverser(Processor processor) : base(processor)	{}
 
 
-		public override void traverse(Node n)
+		public override void traverse(DelphiNode n)
 		{
 			if (n == null)
 				return;

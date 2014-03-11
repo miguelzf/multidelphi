@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 using crosspascal.ast;
+using crosspascal.ast.nodes;
 using crosspascal.utils;
 using crosspascal.parser;
 
@@ -35,7 +36,7 @@ namespace crosspascal
 			*/	
 			//	Logger.log.Write(tree.Inspect());
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 			// string error = "Filename: " + ex.Location.FileName + Environment.NewLine + "Offset: " + ex.Location.Offset + Environment.NewLine + ex.Message;
 			//	Console.WriteLine(error);
@@ -48,7 +49,7 @@ namespace crosspascal
 
 		// Usage example of processors and traversers
 
-		static string printTree(Node tree, System.Type traverserType, int method)
+		static string printTree(DelphiNode tree, System.Type traverserType, int method)
 		{
 			PrintAST proc;
 

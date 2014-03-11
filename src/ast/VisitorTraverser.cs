@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using crosspascal.ast.nodes;
 
 namespace crosspascal.ast
 {
@@ -14,7 +15,7 @@ namespace crosspascal.ast
 
 		public VisitorTraverser(Processor processor) : base(processor) { }
 
-		public override void traverse(Node n)
+		public override void traverse(DelphiNode n)
 		{
 			if (n != null)
 				n.Accept(Processor);

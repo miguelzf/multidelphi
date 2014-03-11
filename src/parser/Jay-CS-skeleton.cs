@@ -32,7 +32,7 @@
 .      @param expected vector of acceptable tokens, if available.
 .    */
 .  public void yyerror (string message, string[] expected) {
-.    if ((yacc_verbose_flag > 0) && (expected != null) && (expected.Length  > 0)) {
+.    if ((DebugLevel > 0) && (expected != null) && (expected.Length  > 0)) {
 .      ErrorOutput.Write (message+", expecting");
 .      for (int n = 0; n < expected.Length; ++ n)
 .        ErrorOutput.Write (" "+expected[n]);
@@ -44,7 +44,7 @@
 .  /** debugging support, requires the package jay.yydebug.
 .      Set to null to suppress debugging messages.
 .    */
-t  internal yydebug.yyDebug debug;
+t  internal ParserDebug debug;
 .
  debug			## tables for debugging support
 .
@@ -99,11 +99,11 @@ t  }
 .      @param yyLex scanner.
 .      @param yydebug debug message writer implementing yyDebug, or null.
 .      @return result of the last reduction, if any.
-.      @throws yyException on irrecoverable parse error.
+.      @throws ParserException on irrecoverable parse error.
 .    */
-.  internal Object yyparse (yyParser.yyInput yyLex, Object yyd)
+.  internal Object yyparse (IScanner yyLex, Object yyd)
 .				 {
-t    this.debug = (yydebug.yyDebug)yyd;
+t    this.debug = (ParserDebug)yyd;
 .    return yyparse(yyLex);
 .  }
 .
@@ -127,15 +127,20 @@ t    this.debug = (yydebug.yyDebug)yyd;
 .      Maintains a state and a value stack, currently with fixed maximum size.
 .      @param yyLex scanner.
 .      @return result of the last reduction, if any.
-.      @throws yyException on irrecoverable parse error.
+.      @throws ParserException on irrecoverable parse error.
 .    */
 .		// miguelzf: Moved outside yyparse, to allow other methods to manipulate these parse state vars
-.	private int yyState = 0;                                   // state stack ptr
-.	private Object yyVal = null;                               // value stack ptr
+.	private int yyState = 0;                    // state stack ptr
+.	private Object yyVal = null;                // value stack ptr
 .	private int yyToken = -1;					// current input
 .
-.  internal Object yyparse (yyParser.yyInput yyLex)
+.  internal Object yyparse (IScanner yyLex)
 .  {
+.	  // reset
+.    yyState = 0;                    // state stack ptr
+.	 yyVal = null;                   // value stack ptr
+.	 yyToken = -1;					// current input
+.
 .    if (yyMax <= 0) yyMax = 256;			// initial size
 .    int [] yyStates = new int[yyMax];	                // state stack 
 .    Object [] yyVals = new Object[yyMax];	        // value stack
@@ -185,7 +190,7 @@ t              debug.shift(yyState, yyTable[yyN], yyErrorFlag-1);
 .              yyExpectingState = yyState;
 .              // yyerror(String.Format ("syntax error, got token `{0}'", yyname (yyToken)), yyExpecting(yyState));
 t              if (debug != null) debug.error("syntax error");
-.              if (yyToken == 0 /*eof*/ || yyToken == eof_token) throw new yyParser.yyUnexpectedEof ();
+.              if (yyToken == 0 /*eof*/ || yyToken == eof_token) throw new UnexpectedEof(yyLex.yylineno());
 .              goto case 1;
 .            case 1: case 2:
 .              yyErrorFlag = 3;
@@ -202,12 +207,12 @@ t                    debug.shift(yyStates[yyTop], yyTable[yyN], 3);
 t                if (debug != null) debug.pop(yyStates[yyTop]);
 .              } while (-- yyTop >= 0);
 t              if (debug != null) debug.reject();
-.              throw new yyParser.yyException("irrecoverable syntax error");
+.              throw new ParserException(yyLex.yylineno(), "Syntax Error, token " + yyname(yyToken) + " in state " + yyState);
 .  
 .            case 3:
 .              if (yyToken == 0) {
 t                if (debug != null) debug.reject();
-.                throw new yyParser.yyException("irrecoverable syntax error at end-of-file");
+.                throw new ParserException(yyLex.yylineno(), "irrecoverable syntax error at end-of-file");
 .              }
 t              if (debug != null)
 t                debug.discard(yyState, yyToken, yyname(yyToken),
@@ -259,117 +264,10 @@ t        if (debug != null) debug.shift(yyStates[yyTop], yyState);
  tables			## tables for rules, default reduction, and action calls
 .
  epilog			## text following second %%
-.namespace yydebug {
-.        using System;
-.	 internal interface yyDebug {
-.		 void push (int state, Object value);
-.		 void lex (int state, int token, string name, Object value);
-.		 void shift (int from, int to, int errorFlag);
-.		 void pop (int state);
-.		 void discard (int state, int token, string name, Object value);
-.		 void reduce (int from, int to, int rule, string text, int len);
-.		 void shift (int from, int to);
-.		 void accept (Object value);
-.		 void error (string message);
-.		 void reject ();
-.	 }
-.	 
-.	 class yyDebugSimple : yyDebug {
-.		 void println (string s){
-.			 Console.Error.WriteLine (s);
-.		 }
-.		 
-.		 public void push (int state, Object value) {
-.			 println ("push\tstate "+state+"\tvalue "+value);
-.		 }
-.		 
-.		 public void lex (int state, int token, string name, Object value) {
-.			 println("lex\tstate "+state+"\treading "+name+"\tvalue "+value);
-.		 }
-.		 
-.		 public void shift (int from, int to, int errorFlag) {
-.			 switch (errorFlag) {
-.			 default:				// normally
-.				 println("shift\tfrom state "+from+" to "+to);
-.				 break;
-.			 case 0: case 1: case 2:		// in error recovery
-.				 println("shift\tfrom state "+from+" to "+to
-.					     +"\t"+errorFlag+" left to recover");
-.				 break;
-.			 case 3:				// normally
-.				 println("shift\tfrom state "+from+" to "+to+"\ton error");
-.				 break;
-.			 }
-.		 }
-.		 
-.		 public void pop (int state) {
-.			 println("pop\tstate "+state+"\ton error");
-.		 }
-.		 
-.		 public void discard (int state, int token, string name, Object value) {
-.			 println("discard\tstate "+state+"\ttoken "+name+"\tvalue "+value);
-.		 }
-.		 
-.		 public void reduce (int from, int to, int rule, string text, int len) {
-.			 println("reduce\tstate "+from+"\tuncover "+to
-.				     +"\trule ("+rule+") "+text);
-.		 }
-.		 
-.		 public void shift (int from, int to) {
-.			 println("goto\tfrom state "+from+" to "+to);
-.		 }
-.		 
-.		 public void accept (Object value) {
-.			 println("accept\tvalue "+value);
-.		 }
-.		 
-.		 public void error (string message) {
-.			 println("error\t"+message);
-.		 }
-.		 
-.		 public void reject () {
-.			 println("reject");
-.		 }
-.		 
-.	 }
-.}
+ 
 .// %token constants
 . class Token {
  tokens public const int
 . }
-. namespace yyParser {
-.  using System;
-.  /** thrown for irrecoverable syntax errors and stack overflow.
-.    */
-.  internal class yyException : System.Exception {
-.    public yyException (string message) : base (message) {
-.    }
-.  }
-.  internal class yyUnexpectedEof : yyException {
-.    public yyUnexpectedEof (string message) : base (message) {
-.    }
-.    public yyUnexpectedEof () : base ("") {
-.    }
-.  }
-.
-.  /** must be implemented by a scanner object to supply input to the parser.
-.    */
-.  internal interface yyInput {
-.    /** move on to next token.
-.        @return false if positioned beyond tokens.
-.        @throws IOException on input error.
-.      */
-.    bool advance (); // throws java.io.IOException;
-.    /** classifies current token.
-.        Should not be called if advance() returned false.
-.        @return current %token or single character.
-.      */
-.    int token ();
-.    /** associated with current token.
-.        Should not be called if advance() returned false.
-.        @return value for token().
-.      */
-.    Object value ();
-.  }
-. }
+. 
 .} // close outermost namespace, that MUST HAVE BEEN opened in the prolog

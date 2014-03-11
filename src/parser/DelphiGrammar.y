@@ -5,7 +5,8 @@ using System.Collections;
 using System.IO;
 using System.Text;
 using System.Diagnostics;
-using crosspascal.parser.ast;
+using crosspascal.ast;
+using crosspascal.ast.nodes;
 
 namespace crosspascal.parser
 {
@@ -13,30 +14,28 @@ namespace crosspascal.parser
 	// Open main Parser class
 	public class DelphiParser
 	{
-		
+
+		public static int DebugLevel  =  0;
+
 		// Emulate YACC
-		
-		int yacc_verbose_flag = 0;
-		
+
 		void ACCEPT()
 		{	// make scanner emit EOF, ends scanning and parsing
 			lexer.Accept();
 			yyState = yyFinal;
 		}
-		
+
 		void REJECT(string msg = "")
 		{	
-			throw new yyParser.InputRejected(lexer.yylineno(), msg);
+			throw new InputRejected(lexer.yylineno(), msg);
 		}
-		
-		
-		
+			
 		// Internal helper functions
 		
-		string GetErrorMessage(yyParser.yyException e)
+		string GetErrorMessage(ParserException e)
 		{
 			StackTrace st = new StackTrace(e, true);
-			StackFrame frame = st.GetFrame(st.FrameCount-1);
+			StackFrame frame = st.GetFrame(st.FrameCount-1); 
 			return "[ERROR] " + e.Message + " in " + Path.GetFileName(frame.GetFileName())
 					+ ": line " + frame.GetFileLineNumber();
 		}
@@ -46,74 +45,54 @@ namespace crosspascal.parser
 		// TODO change charset to unicode, use %unicode in flex
 		public static readonly Encoding DefaultEncoding = Encoding.GetEncoding("iso-8859-1");
 
-		
-		// Parser-Lexer communication
-			
-		PreProcessor preproc = new PreProcessor();
-		DelphiScanner lexer;
-		
-		public void AddIncludePath(string path)
-		{
-			preproc.AddPath(path);
-		}
-
-		public void LoadIncludePaths(string fname)
-		{
-			string line;
-			using (StreamReader file = new StreamReader(fname, DefaultEncoding))
-				while((line = file.ReadLine()) != null)
-				{
-					string path = line.Trim();
-					if (path.Length > 0 && Directory.Exists(path))
-						preproc.AddPath(path);
-				}
-		}
+		DelphiScanner lexer;		
 		
 		// Entry point and public interface
 		
-		internal DelphiParser(yydebug.yyDebug dgb = null)
+		internal DelphiParser(ParserDebug dgb)
 		{
 			if (dgb != null) {
-				this.debug = (yydebug.yyDebug) dgb;
-				yacc_verbose_flag = 1;
+				this.debug = (ParserDebug) dgb;
+				DebugLevel = 1;
 			}
 			
 			eof_token = DelphiScanner.YYEOF;
 			
 		}
+
+		internal DelphiParser()
+		{
+			this.debug = new Func<ParserDebug>(
+					() => {	switch(DelphiParser.DebugLevel)
+						{	case 1: return new DebugPrintFinal();
+							case 2: return new DebugPrintAll();
+							default: return null;
+						}
+					})();
+			eof_token = DelphiScanner.YYEOF;
+		}
 		
 		// wrapper for yyparse
-		internal Object Parse(string fname, yydebug.yyDebug dgb = null)
+		internal Object Parse(TextReader tr, ParserDebug dgb = null)
 		{
-			StreamReader sr;
-			try {
-				sr = new StreamReader(fname, DefaultEncoding);
-				// Console.WriteLine("File " + fname + " has enconding: " + sr.CurrentEncoding);
-			} 
-			catch (IOException ioe) {
-				ErrorOutput.WriteLine("Failure to open input file: " + fname);
-				return null;
+			if (dgb != null) {
+				this.debug = (ParserDebug) dgb;
+				DebugLevel = 1;
 			}
 			
-			if (dgb != null) {
-				this.debug = (yydebug.yyDebug) dgb;
-				yacc_verbose_flag = 1;
-			}
-
-			lexer = new DelphiScanner(sr);
-			lexer.preproc = this.preproc;
+			lexer = new DelphiScanner(tr);
 			
 			try {
 				Object ret = yyparse(lexer);
 				return ret;
 			} 
-			catch (yyParser.yyException yye) {
-				// ErrorOutput.WriteLine(GetErrorMessage(yye));
+			catch (ParserException yye) {
+				ErrorOutput.WriteLine(yye.Message);
 				// only clean way to signal error. null is the default yyVal
-				throw new yyParser.InputRejected(GetErrorMessage(yye));
+				throw yye; // new InputRejected(GetErrorMessage(yye));
 			}
 		}
-		
+
 %}
 
 
@@ -123,13 +102,6 @@ namespace crosspascal.parser
 
 %start goal
 	// file type
-	
-	// EXEMPLOS!:
-	
-	// %type<String> string_const id
-	// %type<Int32> intliteral 
-	// %type<Statement> stmt  nonlbl_stmt
-
 
 %type<bool>  staticclassopt ofobjectopt
 %type<GoalNode> goal file
@@ -147,20 +119,20 @@ namespace crosspascal.parser
 %type<DeclarationNode> interfdecl maindeclsec funcdeclsec basicdeclsec typesec labeldeclsec labelidlist  varsec thrvarsec vardecllist vardecl constdecl typedecl
 %type<LabelNode> labelid
 %type<ExportItem> exportsec	 exportsitemlist exportsitem
-%type<ProcedureDefinitionNode> procdefinition procdeclnondef
-%type<ProcedureHeaderNode> procdefproto procproto proceduretype
+%type<ProcedureDefinitionNode> procdefinition procdeclnondef 
+%type<ProcedureHeaderNode> procdefproto procdeclinterf proceduresign procsignfield
 %type<ProcedureBodyNode> proc_define func_block
 %type<TypeNode> funcrettype simpletype funcretopt funcparamtype paramtypeopt paramtypespec
-%type<FunctionClass> procbasickind
+%type<FunctionClass> prockind
 %type<ParameterNodeList> formalparams formalparamslist
 %type<ParamterNode> formalparm
 %type<VarParameterQualifier> paramqualif
-%type<Expression> paraminitopt expr rangetype  rangestart constexpr
-%type<ProcedureDirectiveList> funcdirectopt funcdirectopt_nonterm funcdir_strict_opt funcdirective_list funcdir_strict_list func_nondef_list									
-%type<ProcedureDirective> funcdirective funcdir_strict funcdir_nondef funcqualif
+%type<Expression> paraminitopt expr rangetype  rangestart constexpr functypeinit
+%type<ProcedureDirectiveList> funcdirectopt funcdir_noterm_opt funcdirectlist funcqualinterflist									
+%type<ProcedureDirective> funcdirective funcqualinterf funcqualif funcdeprecated funcqualinterfopt
 %type<CallConventionNode> funccallconv
 %type<StatementBlock> block stmtlist
-%type<Statement> stmt nonlbl_stmt inheritstmts assign goto_stmt ifstmt casestmt else_case repeatstmt whilestmt forstmt with_stmt tryexceptstmt tryfinallystmt raisestmt assemblerstmt asmcode
+%type<Statement> stmt nonlbl_stmt assign goto_stmt ifstmt casestmt else_case repeatstmt whilestmt forstmt with_stmt tryexceptstmt tryfinallystmt raisestmt assemblerstmt asmcode
 %type<CaseSelectorList> caseselectorlist
 %type<CaseSelector> caseselector
 %type<CaseLabelList> caselabellist
@@ -179,13 +151,12 @@ namespace crosspascal.parser
 %type<FieldInit> enumtypeel fieldconst
 %type<SetList> setconstructor setlist
 %type<SetElement> setelem
-%type<Literal> rscstringsec constrscdecllist constrscdecl
 %type<ConstDeclarationList> constsec
-%type<ExpressionListNode> arrayconst constexprlist
+%type<ExpressionListNode> arrayconst
 %type<FieldInitList>  recordconst fieldconstlist
 %type<ClassDefinition> classtype
 %type<ClassType> class_keyword
-%type<ClassStruct> class_struct_opt scopesec
+%type<ClassStruct> scopesec
 %type<ClassContentList> scopeseclist complist classmethodlistopt methodlist classproplistopt classproplist
 %type<ClassContent> class_comp
 %type<Scope> scope_decl
@@ -194,21 +165,21 @@ namespace crosspascal.parser
 %type<InterfaceDefinition> interftype
 %type<ClassProperty> property
 %type<bool> typeopt 
-%type<TypeNode> type vartype packedtype classreftype simpletype ordinaltype casttype
-%type<TypeNode> scalartype realtype inttype chartype stringtype varianttype funcrettype
-%type<TypeNode> structype restrictedtype arraytype settype filetype refpointertype funcparamtype 
+%type<TypeNode> vartype classreftype simpletype ordinaltype casttype
+%type<TypeNode> packstructtype packcomptype compositetype
+%type<TypeNode> scalartype realtype inttype chartype stringtype varianttype funcrettype 
+%type<TypeNode> arraytype settype filetype refpointertype funcparamtype  structuredtype
 %type<ArraySizeList>  arraysizelist
 %type<ArraySizeList> arraytypedef
 
-/*!!missing:
-defaultdiropt
-propinterfopt
-idlisttypeidlist
-idlisttypeid
-indexspecopt
-propspecifiers
-*/
-		
+%type<ListNode> propspecifiers constinitexprlist variantlist rscstringlist idlisttypeidlist
+
+%type<PropertySpecifier> propinterfopt defaultdiropt indexspecopt storedspecopt defaultspecopt implementsspecopt readacessoropt writeacessoropt
+%type<Expression> unaryexpr constinitexpr inheritexpr basicliteral simpleconst rangestart functypeinit
+%type<RecordNode> recordtype recordtypebasic
+
+%type<Node> variant_struct varfieldlist varfield  variantvar guid rscstring class_struct rscstringsec idlisttypeid
+
 
 	
 	// ==============================================================
@@ -253,19 +224,18 @@ propspecifiers
 %token TYPE_CHAR TYPE_PCHAR TYPE_WIDECHAR TYPE_WIDESTR TYPE_STR TYPE_RSCSTR TYPE_SHORTSTR
 %token TYPE_FLOAT TYPE_REAL48 TYPE_DOUBLE TYPE_EXTENDED
 %token TYPE_BOOL TYPE_COMP TYPE_CURRENCY TYPE_OLEVAR TYPE_VAR TYPE_ARRAY TYPE_CURR TYPE_FILE TYPE_PTR TYPE_SET
-	// pseudo, hints, added, etc
-%token ASM_OP
+
+	// pseudo, hints, windows-specific, deprecated, obscure, etc
+%token ASM_OP WINDOWS_GUID KW_BREAK KW_CONTINUE KW_FAR KW_NEAR KW_RESIDENT 
 
 
 	// ==============================================================
 	// Precedence and associativity
 	// ==============================================================
 
-		// lowest precedence |
-		//					 v
-
-
-%nonassoc LOWESTPREC  EXPR_SINGLE
+	// lowest precedence |
+	//					 v
+%nonassoc LOWESTPREC 
 
 	// dangling else
 %right KW_THEN 
@@ -292,10 +262,13 @@ propspecifiers
 
 	//		Highest precedence ^
 	// ==============================================================
-	// ==============================================================
 
 %%
 
+	// ==============================================================
+	// YACC Rules
+	// ==============================================================
+	
 goal: file KW_DOT		{	$$ = $1; YYACCEPT();	}
 	;
 
@@ -306,6 +279,11 @@ file
 	| unit		{ $$ = $1; }
 	;
 
+semicolopt
+	:
+	| SEMICOL
+	;
+	
 	/*
 	portability
 		: KW_PLATFORM
@@ -318,8 +296,8 @@ file
 		| portability
 		;
 	*/
-
-
+	
+	
 	// ========================================================================
 	// Top-level Sections
 	// ========================================================================
@@ -334,7 +312,7 @@ library
 	;
 
 unit
-	: KW_UNIT id /*port_opt*/ SEMICOL interfsec implementsec initsec	{ $$ = new UnitNode($2, $4, $5, $6); }
+	: KW_UNIT id  SEMICOL interfsec implementsec initsec	{ $$ = new UnitNode($2, $4, $5, $6); }
 	;
 
 package
@@ -342,11 +320,11 @@ package
 	;
 
 requiresclause
-	: id idlist SEMICOL	{ $$ = new UsesNode($1, $2);}
+	: id idlist SEMICOL	{ $$ = new UsesNode($1, $2);}	// check that id == "Requires"
 	;
 
 containsclause
-	: id idlist SEMICOL	{ $$ = new UsesNode($1, $2);}
+	: id idlist SEMICOL	{ $$ = new UsesNode($1, $2);}	// check that id == "Contains"
 	;
 
 usesclauseopt
@@ -408,10 +386,10 @@ declseclist
 	// ========================================================================
 
 interfdecl
-	: basicdeclsec					{ $$ = $1;}
-	| staticclassopt procproto		{ $2.isStatic = $1; $$ = $2;}
-	| thrvarsec						{ $$ = $1;}
-//	| rscstringsec				
+	: basicdeclsec					{ $$ = $1; }
+	| staticclassopt procdeclinterf		{ $2.isStatic = $1; $$ = $2;}
+	| thrvarsec						{ $$ = $1; }
+	| rscstringsec					{ $$ = $1; }
 	;
 
 maindeclsec
@@ -431,9 +409,9 @@ funcdeclsec
 	;
 
 basicdeclsec
-	: constsec		{ $$ = $1;}
-	| typesec		{ $$ = $1;}
-	| varsec		{ $$ = $1;}
+	: constsec				{ $$ = $1;}
+	| typesec				{ $$ = $1;}
+	| varsec				{ $$ = $1;}
 	;
 
 typesec
@@ -454,8 +432,8 @@ labelidlist
 	;
 
 labelid
-	: CONST_INT /* must be decimal integer in the range 0..9999 */	{ $$ = new NumberLabelNode(yyLex.value()); }
-	| id															{ $$ = new StringLabelNode($1); }
+	: CONST_INT /* decimal int 0..9999 */	{ $$ = new NumberLabelNode(yyLex.value()); }
+	| id									{ $$ = new StringLabelNode($1); }
 	;
 
 	// Exports
@@ -486,21 +464,26 @@ exportsitem
 
 	// proc decl for impl sections, needs a external/forward
 procdeclnondef
-	: procdefproto func_nondef_list funcdir_strict_opt	{ $$ = new ProcedureDefinitionNode($1, null); } 
+	: procdefproto funcqualinterflist funcdirectopt		{ $$ = new ProcedureDefinitionNode($1, null); } 
 	;
 
 procdefinition
 	: procdefproto proc_define SEMICOL	{ $$ = new ProcedureDefinitionNode($1, $2); } 
 	;
 
-	// proc proto for definitions or external/forward decls
-procdefproto
-	: procbasickind qualid formalparams funcretopt SEMICOL funcdir_strict_opt	{ $$ = new ProcedureHeaderNode($1, $2, $3, $4, null, $6); }
+procdeclinterf
+	: procdefproto funcqualinterfopt	{ $$ = null; /* TODO */ }
 	;
 
+	// proc proto for definitions or external/forward decls
 	// check that funcrecopt is null for every kind except FUNCTION
-procproto
-	: procbasickind qualid formalparams funcretopt SEMICOL funcdirectopt  /*port_opt*/	{ $$ = new ProcedureHeaderNode($1, $2, $3, $4, null, $6); }
+procdefproto
+	: prockind qualid formalparams funcretopt SEMICOL funcdirectopt		{ $$ = new ProcedureHeaderNode($1, $2, $3, $4, null, $6); }
+	;
+
+funcqualinterfopt
+	: 									{ $$ = null; /* TODO */ }
+	| funcqualinterflist funcdirectopt	{ $$ = null; /* TODO */ }
 	;
 
 funcretopt
@@ -513,16 +496,21 @@ staticclassopt
 	| KW_CLASS					{ $$ = true;}
 	;
 
-procbasickind
+prockind
 	: KW_FUNCTION				{ $$ = FunctionClass.Function;}
 	| KW_PROCEDURE				{ $$ = FunctionClass.Procedure;}
 	| KW_CONSTRUCTOR			{ $$ = FunctionClass.Constructor;}
 	| KW_DESTRUCTOR				{ $$ = FunctionClass.Destructor;}
 	;
 
-proceduretype
+proceduresign
 	: KW_PROCEDURE formalparams ofobjectopt		{ $$ = new ProcedureHeaderNode(FunctionKind.Procedure, null, $2, null, $3, null); }
 	| KW_FUNCTION  formalparams COLON funcrettype ofobjectopt { $$ = new ProcedureHeaderNode(FunctionKind.Function, null, $2, $4, $5, null); }
+	;
+
+procsignfield
+	: proceduresign					{ $$ = null; /* TODO */ }
+	| proceduresign funccallconv	{ $$ = null; /* TODO */ }
 	;
 
 ofobjectopt
@@ -530,17 +518,17 @@ ofobjectopt
 	| KW_OF KW_OBJECT		{ return true; }
 	;
 
+
 	// Function blocks and parameters
 
 proc_define
-	: func_block			{ $$ = $1; }
-	| assemblerstmt			{ $$ = new AssemblerProcedureBodyNode($1); }
+	: declseclist func_block				{ $$ = new ProcedureBodyNode($1, $2); }
+	| 			  func_block				{ $$ = new ProcedureBodyNode(null, $1); }
 	;
 
-
 func_block
-	: declseclist block			{ $$ = new ProcedureBodyNode($1, $2); }
-	| 			  block			{ $$ = new ProcedureBodyNode(null, $1); }
+	: block									{ $$ = $1; }
+	| assemblerstmt							{ $$ = $1; }
 	;
 
 formalparams
@@ -575,69 +563,65 @@ paramtypespec
 	;
 
 paraminitopt
-	:											{ $$ = null; }
-	| KW_EQ expr	// evaluates to constant	{ $$ = $2; }
+	:									{ $$ = null; }
+	| KW_EQ constexpr					{ $$ = $2; }
 	;
 
 	
 	// Function directives
 	
+functypeinit
+	: KW_EQ id 							{ $$ = null; /* TODO */ }
+	| KW_EQ CONST_NIL					{ $$ = null; /* TODO */ }
+	;
+
+funcdir_noterm_opt
+	:									{ $$ = null; /* TODO */ }
+	| funcdirectlist					{ $$ = null; /* TODO */ }
+	;
+
 funcdirectopt
-	:										{ $$ = null; }
-	| funcdirective_list SEMICOL			{ $$ = $1; }
+	:									{ $$ = null; }
+	| funcdirectlist SEMICOL			{ $$ = $1; }
 	;
 
-funcdirectopt_nonterm
-	:							{ $$ = null; }
-	| funcdirective_list		{ $$ = $1; }
-	;
-
-funcdir_strict_opt
-	:							{ $$ = null; }
-	| funcdir_strict_list		{ $$ = $1; }
-	;
-
-funcdirective_list
+funcdirectlist
 	: funcdirective									{ $$ = new ProcedureDirectiveList($1, null); }
-	| funcdirective_list SEMICOL funcdirective		{ $$ = new ProcedureDirectiveList($3, $1); }
+	| funcdirectlist SEMICOL funcdirective			{ $$ = new ProcedureDirectiveList($3, $1); }
 	;
 
-funcdir_strict_list
-	: funcdir_strict SEMICOL						{ $$ = new ProcedureDirectiveList($1, null); }
-	| funcdir_strict_list funcdir_strict SEMICOL	{ $$ = new ProcedureDirectiveList($2, $1); }
-	;
-
-func_nondef_list									
-	: funcdir_nondef SEMICOL						{ $$ = new ProcedureDirectiveList($1, null); }
-	| func_nondef_list funcdir_nondef SEMICOL		{ $$ = new ProcedureDirectiveList($2, $1); }
+funcqualinterflist									
+	: funcqualinterf SEMICOL						{ $$ = new ProcedureDirectiveList($1, null); }
+	| funcqualinterflist funcqualinterf SEMICOL		{ $$ = new ProcedureDirectiveList($2, $1); }
 	;
 
 funcdirective
-	: funcdir_strict	{ $$ = $1; }
-	| funcdir_nondef	{ $$ = $1; }
-	;
-
-funcdir_strict
 	: funcqualif		{ $$ = $1; }
 	| funccallconv		{ $$ = $1; }
+	| funcdeprecated	{ $$ = $1; }
 	;
 
-funcdir_nondef
-	: KW_EXTERNAL string_const externarg		{ $$ = new ExternalProcedureDirective(new IdentifierNode($2), $3); }
-	| KW_EXTERNAL qualid externarg				{ $$ = new ExternalProcedureDirective($2, $3); }
-	| KW_EXTERNAL								{ $$ = new ExternalProcedureDirective(null, null); }
-	| KW_FORWARD								{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Forward); }
+funcdeprecated
+	: KW_FAR			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Far); }
+	| KW_NEAR			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Near); }
+	| KW_RESIDENT		{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Resident); }
+	;
+
+funcqualinterf
+	: KW_EXTERNAL string_const externarg	{ $$ = new ExternalProcedureDirective(new IdentifierNode($2), $3); }
+	| KW_EXTERNAL qualid externarg			{ $$ = new ExternalProcedureDirective($2, $3); }
+	| KW_EXTERNAL							{ $$ = new ExternalProcedureDirective(null, null); }
+	| KW_FORWARD							{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Forward); }
 	;
 
 externarg
-	:					{$$ = null; }
-	| id string_const 	{$$ = new IdentifierNode($2);}	// id == NAME		
-	| id qualid		 	{$$ = $2;}  // id == NAME		
+	:						{$$ = null; }
+	| KW_NAME string_const 	{$$ = new IdentifierNode($2);}	// id == NAME		
+	| KW_NAME qualid	 	{$$ = $2;}  // id == NAME		
 	;
 
 funcqualif
-	: KW_ABSOLUTE			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Absolute); }
-	| KW_ABSTRACT			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Abstract); }
+	: KW_ABSTRACT			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Abstract); }
 	| KW_ASSEMBLER			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Assembler); }
 	| KW_DYNAMIC			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Dynamic); }
 	| KW_EXPORT				{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Export); }
@@ -661,7 +645,7 @@ funccallconv
 	// ========================================================================
 	// Statements
 	// ========================================================================
-	
+
 block
 	: KW_BEGIN stmtlist KW_END		{ $$ = $2; }
 	;
@@ -677,8 +661,12 @@ stmt
 	;
 
 nonlbl_stmt
-	:						{ $$ = null;}
-	| inheritstmts			{ $$ = $1; }
+	:						{ $$ = null; /* TODO */ }
+	// procedure call, no params 
+	| KW_INHERITED			{ $$ = null; /* TODO */ }
+	| inheritexpr			{ $$ = null; /* TODO */ }
+	| assign				{ $$ = null; /* TODO */ }
+	| proccall				{ $$ = null; /* TODO */ }
 	| goto_stmt				{ $$ = $1; }
 	| block					{ $$ = $1; }
 	| ifstmt				{ $$ = $1; }
@@ -691,21 +679,13 @@ nonlbl_stmt
 	| tryfinallystmt		{ $$ = $1; }
 	| raisestmt				{ $$ = $1; }
 	| assemblerstmt			{ $$ = $1; }
-	;
-
-inheritstmts
-	: KW_INHERITED				{ $$ = new InheritedStatement(null); }
-	| KW_INHERITED assign		{ $$ = new InheritedStatement($2); }
-	| KW_INHERITED proccall		{ $$ = new InheritedStatement($2); }
-	| proccall					{ $$ = $1; }
-	| assign					{ $$ = $1; }
+	| KW_BREAK				{ $$ = new BreakStatement(); }
+	| KW_CONTINUE			{ $$ = new ContinueStatement(); }
 	;
 
 assign
 	: lvalue KW_ASSIGN expr					{ $$ = new AssignementStatement($1, $3, false); }
-	| lvalue KW_ASSIGN KW_INHERITED expr	{ $$ = new AssignementStatement($1, $4, true); }
 	;
-
 
 goto_stmt
 	: KW_GOTO labelid	{ $$ = new GotoStatement($2); }
@@ -741,10 +721,9 @@ caselabellist
 	| caselabellist COMMA caselabel		{ $$ = new CaseLabelList($3, $1); }
 	;
 
-	// all exprs must be evaluate to const
 caselabel
-	: expr								{ $$ = new CaseLabel($1, null); }
-	| expr KW_RANGE expr				{ $$ = new CaseLabel($1, $3); }
+	: constexpr							{ $$ = new CaseLabel($1, null); }
+	| constexpr KW_RANGE constexpr		{ $$ = new CaseLabel($1, $3); }
 	;
 
 repeatstmt
@@ -766,7 +745,7 @@ with_stmt
 	;
 
 tryexceptstmt
-	: KW_TRY stmtlist KW_EXCEPT exceptionblock KW_END		{ $$ = new TryExceptStatement($2, $4); }
+	: KW_TRY stmtlist KW_EXCEPT exceptionblock KW_END	{ $$ = new TryExceptStatement($2, $4); }
 	;
 
 exceptionblock
@@ -786,7 +765,7 @@ ondef
 	;
 
 tryfinallystmt
-	: KW_TRY  stmtlist KW_FINALLY stmtlist KW_END		{ $$ = new TryFinallyStatement($2, $4); }
+	: KW_TRY  stmtlist KW_FINALLY stmtlist KW_END	{ $$ = new TryFinallyStatement($2, $4); }
 	;
 
 raisestmt
@@ -797,11 +776,11 @@ raisestmt
 	;
 
 assemblerstmt
-	: KW_ASM asmcode KW_END		{ $$ = $2; }
+	: KW_ASM asmcode KW_END		{ $$ = new AssemblerProcedureBodyNode($2); }
 	;
 
 asmcode
-	: ASM_OP					{ $$ = null; }
+	: 							{ $$ = null; }
 	| asmcode ASM_OP			{ $$ = null; }
 	;
 
@@ -810,7 +789,7 @@ asmcode
 
 
 	// ========================================================================
-	// Variables and Expressions
+	// Variables
 	// ========================================================================
 
 varsec
@@ -826,54 +805,78 @@ vardecllist
 	| vardecllist vardecl		{ $$ = new VarDeclarationListNode($2, $1); }
 	;
 
-	/* VarDecl
-		On Windows -> idlist ':' Type [(ABSOLUTE (id | ConstExpr))	| '=' ConstExpr] [portability]
-		On Linux   -> idlist ':' Type [ ABSOLUTE (Ident)			| '=' ConstExpr] [portability]
-	*/
-
 vardecl
 	: idlist COLON vartype vardeclopt SEMICOL				{ $$ = new VarDeclarationNode($1, $3, $4); }
-	| idlist COLON proceduretype SEMICOL funcdirectopt		{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, null); }
-	| idlist COLON proceduretype SEMICOL funcdirectopt_nonterm KW_EQ CONST_NIL SEMICOL	{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, null); }
-	| idlist COLON proceduretype SEMICOL funcdirectopt_nonterm KW_EQ id SEMICOL	{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, $7); }
+	| idlist COLON proceduresign SEMICOL funcdirectopt		{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, null); }
+	| idlist COLON proceduresign SEMICOL funcdir_noterm_opt functypeinit SEMICOL	{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, $6); }
 	;
 
 vardeclopt
-	: /*port_opt*/
-	| KW_ABSOLUTE id  /*port_opt*/				{ $$ = new VariableAbsoluteNode($2); }
-	| KW_EQ constexpr /*portabilityonapt*/		{ $$ = new VariableInitNode($2); }
+	: 										{ $$ = null; /* TODO */ }
+	| KW_ABSOLUTE id  						{ $$ = new VariableAbsoluteNode($2); }
+	| KW_EQ constinitexpr 					{ $$ = new VariableInitNode($2); }
 	;
 
-	// func call, type cast or identifier //  TODO TODO TODO TODO
+	// Resourcestrings fom windows
+	
+rscstringsec
+	: TYPE_RSCSTR rscstringlist				{ $$ = $2; }
+	;
+	
+rscstringlist
+	: rscstring								{ $$ = new ConstDeclarationList($1, null); }
+	| rscstringlist rscstring				{ $$ = new ConstDeclarationList($2, $1); }
+	;
+	
+rscstring
+	:  id KW_EQ string_const SEMICOL		{ $$ = new ConstDeclarationNode($1, null, $3); }
+	;
+
+
+	
+	// ========================================================================
+	// Expressions
+	// ========================================================================
+
+inheritexpr
+	: KW_INHERITED id								{ $$ = null; /* TODO */ }
+	| KW_INHERITED id LPAREN exprlistopt RPAREN		{ $$ = null; /* TODO */ }
+	;
+ 
+	// func call to be called as statement
 proccall
 	: id									{ $$ = new ProcedureCallNode($1, null); }
-	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); } // field access
 	| lvalue LPAREN exprlistopt RPAREN		{ $$ = new ProcedureCallNode($1, $3); } // pointer deref
-	| lvalue LPAREN casttype RPAREN			{ $$ = new ProcedureCallNode($1, $3); }// for funcs like High, Low, Sizeof etc
+	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); } // field access
+	;
+	
+lvalue	// lvalue
+	: id									{ $$ = $1; }
+	| lvalue LPAREN exprlistopt RPAREN		{ $$ = null; /* TODO */ }
+	| lvalue LPAREN casttype RPAREN			{ $$ = null; /* TODO */ }
+	| casttype LPAREN exprlistopt RPAREN	{ $$ = new TypeCastNode($1, $3); } // cast with pre-defined type
+	| lvalue KW_DOT id						{ $$ = null; /* TODO */ }
+	| lvalue KW_DEREF						{ $$ = new PointerDereferenceNode($1); } // pointer deref
+	| lvalue LBRAC exprlist RBRAC			{ $$ = new ArrayAccessNode($1, $3); }	// array access
+	| string_const LBRAC expr RBRAC			{ $$ = new ArrayAccessNode($1, $3); } // string access
+	| LPAREN expr RPAREN					{ $$ = null; /* TODO */ }
 	;
 
-lvalue
-	: proccall								{ $$ = $1; }	// proc_call or cast
-//	| KW_INHERITED proccall		// TODO
-	| expr KW_DEREF 						{ $$ = new PointerDereferenceNode($1); } // pointer deref
-	| lvalue LBRAC exprlist RBRAC			{ $$ = new ArrayAccessNode($1, $3); }	// array access
-	| string_const LBRAC exprlist RBRAC		{ $$ = new ArrayAccessNode($1, $3); } // string access
-	| casttype LPAREN exprlistopt RPAREN	{ $$ = new TypeCastNode($1, $3); } // cast with pre-defined type
-
-//	| LPAREN lvalue RPAREN		// TODO
+unaryexpr
+	: literal								{ $$ = $1; }
+	| lvalue								{ $$ = new LValueNode($1); }
+	| setconstructor						{ $$ = $1; }
+	| KW_ADDR unaryexpr						{ $$ = new AddressNode($2); }
+	| KW_NOT unaryexpr						{ $$ = new NegationNode($2); }
+	| sign	 unaryexpr 						{ $$ = new UnaryOperationNode($2, $1); }
+	| inheritexpr
 	;
 
 expr
-	: literal							{ $$ = $1; }
-	| lvalue							{ $$ = new LValueNode($1); }
-	| setconstructor					{ $$ = $1; }
-	| KW_ADDR expr						{ $$ = new AddressNode($2); }
-	| KW_NOT expr						{ $$ = new NegationNode($2); }
-	| sign	 expr %prec UNARY			{ $$ = new UnaryOperationNode($2, $1); }
-	| LPAREN expr RPAREN				{ $$ = $1; }
-	| expr relop expr %prec KW_EQ		{ $$ = new BinaryOperationNode($1, $3, $2); }
-	| expr addop expr %prec KW_SUB		{ $$ = new BinaryOperationNode($1, $3, $2); }
-	| expr mulop expr %prec KW_MUL		{ $$ = new BinaryOperationNode($1, $3, $2); }
+	: unaryexpr								{ $$ = $1; }
+	| expr relop expr %prec KW_EQ			{ $$ = new BinaryOperationNode($1, $3, $2); }
+	| expr addop expr %prec KW_SUB			{ $$ = new BinaryOperationNode($1, $3, $2); }
+	| expr mulop expr %prec KW_MUL			{ $$ = new BinaryOperationNode($1, $3, $2); }
 	;
 
 sign
@@ -907,28 +910,33 @@ relop
 	| KW_AS		{ $$ = new OperatorNode("as");}
 	;
 
+
 literal
-	: CONST_INT		{ $$ = new IntegerLiteralNode($1);}
-	| CONST_BOOL	{ $$ = new BoolLiteralNode($1);}
-	| CONST_REAL	{ $$ = new RealLiteralNode($1);}
-	| CONST_NIL		{ $$ = new NilLiteralNode();}
+	: basicliteral	{ $$ = $1; }
 	| string_const	{ $$ = new StringLiteralNode($1);}
 	;
 
+basicliteral
+	: CONST_INT		{ $$ = new IntLiteral(yyVal);}
+	| CONST_BOOL	{ $$ = new BoolLiteral(yyVal);}
+	| CONST_REAL	{ $$ = new RealLiteral(yyVal);}
+	| CONST_NIL		{ $$ = new PointerLiteral();}
+	;
+
 discrete
-	: CONST_INT		{ $$ = new IntegerLiteralNode($1);}
-	| CONST_CHAR	{ $$ = new CharLiteralNode($1);}
-	| CONST_BOOL	{ $$ = new BoolLiteralNode($1);}
+	: CONST_INT		{ $$ = new IntLiteral(yyVal);}
+	| CONST_CHAR	{ $$ = new CharLiteralNode(yyVal);}
+	| CONST_BOOL	{ $$ = new BoolLiteral(yyVal);}
 	;
 
 string_const
-	: CONST_STR					{ $$ = $1; }
-	| CONST_CHAR				{ $$ = $1; }
-	| string_const CONST_STR	{ $$ = $1 + $2; }
-	| string_const CONST_CHAR	{ $$ = $1 + $2; }
+	: CONST_STR					{ $$ = yyVal; }
+	| CONST_CHAR				{ $$ = ""+yyVal; }
+	| string_const CONST_STR	{ $$ = $1 + ""+yyVal; }
+	| string_const CONST_CHAR	{ $$ = $1 + ""+yyVal; }
 	;
 
-id	: IDENTIFIER	{ $$ = new IdentifierNode($1); }
+id	: IDENTIFIER	{ $$ = new IdentifierNode(yyVal); }
 	;
 
 idlist
@@ -952,6 +960,7 @@ exprlistopt
 	;
 
 
+	
 	// ========================================================================
 	// Sets and Enums literals
 	// ========================================================================
@@ -969,16 +978,14 @@ exprlistopt
 		['A'..'Z', 'a'..'z', Chr(Digit + 48)]
 	*/
 
-rangetype
-	: sign rangestart KW_RANGE expr		{ $$ = new SetElement($2, $4); }	
-	| rangestart KW_RANGE expr			{ $$ = new SetElement($1, $3); }
+rangetype			// must be const
+	: rangestart KW_RANGE expr		{ $$ = new SetElement($1, $3); }
 	;
-
+	
+	// best effort to support constant exprs. TODO improve
 rangestart
-	: discrete						{ $$ = $1; }
-	| qualid						{ $$ = $1; }
-	| id LPAREN casttype RPAREN		{ $$ = ProcedureCall($1, $3); }
-	| id LPAREN literal RPAREN		{ $$ = ProcedureCall($1, $3); }
+	: simpleconst					{ $$ = $1; }
+	| sign expr						{ $$ = $1; }
 	;
 
 enumtype
@@ -1012,60 +1019,45 @@ setelem
 
 
 
-
-	
 	// ========================================================================
 	// Constants
 	// ========================================================================
 
-	/*
-	// Resource strings, windows-only
-
-	rscstringsec
-		: TYPE_RSCSTR  constrscdecllist		{ $$ = $1; }
-		;
-
-	constrscdecllist
-		: constrscdecl							{$$ = new ConstDeclarationList($1, null); }
-		| constrscdecllist constrscdecl			{$$ = new ConstDeclarationList($2, $1); }
-		;
-
-	constrscdecl
-		: id KW_EQ literal SEMICOL		{$$ = new ConstDeclarationNode($1, null, $3); }
-		;	
-	
-	// --------------------------------
-	*/
-	
 constsec
 	: KW_CONST constdecl	{ $$ = new ConstDeclarationList($2, null); }
 	| constsec constdecl	{ $$ = new ConstDeclarationList($2, $1); }
 	;
 
 constdecl
-	: id KW_EQ constexpr /*port_opt*/ SEMICOL	{ $$ = new ConstDeclarationNode($1, null, $3);}			// true const
-	| id COLON vartype KW_EQ constexpr /*port_opt*/ SEMICOL	{ $$ = new ConstDeclarationNode($1, $3, $5);}	// typed const
+	: id KW_EQ constinitexpr  SEMICOL				{ $$ = new ConstDeclarationNode($1, null, $3); }			// true const
+	| id COLON vartype KW_EQ constinitexpr SEMICOL	{ $$ = new ConstDeclarationNode($1, $3, $5); }	// typed const
+	| id COLON proceduresign funcdir_noterm_opt functypeinit SEMICOL		{ $$ = null; /* TODO */ }
+	;
+
+constinitexpr
+	: constexpr				{ $$ = $1; }
+	| arrayconst			{ $$ = $1; }
+	| recordconst			{ $$ = $1; }
 	;
 
 constexpr
-	: expr				{ $$ = $1; }
-	| arrayconst		{ $$ = $1; }
-	| recordconst		{ $$ = $1; }
+	: expr					{ $$ = null; /* TODO */ }
 	;
+	
 
 	// 1 or more exprs
 arrayconst
-	: LPAREN constexpr COMMA constexprlist RPAREN	{ $$ = new ExpressionListNode($2, $4); }
+	: LPAREN constexpr COMMA constinitexprlist RPAREN	{ $$ = new ExpressionListNode($2, $4); }
 	;
 
-constexprlist
-	: constexpr							{ $$ = new ExpressionListNode($1, null); }
-	| constexprlist COMMA constexpr		{ $$ = new ExpressionListNode($3, $1); }
+constinitexprlist
+	: constexpr								{ $$ = new ExpressionListNode($1, null); }
+	| constinitexprlist COMMA constexpr		{ $$ = new ExpressionListNode($3, $1); }
 	;
 
 recordconst
-	: LPAREN fieldconstlist RPAREN				{$$ = $2; }
-	| LPAREN fieldconstlist SEMICOL RPAREN		{$$ = $2; }
+	: LPAREN fieldconstlist RPAREN			{$$ = $2; }
+	| LPAREN fieldconstlist SEMICOL RPAREN	{$$ = $2; }
 	;
 
 fieldconstlist
@@ -1074,37 +1066,86 @@ fieldconstlist
 	;
 
 fieldconst
-	: id COLON constexpr		{ $$ = new FieldInit($1, $3); }
+	: id COLON constinitexpr				{ $$ = new FieldInit($1, $3); }
+	;
+
+simpleconst
+	: discrete						{ $$ = null; /* TODO */ }
+	| qualid						{ $$ = null; /* TODO */ }
+	| id LPAREN casttype RPAREN		{ $$ = null; /* TODO */ }
+	| id LPAREN literal RPAREN		{ $$ = null; /* TODO */ }
 	;
 
 
 
-
-
 	// ========================================================================
-	// Composite Types
+	// Records
 	// ========================================================================
 	
-	// Records and objects are treated as classes
+	// Only supports 'simple' structs, without class-like components
+
+recordtypebasic
+	: KW_RECORD KW_END						{ $$ = null; /* TODO */ }
+	| KW_RECORD fieldlist semicolopt KW_END		{ $$ = null; /* TODO */ }
+	;
 	
+recordtype
+	: recordtypebasic		{ $$ = null; /* TODO */ }
+	| KW_RECORD fieldlist SEMICOL variant_struct semicolopt KW_END		{ $$ = null; /* TODO */ }
+	| KW_RECORD variant_struct semicolopt KW_END		{ $$ = null; /* TODO */ }
+	;
+	
+variant_struct
+	: KW_CASE id COLON ordinaltype KW_OF varfieldlist		{ $$ = null; /* TODO */ }
+	| KW_CASE ordinaltype KW_OF varfieldlist		{ $$ = null; /* TODO */ }
+	;
+
+varfieldlist
+	: varfield %prec LOWESTPREC		{ $$ = null; /* TODO */ }
+	| varfield SEMICOL		{ $$ = null; /* TODO */ }
+	| varfield SEMICOL varfieldlist		{ $$ = null; /* TODO */ }
+	;
+
+varfield
+	: simpleconst COLON LPAREN variantlist semicolopt RPAREN		{ $$ = null; /* TODO */ }
+	;
+	
+variantlist
+	: variantvar		{ $$ = null; /* TODO */ }
+	| variantlist SEMICOL variantvar		{ $$ = null; /* TODO */ }
+	;
+
+variantvar
+	: objfield		{ $$ = null; /* TODO */ }
+	| variant_struct		{ $$ = null; /* TODO */ }
+	;
+	
+
+	
+	
+	// ========================================================================
+	// Classes
+	// ========================================================================
+
+	// Objects are treated as classes
 classtype
-	: class_keyword heritage class_struct_opt KW_END		{ $$ = new ClassDefinition($1, $2, $3); }
-	| class_keyword heritage								{ $$ = new ClassDefinition($1, $2, null); } // forward decl			
+	: class_keyword heritage class_struct KW_END	{ $$ = new ClassDefinition($1, $2, $3); }
+	| class_keyword heritage						{ $$ = new ClassDefinition($1, $2, null); } // forward decl			
 	;
 
 class_keyword
 	: KW_CLASS		{ $$ = ClassType.Class; }
 	| KW_OBJECT		{ $$ = ClassType.Object; }
-	| KW_RECORD		{ $$ = ClassType.Record; }
 	;
 
 heritage
-	:
+	:						{ $$ = null; /* TODO */ }
 	| LPAREN idlist RPAREN	{ $$ = $2; }		// inheritance from class and interf(s)			
 	;
 
-class_struct_opt
-	: fieldlist complist scopeseclist	{ $$ = new ClassStruct(Scope.Public, $2, $3);  }
+class_struct
+	: fieldlist SEMICOL complist scopeseclist		{ $$ = new ClassStruct(Scope.Public, $3, $4);  }
+	|					complist scopeseclist		{ $$ = new ClassStruct(Scope.Public, $1, $2);  }
 	;
 
 scopeseclist
@@ -1113,9 +1154,10 @@ scopeseclist
 	;
 
 scopesec
-	: scope_decl fieldlist complist	{ $$ = new ClassStruct($1, $2, $3);  }
+	: scope_decl fieldlist SEMICOL complist			{ $$ = new ClassStruct($1, $2, $4);  }
+	| scope_decl				   complist			{ $$ = new ClassStruct($1, null, $2);  }
 	;
-
+	
 scope_decl
 	: KW_PUBLISHED			{ $$ = Scope.Published; }
 	| KW_PUBLIC				{ $$ = Scope.Public; }
@@ -1124,26 +1166,35 @@ scope_decl
 	;
 
 fieldlist
-	:						{ $$ = null;}
-	| fieldlist objfield	{ $$ = new ClassFieldList($2, $1); }
+	: objfield					{ $$ = $1; }
+	| fieldlist SEMICOL objfield { $$ = new ClassFieldList($3, $1); }
 	;
-		
+	
 complist
 	:							{ $$ = null; }
 	| complist class_comp		{ $$ = new ClassContentList($2, $1); }
 	;
 
 objfield
-	: idlist COLON type SEMICOL	{ $$ = new VarDeclarationNode($1, $3, null); }
+	: idlist COLON vartype		{ $$ = new VarDeclarationNode($1, $3, null); }
+	| idlist COLON procsignfield	{ $$ = null; /* TODO */ }
+//	| idlist COLON proceduresign funcdir_noterm_opt
 	;
 	
 class_comp
-	: staticclassopt procproto	{ $2.isStatic = $1; $$ = $2; }
-	| property					{ $$ = $1; }
+	: staticclassopt procdefproto	{ $2.isStatic = $1; $$ = $2; }
+	| property						{ $$ = $1; }
 	;
 
 interftype
-	: KW_INTERF heritage classmethodlistopt classproplistopt KW_END	 { $$ = new InterfaceDefinition($2, $3, $4); }
+	: KW_INTERF heritage guid classmethodlistopt classproplistopt KW_END	{ $$ = new InterfaceDefinition($2, $4, $5); }
+	| KW_INTERF heritage classmethodlistopt classproplistopt KW_END			{ $$ = new InterfaceDefinition($2, $3, $4); }
+	| KW_INTERF heritage %prec LOWESTPREC									{ $$ = null; /* TODO */ }
+	;
+
+guid
+	: LBRAC string_const RBRAC		{ $$ = null; /* TODO */ }
+	| LBRAC qualid RBRAC			{ $$ = null; /* TODO */ }
 	;
 
 classmethodlistopt
@@ -1152,8 +1203,8 @@ classmethodlistopt
 	;
 
 methodlist
-	: procproto					{ $$ = new ClassContentList(new ClassMethod($1), null); }
-	| methodlist procproto		{ $$ = new ClassContentList(new ClassMethod($2), $1); }
+	: procdefproto					{ $$ = new ClassContentList(new ClassMethod($1), null); }
+	| methodlist procdefproto		{ $$ = new ClassContentList(new ClassMethod($2), $1); }
 	;
 
 
@@ -1163,7 +1214,6 @@ methodlist
 	// ========================================================================
 	// Properties
 	// ========================================================================
-	
 	
 classproplistopt
 	: classproplist		{ $$ = $1; }
@@ -1177,80 +1227,66 @@ classproplist
 
 property
 	: KW_PROPERTY id SEMICOL		{ $$ = null; }
-	| KW_PROPERTY id propinterfopt COLON funcrettype indexspecopt propspecifiers SEMICOL defaultdiropt { $$ = new ClassProperty($2, $5, $6, $4, $7, $9); }
+	| KW_PROPERTY id propinterfopt COLON funcrettype propspecifiers SEMICOL defaultdiropt { $$ = new ClassProperty($2, $5, $6, $3, $8); }
 	;
 
 defaultdiropt
-	:
+	:				{ $$ = null; /* TODO */ }
 	| id SEMICOL	{ $$ = new PropertyDefault($1); }	// id == DEFAULT
 	;
 
 propinterfopt
 	:									{ $$ = null; }
-	| LBRAC idlisttypeidlist RBRAC
+	| LBRAC idlisttypeidlist RBRAC		{ $$ = null; /* TODO */ }
 	;
 	
 idlisttypeidlist
-	: idlisttypeid
-	| idlisttypeidlist SEMICOL idlisttypeid
+	: idlisttypeid								{ $$ = null; /* TODO */ }
+	| idlisttypeidlist SEMICOL idlisttypeid		{ $$ = null; /* TODO */ }
 	;
 
 idlisttypeid
-	: idlist COLON funcparamtype
-	| KW_CONST idlist COLON funcparamtype
+	: idlist COLON funcparamtype		{ $$ = null; /* TODO */ }
+	| KW_CONST idlist COLON funcparamtype		{ $$ = null; /* TODO */ }
+	;
+
+
+	// Properties directive: emitted as keywords caught from within a lexical scope
+
+propspecifiers
+	: indexspecopt readacessoropt writeacessoropt storedspecopt defaultspecopt implementsspecopt		{ $$ = null; /* TODO */ }
 	;
 
 indexspecopt
-	:					{ $$ = null; }
-	| KW_INDEX expr		{ $$ = new PropertyIndex($2); } 
+	:							{ $$ = null; /* TODO */ }
+	| KW_INDEX CONST_INT		{ $$ = null; /* TODO */ }
 	;
 
-
-	// Ugly, but the only way...
-	// 1st-id: specifier - default, implements, read, write, stored
-	// 2nd-id: argument
-propspecifiers
-	:
-	| id id 
-	| id id id id
-	| id id id id id id
-	| id id id id id id id id
-	| id id id id id id id id id id 
+storedspecopt
+	:							{ $$ = null; /* TODO */ }
+	| KW_STORED id				{ $$ = null; /* TODO */ }
 	;
 
+defaultspecopt
+	:							{ $$ = null; /* TODO */ }
+	| KW_DEFAULT literal		{ $$ = null; /* TODO */ }
+	| KW_NODEFAULT				{ $$ = null; /* TODO */ }
+	;
 
-/*	// Properties directive: emitted as ids since they are not real keywords
+implementsspecopt
+	:							{ $$ = null; /* TODO */ }
+	| KW_IMPLEMENTS id			{ $$ = null; /* TODO */ }
+	;
 
-	propspecifiers
-		: indexspecopt readacessoropt writeacessoropt storedspecopt defaultspecopt implementsspecopt	{ $$ = new PropertySpecifierNode($2, $3); }
-		;
+readacessoropt
+	:							{ $$ = null; /* TODO */ }
+	| KW_READ	id				{ $$ = null; /* TODO */ }
+	;
 
-	storedspecopt
-		:
-		| KW_STORED id			
-		;
-
-	defaultspecopt
-		:
-		| KW_DEFAULT literal	
-	//	| KW_NODEFAULT	not supported by now
-		;
-
-	implementsspecopt
-		:
-		| KW_IMPLEMENTS id	
-		;
-
-	readacessoropt
-		:
-		| KW_READ	id		
-		;
-
-	writeacessoropt
-		:
-		| KW_WRITE	id		
-		;
-	*/
+writeacessoropt
+	:							{ $$ = null; /* TODO */ }
+	| KW_WRITE	id				{ $$ = null; /* TODO */ }
+	;
 
 	
 	
@@ -1259,8 +1295,9 @@ propspecifiers
 	// ========================================================================
 
 typedecl
-	: id KW_EQ typeopt vartype /*port_opt*/ SEMICOL							{ $$ = new TypeDeclarationNode($1, $4); }
-	| id KW_EQ typeopt proceduretype /*port_opt*/ SEMICOL funcdirectopt		{ $$ = new ProcedureTypeDeclarationNode($1, $4, $6); }
+	: id KW_EQ typeopt vartype  SEMICOL							{ $$ = new TypeDeclarationNode($1, $4); }
+	| id KW_EQ typeopt proceduresign  SEMICOL funcdirectopt		{ $$ = new proceduresignDeclarationNode($1, $4, $6); }
+	| id KW_EQ typeopt packcomptype SEMICOL						{ $$ = null; /* TODO */ }
 	;
 
 typeopt
@@ -1268,27 +1305,24 @@ typeopt
 	| KW_TYPE						{ $$ = true; }
 	;
 
-type
-	: vartype						{ $$ = $1; }
-	| proceduretype					{ $$ = $1; }
-	;
-
 vartype
 	: simpletype					{ $$ = $1; }
 	| enumtype						{ $$ = $1; }
 	| rangetype						{ $$ = $1; }
-	| varianttype					{ $$ = $1; }
 	| refpointertype				{ $$ = $1; }
 	// metaclasse
 	| classreftype					{ $$ = $1; }
-	// object definition		
-	| KW_PACKED  packedtype			{ $$ = $1; }
-	| packedtype					{ $$ = $1; }
+	| packstructtype				{ $$ = $1; }
 	;
 
-packedtype
-	: structype						{ $$ = $1; }
-	| restrictedtype				{ $$ = $1; }
+packcomptype
+	: KW_PACKED compositetype		{ $$ = null; /* TODO */ }
+	| compositetype		{ $$ = null; /* TODO */ }
+	;
+
+compositetype
+	: classtype								{ $$ = $1; }
+	| interftype							{ $$ = $1; }
 	;
 
 classreftype
@@ -1296,10 +1330,11 @@ classreftype
 	;
 
 simpletype
-	: scalartype				{ $$ = $1; }
-	| realtype					{ $$ = $1; }
-	| stringtype				{ $$ = $1; }
-	| TYPE_PTR					{ $$ = new PointerType(null); }
+	: scalartype					{ $$ = $1; }
+	| realtype						{ $$ = $1; }
+	| stringtype					{ $$ = $1; }
+	| varianttype					{ $$ = $1; }
+	| TYPE_PTR						{ $$ = new PointerType(null); }
 	;
 
 ordinaltype
@@ -1311,15 +1346,15 @@ ordinaltype
 scalartype
 	: inttype								{ $$ = $1; }
 	| chartype								{ $$ = $1; }
-	| qualid		// user-defined type	{ $$ = $1; }
+	| qualid								{ $$ = $1; }
 	;
 
 realtype
-	: TYPE_REAL48		{ $$ = new DoubleType(); }
-	| TYPE_FLOAT		{ $$ = new FloatType(); }
-	| TYPE_DOUBLE		{ $$ = new DoubleType(); }
-	| TYPE_EXTENDED		{ $$ = new ExtendedType(); }
-	| TYPE_CURR			{ $$ = new CurrencyType(); }
+	: TYPE_REAL48			{ $$ = new DoubleType(); }
+	| TYPE_FLOAT			{ $$ = new FloatType(); }
+	| TYPE_DOUBLE			{ $$ = new DoubleType(); }
+	| TYPE_EXTENDED			{ $$ = new ExtendedType(); }
+	| TYPE_CURR				{ $$ = new CurrencyType(); }
 	;
 
 inttype
@@ -1343,7 +1378,7 @@ chartype
 	;
 
 stringtype
-	: TYPE_STR		// dynamic size	{ $$ = new StringType(null); }
+	: TYPE_STR	/* dynamic size	*/	{ $$ = new StringType(null); }
 	| TYPE_PCHAR					{ $$ = new StringType(null); }
 	| TYPE_STR LBRAC expr RBRAC		{ $$ = new StringType($3); }
 	| TYPE_SHORTSTR					{ $$ = new StringType(null); }
@@ -1351,29 +1386,30 @@ stringtype
 	;
 
 varianttype
-	: TYPE_VAR			{ $$ = new VariantType($1); }
-	| TYPE_OLEVAR		{ $$ = new VariantType($1); }
+	: TYPE_VAR			{ $$ = new VariantType(); }
+	| TYPE_OLEVAR		{ $$ = new VariantType(); }
 	;
 
-structype
+packstructtype
+	: structuredtype		{ $$ = null; /* TODO */ }
+	| KW_PACKED structuredtype		{ $$ = null; /* TODO */ }
+	;
+
+structuredtype
 	: arraytype			{ $$ = $1; }
 	| settype			{ $$ = $1; }
 	| filetype			{ $$ = $1; }
+	| recordtype		{ $$ = $1; }
 	;
 	
-restrictedtype
-	: classtype								{ $$ = $1; }
-	| interftype							{ $$ = $1; }
-	;
-
 arraysizelist
 	: rangetype								{ $$ = new ArraySizeList($1, null); }
 	| arraysizelist COMMA rangetype			{ $$ = new ArraySizeList($3, $1); }
 	;
 
 arraytype
-	: TYPE_ARRAY LBRAC arraytypedef RBRAC KW_OF type /*port_opt*/	{ $$ = new ArrayType($3, $6); }
-	| TYPE_ARRAY KW_OF type /*port_opt*/	{ $$ = new ArrayType(null, $3); }
+	: TYPE_ARRAY LBRAC arraytypedef RBRAC KW_OF vartype 	{ $$ = new ArrayType($3, $6); }
+	| TYPE_ARRAY KW_OF vartype 	{ $$ = new ArrayType(null, $3); }
 	;
 
 arraytypedef
@@ -1384,21 +1420,21 @@ arraytypedef
 	;
 
 settype
-	: TYPE_SET KW_OF ordinaltype /*port_opt*/		{ $$ = new SetType($3); }
+	: TYPE_SET KW_OF ordinaltype 	{ $$ = new SetType($3); }
 	;
 
 filetype
-	: TYPE_FILE KW_OF type /*port_opt*/		{ $$ = new FileType($3); }
-	| TYPE_FILE								{ $$ = new FileType(null); }
+	: TYPE_FILE KW_OF vartype 		{ $$ = new FileType($3); }
+	| TYPE_FILE						{ $$ = new FileType(null); }
 	;
 
 refpointertype
-	: KW_DEREF type /*port_opt*/				{ $$ = new PointerType($2); }
+	: KW_DEREF vartype 				{ $$ = new PointerType($2); }
 	;
 
 funcparamtype
-	: simpletype								{ $$ = $1; }
-	| TYPE_ARRAY KW_OF simpletype /*port_opt*/	{ $$ = new ArrayType(null, $3); }
+	: simpletype					{ $$ = $1; }
+	| TYPE_ARRAY KW_OF simpletype	{ $$ = new ArrayType(null, $3); }
 	;
 
 funcrettype
@@ -1411,103 +1447,13 @@ casttype
 	| chartype			{ $$ = $1; }
 	| realtype			{ $$ = $1; }
 	| stringtype		{ $$ = $1; }
-	| TYPE_PTR			{ $$ = $1; }
+	| TYPE_PTR			{ $$ = new PointerType(); }
 	;
 
 
 %%
 
-	}	// close parser class, opened in prolog
-	
-	
-	namespace yydebug
-	{
-		// Internal for Debug prints
-		class yyErrorTrace : yyDebug
-		{
-			const int yyFinal = 6;
-			
-			void println (string s) {
-				Console.Error.WriteLine (s);
-			}
-			
-			void printchecked(int state, string s)
-			{
-				if (state == 0 || state == yyFinal)
-					println(s);
-			}
-
-			void printchecked(int from, int to, string s)
-			{
-				if (from == 0 || from == yyFinal || to == 0 || to == yyFinal)
-					println(s);
-			}
-			
-			public void push (int state, Object value) {
-				printchecked (state, "push\tstate "+state+"\tvalue "+value);
-			}
-			
-			public void lex (int state, int token, string name, Object value) {
-				 printchecked (state, "lex\tstate "+state+"\treading "+name+"\tvalue "+value);
-			}
-			
-			public void shift (int from, int to, int errorFlag)
-			{
-					switch (errorFlag) {
-					default:				// normally
-						printchecked (from, to, "shift\tfrom state "+from+" to "+to);
-						break;
-					case 0: case 1: case 2:		// in error recovery
-						printchecked (from, to,"shift\tfrom state "+from+" to "+to +"\t"+errorFlag+" left to recover");
-						break;
-					case 3:				// normally
-						printchecked (from, to, "shift\tfrom state "+from+" to "+to+"\ton error");
-						break;
-					}
-			}
-			
-			public void pop (int state) {
-				printchecked (state,"pop\tstate "+state+"\ton error");
-			}
-			
-			public void discard (int state, int token, string name, Object value) {
-				printchecked (state,"discard\tstate "+state+"\ttoken "+name+"\tvalue "+value);
-			}
-			
-			public void reduce (int from, int to, int rule, string text, int len) {
-				printchecked (from, to, "reduce\tstate "+from+"\tuncover "+to +"\trule ("+rule+") "+text);
-			}
-			
-			public void shift (int from, int to) {
-				printchecked (from, to, "goto\tfrom state "+from+" to "+to);
-			}
-			
-			public void accept (Object value) {
-				println("accept\tvalue "+value);
-			}
-			
-			public void error (string message) {
-				println("error\t"+message);
-			}
-			
-			public void reject () {
-				println("reject");
-			}
-			
-		}
-	}
-	
-	namespace yyParser
-	{
-		internal class InputRejected : yyException 
-		{
-			public InputRejected (int lineno, string message = "Input invalid - Parsing terminated by REJECT action") 
-				: base ("Line " + lineno + ": " + message)  { }
-			
-			public InputRejected (string message = "Input invalid - Parsing terminated by REJECT action") 
-				: base (message)  { }
-		}
-	}
+	}	// close parser class, opened in prolog	
 
 // already defined in template
-//	} // close outermost namespace
+//} // close outermost namespace

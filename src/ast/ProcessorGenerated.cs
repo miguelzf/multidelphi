@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using crosspascal.ast.nodes;
 
 namespace crosspascal.ast
 {
@@ -13,11 +14,11 @@ namespace crosspascal.ast
 	{
 		//	Complete interface to be implemented by any specific AST processor	
 		
-		public virtual void Visit(Node node)
+		public virtual void Visit(DelphiNode node)
 		{
 		}
 				
-		public virtual void Visit(GoalNode node)
+		public virtual void Visit(CompilationUnit node)
 		{
 		}
 				
@@ -118,7 +119,7 @@ namespace crosspascal.ast
 		{
 		}
 				
-		public virtual void Visit(LiteralNode node)
+		public virtual void Visit(DelphiLiteral node)
 		{
 		}
 				
@@ -126,11 +127,11 @@ namespace crosspascal.ast
 		{
 		}
 				
-		public virtual void Visit(UnfinishedNode node)
+		public virtual void Visit(FixmeNode node)
 		{
 		}
 				
-		public virtual void Visit(IntegerLiteralNode node)
+		public virtual void Visit(IntLiteral node)
 		{
 		}
 				
@@ -142,15 +143,15 @@ namespace crosspascal.ast
 		{
 		}
 				
-		public virtual void Visit(BoolLiteralNode node)
+		public virtual void Visit(BoolLiteral node)
 		{
 		}
 				
-		public virtual void Visit(RealLiteralNode node)
+		public virtual void Visit(RealLiteral node)
 		{
 		}
 				
-		public virtual void Visit(NilLiteralNode node)
+		public virtual void Visit(PointerLiteral node)
 		{
 		}
 				
@@ -367,7 +368,7 @@ namespace crosspascal.ast
 		{
 		}
 				
-		public virtual void Visit(ExpressionNode node)
+		public virtual void Visit(DelphiExpression node)
 		{
 		}
 				

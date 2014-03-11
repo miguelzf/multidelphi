@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using crosspascal.ast.nodes;
 
 namespace crosspascal.ast
 {
@@ -18,6 +19,6 @@ namespace crosspascal.ast
 			processor.traverse = this.traverse;
 		}
 
-		public abstract void traverse(Node n);
+		public abstract void traverse(DelphiNode n);
 	}
 }

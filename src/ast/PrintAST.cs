@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using crosspascal.ast.nodes;
 
 namespace crosspascal.ast
 {
@@ -44,7 +45,7 @@ namespace crosspascal.ast
 		// =================================================
 
 		// Printing helper
-		private void EnterNode(Node n)
+		private void EnterNode(DelphiNode n)
 		{
 			string name = n.GetType().Name;
 			builder.Append(' ', identLevel);
@@ -52,7 +53,7 @@ namespace crosspascal.ast
 			identLevel++;
 		}
 
-		private void LeaveNode(Node n)
+		private void LeaveNode(DelphiNode n)
 		{
 			identLevel--;
 		}

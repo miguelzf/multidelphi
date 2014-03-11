@@ -14,8 +14,8 @@ namespace crosspascal
 	{
 		static void Main(string[] args)
 		{
-			string test = "Program bla; {$DEFINE foo} const a = 2; {$IFDEF FOO} const b = 3; {$ENDIF}"
-				+ "{$IFDEF BAR} const c = 4;{$ENDIF} {$IFDEF BAR} LOL = 3; {$ELSE} LOL = 4; {$ENDIF}";
+		//	string test = "Program bla; {$DEFINE foo} const a = 2; {$IFDEF FOO} const b = 3; {$ENDIF}"
+		//		+ "{$IFDEF BAR} const c = 4;{$ENDIF} {$IFDEF BAR} LOL = 3; {$ELSE} LOL = 4; {$ENDIF}";
 
 			Console.ReadLine();
 

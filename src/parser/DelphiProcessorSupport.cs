@@ -9,18 +9,29 @@ using System.Threading;
 
 namespace crosspascal.parser
 {
-	public class PreProcessor
+	public partial class DelphiPreprocessor	
 	{
-		private List<string> _paths;
+		private List<string> _paths = new List<string>();
 		private List<string> _defines;
 
-		public PreProcessor()
-		{ 
-			_paths = new List<string>();
+		void InitPreprocessor()
+		{	// to be resetted each time this function is called
 			_defines = new List<string>();
 		}
+			
+		public void LoadIncludePaths(string fname)
+		{
+			string line;
+			using (StreamReader file = new StreamReader(fname, DelphiParser.DefaultEncoding))
+				while((line = file.ReadLine()) != null)
+				{
+					string path = line.Trim();
+					if (path.Length > 0 && Directory.Exists(path))
+						AddIncludePath(path);
+				}
+		}
 
-		public void AddPath(string path)
+		public void AddIncludePath(string path)
 		{
 			if (path.EndsWith("\\") || path.EndsWith("/"))
 				return ;

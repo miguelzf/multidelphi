@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -8,23 +9,74 @@ namespace crosspascal.parser
 
 	class ParserDriverTest
 	{
+		static void TestReadAll(string[] args)
+		{
+			string[] fstrings = new string[args.Length];
+			var sw =  new Stopwatch();
+			sw.Start();
+
+			for(int i = 0; i < args.Length; i++)
+			{
+				string s = args[i];
+				Console.Write("####### PARSE file " + Path.GetFileName(s) + "\n");
+				var sr = new StreamReader(s, DelphiParser.DefaultEncoding);
+				fstrings[i] = sr.ReadToEnd();
+			}
+
+			sw.Stop();
+			Console.WriteLine("READING all files took " + sw.ElapsedMilliseconds + " milisecs");
+
+			sw.Restart();
+			for (int i = 0; i < 10; i++)
+			foreach (string s in fstrings)
+				new StringReader(s).ReadToEnd();
+
+			Console.WriteLine("READING from StringStream all files took " + sw.ElapsedMilliseconds + " milisecs");
+		}
+
 		public static void Main(string[] args)
 		{
-			DelphiParser parser = new DelphiParser();
-			parser.LoadIncludePaths("include-paths.txt");
-			
-			try {
-				foreach (string s in args)
-				{
-					Console.Error.Write("PARSE file " + Path.GetFileName(s) + ": ");
+			var sw = new Stopwatch();
+			sw.Start();
 
-					Object tree = parser.Parse(s, new yydebug.yyErrorTrace());
-					Console.Error.WriteLine("Parsing finished ok");
+			DelphiParser parser = new DelphiParser();
+			DelphiPreprocessor preproc = new DelphiPreprocessor();
+			preproc.LoadIncludePaths("include-paths.txt");
+
+			// TestReadAll(args);
+			foreach (string s in args)
+			{
+				Console.Write("####### PARSE file " + Path.GetFileName(s) + ": ");
+
+				preproc.InitLexer(s);
+				preproc.AddDefine("LINUX");	// test
+				try
+				{
+					preproc.Preprocess();
 				}
-			} catch (Exception e) {
-				Console.Error.WriteLine(e);
-				Console.Error.WriteLine("Parsing failed");
+				catch (PreprocessorException)
+				{
+					Console.Error.WriteLine("Parsing failed");
+					continue;
+				}
+
+				string preprocfiletext = preproc.GetOutput();
+				StringReader sr = new StringReader(preprocfiletext);
+
+				try
+				{
+					Object tree = parser.Parse(sr);
+					Console.WriteLine("Parsed OK");
+				}
+				catch (ParserException e)
+				{
+					Console.Error.WriteLine(e);
+					Console.Error.WriteLine("Parsing failed");
+				}
 			}
+
+			sw.Stop();
+			Console.WriteLine("READING from StringStream all files took " + (sw.ElapsedMilliseconds/1000.0) + " secs");
 		}
 	}
 

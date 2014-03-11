@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Linq;
 
 namespace crosspascal.parser
 {
@@ -21,12 +22,20 @@ namespace crosspascal.parser
 	
 	// %public %abstract
 %class DelphiScanner
-%implements Token, yyParser.yyInput
+%implements Token, IScanner
 //%extends 
 %function token
 
 %8bit
 	// %unicode
+
+// useless for C#
+// %yylexthrow ScannerException
+
+//%column
+%line
+//Delphi is case insensitive
+%ignorecase
 
 // ------------------------------------------------------
 // EOF treatment:
@@ -46,73 +55,42 @@ namespace crosspascal.parser
 %eof}
 // ------------------------------------------------------
 
-	// useless for C#
-	// %yylexthrow ScannerException
-
-//%column
-%line
-	//Delphi is case insensitive
-%ignorecase
-
-%x XCOMMENT1 XCOMMENT2 ASMCODESEC XNOTDEF
-
+%init{
+	// code injected in the constructor
+	// Inits the scanner
+	InitLexer(@in);
+%init}
 
 %{
-	
-	// **********************************************
-	// Preprocessing
-	
-		public PreProcessor preproc;
-	
-		Stack<Boolean> defines = new Stack<Boolean>();
-	
-		bool IsDefinedDir(string dir)
-		{
-			Boolean defined = preproc.IsDefined(GetDirectiveArg(dir));
-			defines.Push(defined);
-			return defined;
-		}
+		// **********************************************
+		// IScanner/yyLex interface:
 
-	// **********************************************
-	// yyParser.yyLex interface:
-	
-		/** move on to next token.
-			@return false if positioned beyond tokens.
-			@throws IOException on input error.
-		*/
-		public bool advance ()
-		{
+		public bool advance () {
 			return !zzAtEOF;
 		}
-		
-		/** classifies current token.
-			Should not be called if advance() returned false.
-			@return current %token or single character.
-		*/
-		// public int token ();
-		
-		/** associated with current token.
-			Should not be called if advance() returned false.
-			@return value for token().
-		*/
-		
-		Object yylval;	// value of last token
-		public Object value ()
-		{
+
+		// public int token ();	// created by CSFlex
+				
+		public Object value () {
 			return yylval;
 		}
-		
-		
-	// **********************************************
-	// Make CSFlex compatible with FLex:
-		
-	  	void BEGIN(int state) { yybegin(state); }
-		void unput(char c) { yypushback(1); }
-		const int INITIAL = YYINITIAL;
 
+		public int yylineno() {
+			return yyline;
+		}
+
+		// **********************************************
+		// Yacc's message functions
+		
 		void yyprint(String msg)
 		{
 			Console.Out.WriteLine("[Line " + yyline + "] " + msg);
+		}
+
+		void yydebug(String msg)
+		{
+			if (DelphiParser.DebugLevel > 0)
+				Console.Out.WriteLine("[Line " + yyline + "] " + msg);
 		}
 		
 		void yyerror(String msg = "Unknown lexical error")
@@ -120,42 +98,11 @@ namespace crosspascal.parser
 		//	throw new ScannerException(yyline, msg);
 			Console.Error.WriteLine("[ERROR lexical] " + msg + " in line " + yyline);
 		}
-		
-		void pperror(String msg = "Unknown preprocessing error")
-		{
-		//	throw new PreprocessorException(yyline, msg);
-			Console.Error.WriteLine("[ERROR preprocessor] " + msg + " in line " + yyline);
-		}
 
-		// Finish scanning
-		public int Accept()
-		{
-		    if (!zzEOFDone) {
-				zzEOFDone = true;
-				yyclose();
-			}
-			return YYEOF;
-		}
 		
-		public int yylineno() {
-			return yyline;
-		}
-		
-
 		// **********************************************
-		
 		// Internal helper functions
-		
-		// Avoid repeated string creations in yytext. Must reset text to null before each rule's action.
-		string _text;
-		string text {
-			get { 
-				if (_text == null)
-					_text = yytext();
-				return _text;
-			}
-			set { _text = value; }
-		}
+			
 		
 		Int32 GetInt(string str, int numbase) { return Convert.ToInt32(str, numbase); }
 		Double GetReal(string str) { return Convert.ToDouble(str); }
@@ -164,20 +111,27 @@ namespace crosspascal.parser
 		{
 			int ignlen = directive.Length + 2; // from: "{$"
 			return yytext().Substring(ignlen, yylength()-1-ignlen).Trim();
+		}	
+		
+		void InitLexer(TextReader sr)
+		{
+			stateNames = new string[] {
+				"INITIAL", "XCOMMENT1", "XCOMMENT2", "XASMCODESEC", "XNOTDEF",  
+				"XFUNCW_PARAMS", "XFUNCW_RET", "XFUNCDIRECTS", "XFUNCEXTERN" };
+
+			yyreset(sr);
+			// set yylval and text to null before each executing each rule's action
+			PRE_ACTION_DEFAULT = () => { yylval = null; text = null; };
+	
+			stateStack.Push(INITIAL);
 		}
-	
-	
 %}
 
-%init{
-	// code injected in the constructor
 
-	// Inits the scanner
-	yyreset(@in);
-	// set yylval and text to null before each executing each rule's action
-	PRE_ACTION_DEFAULT = () => { yylval = null; text = null; };
-
-%init}
+	// exclusive states
+%x XASMCODESEC XFUNCW_PARAMS XFUNCW_RET XFUNCDIRECTS XFUNCEXTERN
+	// inclusive states. shared with INITIAL
+%s SFUNCDECL SPROPSPECS
 
 DEC     = [0-9]
 HEXA    = [0-9a-fA-F]
@@ -213,21 +167,22 @@ record		{ return KW_RECORD; }
 class		{ return KW_CLASS; }
 packed		{ return KW_PACKED; }		// packed struct
 of			{ return KW_OF; }			// decl of types
+out			{ return KW_OUT; }			// modifier of func params
+absolute	{ return KW_ABSOLUTE; }		// modifier of variables
+property	{ yypushstate(SPROPSPECS); return KW_PROPERTY; }
+inherited	{ return KW_INHERITED; }	// call of base construcotr/methods
 
 	/* functions */
-function	{ return KW_FUNCTION; }
-procedure	{ return KW_PROCEDURE; }
-property	{ return KW_PROPERTY; }		
-inherited	{ return KW_INHERITED; }	// call of base construcotr/methods
+function	{ yypushstate(XFUNCW_PARAMS); return KW_FUNCTION; }
+procedure	{ yypushstate(XFUNCW_PARAMS); return KW_PROCEDURE; }
+constructor	{ yypushstate(XFUNCW_PARAMS); return KW_CONSTRUCTOR; }
+destructor	{ yypushstate(XFUNCW_PARAMS); return KW_DESTRUCTOR; }
 
 	/* section headers */
 const		{ return KW_CONST; }
 var			{ return KW_VAR; }
-out			{ return KW_OUT; }			// modifier of func params
 threadvar	{ return KW_THRVAR; }
 type		{ return KW_TYPE; }
-constructor	{ return KW_CONSTRUCTOR; }
-destructor	{ return KW_DESTRUCTOR; }
 
 	/* blocks */
 begin		{ return KW_BEGIN; }
@@ -242,6 +197,8 @@ downto		{ return KW_DOWNTO; }
 repeat		{ return KW_REPEAT; }
 until		{ return KW_UNTIL; }
 while		{ return KW_WHILE; }
+break		{ return KW_BREAK; }
+continue	{ return KW_CONTINUE; }
 
 	/* control flow: others */
 if			{ return KW_IF; }
@@ -260,12 +217,118 @@ finally		{ return KW_FINALLY; }
 on			{ return KW_ON; }
 
 
+
+
 	/**************************************************************
 	 * Directives:
 	 * Should be treated as identifiers instead of reserved keywords
 	 **************************************************************/
 
-	/*	properties keywords 
+ 	/**************************************************************/
+	// Lexical Scope for function directives
+
+	// wait for function params or return (when function has no params)
+<XFUNCW_PARAMS> {
+	// function name
+	[_a-zA-Z]{ID}*	{ yylval = yytext(); return IDENTIFIER; }
+	"."			{ return KW_DOT; }
+	
+	"("			{	switchstate(XFUNCW_RET);
+					yypushstate(INITIAL);
+					return LPAREN;
+				}
+	";"			{	switchstate(XFUNCDIRECTS);
+					yybegin(XFUNCDIRECTS);
+					return SEMICOL;
+				}
+	":"			{	switchstate(XFUNCDIRECTS);
+					yypushstate(INITIAL);
+					return COLON;
+				}
+	[ \t\n\r]+	{ }
+	. 			{ // signal to leave this state
+					yypopstate();
+					yypushback(1);
+				}
+}
+
+	// wait for function return
+<XFUNCW_RET> {
+	":"			{	switchstate(XFUNCDIRECTS);
+					yypushstate(INITIAL);
+					return COLON;
+				}
+	
+	";"			{	switchstate(XFUNCDIRECTS);
+					yybegin(XFUNCDIRECTS);
+					return SEMICOL;
+				}
+				
+	[ \t\n\r]+	{ }
+	. 			{ // signal to leave this state
+					yypopstate();
+					yypushback(1);
+				}
+}
+	
+	// scan function directives. in the default state, emit them as identifiers
+<XFUNCDIRECTS> {
+		// function call conventions
+	cdecl		{ return KW_CDECL; }
+	pascal		{ return KW_PASCAL; }
+	mwpascal	{ return KW_PASCAL; }
+	register	{ return KW_REGISTER; }
+	safecall	{ return KW_SAFECALL; }
+	stdcall		{ return KW_STDCALL; }
+
+		// function qualifiers
+	abstract	{ return KW_ABSTRACT; }
+	assembler	{ return KW_ASSEMBLER; }
+	dynamic		{ return KW_DYNAMIC; }
+	export		{ return KW_EXPORT; }
+	forward		{ return KW_FORWARD; }
+	inline		{ return KW_INLINE; }
+	override	{ return KW_OVERRIDE; }
+	overload	{ return KW_OVERLOAD; }
+	reintroduce	{ return KW_REINTRODUCE; }
+	virtual		{ return KW_VIRTUAL; }
+	varargs		{ return KW_VARARGS; }
+		// DOS deprecated
+	far			{ return KW_FAR; }
+	near		{ return KW_NEAR; }
+	resident	{ return KW_RESIDENT; }
+	
+		// needs to chomp up the externa args
+	external	{ yypushstate(XFUNCEXTERN); return KW_EXTERNAL; }
+	
+	";"			{ return SEMICOL; }
+	[ \t\n\r]+	{ }
+
+	// leave func directives:
+	"="			{ yypopstate(); return KW_EQ; }
+		// for IDs that start with a keyword part. ex: forward_dffdg
+	[_a-zA-Z]{ID}*	{ yypopstate(); yypushback(yylength()); }
+	. 			{ yypopstate();	yypushback(1); }
+}
+
+	// process 'external' directive args
+<XFUNCEXTERN> {
+	name 		{ return KW_NAME; }
+	'[^']*'		{ yylval = yytext().Substring(1, yylength()-2); return CONST_STR; }
+	"."			{ return KW_DOT; }
+	[_a-zA-Z]{ID}*	{ yylval = yytext(); return IDENTIFIER; }
+	
+	";"			{ yypopstate(); return SEMICOL; }
+	[ \t\n\r]+	{ }
+	.			{ yyerror("Invalid char in external args: " + text + " (ASCII " + ((int) text[0]) +")"); }	
+} 
+
+	
+ 	/**************************************************************/
+	// Lexical Scope for Properties directives	
+
+<SPROPSPECS> {
+	//	properties keywords
 	default		{ return KW_DEFAULT; }
 	index		{ return KW_INDEX; }
 	implements	{ return KW_IMPLEMENTS; }
@@ -274,126 +337,88 @@ on			{ return KW_ON; }
 	read		{ return KW_READ; }
 	stored		{ return KW_STORED; }
 	write		{ return KW_WRITE; }
-	*/
+		
+	";" 		{ // signal to leave this state
+					yypopstate();
+					return SEMICOL;
+				}
+}
 
-	/* scope qualifiers */
-protected	{ return KW_PROTECTED; }
-public		{ return KW_PUBLIC; }
-published	{ return KW_PUBLISHED; }
-private		{ return KW_PRIVATE; }
 
-	/* function call types */
-cdecl		{ return KW_CDECL; }
-pascal		{ return KW_PASCAL; }
-mwpascal	{ return KW_PASCAL; }
-register	{ return KW_REGISTER; }
-safecall	{ return KW_SAFECALL; }
-stdcall		{ return KW_STDCALL; }
+ 	/**************************************************************/
+	// Lexical Scope for Visibility/Scope qualifiers - TODO
 
-	/* function qualifiers */
-absolute	{ return KW_ABSOLUTE; }
-abstract	{ return KW_ABSTRACT; }
-assembler	{ return KW_ASSEMBLER; }
-dynamic		{ return KW_DYNAMIC; }
-export		{ return KW_EXPORT; }
-external	{ return KW_EXTERNAL; }
-forward		{ return KW_FORWARD; }
-inline		{ return KW_INLINE; }
-override	{ return KW_OVERRIDE; }
-overload	{ return KW_OVERLOAD; }
-reintroduce	{ return KW_REINTRODUCE; }
-virtual		{ return KW_VIRTUAL; }
-varargs		{ return KW_VARARGS; }
+protected	{ return KW_PROTECTED;	}
+public		{ return KW_PUBLIC;		}
+published	{ return KW_PUBLISHED;	}
+private		{ return KW_PRIVATE;	}
 
-	/* file warnings */
-platform	{ return KW_PLATFORM; }
-deprecated	{ return KW_DEPRECATED; }
-
-	/* packages 
+	
+	/* packages: emitted as identifiers
 	package		{ return KW_PACKAGE; }
 	requires	{ return KW_REQUIRES; }
 	contains	{ return KW_CONTAINS; }
 	*/
+	
+		/* types: integers */
+	byte		{ return TYPE_BYTE; }
+	shortint	{ return TYPE_SHORTINT; }
+	word		{ return TYPE_WORD; }
+	smallint	{ return TYPE_SMALLINT; }
+	cardinal	{ return TYPE_CARDINAL; }
+	integer		{ return TYPE_INT; }
+	longword	{ return TYPE_LONGWORD; }
+	longint		{ return TYPE_LONGINT; }
+		/* int64		{ return TYPE_INT64; }	*/
+		/* uint64		{ return TYPE_UINT64; }	*/
 
-	/* Embarcadero Delphi directives - ignored
-	delayed experimental final
-	helper operator reference
-	sealed static strict unsafe
-	*/
+		/* types: floats */
+	single		{ return TYPE_FLOAT; }
+	real48		{ return TYPE_REAL48; }
+	extended	{ return TYPE_EXTENDED; }
+	double		{ return TYPE_DOUBLE; }
+	real		{ return TYPE_DOUBLE; }
 
-	/*		// windows/forms/COM specific - ignored
-	winapi		{ return KW_WINAPI; }
-	message		{ return KW_MESSAGE; }
-	dispinterface	{ return KW_DISPINTERF; }
-	dispid		{ return KW_DISPID; }
-	automated	{ return KW_AUTOMATED; }	// visibilidade
-		// properties modifiers for dispinterface
-	writeonly	{ return KW_WRITEONLY; }
-	readonly	{ return KW_READONLY; }
-		// DOS deprecated
-	far			{ return KW_FAR; }
-	near		{ return KW_NEAR; }
-	resident	{ return KW_RESIDENT; }
-	*/
+		/* types: chars */
+	char		{ return TYPE_CHAR; }
+	pchar		{ return TYPE_PCHAR; }
+	ansichar	{ return TYPE_PCHAR; }
+	widechar	{ return TYPE_WIDECHAR; }
+	string		{ return TYPE_STR; }
+	shortstring	{ return TYPE_SHORTSTR; }
+	widestring	{ return TYPE_WIDESTR; }
+	ansistring	{ return TYPE_STR; }
+	resourcestring	{ return TYPE_RSCSTR; }
+	 
+		/* types others */
+	boolean		{ return TYPE_BOOL; }
+	olevariant	{ return TYPE_OLEVAR; }
+	variant		{ return TYPE_VAR; }
+	comp		{ return TYPE_COMP; }
+	currency	{ return TYPE_CURR; }
 
-
-	/* types: integers */
-byte		{ return TYPE_BYTE; }
-shortint	{ return TYPE_SHORTINT; }
-word		{ return TYPE_WORD; }
-smallint	{ return TYPE_SMALLINT; }
-cardinal	{ return TYPE_CARDINAL; }
-integer		{ return TYPE_INT; }
-longword	{ return TYPE_LONGWORD; }
-longint		{ return TYPE_LONGINT; }
-int64		{ return TYPE_INT64; }
-uint64		{ return TYPE_UINT64; }
-
-	/* types: floats */
-single		{ return TYPE_FLOAT; }
-real48		{ return TYPE_REAL48; }
-extended	{ return TYPE_EXTENDED; }
-double		{ return TYPE_DOUBLE; }
-real		{ return TYPE_DOUBLE; }
-
-	/* types: chars */
-char		{ return TYPE_CHAR; }
-pchar		{ return TYPE_PCHAR; }
-ansichar	{ return TYPE_PCHAR; }
-widechar	{ return TYPE_WIDECHAR; }
-string		{ return TYPE_STR; }
-shortstring	{ return TYPE_SHORTSTR; }
-widestring	{ return TYPE_WIDESTR; }
-ansistring	{ return TYPE_STR; }
-resourcestring	{ return TYPE_RSCSTR; }
- 
-	/* types others */
-boolean		{ return TYPE_BOOL; }
-olevariant	{ return TYPE_OLEVAR; }
-variant		{ return TYPE_VAR; }
-comp		{ return TYPE_COMP; }
-currency	{ return TYPE_CURR; }
 array		{ return TYPE_ARRAY; }
 pointer		{ return TYPE_PTR; }
 file		{ return TYPE_FILE; }
 set			{ return TYPE_SET; }
-	
+		
 
 	/**************************************************************/
 	/* ASM x86 */
 
-asm						{	BEGIN(ASMCODESEC);
+asm						{	yypushstate(XASMCODESEC);
 							return KW_ASM;
 						}
-
-<ASMCODESEC>[ \t\r]+	{ }
-<ASMCODESEC>end;		{	// HACK!!! temporary. must change
-							unput(';');
-							BEGIN(INITIAL);
+<XASMCODESEC> {
+ [ \t\r]+				{ }
+ end					{	yypopstate();
 							return KW_END;
 						}
-<ASMCODESEC>{NL}		{ }
-<ASMCODESEC>.			{ return ASM_OP; }	// ASM unknown char
+	// ignore IDs that start with 'end'
+ [_a-zA-Z]{ID}*			{ }
+
+ .|{NL}					{ }	// return ASM_OP; }
+}
 
 
 	/**************************************************************/
@@ -408,11 +433,10 @@ nil					{ return CONST_NIL; }
 {DEC}+\.{DEC}+e[+-]?{DEC}+	{ yylval = GetReal(yytext()); return CONST_REAL; }
 	
 	/* literals: ALPHnumeric */
-\'.\'				{ yylval = yytext()[1]; return CONST_CHAR; }
+'.'					{ yylval = yytext()[1]; return CONST_CHAR; }
 	// check that num < 255
 \#{DEC}+			{ yylval = GetInt(yytext().Substring(1), 10); return CONST_CHAR; }
 \#\${HEXA}+			{ yylval = GetInt(yytext().Substring(2), 16); return CONST_CHAR; }
-''					{ yylval = ""; return CONST_STR; }
 '[^']*'				{ yylval = yytext().Substring(1, yylength()-2); return CONST_STR; }
 
 true				{ yylval = true;  return CONST_BOOL; }
@@ -425,11 +449,19 @@ false				{ yylval = false; return CONST_BOOL; }
 	/* separators */
 ":"			{ return COLON; }
 ","			{ return COMMA; }
-";"			{ return SEMICOL;}
 "["			{ return LBRAC; }
-"("			{ return LPAREN;}
+"("			{ return LPAREN; }
 "]"			{ return RBRAC;	}
-")"			{ return RPAREN;}
+
+";"			{	if (yylaststate() == XFUNCDIRECTS)
+					yypopstate();
+				return SEMICOL;
+			}
+
+")"			{	if (yylaststate() == XFUNCW_RET)
+					yypopstate();
+				return RPAREN;
+			}
 
 	/* expr: general */
 ":="		{ return KW_ASSIGN; }
@@ -469,165 +501,47 @@ in			{ return KW_IN; }	// is in set
 
 
 
+
 	/**************************************************************/
-	/* PreProcessor - process compiler directives */
+
+[_a-zA-Z]{ID}*		{ yylval = yytext(); return IDENTIFIER; }
+
+[ \t]+				{ }     /* ignore whitespace */
+
+{NL}				{ }
+
+<<EOF>>				{	return Accept(); }
+
+.					{ yyerror("Unknown char: " + text + " (ASCII " + ((int) text[0]) +")"); }
+
+
+
+	/************************************************************/
+	/* Obscure/Non-portable/Deprecated keywords: not supported	*/
 	
-	/* includes */
-"{$i "[^}]+\}		{
-						string fpath = GetDirectiveArg("i");
-						string incpath = preproc.SearchFile(fpath);
-						
-						if (incpath == null)
-							pperror("Include file " + incpath + " not found");
-						else
-						{
-							StreamReader sr = null;
-							try {
-								sr = new StreamReader(incpath, DelphiParser.DefaultEncoding);
-							} 
-							catch (IOException ioe) {
-								pperror("Include file " + fpath + " could not be read: " + ioe.Message);
-							}
-							finally {
-								yypushStream(sr);
-								yyprint("Pushed stream from " + fpath + "");
-							}
-						}
-					}
+	/* file warnings */
+	/*
+	platform	{ return KW_PLATFORM; }
+	deprecated	{ return KW_DEPRECATED; }
+	*/
 
-	/* defines */
-"{$define "[^}]\}	{	preproc.AddDefine(GetDirectiveArg("define"));	}
+	/* Embarcadero Delphi directives - ignored
+	delayed experimental final
+	helper operator reference
+	sealed static strict unsafe
+	*/
 
-"{$undef "[^}]\}	{	preproc.RemoveDefine(GetDirectiveArg("undef"));	}
-
-	/* ifdefs */
-"{$ifdef "[^}]\}	{	if (!IsDefinedDir("ifdef"))
-							BEGIN(XNOTDEF);
-					}
-
-"{$ifopt "[^}]\}	{	if (!IsDefinedDir("ifopt"))
-							BEGIN(XNOTDEF);
-					}
-
-"{$ifndef "[^}]\}	{	if (IsDefinedDir("ifndef"))
-							BEGIN(XNOTDEF);
-					}
-
-"{$else"[^}]\}		{	Boolean def = defines.Pop();
-						if (!def)
-							BEGIN(XNOTDEF);
-						defines.Push(!def);
-					}
-
-"{$endif"[^}]\}		{	Boolean def = defines.Pop(); }
-
-
-	/* not-defined code section */
-<XNOTDEF> {
-					/* push true to signal that these defines are within a non-defined section */
- "{$ifdef "[^}]\}	{	defines.Push(true);	}
-
- "{$ifopt "[^}]\}	{	defines.Push(true);	}
-
- "{$ifndef "[^}]\}	{	defines.Push(true);	}
-
- "{$else"[^}]\}		{	if (defines.Peek() == false)	// at the non-def section start, must leave
-						{	BEGIN(INITIAL);
-							defines.Pop();
-							defines.Push(true);
-						} // else, leave the top def as true
-					}
-
- "{$endif"[^}]\}	{	Boolean def = defines.Pop(); 
-						if (def == false)
-							BEGIN(INITIAL);
-					}
- 
- .|\n				{ }
- <<EOF>>			{	throw new ScannerException(yyline, "Encountered EOF while inside a compiler directive"); }
-}
-
-	/* Other compiler directives: ignored */
-"{$"[^}]\}		{ }
-
-
-
-
-	/**************************************************************/
-	/* Comments		*/
-	
-"//".*			{ } // single line comment
-
-				/* multi-line comments */
-\{				{ BEGIN(XCOMMENT1); }
-<XCOMMENT1>\}	{ BEGIN(INITIAL); }
-
-\(\*			{ BEGIN(XCOMMENT2); }
-<XCOMMENT2>\*\)	{ BEGIN(INITIAL); }
-
-<XCOMMENT2,XCOMMENT1>{NL}	{ }
-<XCOMMENT2,XCOMMENT1>.		{ }  // Console.WriteLine("READ comment state: " + yytext() + " ascii: " + (int) yytext()[0] + " <<"); }
-
-
-
-	/**************************************************************/
-
-[_a-zA-Z]{ID}*	{ yylval = yytext(); return IDENTIFIER; }
-
-
-[ \t]+			{ }     /* ignore whitespace */
-
-{NL}			{ }
-
-<<EOF>>			{	if (yymoreStreams())
-					{	yypopStream();
-						yyprint("Popped stream and began initial state");
-					}
-					else
-					{
-						if (defines.Count > 0)
-							throw new ScannerException(yyline, "Encountered EOF while inside a compiler directive");
-						else
-							return Accept(); /* top-level yyclose() */
-					}
-				}
-					
-
-.				{ yyerror("Unknown char: " + text + " (ASCII " + ((int) text[0]) +")"); }
-
+	/*		// windows/forms/COM specific - ignored
+	winapi		{ return KW_WINAPI; }
+	message		{ return KW_MESSAGE; }
+	dispinterface	{ return KW_DISPINTERF; }
+	dispid		{ return KW_DISPID; }
+	automated	{ return KW_AUTOMATED; }	// visibilidade
+		// properties modifiers for dispinterface
+	writeonly	{ return KW_WRITEONLY; }
+	readonly	{ return KW_READONLY; }
+	*/
 
 %%
-
-	
-	// Auxiliary 
-
-	class LexErrorMessages
-	{
-		const string UnkownChar = "Unknown character";
-		
-		const string InvalidInteger = "Invalid Integer Format";
-		const string InvalidReal = "Invalid Real Format";
-		const string UnterminatedComment = "Block Comment not closed";
-		
-		// TODO all the Scanner's error messages here
-	}
-
-		
-	class ScannerException : Exception
-	{
-		internal ScannerException(int line, string msg = "Scanner Error")
-			: base(msg + " in line " + line) { }
-		
-		internal ScannerException(string msg = "Scanner Error") : base(msg) { }
-	}
-	
-	class PreprocessorException : Exception
-	{
-		internal PreprocessorException(int line, string msg = "Preprocessor Error")
-			: base(msg + " in line " + line) { }
-
-		internal PreprocessorException(string msg = "Preprocessor Error") : base(msg) { }
-	}
-
 
 }	// close outermost namespace
