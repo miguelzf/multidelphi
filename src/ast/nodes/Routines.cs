@@ -197,9 +197,9 @@ namespace crosspascal.ast.nodes
 		public IdentifierNodeList idlist;
 		public IdentifierNode type;
 		public ParameterQualifierNode qualifier;
-		public DelphiExpression init;
+		public Expression init;
 
-		public ParamDeclaration(ParameterQualifierNode qualifier, IdentifierNodeList idlist, IdentifierNode type, DelphiExpression init)
+		public ParamDeclaration(ParameterQualifierNode qualifier, IdentifierNodeList idlist, IdentifierNode type, Expression init)
 		{
 			this.idlist = idlist;
 			this.type = type;

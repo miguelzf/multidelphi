@@ -180,7 +180,7 @@ namespace crosspascal.parser
 %type<ExceptionBlock> exceptionblock
 %type<OnStatement> ondef
 %type<VarDeclarationOption> vardeclopt
-%type<ProcedureCallNode> proccall
+%type<RoutineCallNode> proccall
 %type<LValue> lvalue
 %type<LiteralNode> literal discrete stringconst
 %type<EmumList> enumtype enumtypeellst
@@ -879,21 +879,21 @@ inheritexpr
  
 	// func call to be called as statement
 proccall
-	: id									{ $$ = new ProcedureCallNode($1, null); }
-	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new ProcedureCallNode($1, $3); } // pointer deref
-	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); } // field access
+	: id									{ $$ = new RoutineCallNode($1, null); }
+	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCallNode($1, $3); }
+	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	;
 	
 lvalue	// lvalue
 	: id									{ $$ = $1; }
-	| lvalue LPAREN exprlstopt RPAREN		{ $$ = null; /* TODO */ }
-	| lvalue LPAREN casttype RPAREN			{ $$ = null; /* TODO */ }
-	| casttype LPAREN exprlstopt RPAREN		{ $$ = new TypeCast($1, $3); } // cast with pre-defined type
-	| lvalue KW_DOT id						{ $$ = null; /* TODO */ }
-	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); } // pointer deref
-	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }	// array access
-	| stringconst LBRAC expr RBRAC			{ $$ = new ArrayAccess($1, $3); } // string access
-	| LPAREN expr RPAREN					{ $$ = null; /* TODO */ }
+	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCallNode($1, $3); }
+	| lvalue LPAREN casttype RPAREN			{ $$ = new RoutineCallNode($1, $3); }
+	| casttype LPAREN exprlstopt RPAREN		{ $$ = new TypeCast($1, $3); }
+	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
+	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
+	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
+	| stringconst LBRAC expr RBRAC			{ $$ = new ArrayAccess($1, $3); }
+	| LPAREN expr RPAREN					{ $$ = $1; }
 	;
 
 unaryexpr
@@ -902,8 +902,9 @@ unaryexpr
 	| setconstructor						{ $$ = $1; }
 	| KW_ADDR unaryexpr						{ $$ = new AddressLvalue($2); }
 	| KW_NOT unaryexpr						{ $$ = new LogicalNot($2); }
-	| sign	 unaryexpr 						{ $$ = new UnaryOperationNode($2, $1); }
-	| inheritexpr
+	| KW_SUM unaryexpr 						{ $$ = new UnaryPlus($1); }
+	| KW_SUB unaryexpr 						{ $$ = new UnaryMinus($1); }
+	| inheritexpr							{ $$ = new Inherited($1); }
 	;
 
 expr

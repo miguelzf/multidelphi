@@ -58,10 +58,10 @@ namespace crosspascal.ast.nodes
 	public class AssignementStatement : Statement
 	{
 		public LvalueExpression lvalue;
-		public DelphiExpression expr;
+		public Expression expr;
 		public bool inherited;
 
-		public AssignementStatement(LvalueExpression lvalue, DelphiExpression expr, bool inherited)
+		public AssignementStatement(LvalueExpression lvalue, Expression expr, bool inherited)
 		{
 			this.lvalue = lvalue;
 			this.expr = expr;
@@ -81,11 +81,11 @@ namespace crosspascal.ast.nodes
 
 	public class IfStatement : Statement
 	{
-		public DelphiExpression condition;
+		public Expression condition;
 		public Statement ifTrue;
 		public Statement ifFalse;
 
-		public IfStatement(DelphiExpression condition, Statement ifTrue, Statement ifFalse)
+		public IfStatement(Expression condition, Statement ifTrue, Statement ifFalse)
 		{
 			this.condition = condition;
 			this.ifTrue = ifTrue;
@@ -144,9 +144,9 @@ namespace crosspascal.ast.nodes
 	public class RaiseStatement : Statement
 	{
 		public LvalueExpression lvalue;
-		public DelphiExpression expr;
+		public Expression expr;
 
-		public RaiseStatement(LvalueExpression lvalue, DelphiExpression expr)
+		public RaiseStatement(LvalueExpression lvalue, Expression expr)
 		{
 			this.lvalue = lvalue;
 			this.expr = expr;
@@ -155,10 +155,10 @@ namespace crosspascal.ast.nodes
 
 	public class CaseLabel : Node
 	{
-		public DelphiExpression minRange;
-		public DelphiExpression maxRange;
+		public Expression minRange;
+		public Expression maxRange;
 
-		public CaseLabel(DelphiExpression minRange, DelphiExpression maxRange)
+		public CaseLabel(Expression minRange, Expression maxRange)
 		{
 			this.minRange = minRange;
 			this.maxRange = maxRange;
@@ -196,11 +196,11 @@ namespace crosspascal.ast.nodes
 
 	public class CaseStatement : Statement
 	{
-		public DelphiExpression condition;
+		public Expression condition;
 		public CaseSelectorList selectors;
 		public Statement caseelse;
 
-		public CaseStatement(DelphiExpression condition, CaseSelectorList selectors, Statement caseelse)
+		public CaseStatement(Expression condition, CaseSelectorList selectors, Statement caseelse)
 		{
 			this.condition = condition;
 			this.selectors = selectors;
@@ -210,10 +210,10 @@ namespace crosspascal.ast.nodes
 
 	public class RepeatLoop : Statement
 	{
-		public DelphiExpression condition;
+		public Expression condition;
 		public Statement block;
 
-		public RepeatLoop(Statement block, DelphiExpression condition)
+		public RepeatLoop(Statement block, Expression condition)
 		{
 			this.condition = condition;
 			this.block = block;
@@ -222,10 +222,10 @@ namespace crosspascal.ast.nodes
 
 	public class WhileLoop : Statement
 	{
-		public DelphiExpression condition;
+		public Expression condition;
 		public Statement block;
 
-		public WhileLoop(DelphiExpression condition, Statement block)
+		public WhileLoop(Expression condition, Statement block)
 		{
 			this.condition = condition;
 			this.block = block;
@@ -253,9 +253,9 @@ namespace crosspascal.ast.nodes
 	public class WithStatement : Statement
 	{
 		public Statement body;
-		public DelphiExpression with;
+		public Expression with;
 
-		public WithStatement(DelphiExpression with, Statement body)
+		public WithStatement(Expression with, Statement body)
 		{
 			this.body = body;
 			this.with = with;
@@ -266,11 +266,11 @@ namespace crosspascal.ast.nodes
 	{
 		public Statement body;
 		public IdentifierNode var;
-		public DelphiExpression start;
-		public DelphiExpression end;
+		public Expression start;
+		public Expression end;
 		public int direction;
 
-		public ForLoop(IdentifierNode var, DelphiExpression start, DelphiExpression end, Statement body)
+		public ForLoop(IdentifierNode var, Expression start, Expression end, Statement body)
 		{
 			this.body = body;
 			this.var = var;

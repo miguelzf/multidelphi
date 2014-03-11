@@ -8,12 +8,12 @@ namespace crosspascal.ast.nodes
 {
 
 
-	public class DelphiExpression : Node
+	public class Expression : Node
 	{
 	}
 
 
-	public class UnaryExpression : DelphiExpression
+	public class UnaryExpression : Expression
 	{
 	}
 
@@ -41,10 +41,10 @@ namespace crosspascal.ast.nodes
 
 	public class ExpressionNodeList : Node
 	{
-		public DelphiExpression exp;
+		public Expression exp;
 		public ExpressionNodeList next;
 
-		public ExpressionNodeList(DelphiExpression exp, ExpressionNodeList next)
+		public ExpressionNodeList(Expression exp, ExpressionNodeList next)
 		{
 			this.exp = exp;
 			this.next = next;
@@ -123,21 +123,21 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public class LogicalNot : DelphiExpression
+	public class LogicalNot : Expression
 	{
-		public DelphiExpression exp;
+		public Expression exp;
 
-		public LogicalNot(DelphiExpression exp)
+		public LogicalNot(Expression exp)
 		{
 			this.exp = exp;
 		}
 	}
 
-	public class AddressLvalue : DelphiExpression
+	public class AddressLvalue : Expression
 	{
-		public DelphiExpression exp;
+		public Expression exp;
 
-		public AddressLvalue(DelphiExpression exp)
+		public AddressLvalue(Expression exp)
 		{
 			this.exp = exp;
 		}
@@ -157,9 +157,9 @@ namespace crosspascal.ast.nodes
 
 	public class PointerDereference : Node
 	{
-		public DelphiExpression expr;
+		public Expression expr;
 
-		public PointerDereference(DelphiExpression expr)
+		public PointerDereference(Expression expr)
 		{
 			this.expr = expr;
 		}
@@ -168,17 +168,17 @@ namespace crosspascal.ast.nodes
 
 	public class TypeCast : Node
 	{
-		public DelphiExpression expr;
+		public Expression expr;
 		public TypeNode type;
 
-		public TypeCast(TypeNode type, DelphiExpression expr)
+		public TypeCast(TypeNode type, Expression expr)
 		{
 			this.type = type;
 			this.expr = expr;
 		}
 	}
 
-	public class ProcedureCallNode : DelphiExpression
+	public class ProcedureCallNode : Expression
 	{
 		public LvalueExpression function;
 		public ExpressionNodeList arguments;
@@ -216,25 +216,25 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class UnaryOperationNode : DelphiExpression
+	public class UnaryOperationNode : Expression
 	{
-		public DelphiExpression a;
+		public Expression a;
 		public OperatorNode op;
 
-		public UnaryOperationNode(DelphiExpression a, OperatorNode op)
+		public UnaryOperationNode(Expression a, OperatorNode op)
 		{
 			this.a = a;
 			this.op = op;
 		}
 	}
 
-	public class BinaryOperationNode : DelphiExpression
+	public class BinaryOperationNode : Expression
 	{
-		public DelphiExpression a;
-		public DelphiExpression b;
+		public Expression a;
+		public Expression b;
 		public OperatorNode op;
 
-		public BinaryOperationNode(DelphiExpression a, DelphiExpression b, OperatorNode op)
+		public BinaryOperationNode(Expression a, Expression b, OperatorNode op)
 		{
 			this.a = a;
 			this.b = b;
@@ -278,10 +278,10 @@ namespace crosspascal.ast.nodes
 
 	public class SetElement : Node
 	{
-		public DelphiExpression min;
-		public DelphiExpression max;
+		public Expression min;
+		public Expression max;
 
-		public SetElement(DelphiExpression min, DelphiExpression max)
+		public SetElement(Expression min, Expression max)
 		{
 			this.min = min;
 			this.max = max;

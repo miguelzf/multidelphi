@@ -142,9 +142,9 @@ namespace crosspascal.ast.nodes
 	{
 		public IdentifierNode ident;
 		public string name;
-		public DelphiExpression index;
+		public Expression index;
 
-		public ExportItem(IdentifierNode ident, string name, DelphiExpression index)
+		public ExportItem(IdentifierNode ident, string name, Expression index)
 		{
 			this.ident = ident;
 			this.name = name;
@@ -193,9 +193,9 @@ namespace crosspascal.ast.nodes
 
 	public class VariableInitNode : VarDeclarationOption
 	{
-		public DelphiExpression expr;
+		public Expression expr;
 
-		public VariableInitNode(DelphiExpression expr)
+		public VariableInitNode(Expression expr)
 		{
 			this.expr = expr;
 		}
@@ -240,10 +240,10 @@ namespace crosspascal.ast.nodes
 	public class ConstDeclaration : DeclarationNode
 	{
 		public IdentifierNode ident;
-		public DelphiExpression expr;
+		public Expression expr;
 		public TypeNode type;
 
-		public ConstDeclaration(IdentifierNode ident, TypeNode type, DelphiExpression expr)
+		public ConstDeclaration(IdentifierNode ident, TypeNode type, Expression expr)
 		{
 			this.ident = ident;
 			this.type = type;

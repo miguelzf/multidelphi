@@ -18,9 +18,9 @@ namespace crosspascal.ast.nodes
 	public class FieldInit : Node
 	{
 		public IdentifierNode ident;
-		public DelphiExpression expr;
+		public Expression expr;
 
-		public FieldInit(IdentifierNode ident, DelphiExpression expr)
+		public FieldInit(IdentifierNode ident, Expression expr)
 		{
 			this.ident = ident;
 			this.expr = expr;
@@ -156,9 +156,9 @@ namespace crosspascal.ast.nodes
 
 	public class PropertyIndex : Node
 	{
-		public DelphiExpression expr;
+		public Expression expr;
 
-		public PropertyIndex(DelphiExpression expr)
+		public PropertyIndex(Expression expr)
 		{
 			this.expr = expr;
 		}

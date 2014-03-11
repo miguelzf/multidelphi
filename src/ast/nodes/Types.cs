@@ -133,9 +133,9 @@ namespace crosspascal.ast.nodes
 
 	public class StringType : TypeNode
 	{
-		public DelphiExpression size;
+		public Expression size;
 
-		public StringType(DelphiExpression size)
+		public StringType(Expression size)
 		{
 			this.size = size;
 		}
