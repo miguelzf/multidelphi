@@ -1256,7 +1256,7 @@ property
 	;
 
 defaultdiropt
-	:				{ $$ = null; /* TODO */ }
+	:				{ $$ = null;}
 	| id SCOL		{ $$ = new PropertyDefault($1); }	// id == DEFAULT
 	;
 
@@ -1279,7 +1279,7 @@ idlsttypeid
 	// Properties directive: emitted as keywords caught from within a lexical scope
 
 propspecifiers
-	: indexspecopt readacessoropt writeacessoropt storedspecopt defaultspecopt implementsspecopt		{ $$ = null; /* TODO */ }
+	: indexspecopt readacessoropt writeacessoropt storedspecopt defaultspecopt implementsspecopt		{ $$ = new PropertySpecifiers($1, $2, $3, $4, $5, $6); }
 	;
 
 indexspecopt
@@ -1288,29 +1288,29 @@ indexspecopt
 	;
 
 storedspecopt
-	:							{ $$ = null; /* TODO */ }
-	| KW_STORED id				{ $$ = null; /* TODO */ }
+	:							{ $$ = null;  }
+	| KW_STORED id				{ $$ = new PropertyStored($2); }
 	;
 
 defaultspecopt
-	:							{ $$ = null; /* TODO */ }
-	| KW_DEFAULT literal		{ $$ = null; /* TODO */ }
-	| KW_NODEFAULT				{ $$ = null; /* TODO */ }
+	:							{ $$ = null;  }
+	| KW_DEFAULT literal		{ $$ = new PropertyIndex($2); }
+	| KW_NODEFAULT				{ $$ = null;  }
 	;
 
 implementsspecopt
-	:							{ $$ = null; /* TODO */ }
-	| KW_IMPLEMENTS id			{ $$ = null; /* TODO */ }
+	:							{ $$ = null;  }
+	| KW_IMPLEMENTS id			{ $$ = new PropertyImplements($2); }
 	;
 
 readacessoropt
-	:							{ $$ = null; /* TODO */ }
-	| KW_READ	id				{ $$ = null; /* TODO */ }
+	:							{ $$ = null;  }
+	| KW_READ	id				{ $$ = new PropertyReadNode($2); }
 	;
 
 writeacessoropt
-	:							{ $$ = null; /* TODO */ }
-	| KW_WRITE	id				{ $$ = null; /* TODO */ }
+	:							{ $$ = null; }
+	| KW_WRITE	id				{ $$ = new PropertyWriteNode($2); }
 	;
 
 	
