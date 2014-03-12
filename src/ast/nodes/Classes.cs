@@ -15,6 +15,37 @@ namespace crosspascal.ast.nodes
 		Published
 	}
 
+
+	public class ClassDefinition : Node
+	{
+		public ClassType classType;
+		public IdentifierList heritage;
+		public ClassBody ClassBody;
+
+		public ClassDefinition(ClassType classType, IdentifierList heritage, ClassBody ClassBody)
+		{
+			this.classType = classType;
+			this.heritage = heritage;
+			this.ClassBody = ClassBody;
+		}
+	}
+
+	public class InterfaceDefinition : Node
+	{
+		public IdentifierList heritage;
+		public ClassContentList methods;
+		public ClassContentList properties;
+
+		public InterfaceDefinition(IdentifierList heritage, ClassContentList methods, ClassContentList properties)
+		{
+			this.heritage = heritage;
+			this.methods = methods;
+			this.properties = properties;
+		}
+	}
+
+
+
 	public class FieldInit : Node
 	{
 		public Identifier ident;

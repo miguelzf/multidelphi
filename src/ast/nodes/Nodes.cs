@@ -102,29 +102,37 @@ namespace crosspascal.ast.nodes
 	///				enums, sets, ranges, initializers TODO
 	///				
 	///		Types
-	///			ArrayType
-	///			SetType		
-	///			FileType
+	///			User-defined type => may be any
+	///			RoutineType
 	///			ClassType
-	///			VariantType
-	///			CharType
-	///			BoolType
-	///			IntegerType
-	///				UnsignedInt8Type
-	///				UnsignedInt16Type
-	///				UnsignedInt32Type
-	///				UnsignedInt64Type
-	///				SignedInt8Type
-	///				SignedInt16Type
-	///				SignedInt32Type
-	///				SignedInt64Type
-	///			FloatingPointType
-	///				FloatType
-	///				DoubleType
-	///				ExtendedType
-	///				CurrencyType
-	///			StringType
-	///			InterfaceDefinition
+	///			InterfaceType
+	///			VariableType
+	///				SimpleType
+	///					ScalarType		: IOrdinalType
+	///						IntegerType
+	///							UnsignedInt	...
+	///							SignedInt	...
+	///						Bool
+	///						Char
+	///					FloatingPointType
+	///						FloatType
+	///						DoubleType
+	///						ExtendedType
+	///						CurrencyType
+	///					StringType
+	///					VariantType
+	///					PointerType
+	///				EnumType			: IOrdinalType
+	///				RangeType			: IOrdinalType
+	///				RefPointerType < VariableType> 
+	///				MetaclassType < id>
+	///				StructuredType
+	///					Array < VariableType> 
+	///					Set < VariableType> 
+	///					File
+	///					Record
+	///			
+	///			InterfaceDeclaration/ClassRefType
 	///			
 	///  </summary>
 
@@ -177,6 +185,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
+
 	// =========================================================================
 	// Node Lists
 	// =========================================================================
@@ -189,7 +198,7 @@ namespace crosspascal.ast.nodes
 	/// Lists of Nodes, Expressions, Statements etc
 	/// </summary>
 
-	public class NodeList : Node
+	public class NodeList : Node, IEnumerable<Node>
 	{
 		List<Node> nodes = new List<Node>();
 
@@ -197,6 +206,11 @@ namespace crosspascal.ast.nodes
 		{
 			if (t != null)
 				nodes.Add(t);
+		}
+
+		IEnumerator<Node> IEnumerable<Node>.GetEnumerator()
+		{
+			return nodes.GetEnumerator();
 		}
 
 		public override void Accept(Processor visitor)

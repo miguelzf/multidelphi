@@ -16,13 +16,22 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Expression type, to be checked or determined in static type-validation
 		/// </summary>
-		public ExpressionType type { get; set; }
+		public TypeNode type { get; set; }
+
+		/// <summary>
+		/// Indicates if expression is be constant
+		/// </summary>
+		public bool isConst { get; set; }
 
 		/// <summary>
 		/// Indicates if expression must be constant
 		/// </summary>
 		public bool enforceConst { get; set; }
 
+		/// <summary>
+		/// Type that must be enforced/checked
+		/// </summary>
+		public TypeNode forcedType { get; set; }
 	}
 
 	public class EmptyExpression : Expression
@@ -45,7 +54,7 @@ namespace crosspascal.ast.nodes
 
 	}
 
-	public abstract class Literal<T> : Node
+	public abstract class Literal<T> : UnaryExpression
 	{
 		public T value;
 
@@ -115,7 +124,6 @@ namespace crosspascal.ast.nodes
 	{
 		public ShiftLeft(Expression e1, Expression e2) : base(e1, e2) { }
 	}
-
 
 
 	public abstract class LogicalBinaryExpression : BinaryExpression
@@ -190,9 +198,9 @@ namespace crosspascal.ast.nodes
 	public abstract class TypeBinaryExpression : BinaryExpression
 	{
 		Expression expr;
-		CastType types;
+		TypeNode types;
 
-		public TypeBinaryExpression(Expression e1, CastType e2)
+		public TypeBinaryExpression(Expression e1, TypeNode e2)
 		{
 			expr = e1;
 			type = e2;
@@ -201,7 +209,7 @@ namespace crosspascal.ast.nodes
 
 	public class TypeIs : TypeBinaryExpression
 	{
-		public TypeIs(Expression e1, CastType e2) : base(e1, e2) { }
+		public TypeIs(Expression e1, TypeNode e2) : base(e1, e2) { }
 	}
 
 	/// <summary>
@@ -209,7 +217,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class TypeCast : TypeBinaryExpression
 	{
-		public TypeCast(Expression e1, CastType e2) : base(e1, e2) { }
+		public TypeCast(Expression e1, TypeNode e2) : base(e1, e2) { }
 	}
 
 	#endregion
@@ -353,11 +361,16 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-
 	public class FieldAcess : LvalueExpression
 	{
 		public LvalueExpression obj;
 		public Identifier field;
+
+		public FieldAcess(LvalueExpression obj, Identifier field)
+		{
+			this.obj = obj;
+			this.field = field;
+		}
 
 		public FieldAcess(LvalueExpression obj, Identifier field)
 		{
