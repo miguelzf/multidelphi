@@ -60,6 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ast\nodes\Declarations.cs" />
     <Compile Include="ast\nodes\Sections.cs" />
     <Compile Include="ast\nodes\Routines.cs" />
     <Compile Include="ast\nodes\Types.cs" />

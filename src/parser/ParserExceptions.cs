@@ -18,6 +18,15 @@ namespace crosspascal.parser
 				: base (message) { }
 	}
 
+	public class AstNodeException : crosspascal.parser.ParserException
+	{
+		const string DefaultMsg = "Error in construction of AST Node";
+
+		public AstNodeException (int lineno, string message = DefaultMsg) : base (lineno,message) { }
+		
+		public AstNodeException (string message = DefaultMsg) : base (message) { }
+	}
+
 	public class UnexpectedEof : ParserException
 	{
 		const string DefaultMsg = "Encountered unexpected EOF";

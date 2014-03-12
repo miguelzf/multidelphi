@@ -45,13 +45,13 @@ namespace crosspascal.ast.nodes
 	{
 		public bool isStatic;
 		public RoutineReturnType kind;
-		public IdentifierNode ident;
+		public Identifier ident;
 		public TypeNode returnType;
 		public bool obj;
 		public ParamDeclarationList parameters;
 		public ProcedureDirectiveList directives;
 
-		public RoutineDeclaration(RoutineReturnType kind, IdentifierNode ident, ParamDeclarationList parameters, TypeNode returnType, bool obj, ProcedureDirectiveList directives)
+		public RoutineDeclaration(RoutineReturnType kind, Identifier ident, ParamDeclarationList parameters, TypeNode returnType, bool obj, ProcedureDirectiveList directives)
 		{
 			this.isStatic = false;
 			this.kind = kind;
@@ -139,10 +139,10 @@ namespace crosspascal.ast.nodes
 
 	public class ExternalProcedureDirective : ProcedureDirective
 	{
-		public IdentifierNode importLib;
+		public Identifier importLib;
 		public string importName;
 
-		public ExternalProcedureDirective(IdentifierNode importLib, string importName)
+		public ExternalProcedureDirective(Identifier importLib, string importName)
 			: base(RoutineDirective.External)
 		{
 			this.importLib = importLib;
@@ -152,11 +152,11 @@ namespace crosspascal.ast.nodes
 
 	public class CallPointerDeclaration : DeclarationNode
 	{
-		public IdentifierNodeList ids;
+		public IdentifierList ids;
 		public RoutineDeclaration proc;
 		public ProcedureDirectiveList dirs;
 
-		public CallPointerDeclaration(IdentifierNodeList ids, RoutineDeclaration proc, ProcedureDirectiveList dirs, Node init)
+		public CallPointerDeclaration(IdentifierList ids, RoutineDeclaration proc, ProcedureDirectiveList dirs, Node init)
 		{
 			this.ids = ids;
 			this.proc = proc;
@@ -169,7 +169,7 @@ namespace crosspascal.ast.nodes
 	{
 		public ProcedureDirectiveList dirs;
 
-		public ProcedureTypeDeclarationNode(IdentifierNode ident, TypeNode type, ProcedureDirectiveList dirs)
+		public ProcedureTypeDeclarationNode(Identifier ident, TypeNode type, ProcedureDirectiveList dirs)
 			: base(ident, type)
 		{
 			this.dirs = dirs;
@@ -194,12 +194,12 @@ namespace crosspascal.ast.nodes
 
 	public class ParamDeclaration : Node
 	{
-		public IdentifierNodeList idlist;
-		public IdentifierNode type;
+		public IdentifierList idlist;
+		public Identifier type;
 		public ParameterQualifierNode qualifier;
 		public Expression init;
 
-		public ParamDeclaration(ParameterQualifierNode qualifier, IdentifierNodeList idlist, IdentifierNode type, Expression init)
+		public ParamDeclaration(ParameterQualifierNode qualifier, IdentifierList idlist, Identifier type, Expression init)
 		{
 			this.idlist = idlist;
 			this.type = type;

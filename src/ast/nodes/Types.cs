@@ -6,17 +6,30 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
-	public class TypeNode : Node
+	public abstract class TypeNode : Node
+	{
+
+	}
+
+	public abstract class ExpressionType : TypeNode
+	{
+
+	}
+
+	/// <summary>
+	/// TODO!!
+	/// </summary>
+	public abstract class CastType : ExpressionType
 	{
 
 	}
 
 	public class ArrayType : TypeNode
 	{
-		public ArraySizeList size;
+		public ExpressionList size;
 		public TypeNode type;
 
-		public ArrayType(ArraySizeList size, TypeNode type)
+		public ArrayType(ExpressionList size, TypeNode type)
 		{
 			this.size = size;
 			this.type = type;
@@ -145,10 +158,10 @@ namespace crosspascal.ast.nodes
 	public class ClassDefinition : TypeNode
 	{
 		public ClassType classType;
-		public IdentifierNodeList heritage;
+		public IdentifierList heritage;
 		public ClassBody ClassBody;
 
-		public ClassDefinition(ClassType classType, IdentifierNodeList heritage, ClassBody ClassBody)
+		public ClassDefinition(ClassType classType, IdentifierList heritage, ClassBody ClassBody)
 			: base()
 		{
 			this.classType = classType;
@@ -161,11 +174,11 @@ namespace crosspascal.ast.nodes
 
 	public class InterfaceDefinition : TypeNode
 	{
-		public IdentifierNodeList heritage;
+		public IdentifierList heritage;
 		public ClassContentList methods;
 		public ClassContentList properties;
 
-		public InterfaceDefinition(IdentifierNodeList heritage, ClassContentList methods, ClassContentList properties)
+		public InterfaceDefinition(IdentifierList heritage, ClassContentList methods, ClassContentList properties)
 			: base()
 		{
 			this.heritage = heritage;

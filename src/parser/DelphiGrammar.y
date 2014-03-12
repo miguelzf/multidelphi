@@ -106,26 +106,23 @@ namespace crosspascal.parser
 		{
 			switch(token)
 			{
-				case KW_MUL	:	return new Product    (e1, e2);
-				case KW_DIV	:	return new Division   (e1, e2);
-				case KW_QUOT:	return new Quotient   (e1, e2);
-				case KW_MOD	:	return new Modulus    (e1, e2);
-				case KW_SHR	:	return new ShiftRight (e1, e2);
-				case KW_SHL	:	return new ShiftLeft  (e1, e2);
-				case KW_AND	:	return new LogicalAnd (e1, e2);
-				case KW_SUB	:	return new Subtraction(e1, e2);
-				case KW_SUM	:	return new Addition   (e1, e2);
-				case KW_OR 	:	return new LogicalOr  (e1, e2);
-				case KW_XOR	:	return new LogicalXor (e1, e2);
-				case KW_EQ	:	return new Equal      (e1, e2);
-				case KW_NE	:	return new NotEqual   (e1, e2);
-				case KW_LT	:	return new LessThan   (e1, e2);
-				case KW_LE	:	return new LessOrEqual(e1, e2);
-				case KW_GT	:	return new GreaterThan(e1, e2);
-				case KW_GE	:	return new GreaterOrEqual(e1, e2);
-				case KW_IN	:	return new SetIn      (e1, e2);
-				case KW_IS	:	return new TypeIs     (e1, e2);
-				case KW_AS	:	return new TypeCast   (e1, e2);
+				case Token.KW_MUL	:	return new Product    (e1, e2);
+				case Token.KW_DIV	:	return new Division   (e1, e2);
+				case Token.KW_QUOT:	return new Quotient   (e1, e2);
+				case Token.KW_MOD	:	return new Modulus    (e1, e2);
+				case Token.KW_SHR	:	return new ShiftRight (e1, e2);
+				case Token.KW_SHL	:	return new ShiftLeft  (e1, e2);
+				case Token.KW_AND	:	return new LogicalAnd (e1, e2);
+				case Token.KW_SUB	:	return new Subtraction(e1, e2);
+				case Token.KW_SUM	:	return new Addition   (e1, e2);
+				case Token.KW_OR 	:	return new LogicalOr  (e1, e2);
+				case Token.KW_XOR	:	return new LogicalXor (e1, e2);
+				case Token.KW_EQ	:	return new Equal      (e1, e2);
+				case Token.KW_NE	:	return new NotEqual   (e1, e2);
+				case Token.KW_LT	:	return new LessThan   (e1, e2);
+				case Token.KW_LE	:	return new LessOrEqual(e1, e2);
+				case Token.KW_GT	:	return new GreaterThan(e1, e2);
+				case Token.KW_GE	:	return new GreaterOrEqual(e1, e2);
 				default: throw ParserException("Invalid Binary Operation token"); 	// should never happen
 			}
 		}
@@ -148,7 +145,7 @@ namespace crosspascal.parser
 %type<UnitNode> unit
 %type<PackageNode> package
 %type<UsesNode> requiresclause containsclause usesclauseopt useidlst
-%type<IdentifierNode> useid externarg qualid classid
+%type<Identifier> useid externarg qualid classid
 %type<ImplementationSection> implsec
 %type<InterfaceSection> interfsec
 
@@ -158,7 +155,7 @@ namespace crosspascal.parser
 %type<NodeList> scopeseclst complst classmethodlstopt methodlst classproplstopt classproplst fieldlst 
 %type<NodeList> propspecifiers constinitexprlst variantlst rscstringlst idlsttypeidlst
 %type<NodeList> idlst heritage exprlst exprlstopt 
-%type<NodeList> setconstructor setlst arrayconst recordconst fieldconstlst arraysizelst arraytypedef 
+%type<NodeList> setelemlst arrayconst recordconst fieldconstlst arraysizelst arraytypedef 
 
 %type<Section> initsec finalizsec
 %type<ProgramBody> main_block
@@ -166,7 +163,7 @@ namespace crosspascal.parser
 %type<LabelNode> labelid
 %type<ExportItem> exportsec	 exportsitemlst exportsitem
 %type<RoutineDefinition> routinedef routinedeclimpl 
-%type<RoutineDeclaration> routinedeclinterf proceduresign procsignfield
+%type<RoutineDeclaration> routinedeclinterf funcesignature funcsignfield
 %type<RoutineBody> funcdefine funcblock
 %type<TypeNode> funcrettype simpletype funcparamtype paramtypeopt paramtypespec  funcret
 %type<ParamterNode> formalparm
@@ -180,13 +177,13 @@ namespace crosspascal.parser
 %type<ExceptionBlock> exceptionblock
 %type<OnStatement> ondef
 %type<VarDeclarationOption> vardeclopt
-%type<RoutineCallNode> proccall
-%type<LValue> lvalue
-%type<LiteralNode> literal discrete stringconst
-%type<EmumList> enumtype enumtypeellst
+%type<RoutineCall> funccall
+%type<LvalueExpression> lvalue
+%type<Literal> literal discrete stringconst
+%type<NodeList> enumtype enumtypeellst
 %type<FieldInit> enumtypeel fieldconst
 %type<SetElement> setelem
-
+ 
 %type<ClassDefinition> classtype
 %type<ClassType> classkeyword
 %type<ClassBody> scopesec
@@ -202,7 +199,7 @@ namespace crosspascal.parser
 %type<TypeNode> arraytype settype filetype refpointertype funcparamtype  structuredtype
 
 %type<PropertySpecifier> propinterfopt defaultdiropt indexspecopt storedspecopt defaultspecopt implementsspecopt readacessoropt writeacessoropt
-%type<Expression> unaryexpr constinitexpr inheritexpr basicliteral simpleconst rangestart functypeinit
+%type<Expression> unaryexpr constinitexpr inheritexpr basicliteral simpleconst rangestart functypeinit set
 %type<RecordNode> recordtype recordtypebasic
 
 %type<Node> variant_struct  varfield  variantvar guid rscstring classbody rscstringsec 
@@ -358,7 +355,7 @@ usesclauseopt
 	;
 
 useidlst
-	: useid						{ $$ = new NodeList<Node>($1); }
+	: useid						{ $$ = new NodeList($1); }
 	| useidlst COMMA useid		{ ListAdd($$, $1, $3); }
 	;
 	
@@ -381,7 +378,7 @@ interfsec
 	;
 
 interfdecllst
-	:											{ $$ = new NodeList<Node>();}
+	:											{ $$ = new NodeList();}
 	| interfdecllst interfdecl					{ ListAdd($$, $1, $2); }
 	;
 
@@ -400,12 +397,12 @@ main_block
 	;
 	
 maindecllst
-	: maindeclsec				{ $$ = new NodeList<Node>($1);}
+	: maindeclsec				{ $$ = new NodeList($1);}
 	| maindecllst maindeclsec	{ ListAdd($$, $1, $2); }
 	;
 
 declseclst
-	: funcdeclsec				{ $$ = new NodeList<Node>($1);}
+	: funcdeclsec				{ $$ = new NodeList($1);}
 	| declseclst funcdeclsec	{ ListAdd($$, $1, $2); }
 	;
 
@@ -445,7 +442,7 @@ basicdeclsec
 	;
 
 typesec
-	: KW_TYPE typedecl		{ $$ = new NodeList<Node>($2); }
+	: KW_TYPE typedecl		{ $$ = new NodeList($2); }
 	| typesec typedecl		{ ListAdd($$, $1, $2); }
 	;
 
@@ -541,14 +538,14 @@ staticopt
 	| 								{ $$ = true;}
 	;
 
-proceduresign
+funcesignature
 	: KW_PROCEDURE formalparams ofobjectopt		{ $$ = new RoutineDeclaration(RoutineReturnType.Procedure, null, $2, null, $3, null); }
 	| KW_FUNCTION  formalparams COLON funcrettype ofobjectopt { $$ = new RoutineDeclaration(RoutineReturnType.Function, null, $2, $4, $5, null); }
 	;
 
-procsignfield
-	: proceduresign					{ $$ = null; /* TODO */ }
-	| proceduresign funccallconv	{ $$ = null; /* TODO */ }
+funcsignfield
+	: funcesignature					{ $$ = null; /* TODO */ }
+	| funcesignature funccallconv	{ $$ = null; /* TODO */ }
 	;
 
 ofobjectopt
@@ -576,7 +573,7 @@ formalparams
 	;
 
 formalparamslst
-	: formalparm							{ $$ = new NodeList<Node>($1); }
+	: formalparm							{ $$ = new NodeList($1); }
 	| formalparamslst SCOL formalparm	{ ListAdd($$, $1, $3); }
 	;
 
@@ -620,12 +617,12 @@ funcdirectopt
 	;
 
 funcdirectlst
-	: funcdirective									{ $$ = new NodeList<Node>($1); }
+	: funcdirective									{ $$ = new NodeList($1); }
 	| funcdirectlst SCOL funcdirective			{ ListAdd($$, $1, $3); }
 	;
 
 funcqualinterflst									
-	: funcqualinterf SCOL						{ $$ = new NodeList<Node>($1); }
+	: funcqualinterf SCOL						{ $$ = new NodeList($1); }
 	| funcqualinterflst funcqualinterf SCOL		{ ListAdd($$, $1, $2); }
 	;
 
@@ -685,7 +682,7 @@ block
 	;
 
 stmtlst
-	: stmt							{ $$ = new NodeList<Statement>($1); }
+	: stmt							{ $$ = new StatementList($1); }
 	| stmt SCOL stmtlst			{ ListAdd($$, $3, $1); }
 	;
 
@@ -700,7 +697,7 @@ nonlbl_stmt
 	| KW_INHERITED			{ $$ = null; /* TODO */ }
 	| inheritexpr			{ $$ = null; /* TODO */ }
 	| assign				{ $$ = null; /* TODO */ }
-	| proccall				{ $$ = null; /* TODO */ }
+	| funccall				{ $$ = null; /* TODO */ }
 	| goto_stmt				{ $$ = $1; }
 	| block					{ $$ = $1; }
 	| ifstmt				{ $$ = $1; }
@@ -741,7 +738,7 @@ else_case
 	;
 
 caseselectorlst
-	: caseselector								{ $$ = new NodeList<Node>($1); }
+	: caseselector								{ $$ = new NodeList($1); }
 	| caseselectorlst SCOL caseselector		{ ListAdd($$, $1, $3); }
 	;
 
@@ -749,15 +746,15 @@ caseselector
 	:										{ $$ = null; }
 	| caselabellst COLON nonlbl_stmt		{ $$ = new CaseSelector($1, $3); }
 	;
-
+	
 caselabellst
-	: caselabel							{ $$ = new NodeList<Node>($1); }
+	: caselabel							{ $$ = new NodeList($1); }
 	| caselabellst COMMA caselabel		{ ListAdd($$, $1, $3); }
 	;
 
+	// the labels must be constant
 caselabel
-	: constexpr							{ $$ = new CaseLabel($1, null); }
-	| constexpr KW_RANGE constexpr		{ $$ = new CaseLabel($1, $3); }
+	: setelem							{ $$ = new CaseLabel($1); }
 	;
 
 repeatstmt
@@ -789,7 +786,7 @@ exceptionblock
 	;
 
 onlst
-	: ondef											{ $$ = new NodeList<Statement>($1); }
+	: ondef											{ $$ = new StatementList($1); }
 	| onlst ondef									{ ListAdd($$, $1, $2); }
 	;
 
@@ -835,14 +832,14 @@ thrvarsec
 	;
 
 vardecllst
-	: vardecl					{ $$ = new NodeList<Node>($1); }
+	: vardecl					{ $$ = new NodeList($1); }
 	| vardecllst vardecl		{ ListAdd($$, $1, $2); }
 	;
 
 vardecl
 	: idlst COLON vartype vardeclopt SCOL				{ $$ = new VarDeclaration($1, $3, $4); }
-	| idlst COLON proceduresign SCOL funcdirectopt		{ $$ = new CallPointerDeclaration($1, $3, $5, null); }
-	| idlst COLON proceduresign SCOL funcdir_noterm_opt functypeinit SCOL	{ $$ = new CallPointerDeclaration($1, $3, $5, $6); }
+	| idlst COLON funcesignature SCOL funcdirectopt		{ $$ = new CallPointerDeclaration($1, $3, $5, null); }
+	| idlst COLON funcesignature SCOL funcdir_noterm_opt functypeinit SCOL	{ $$ = new CallPointerDeclaration($1, $3, $5, $6); }
 	;
 
 vardeclopt
@@ -858,7 +855,7 @@ rscstringsec
 	;
 	
 rscstringlst
-	: rscstring								{ $$ = new NodeList<Node>($1); }
+	: rscstring								{ $$ = new NodeList($1); }
 	| rscstringlst rscstring				{ ListAdd($$, $1, $2); }
 	;
 	
@@ -873,42 +870,45 @@ rscstring
 	// ========================================================================
 
 inheritexpr
-	: KW_INHERITED id								{ $$ = null; /* TODO */ }
-	| KW_INHERITED id LPAREN exprlstopt RPAREN		{ $$ = null; /* TODO */ }
+	: KW_INHERITED id							{ $$ = new RoutineCall($2	); $$.inherited = true; }
+	| KW_INHERITED id LPAREN exprlstopt RPAREN	{ $$ = new RoutineCall($2,$4); $$.inherited = true; }
 	;
  
 	// func call to be called as statement
-proccall
-	: id									{ $$ = new RoutineCallNode($1, null); }
-	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCallNode($1, $3); }
+funccall
+	: id									{ $$ = new RoutineCall($1); }
+	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCall($1, $3); }
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	;
 	
 lvalue	// lvalue
-	: id									{ $$ = $1; }
-	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCallNode($1, $3); }
-	| lvalue LPAREN casttype RPAREN			{ $$ = new RoutineCallNode($1, $3); }
-	| casttype LPAREN exprlstopt RPAREN		{ $$ = new TypeCast($1, $3); }
+	: id									{ $$ = new Identifier($1); }
+	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCall($1, $3); }
+	| lvalue LPAREN casttype RPAREN			{ $$ = new RoutineCall($1, $3); }
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
 	| stringconst LBRAC expr RBRAC			{ $$ = new ArrayAccess($1, $3); }
-	| LPAREN expr RPAREN					{ $$ = $1; }
+	| LPAREN expr RPAREN					{ $$ = $2; }
 	;
 
 unaryexpr
 	: literal								{ $$ = $1; }
-	| lvalue								{ $$ = new LvalueExpression($1); }
-	| setconstructor						{ $$ = $1; }
+	| lvalue								{ $$ = $1; }
+	| set									{ $$ = $1; }
+	| casttype LPAREN exprlstopt RPAREN		{ $$ = new TypeCast($1, $3); }
 	| KW_ADDR unaryexpr						{ $$ = new AddressLvalue($2); }
 	| KW_NOT unaryexpr						{ $$ = new LogicalNot($2); }
 	| KW_SUM unaryexpr 						{ $$ = new UnaryPlus($1); }
 	| KW_SUB unaryexpr 						{ $$ = new UnaryMinus($1); }
-	| inheritexpr							{ $$ = new Inherited($1); }
+	| inheritexpr							{ $$ = $1; }
 	;
 
 expr
 	: unaryexpr								{ $$ = $1; }
+	| expr KW_AS casttype					{ $$ = new TypeCast($1, $2); }
+	| expr KW_IS casttype					{ $$ = new TypeIs($1,$2); }
+	| expr KW_IN expr						{ $$ = new SetIn($1, $2); }
 	| expr relop expr %prec KW_EQ			{ $$ = CreateBinaryExpression($1, $2, $3); }
 	| expr addop expr %prec KW_SUB			{ $$ = CreateBinaryExpression($1, $2, $3); }
 	| expr mulop expr %prec KW_MUL			{ $$ = CreateBinaryExpression($1, $2, $3); }
@@ -940,9 +940,6 @@ relop
 	| KW_LE			{ $$ = $1; }
 	| KW_GT			{ $$ = $1; }
 	| KW_GE			{ $$ = $1; }
-	| KW_IN			{ $$ = $1; }
-	| KW_IS			{ $$ = $1; }
-	| KW_AS			{ $$ = $1; }
 	;
 
 
@@ -960,14 +957,14 @@ basicliteral
 
 discrete
 	: CONST_INT		{ $$ = new IntLiteral(yyVal);}
-	| CONST_CHAR	{ $$ = new CharLiteralNode(yyVal);}
+	| CONST_CHAR	{ $$ = new StringLiteral(""+yyVal);}
 	| CONST_BOOL	{ $$ = new BoolLiteral(yyVal);}
 	;
 
 stringconst
 	: CONST_STR					{ $$ = yyVal; }
 	| CONST_CHAR				{ $$ = ""+yyVal; }
-	| stringconst CONST_STR	{ $$ = $1 + ""+yyVal; }
+	| stringconst CONST_STR		{ $$ = $1 + ""+yyVal; }
 	| stringconst CONST_CHAR	{ $$ = $1 + ""+yyVal; }
 	;
 
@@ -985,12 +982,12 @@ qualid
 	;
 	
 exprlst
-	: expr						{ $$ = new NodeList<Node>($1); }
+	: expr						{ $$ = new NodeList($1); }
 	| exprlst COMMA expr		{ ListAdd($$, $1, $3); }
 	;
 
 exprlstopt
-	:							{ $$ = new NodeList<Node>(); }
+	:							{ $$ = new NodeList(); }
 	| exprlst					{ $$ = $1; }
 	;
 
@@ -1001,7 +998,7 @@ exprlstopt
 	// ========================================================================
 
 rangetype			// must be const
-	: rangestart KW_RANGE expr		{ $$ = new SetElement($1, $3); }
+	: rangestart KW_RANGE expr		{ $$ = new SetRange($1, $3); }
 	;
 	
 	// best effort to support constant exprs. TODO improve
@@ -1011,32 +1008,32 @@ rangestart
 	;
 
 enumtype
-	: LPAREN enumtypeellst RPAREN		{ $$ = $2; }
+	: LPAREN enumtypeellst RPAREN		{ $$ = new EnumDeclaration($2); }
 	;
 
 enumtypeellst
-	: enumtypeel							{ $$ = new NodeList<Node>($1); }
+	: enumtypeel							{ $$ = new NodeList($1); }
 	| enumtypeellst COMMA enumtypeel		{ ListAdd($$, $1, $3); }
 	;
 
 enumtypeel
-	: id					{ $$ = new FieldInit($1, null); }
-	| id KW_EQ expr			{ $$ = new FieldInit($1, $3); }
+	: id					{ $$ = new EnumInitializer($1); }
+	| id KW_EQ expr			{ $$ = new EnumInitializer($1, $3); }
 	;
 
-setconstructor
-	: LBRAC	RBRAC				{ $$ = null;}
-	| LBRAC setlst	RBRAC		{ $$ = $2; }
+set
+	: LBRAC	RBRAC					{ $$ = new Set();}
+	| LBRAC setelemlst	RBRAC		{ $$ = new Set($2); }
 	;
 
-setlst
-	: setelem					{ $$ = new NodeList<Node>($1); }
-	| setlst COMMA setelem		{ ListAdd($$, $1, $3); }
+setelemlst
+	: setelem						{ $$ = new NodeList($1); }
+	| setelemlst COMMA setelem		{ ListAdd($$, $1, $3); }
 	;
 	
 setelem
-	: expr					{ $$ = new SetElement($1, null); }
-	| expr KW_RANGE expr	{ $$ = new SetElement($1, $3); }
+	: expr					{ $$ = $1; }
+	| expr KW_RANGE expr	{ $$ = new SetRange($1, $3); }
 	;
 
 
@@ -1046,14 +1043,14 @@ setelem
 	// ========================================================================
 
 constsec
-	: KW_CONST constdecl	{ $$ = new NodeList<Node>($2); }
+	: KW_CONST constdecl	{ $$ = new NodeList($2); }
 	| constsec constdecl	{ ListAdd($$, $1, $2); }
 	;
 
 constdecl
 	: id KW_EQ constinitexpr  SCOL				{ $$ = new ConstDeclaration($1, null, $3); }			// true const
 	| id COLON vartype KW_EQ constinitexpr SCOL	{ $$ = new ConstDeclaration($1, $3, $5); }	// typed const
-	| id COLON proceduresign funcdir_noterm_opt functypeinit SCOL		{ $$ = null; /* TODO */ }
+	| id COLON funcesignature funcdir_noterm_opt functypeinit SCOL		{ $$ = null; /* TODO */ }
 	;
 
 constinitexpr
@@ -1063,28 +1060,28 @@ constinitexpr
 	;
 
 constexpr
-	: expr					{ $$ = null; /* TODO */ }
+	: expr					{ $1.enforceConst = true; $$ = $1; }
 	;
 	
 
 	// 1 or more exprs
 arrayconst
-	: LPAREN constexpr COMMA constinitexprlst RPAREN	{ $$ = new ArrayConst($2, $4); }
+	: LPAREN constexpr COMMA constinitexprlst RPAREN	{ $$ = new ArrayInitializer($2, $4); }
 	;
 
 constinitexprlst
-	: constexpr								{ $$ = new NodeList<Node>($1); }
+	: constexpr								{ $$ = new NodeList($1); }
 	| constinitexprlst COMMA constexpr		{ ListAdd($$, $1, $3); }
 	;
 
 recordconst
 	: LPAREN fieldconstlst RPAREN			{$$ = $2; }
-	| LPAREN fieldconstlst SCOL RPAREN	{$$ = $2; }
+	| LPAREN fieldconstlst SCOL RPAREN		{$$ = $2; }
 	;
 
 fieldconstlst
-	: fieldconst							{ $$ = new NodeList<Node>($1); }
-	| fieldconstlst SCOL fieldconst		{ ListAdd($$, $1, $3); }
+	: fieldconst							{ $$ = new NodeList($1); }
+	| fieldconstlst SCOL fieldconst			{ ListAdd($$, $1, $3); }
 	;
 
 fieldconst
@@ -1112,9 +1109,9 @@ recordtypebasic
 	;
 	
 recordtype
-	: recordtypebasic												{ $$ = null; /* TODO */ }
+	: recordtypebasic											{ $$ = null; /* TODO */ }
 	| KW_RECORD fieldlst SCOL variant_struct scolopt KW_END		{ $$ = null; /* TODO */ }
-	| KW_RECORD variant_struct scolopt KW_END						{ $$ = null; /* TODO */ }
+	| KW_RECORD variant_struct scolopt KW_END					{ $$ = null; /* TODO */ }
 	;
 	
 variant_struct
@@ -1123,7 +1120,7 @@ variant_struct
 	;
 
 varfieldlst
-	: varfield %prec LOWESTPREC			{ $$ = null; /* TODO */ }
+	: varfield %prec LOWESTPREC		{ $$ = null; /* TODO */ }
 	| varfield SCOL					{ $$ = null; /* TODO */ }
 	| varfield SCOL varfieldlst		{ $$ = null; /* TODO */ }
 	;
@@ -1171,7 +1168,7 @@ classbody
 	;
 
 scopeseclst
-	:							{ $$ = new NodeList<Node>(); }
+	:							{ $$ = new NodeList(); }
 	| scopeseclst scopesec		{ ListAdd($$, $1, $2); }
 	;
 
@@ -1188,19 +1185,19 @@ scope_decl
 	;
 
 fieldlst
-	: objfield					{ $$ = new NodeList<Node>($1); }
+	: objfield					{ $$ = new NodeList($1); }
 	| fieldlst SCOL objfield { ListAdd($$, $1, $3); }
 	;
 	
 complst
-	:							{ $$ = new NodeList<Node>(); }
+	:							{ $$ = new NodeList(); }
 	| complst classcomp		{ ListAdd($$, $1, $2); }
 	;
 
 objfield
 	: idlst COLON vartype		{ $$ = new VarDeclaration($1, $3, null); }
-	| idlst COLON procsignfield	{ $$ = null; /* TODO */ }
-//	| idlst COLON proceduresign funcdir_noterm_opt
+	| idlst COLON funcsignfield	{ $$ = null; /* TODO */ }
+//	| idlst COLON funcesignature funcdir_noterm_opt
 	;
 	
 classcomp
@@ -1225,7 +1222,7 @@ classmethodlstopt
 	;
 
 methodlst
-	: methoddecl				{ $$ = new NodeList<Node>(new ClassMethod($1)); }
+	: methoddecl				{ $$ = new NodeList(new ClassMethod($1)); }
 	| methodlst methoddecl		{ ListAdd($$, $1, $2); }
 	;
 
@@ -1249,7 +1246,7 @@ classproplstopt
 	;
 
 classproplst
-	: property					{ $$ = new NodeList<Node>($1); }
+	: property					{ $$ = new NodeList($1); }
 	| classproplst property		{ ListAdd($$, $1, $2); }
 	;
 
@@ -1260,7 +1257,7 @@ property
 
 defaultdiropt
 	:				{ $$ = null; /* TODO */ }
-	| id SCOL	{ $$ = new PropertyDefault($1); }	// id == DEFAULT
+	| id SCOL		{ $$ = new PropertyDefault($1); }	// id == DEFAULT
 	;
 
 propinterfopt
@@ -1324,7 +1321,7 @@ writeacessoropt
 
 typedecl
 	: id KW_EQ typeopt vartype  SCOL							{ $$ = new TypeDeclarationNode($1, $4); }
-	| id KW_EQ typeopt proceduresign  SCOL funcdirectopt		{ $$ = new proceduresignDeclarationNode($1, $4, $6); }
+	| id KW_EQ typeopt funcesignature  SCOL funcdirectopt		{ $$ = new funcesignatureDeclarationNode($1, $4, $6); }
 	| id KW_EQ typeopt packcomptype SCOL						{ $$ = null; /* TODO */ }
 	;
 
@@ -1431,7 +1428,7 @@ structuredtype
 	;
 	
 arraysizelst
-	: rangetype								{ $$ = new NodeList<Node>($1); }
+	: rangetype								{ $$ = new NodeList($1); }
 	| arraysizelst COMMA rangetype			{ ListAdd($$, $1, $3); }
 	;
 

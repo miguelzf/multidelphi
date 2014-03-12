@@ -24,9 +24,9 @@ namespace crosspascal.ast.nodes
 
 	public class StringLabel : LabelNode
 	{
-		public IdentifierNode name;
+		public Identifier name;
 
-		public StringLabel(IdentifierNode name)
+		public StringLabel(Identifier name)
 		{
 			this.name = name;
 		}
@@ -105,11 +105,11 @@ namespace crosspascal.ast.nodes
 
 	public class OnStatement : Statement
 	{
-		public IdentifierNode ident;
-		public IdentifierNode type;
+		public Identifier ident;
+		public Identifier type;
 		public Statement body;
 
-		public OnStatement(IdentifierNode ident, IdentifierNode type, Statement body)
+		public OnStatement(Identifier ident, Identifier type, Statement body)
 		{
 			this.ident = ident;
 			this.type = type;
@@ -265,12 +265,12 @@ namespace crosspascal.ast.nodes
 	public class ForLoop : Statement
 	{
 		public Statement body;
-		public IdentifierNode var;
+		public Identifier var;
 		public Expression start;
 		public Expression end;
 		public int direction;
 
-		public ForLoop(IdentifierNode var, Expression start, Expression end, Statement body)
+		public ForLoop(Identifier var, Expression start, Expression end, Statement body)
 		{
 			this.body = body;
 			this.var = var;

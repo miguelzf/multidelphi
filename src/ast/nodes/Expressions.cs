@@ -7,123 +7,272 @@ using System.Threading.Tasks;
 namespace crosspascal.ast.nodes
 {
 
+	//==========================================================================
+	// Expressions' base classes
+	//==========================================================================
 
-	public class Expression : Node
+	public abstract class Expression : Node
 	{
+		/// <summary>
+		/// Expression type, to be checked or determined in static type-validation
+		/// </summary>
+		public ExpressionType type { get; set; }
+
+		/// <summary>
+		/// Indicates if expression must be constant
+		/// </summary>
+		public bool enforceConst { get; set; }
+
+	}
+
+	public class EmptyExpression : Expression
+	{
+		// Do nothing
 	}
 
 
-	public class UnaryExpression : Expression
+	public abstract class UnaryExpression : Expression
+	{
+
+	}
+
+	public abstract class BinaryExpression : Expression
 	{
 	}
 
-
-	public class LvalueExpression : UnaryExpression
+	public abstract class LvalueExpression : UnaryExpression
 	{
-		public IdentifierNode ident;
 
-		public LvalueExpression(IdentifierNode ident)
+	}
+
+	public abstract class Literal<T> : Node
+	{
+		public T value;
+
+		public Literal() { }
+
+		public Literal(T t)
 		{
-			this.ident = ident;
+			value = t;
 		}
 	}
 
 
-	public class OperatorNode : Node
-	{
-		public string op;
+	//==========================================================================
+	// Binary Expressions
+	//==========================================================================
 
-		public OperatorNode(string op)
+	#region Binary Expressions
+
+	public abstract class ArithmethicBinaryExpression : BinaryExpression
+	{
+		Expression left;
+		Expression right;
+
+		public ArithmethicBinaryExpression(Expression e1, Expression e2)
 		{
-			this.op = op;
+			left = e1;
+			right= e2;
 		}
 	}
 
-	public class ExpressionNodeList : Node
+	public class Subtraction : ArithmethicBinaryExpression
 	{
-		public Expression exp;
-		public ExpressionNodeList next;
+		public Subtraction(Expression e1, Expression e2) : base(e1, e2) { }
+	}
 
-		public ExpressionNodeList(Expression exp, ExpressionNodeList next)
+	public class Addition : ArithmethicBinaryExpression
+	{
+		public Addition(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class Product : ArithmethicBinaryExpression
+	{
+		public Product(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class Division: ArithmethicBinaryExpression
+	{
+		public Division(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class Quotient: ArithmethicBinaryExpression
+	{
+		public Quotient(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class Modulus: ArithmethicBinaryExpression
+	{
+		public Modulus(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class ShiftRight: ArithmethicBinaryExpression
+	{
+		public ShiftRight(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class ShiftLeft: ArithmethicBinaryExpression
+	{
+		public ShiftLeft(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+
+
+	public abstract class LogicalBinaryExpression : BinaryExpression
+	{
+		Expression left;
+		Expression right;
+
+		public LogicalBinaryExpression(Expression e1, Expression e2)
 		{
-			this.exp = exp;
-			this.next = next;
+			left = e1;
+			right= e2;
 		}
 	}
 
-	public class EnumList : DeclarationNode
+	public class LogicalAnd : LogicalBinaryExpression
 	{
-		public FieldInit element;
-		public EnumList next;
+		public LogicalAnd(Expression e1, Expression e2) : base(e1, e2) { }
+	}
 
-		public EnumList(FieldInit element, EnumList next)
+	public class LogicalOr : LogicalBinaryExpression
+	{
+		public LogicalOr(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class LogicalXor : LogicalBinaryExpression
+	{
+		public LogicalXor(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class Equal : LogicalBinaryExpression
+	{
+		public Equal(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class NotEqual : LogicalBinaryExpression
+	{
+		public NotEqual(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class LessThan : LogicalBinaryExpression
+	{
+		public LessThan(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class LessOrEqual : LogicalBinaryExpression
+	{
+		public LessOrEqual(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class GreaterThan : LogicalBinaryExpression
+	{
+		public GreaterThan(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class GreaterOrEqual : LogicalBinaryExpression
+	{
+		public GreaterOrEqual(Expression e1, Expression e2) : base(e1, e2) { }
+	}
+
+	public class SetIn : BinaryExpression
+	{
+		Expression expr;
+		Expression set;		// enforce that 'set' is in fact a set
+
+		public SetIn(Expression e1, Expression e2)
 		{
-			this.element = element;
-			this.next = next;
+			expr = e1;
+			set  = e2;
 		}
 	}
 
-	public class IntLiteral : DelphiLiteral
+	public abstract class TypeBinaryExpression : BinaryExpression
 	{
-		public int value;
+		Expression expr;
+		CastType types;
 
-		public IntLiteral(int value)
+		public TypeBinaryExpression(Expression e1, CastType e2)
 		{
+			expr = e1;
+			type = e2;
+		}
+	}
+
+	public class TypeIs : TypeBinaryExpression
+	{
+		public TypeIs(Expression e1, CastType e2) : base(e1, e2) { }
+	}
+
+	/// <summary>
+	/// 'Expr AS Type'
+	/// </summary>
+	public class TypeCast : TypeBinaryExpression
+	{
+		public TypeCast(Expression e1, CastType e2) : base(e1, e2) { }
+	}
+
+	#endregion
+
+
+	#region Literals
+
+	//==========================================================================
+	// Literals
+	//==========================================================================
+
+
+	public class IntLiteral : Literal<Int32>
+	{
+		public IntLiteral(Int32 value) : base(value) { }
+	}
+
+	public class CharLiteral : Literal<Char>
+	{
+		public CharLiteral(Char value) : base(value) { }
+	}
+
+	public class StringLiteral : Literal<String>
+	{
+		public bool isChar;
+
+		public StringLiteral(String value) : base(value)
+		{
+			if (value.Length == 1)
+				isChar = true;
+		}
+	}
+
+	public class BoolLiteral : Literal<Boolean>
+	{
+		public BoolLiteral(Boolean value) : base(value) { }
+	}
+
+	public class RealLiteral : Literal<Double>
+	{
+		public RealLiteral(Double value) : base(value) { }
+	}
+
+	public class PointerLiteral : Literal<uint>
+	{
+		public PointerLiteral(uint value)
+		{
+			if (value != 0x0)	// Const_NIl
+				Error("Pointer constant can only be nil");
 			this.value = value;
 		}
 	}
 
-	public class CharLiteralNode : DelphiLiteral
-	{
-		public char value;
+	#endregion
 
-		public CharLiteralNode(char value)
-		{
-			this.value = value;
-		}
-	}
+	#region Unary Expressions
 
-	public class StringLiteral : DelphiLiteral
-	{
-		public string value;
-
-		public StringLiteral(string value)
-		{
-			this.value = value;
-		}
-	}
-
-	public class BoolLiteral : DelphiLiteral
-	{
-		public bool value;
-
-		public BoolLiteral(bool value)
-		{
-			this.value = value;
-		}
-	}
-
-	public class RealLiteral : DelphiLiteral
-	{
-		public double value;
-
-		public RealLiteral(double value)
-		{
-			this.value = value;
-		}
-	}
-
-	public class PointerLiteral : DelphiLiteral
-	{
-	}
-
-	public abstract class DelphiLiteral : Node
-	{
-
-	}
+	//==========================================================================
+	// Unary Expressions
+	//==========================================================================
 
 
-	public class LogicalNot : Expression
+	public class LogicalNot : UnaryExpression
 	{
 		public Expression exp;
 
@@ -133,29 +282,49 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class AddressLvalue : Expression
+	public class AddressLvalue : UnaryExpression
 	{
-		public Expression exp;
+		public LvalueExpression exp;
 
-		public AddressLvalue(Expression exp)
+		public AddressLvalue(LvalueExpression exp)
 		{
 			this.exp = exp;
 		}
 	}
 
-	public class ArrayAccess : Node
+	public class SetRange : UnaryExpression
+	{
+		public Expression min;
+		public Expression max;
+
+		public SetRange(Expression min, Expression max)
+		{
+			this.min = min;
+			this.max = max;
+		}
+	}
+
+	#endregion
+
+	#region L-values
+
+	//==========================================================================
+	// Lvalue Expressions
+	//==========================================================================
+
+	public class ArrayAccess : LvalueExpression
 	{
 		public LvalueExpression lvalue;
-		public ExpressionNodeList acessors;
+		public ExpressionList acessors;
 
-		public ArrayAccess(LvalueExpression lvalue, ExpressionNodeList acessors)
+		public ArrayAccess(LvalueExpression lvalue, ExpressionList acessors)
 		{
 			this.lvalue = lvalue;
 			this.acessors = acessors;
 		}
 	}
 
-	public class PointerDereference : Node
+	public class PointerDereference : LvalueExpression
 	{
 		public Expression expr;
 
@@ -166,172 +335,61 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public class TypeCast : Node
+	public class RoutineCall : LvalueExpression
 	{
-		public Expression expr;
-		public TypeNode type;
+		public Identifier fname;
+		public ExpressionList args;
+		public bool inherited;
 
-		public TypeCast(TypeNode type, Expression expr)
+		public RoutineCall(Identifier fname)
 		{
-			this.type = type;
-			this.expr = expr;
+			this.fname = fname;
+			args = new ExpressionList();
 		}
-	}
 
-	public class ProcedureCallNode : Expression
-	{
-		public LvalueExpression function;
-		public ExpressionNodeList arguments;
-
-		public ProcedureCallNode(LvalueExpression function, ExpressionNodeList arguments)
+		public RoutineCall(Identifier fname, ExpressionList args) :this(fname)
 		{
-			this.function = function;
-			this.arguments = arguments;
+			this.args = args;
 		}
 	}
 
 
-	public class FieldAcessNode : LvalueExpression
+	public class FieldAcess : LvalueExpression
 	{
 		public LvalueExpression obj;
-		public IdentifierNode field;
+		public Identifier field;
 
-		public FieldAcessNode(LvalueExpression obj, IdentifierNode field)
-			: base(obj.ident)
+		public FieldAcess(LvalueExpression obj, Identifier field)
 		{
 			this.obj = obj;
 			this.field = field;
 		}
 	}
 
-	public class IdentifierNodeList : Node
+	/// <summary>
+	/// TO BE resolved into one of Id, FuncCall, or Typecast after creation 
+	/// </summary>
+	public class Identifier : LvalueExpression
 	{
-		public IdentifierNode ident;
-		public IdentifierNodeList next;
+		public string name;
 
-		public IdentifierNodeList(IdentifierNode ident, IdentifierNodeList next)
+		public Identifier(string val)
 		{
-			this.ident = ident;
-			this.next = next;
+			this.name = val;
 		}
 	}
 
-	public class UnaryOperationNode : Expression
-	{
-		public Expression a;
-		public OperatorNode op;
+	#endregion
 
-		public UnaryOperationNode(Expression a, OperatorNode op)
+
+	public class Set : UnaryExpression
+	{
+		public Expression setelems;
+
+		public Set(Expression elems)
 		{
-			this.a = a;
-			this.op = op;
+			setelems = elems;
 		}
 	}
 
-	public class BinaryOperationNode : Expression
-	{
-		public Expression a;
-		public Expression b;
-		public OperatorNode op;
-
-		public BinaryOperationNode(Expression a, Expression b, OperatorNode op)
-		{
-			this.a = a;
-			this.b = b;
-			this.op = op;
-		}
-	}
-
-	public class IdentifierNode : Node
-	{
-		public string value;
-
-		public IdentifierNode(string val)
-		{
-			this.value = val;
-		}
-	}
-
-	public class IdentifierNodeWithLocation : IdentifierNode
-	{
-		public string location;
-
-		public IdentifierNodeWithLocation(string value, string location)
-			: base(value)
-		{
-			this.location = location;
-		}
-	}
-
-	public class FieldAccess : IdentifierNode
-	{
-		public string qualid;
-
-		public FieldAccess(string value, string qualid)
-			: base(value)
-		{
-			this.qualid = qualid;
-		}
-	}
-
-
-
-	public class SetElement : Node
-	{
-		public Expression min;
-		public Expression max;
-
-		public SetElement(Expression min, Expression max)
-		{
-			this.min = min;
-			this.max = max;
-		}
-
-	}
-
-	public class SetList : Node
-	{
-		public SetElement element;
-		public SetList next;
-
-		public SetList(SetElement element, SetList next)
-		{
-			this.element = element;
-			this.next = next;
-		}
-
-	}
-
-
-	public class ArraySizeList : Node
-	{
-	}
-
-	public class ArrayRangeList : ArraySizeList
-	{
-		public SetElement range;
-		public ArraySizeList next;
-
-		public ArrayRangeList(SetElement range, ArraySizeList next)
-		{
-			this.range = range;
-			this.next = next;
-		}
-	}
-
-
-
-
-
-
-	public class ArrayTypeList : ArraySizeList
-	{
-		public TypeNode range;
-
-		public ArrayTypeList(TypeNode range)
-		{
-			this.range = range;
-		}
-	}
-	
 }

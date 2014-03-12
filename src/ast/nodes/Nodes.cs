@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace crosspascal.ast.nodes
 {
 	/// <summary>
-	/// Node hierarchy
+	/// Delphi Nodes hierarchy
 	/// -------------------
 	/// 
 	/// Node
@@ -112,6 +112,16 @@ namespace crosspascal.ast.nodes
 	{
 
 		/// <summary>
+		/// Report and propagate errors ocurred during the syntactic 
+		/// and simple-semantic checks done at the construction of nodes
+		/// </summary>
+		/// <param name="visitor"></param>
+		protected void Error(string msg)
+		{
+			throw new crosspascal.parser.AstNodeException(msg);
+		}
+
+		/// <summary>
 		/// TODO make abstract
 		/// </summary>
 		/// <param name="visitor"></param>
@@ -120,25 +130,6 @@ namespace crosspascal.ast.nodes
 
 		}
 	}
-
-	public class NodesList<T> : Node
-		where T : Node
-	{
-		List<T> nodes = new List<T>();
-
-		public void Add(T t)
-		{
-			if (t != null)
-				nodes.Add(t);
-		}
-
-		public override void Accept(Processor visitor)
-		{
-			foreach (Node node in nodes)
-				node.Accept(visitor);
-		}
-	}
-
 
 	public class FixmeNode : Node
 	{
@@ -171,5 +162,104 @@ namespace crosspascal.ast.nodes
 
 	}
 
+
+	// =========================================================================
+	// Node Lists
+	// =========================================================================
+
+	#region Node Lists
+
+	// Cannot use generics since YACC/JAY does not support them as rules' types
+
+	/// <summary>
+	/// Lists of Nodes, Expressions, Statements etc
+	/// </summary>
+
+	public class NodeList : Node
+	{
+		List<Node> nodes = new List<Node>();
+
+		public void Add(Node t)
+		{
+			if (t != null)
+				nodes.Add(t);
+		}
+
+		public override void Accept(Processor visitor)
+		{
+			foreach (Node node in nodes)
+				node.Accept(visitor);
+		}
+	}
+
+	public class ExpressionList : NodeList
+	{
+		List<Expression> nodes = new List<Expression>();
+
+		public void Add(Expression t)
+		{
+			if (t != null)
+				nodes.Add(t);
+		}
+
+		public override void Accept(Processor visitor)
+		{
+			foreach (Expression node in nodes)
+				node.Accept(visitor);
+		}
+	}
+
+	public class StatementList : NodeList
+	{
+		List<Statement> nodes = new List<Statement>();
+
+		public void Add(Statement t)
+		{
+			if (t != null)
+				nodes.Add(t);
+		}
+
+		public override void Accept(Processor visitor)
+		{
+			foreach (Statement node in nodes)
+				node.Accept(visitor);
+		}
+	}
+
+	public class TypeList : NodeList
+	{
+		List<TypeNode> nodes = new List<TypeNode>();
+
+		public void Add(TypeNode t)
+		{
+			if (t != null)
+				nodes.Add(t);
+		}
+
+		public override void Accept(Processor visitor)
+		{
+			foreach (TypeNode node in nodes)
+				node.Accept(visitor);
+		}
+	}
+
+	public class IdentifierList : ExpressionList
+	{
+		List<Identifier> nodes = new List<Identifier>();
+
+		public void Add(Identifier t)
+		{
+			if (t != null)
+				nodes.Add(t);
+		}
+
+		public override void Accept(Processor visitor)
+		{
+			foreach (Identifier node in nodes)
+				node.Accept(visitor);
+		}
+	}
+
+	#endregion
 
 }

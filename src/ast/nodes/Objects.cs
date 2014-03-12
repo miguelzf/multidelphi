@@ -17,10 +17,10 @@ namespace crosspascal.ast.nodes
 
 	public class FieldInit : Node
 	{
-		public IdentifierNode ident;
+		public Identifier ident;
 		public Expression expr;
 
-		public FieldInit(IdentifierNode ident, Expression expr)
+		public FieldInit(Identifier ident, Expression expr)
 		{
 			this.ident = ident;
 			this.expr = expr;
@@ -80,13 +80,13 @@ namespace crosspascal.ast.nodes
 
 	public class ClassProperty : ClassContent
 	{
-		public IdentifierNode ident;
+		public Identifier ident;
 		public TypeNode type;
 		public PropertyIndex index;
 		public PropertySpecifierNode specs;
 		public PropertyDefault def;
 
-		public ClassProperty(IdentifierNode ident, TypeNode type, PropertyIndex index, PropertySpecifierNode specs, PropertyDefault def)
+		public ClassProperty(Identifier ident, TypeNode type, PropertyIndex index, PropertySpecifierNode specs, PropertyDefault def)
 		{
 			this.ident = ident;
 			this.type = type;
@@ -113,9 +113,9 @@ namespace crosspascal.ast.nodes
 
 	public class PropertyReadNode : Node
 	{
-		public IdentifierNode ident;
+		public Identifier ident;
 
-		public PropertyReadNode(IdentifierNode ident)
+		public PropertyReadNode(Identifier ident)
 		{
 			this.ident = ident;
 		}
@@ -123,9 +123,9 @@ namespace crosspascal.ast.nodes
 
 	public class PropertyWriteNode : Node
 	{
-		public IdentifierNode ident;
+		public Identifier ident;
 
-		public PropertyWriteNode(IdentifierNode ident)
+		public PropertyWriteNode(Identifier ident)
 		{
 			this.ident = ident;
 		}
@@ -146,9 +146,9 @@ namespace crosspascal.ast.nodes
 
 	public class PropertyDefault : Node
 	{
-		public IdentifierNode ident;
+		public Identifier ident;
 
-		public PropertyDefault(IdentifierNode ident)
+		public PropertyDefault(Identifier ident)
 		{
 			this.ident = ident;
 		}
