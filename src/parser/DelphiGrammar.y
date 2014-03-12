@@ -688,7 +688,7 @@ stmtlst
 
 stmt
 	: nonlbl_stmt					{ $$ = $1; }
-	| labelid COLON nonlbl_stmt		{ $3.SetLabel($1); $$ = $1; }
+	| labelid COLON nonlbl_stmt		{ $$ = new LabelStatement($1, $3); }
 	;
 
 nonlbl_stmt
@@ -1283,8 +1283,8 @@ propspecifiers
 	;
 
 indexspecopt
-	:							{ $$ = null; /* TODO */ }
-	| KW_INDEX CONST_INT		{ $$ = null; /* TODO */ }
+	:							{ $$ = null; }
+	| KW_INDEX CONST_INT		{ $$ = new PropertyIndex($2);  }
 	;
 
 storedspecopt

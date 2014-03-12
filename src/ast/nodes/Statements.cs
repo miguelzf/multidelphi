@@ -7,16 +7,22 @@ using System.Threading.Tasks;
 namespace crosspascal.ast.nodes
 {
 
-	public class Statement : Node
+	public abstract class Statement : Node
 	{
 		public string label;
-
-		public void SetLabel(string label)
-		{
-			this.label = label;
-		}
 	}
 
+	public class LabelStatement : Statement
+	{
+		public Identifier label;
+		public Statement stmt;
+
+		public LabelStatement(Identifier label, Statement stmt)
+		{
+			this.label = label;
+			this.stmt = stmt;
+		}
+	}
 
 	public abstract class LabelNode : Node
 	{
