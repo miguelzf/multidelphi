@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace crosspascal.ast.nodes
 {
 
-	public enum FunctionKind
+	public enum RoutineReturnType
 	{
 		Procedure,
 		Function,
@@ -25,7 +25,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public class CallConventionNode : DelphiNode
+	public class CallConventionNode : Node
 	{
 		public CallConvention convention;
 
@@ -37,21 +37,21 @@ namespace crosspascal.ast.nodes
 
 
 
-	public abstract class DeclarationNode : DelphiNode
+	public abstract class DeclarationNode : Node
 	{
 
 	}
-	public class ProcedureHeaderNode : DelphiNode
+	public class RoutineDeclaration : Node
 	{
 		public bool isStatic;
-		public FunctionKind kind;
+		public RoutineReturnType kind;
 		public IdentifierNode ident;
 		public TypeNode returnType;
 		public bool obj;
-		public ParameterNodeList parameters;
+		public ParamDeclarationList parameters;
 		public ProcedureDirectiveList directives;
 
-		public ProcedureHeaderNode(FunctionKind kind, IdentifierNode ident, ParameterNodeList parameters, TypeNode returnType, bool obj, ProcedureDirectiveList directives)
+		public RoutineDeclaration(RoutineReturnType kind, IdentifierNode ident, ParamDeclarationList parameters, TypeNode returnType, bool obj, ProcedureDirectiveList directives)
 		{
 			this.isStatic = false;
 			this.kind = kind;
@@ -63,12 +63,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ProcedureBodyNode : DelphiNode
+	public class ProcedureBodyNode : Node
 	{
-		public DeclarationListNode decls;
+		public DeclarationNodeList decls;
 		public StatementBlock body;
 
-		public ProcedureBodyNode(DeclarationListNode decls, StatementBlock body)
+		public ProcedureBodyNode(DeclarationNodeList decls, StatementBlock body)
 		{
 			this.decls = decls;
 			this.body = body;
@@ -77,28 +77,28 @@ namespace crosspascal.ast.nodes
 
 	public class AssemblerProcedureBodyNode : ProcedureBodyNode
 	{
-		public AssemblerListNode asm;
+		public AssemblerNodeList asm;
 
-		public AssemblerProcedureBodyNode(AssemblerListNode asm)
+		public AssemblerProcedureBodyNode(AssemblerNodeList asm)
 			: base(null, null)
 		{
 			this.asm = asm;
 		}
 	}
 
-	public class ProcedureDefinitionNode : DelphiNode
+	public class RoutineDefinition : Node
 	{
-		public ProcedureHeaderNode header;
+		public RoutineDeclaration header;
 		public ProcedureBodyNode body;
 
-		public ProcedureDefinitionNode(ProcedureHeaderNode header, ProcedureBodyNode body)
+		public RoutineDefinition(RoutineDeclaration header, ProcedureBodyNode body)
 		{
 			this.header = header;
 			this.body = body;
 		}
 	}
 
-	public enum ProcedureDirectiveEnum
+	public enum RoutineDirective
 	{
 		Absolute,
 		Abstract,
@@ -115,17 +115,17 @@ namespace crosspascal.ast.nodes
 		VarArgs
 	}
 
-	public class ProcedureDirective : DelphiNode
+	public class ProcedureDirective : Node
 	{
-		public ProcedureDirectiveEnum type;
+		public RoutineDirective type;
 
-		public ProcedureDirective(ProcedureDirectiveEnum type)
+		public ProcedureDirective(RoutineDirective type)
 		{
 			this.type = type;
 		}
 	}
 
-	public class ProcedureDirectiveList : DelphiNode
+	public class ProcedureDirectiveList : Node
 	{
 		public ProcedureDirective dir;
 		public ProcedureDirectiveList next;
@@ -143,20 +143,20 @@ namespace crosspascal.ast.nodes
 		public string importName;
 
 		public ExternalProcedureDirective(IdentifierNode importLib, string importName)
-			: base(ProcedureDirectiveEnum.External)
+			: base(RoutineDirective.External)
 		{
 			this.importLib = importLib;
 			this.importName = importName;
 		}
 	}
 
-	public class ProcedurePointerDeclarationNode : DeclarationNode
+	public class CallPointerDeclaration : DeclarationNode
 	{
-		public IdentifierListNode ids;
-		public ProcedureHeaderNode proc;
+		public IdentifierNodeList ids;
+		public RoutineDeclaration proc;
 		public ProcedureDirectiveList dirs;
 
-		public ProcedurePointerDeclarationNode(IdentifierListNode ids, ProcedureHeaderNode proc, ProcedureDirectiveList dirs, DelphiNode init)
+		public CallPointerDeclaration(IdentifierNodeList ids, RoutineDeclaration proc, ProcedureDirectiveList dirs, Node init)
 		{
 			this.ids = ids;
 			this.proc = proc;
@@ -176,7 +176,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public abstract class ParameterQualifierNode : DelphiNode
+	public abstract class ParameterQualifierNode : Node
 	{
 	}
 
@@ -192,14 +192,14 @@ namespace crosspascal.ast.nodes
 	{
 	}
 
-	public class ParameterNode : DelphiNode
+	public class ParamDeclaration : Node
 	{
-		public IdentifierListNode idlist;
+		public IdentifierNodeList idlist;
 		public IdentifierNode type;
 		public ParameterQualifierNode qualifier;
-		public DelphiExpression init;
+		public Expression init;
 
-		public ParameterNode(ParameterQualifierNode qualifier, IdentifierListNode idlist, IdentifierNode type, DelphiExpression init)
+		public ParamDeclaration(ParameterQualifierNode qualifier, IdentifierNodeList idlist, IdentifierNode type, Expression init)
 		{
 			this.idlist = idlist;
 			this.type = type;
@@ -208,12 +208,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ParameterNodeList : DelphiNode
+	public class ParamDeclarationList : Node
 	{
-		public ParameterNode param;
-		public ParameterNodeList next;
+		public ParamDeclaration param;
+		public ParamDeclarationList next;
 
-		public ParameterNodeList(ParameterNode param, ParameterNodeList next)
+		public ParamDeclarationList(ParamDeclaration param, ParamDeclarationList next)
 		{
 			this.param = param;
 			this.next = next;

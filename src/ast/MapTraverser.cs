@@ -40,7 +40,7 @@ namespace crosspascal.ast
 		public MapTraverser(Processor processor) : base(processor)	{}
 
 
-		public override void traverse(DelphiNode n)
+		public override void traverse(Node n)
 		{
 			if (n == null)
 				return;

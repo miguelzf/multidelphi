@@ -15,7 +15,7 @@ namespace crosspascal.ast
 
 		public VisitorTraverser(Processor processor) : base(processor) { }
 
-		public override void traverse(DelphiNode n)
+		public override void traverse(Node n)
 		{
 			if (n != null)
 				n.Accept(Processor);

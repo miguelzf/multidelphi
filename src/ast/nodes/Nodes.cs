@@ -10,9 +10,9 @@ namespace crosspascal.ast.nodes
 	/// Node hierarchy
 	/// -------------------
 	/// 
-	/// DelphiNode
+	/// Node
 	///		EmptyNode
-	///		ListNode
+	///		NodeList
 	///		CompilationUnit	
 	///			Program
 	///			Unit
@@ -86,7 +86,7 @@ namespace crosspascal.ast.nodes
 	///					Ptr (nil)
 	///					Bool
 	///				PtrDeref
-	///				NegationExpr
+	///				LogicalNotExpr
 	///				AddrExpr
 	///				Lvalue
 	///					Identifier
@@ -130,7 +130,7 @@ namespace crosspascal.ast.nodes
 
 
 
-	public abstract class DelphiNode
+	public abstract class Node
 	{
 
 		/// <summary>
@@ -143,11 +143,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ListNode : DelphiNode
+	public class NodesList<T> : Node
+		where T : Node
 	{
-		List<DelphiNode> nodes = new List<DelphiNode>();
+		List<T> nodes = new List<T>();
 
-		public void Add(DelphiNode t)
+		public void Add(T t)
 		{
 			if (t != null)
 				nodes.Add(t);
@@ -155,13 +156,13 @@ namespace crosspascal.ast.nodes
 
 		public override void Accept(Processor visitor)
 		{
-			foreach (DelphiNode node in nodes)
+			foreach (Node node in nodes)
 				node.Accept(visitor);
 		}
 	}
 
 
-	public class FixmeNode : DelphiNode
+	public class FixmeNode : Node
 	{
 		public FixmeNode()
 		{
@@ -169,7 +170,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class NotSupportedNode : DelphiNode
+	public class NotSupportedNode : Node
 	{
 		public NotSupportedNode()
 		{
@@ -177,7 +178,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class EmptyNode : DelphiNode
+	public class EmptyNode : Node
 	{
 		public EmptyNode()
 		{
@@ -187,7 +188,7 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// CompilationUnit: top level source file. Can be Program, Unit, Library or Package
 	/// </summary>
-	public abstract class CompilationUnit : DelphiNode
+	public abstract class CompilationUnit : Node
 	{
 
 	}

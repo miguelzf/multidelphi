@@ -45,7 +45,7 @@ namespace crosspascal.ast
 		// =================================================
 
 		// Printing helper
-		private void EnterNode(DelphiNode n)
+		private void EnterNode(Node n)
 		{
 			string name = n.GetType().Name;
 			builder.Append(' ', identLevel);
@@ -53,7 +53,7 @@ namespace crosspascal.ast
 			identLevel++;
 		}
 
-		private void LeaveNode(DelphiNode n)
+		private void LeaveNode(Node n)
 		{
 			identLevel--;
 		}

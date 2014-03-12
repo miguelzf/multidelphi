@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
-	public class TypeNode : DelphiNode
+	public class TypeNode : Node
 	{
 
 	}
@@ -133,9 +133,9 @@ namespace crosspascal.ast.nodes
 
 	public class StringType : TypeNode
 	{
-		public DelphiExpression size;
+		public Expression size;
 
-		public StringType(DelphiExpression size)
+		public StringType(Expression size)
 		{
 			this.size = size;
 		}
@@ -145,15 +145,15 @@ namespace crosspascal.ast.nodes
 	public class ClassDefinition : TypeNode
 	{
 		public ClassType classType;
-		public IdentifierListNode heritage;
-		public ClassStruct classStruct;
+		public IdentifierNodeList heritage;
+		public ClassBody ClassBody;
 
-		public ClassDefinition(ClassType classType, IdentifierListNode heritage, ClassStruct classStruct)
+		public ClassDefinition(ClassType classType, IdentifierNodeList heritage, ClassBody ClassBody)
 			: base()
 		{
 			this.classType = classType;
 			this.heritage = heritage;
-			this.classStruct = classStruct;
+			this.ClassBody = ClassBody;
 		}
 
 	}
@@ -161,11 +161,11 @@ namespace crosspascal.ast.nodes
 
 	public class InterfaceDefinition : TypeNode
 	{
-		public IdentifierListNode heritage;
+		public IdentifierNodeList heritage;
 		public ClassContentList methods;
 		public ClassContentList properties;
 
-		public InterfaceDefinition(IdentifierListNode heritage, ClassContentList methods, ClassContentList properties)
+		public InterfaceDefinition(IdentifierNodeList heritage, ClassContentList methods, ClassContentList properties)
 			: base()
 		{
 			this.heritage = heritage;

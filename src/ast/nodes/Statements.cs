@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace crosspascal.ast.nodes
 {
 
-	public class Statement : DelphiNode
+	public class Statement : Node
 	{
 		public string label;
 
@@ -18,7 +18,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public abstract class LabelNode : DelphiNode
+	public abstract class LabelNode : Node
 	{
 	}
 
@@ -42,12 +42,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class LabelDeclarationNode : DeclarationNode
+	public class LabelDeclaration : DeclarationNode
 	{
 		public LabelNode label;
-		public LabelDeclarationNode next;
+		public LabelDeclaration next;
 
-		public LabelDeclarationNode(LabelNode label, LabelDeclarationNode next)
+		public LabelDeclaration(LabelNode label, LabelDeclaration next)
 		{
 			this.label = label;
 			this.next = next;
@@ -57,11 +57,11 @@ namespace crosspascal.ast.nodes
 
 	public class AssignementStatement : Statement
 	{
-		public LValueNode lvalue;
-		public DelphiExpression expr;
+		public LvalueExpression lvalue;
+		public Expression expr;
 		public bool inherited;
 
-		public AssignementStatement(LValueNode lvalue, DelphiExpression expr, bool inherited)
+		public AssignementStatement(LvalueExpression lvalue, Expression expr, bool inherited)
 		{
 			this.lvalue = lvalue;
 			this.expr = expr;
@@ -81,11 +81,11 @@ namespace crosspascal.ast.nodes
 
 	public class IfStatement : Statement
 	{
-		public DelphiExpression condition;
+		public Expression condition;
 		public Statement ifTrue;
 		public Statement ifFalse;
 
-		public IfStatement(DelphiExpression condition, Statement ifTrue, Statement ifFalse)
+		public IfStatement(Expression condition, Statement ifTrue, Statement ifFalse)
 		{
 			this.condition = condition;
 			this.ifTrue = ifTrue;
@@ -117,24 +117,24 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class OnListNode : DelphiNode
+	public class OnNodeList : Node
 	{
 		public OnStatement stmt;
-		public OnListNode next;
+		public OnNodeList next;
 
-		public OnListNode(OnStatement stmt, OnListNode next)
+		public OnNodeList(OnStatement stmt, OnNodeList next)
 		{
 			this.stmt = stmt;
 			this.next = next;
 		}
 	}
 
-	public class ExceptionBlockNode : DelphiNode
+	public class ExceptionBlock : Node
 	{
-		public OnListNode stmts;
+		public OnNodeList stmts;
 		public Statement onElse;
 
-		public ExceptionBlockNode(OnListNode stmts, Statement onElse)
+		public ExceptionBlock(OnNodeList stmts, Statement onElse)
 		{
 			this.stmts = stmts;
 			this.onElse = onElse;
@@ -143,29 +143,29 @@ namespace crosspascal.ast.nodes
 
 	public class RaiseStatement : Statement
 	{
-		public LValueNode lvalue;
-		public DelphiExpression expr;
+		public LvalueExpression lvalue;
+		public Expression expr;
 
-		public RaiseStatement(LValueNode lvalue, DelphiExpression expr)
+		public RaiseStatement(LvalueExpression lvalue, Expression expr)
 		{
 			this.lvalue = lvalue;
 			this.expr = expr;
 		}
 	}
 
-	public class CaseLabel : DelphiNode
+	public class CaseLabel : Node
 	{
-		public DelphiExpression minRange;
-		public DelphiExpression maxRange;
+		public Expression minRange;
+		public Expression maxRange;
 
-		public CaseLabel(DelphiExpression minRange, DelphiExpression maxRange)
+		public CaseLabel(Expression minRange, Expression maxRange)
 		{
 			this.minRange = minRange;
 			this.maxRange = maxRange;
 		}
 	}
 
-	public class CaseLabelList : DelphiNode
+	public class CaseLabelList : Node
 	{
 		public CaseLabel caselabel;
 		public CaseLabelList next;
@@ -177,7 +177,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class CaseSelectorNode : DelphiNode
+	public class CaseSelectorNode : Node
 	{
 		public CaseLabelList list;
 		public Statement stmt;
@@ -189,18 +189,18 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class CaseSelectorList : DelphiNode
+	public class CaseSelectorList : Node
 	{
 
 	}
 
 	public class CaseStatement : Statement
 	{
-		public DelphiExpression condition;
+		public Expression condition;
 		public CaseSelectorList selectors;
 		public Statement caseelse;
 
-		public CaseStatement(DelphiExpression condition, CaseSelectorList selectors, Statement caseelse)
+		public CaseStatement(Expression condition, CaseSelectorList selectors, Statement caseelse)
 		{
 			this.condition = condition;
 			this.selectors = selectors;
@@ -208,24 +208,24 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class RepeatStatement : Statement
+	public class RepeatLoop : Statement
 	{
-		public DelphiExpression condition;
+		public Expression condition;
 		public Statement block;
 
-		public RepeatStatement(Statement block, DelphiExpression condition)
+		public RepeatLoop(Statement block, Expression condition)
 		{
 			this.condition = condition;
 			this.block = block;
 		}
 	}
 
-	public class WhileStatement : Statement
+	public class WhileLoop : Statement
 	{
-		public DelphiExpression condition;
+		public Expression condition;
 		public Statement block;
 
-		public WhileStatement(DelphiExpression condition, Statement block)
+		public WhileLoop(Expression condition, Statement block)
 		{
 			this.condition = condition;
 			this.block = block;
@@ -253,24 +253,24 @@ namespace crosspascal.ast.nodes
 	public class WithStatement : Statement
 	{
 		public Statement body;
-		public DelphiExpression with;
+		public Expression with;
 
-		public WithStatement(DelphiExpression with, Statement body)
+		public WithStatement(Expression with, Statement body)
 		{
 			this.body = body;
 			this.with = with;
 		}
 	}
 
-	public class ForStatement : Statement
+	public class ForLoop : Statement
 	{
 		public Statement body;
 		public IdentifierNode var;
-		public DelphiExpression start;
-		public DelphiExpression end;
+		public Expression start;
+		public Expression end;
 		public int direction;
 
-		public ForStatement(IdentifierNode var, DelphiExpression start, DelphiExpression end, Statement body)
+		public ForLoop(IdentifierNode var, Expression start, Expression end, Statement body)
 		{
 			this.body = body;
 			this.var = var;
@@ -303,12 +303,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class AssemblerListNode : DelphiNode
+	public class AssemblerNodeList : Node
 	{
 		public string asmop;
-		public AssemblerListNode next;
+		public AssemblerNodeList next;
 
-		public AssemblerListNode(string asmop, AssemblerListNode next)
+		public AssemblerNodeList(string asmop, AssemblerNodeList next)
 		{
 			this.asmop = asmop;
 			this.next = next;

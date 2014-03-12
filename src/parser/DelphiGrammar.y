@@ -92,6 +92,43 @@ namespace crosspascal.parser
 				throw yye; // new InputRejected(GetErrorMessage(yye));
 			}
 		}
+		
+		
+		// Internal helpers
+		
+		void ListAdd(ref NodeList headlst, NodeList bodylst, Node elem)
+		{
+			bodylst.Add(elem);
+			headlst = bodylst;
+		}
+		
+		BinaryExpression CreateBinaryExpression(Expression e1, int token, Expression e2)
+		{
+			switch(token)
+			{
+				case KW_MUL	:	return new Product    (e1, e2);
+				case KW_DIV	:	return new Division   (e1, e2);
+				case KW_QUOT:	return new Quotient   (e1, e2);
+				case KW_MOD	:	return new Modulus    (e1, e2);
+				case KW_SHR	:	return new ShiftRight (e1, e2);
+				case KW_SHL	:	return new ShiftLeft  (e1, e2);
+				case KW_AND	:	return new LogicalAnd (e1, e2);
+				case KW_SUB	:	return new Subtraction(e1, e2);
+				case KW_SUM	:	return new Addition   (e1, e2);
+				case KW_OR 	:	return new LogicalOr  (e1, e2);
+				case KW_XOR	:	return new LogicalXor (e1, e2);
+				case KW_EQ	:	return new Equal      (e1, e2);
+				case KW_NE	:	return new NotEqual   (e1, e2);
+				case KW_LT	:	return new LessThan   (e1, e2);
+				case KW_LE	:	return new LessOrEqual(e1, e2);
+				case KW_GT	:	return new GreaterThan(e1, e2);
+				case KW_GE	:	return new GreaterOrEqual(e1, e2);
+				case KW_IN	:	return new SetIn      (e1, e2);
+				case KW_IS	:	return new TypeIs     (e1, e2);
+				case KW_AS	:	return new TypeCast   (e1, e2);
+				default: throw ParserException("Invalid Binary Operation token"); 	// should never happen
+			}
+		}
 
 %}
 
@@ -103,65 +140,59 @@ namespace crosspascal.parser
 %start goal
 	// file type
 
-%type<bool>  staticclassopt ofobjectopt
+%type<string> id
+%type<bool>  staticopt ofobjectopt
 %type<GoalNode> goal file
 %type<ProgramNode> program
 %type<LibraryNode> library
 %type<UnitNode> unit
 %type<PackageNode> package
-%type<UsesNode> requiresclause containsclause usesclauseopt useidlist
-%type<IdentifierNode> id useid externarg qualid
-%type<UnitImplementationNode> implementsec
-%type<UnitInterfaceNode> interfsec
-%type<DeclarationListNode> interfdecllist maindecllist declseclist
-%type<UnitInitialization> initsec
-%type<BlockWithDeclarationsNode> main_block
-%type<DeclarationNode> interfdecl maindeclsec funcdeclsec basicdeclsec typesec labeldeclsec labelidlist  varsec thrvarsec vardecllist vardecl constdecl typedecl
+%type<UsesNode> requiresclause containsclause usesclauseopt useidlst
+%type<IdentifierNode> useid externarg qualid classid
+%type<ImplementationSection> implsec
+%type<InterfaceSection> interfsec
+
+%type<NodeList> interfdecllst maindecllst declseclst formalparams formalparamslst constsec
+%type<NodeList> funcdirectopt funcdir_noterm_opt funcdirectlst funcqualinterflst stmtlst routinedeclimpldirs						
+%type<NodeList> caseselectorlst caselabellst onlst varfieldlst idlsttypeid
+%type<NodeList> scopeseclst complst classmethodlstopt methodlst classproplstopt classproplst fieldlst 
+%type<NodeList> propspecifiers constinitexprlst variantlst rscstringlst idlsttypeidlst
+%type<NodeList> idlst heritage exprlst exprlstopt 
+%type<NodeList> setconstructor setlst arrayconst recordconst fieldconstlst arraysizelst arraytypedef 
+
+%type<Section> initsec finalizsec
+%type<ProgramBody> main_block
+%type<DeclarationNode> interfdecl maindeclsec funcdeclsec basicdeclsec typesec labeldeclsec labelidlst  varsec thrvarsec vardecllst vardecl constdecl typedecl methoddecl
 %type<LabelNode> labelid
-%type<ExportItem> exportsec	 exportsitemlist exportsitem
-%type<ProcedureDefinitionNode> procdefinition procdeclnondef 
-%type<ProcedureHeaderNode> procdefproto procdeclinterf proceduresign procsignfield
-%type<ProcedureBodyNode> proc_define func_block
-%type<TypeNode> funcrettype simpletype funcretopt funcparamtype paramtypeopt paramtypespec
-%type<FunctionClass> prockind
-%type<ParameterNodeList> formalparams formalparamslist
+%type<ExportItem> exportsec	 exportsitemlst exportsitem
+%type<RoutineDefinition> routinedef routinedeclimpl 
+%type<RoutineDeclaration> routinedeclinterf proceduresign procsignfield
+%type<RoutineBody> funcdefine funcblock
+%type<TypeNode> funcrettype simpletype funcparamtype paramtypeopt paramtypespec  funcret
 %type<ParamterNode> formalparm
-%type<VarParameterQualifier> paramqualif
 %type<Expression> paraminitopt expr rangetype  rangestart constexpr functypeinit
-%type<ProcedureDirectiveList> funcdirectopt funcdir_noterm_opt funcdirectlist funcqualinterflist									
 %type<ProcedureDirective> funcdirective funcqualinterf funcqualif funcdeprecated funcqualinterfopt
 %type<CallConventionNode> funccallconv
-%type<StatementBlock> block stmtlist
-%type<Statement> stmt nonlbl_stmt assign goto_stmt ifstmt casestmt else_case repeatstmt whilestmt forstmt with_stmt tryexceptstmt tryfinallystmt raisestmt assemblerstmt asmcode
-%type<CaseSelectorList> caseselectorlist
+%type<StatementBlock> block 
+%type<Statement> stmt nonlbl_stmt assign goto_stmt ifstmt casestmt else_case repeatstmt whilestmt forstmt withstmt tryexceptstmt tryfinallystmt raisestmt assemblerstmt asmcode
 %type<CaseSelector> caseselector
-%type<CaseLabelList> caselabellist
 %type<CaseLabel> caselabel
-%type<ExceptionBlockNode> exceptionblock
-%type<OnListNode> onlist
+%type<ExceptionBlock> exceptionblock
 %type<OnStatement> ondef
 %type<VarDeclarationOption> vardeclopt
-%type<ProcedureCallNode> proccall
+%type<RoutineCallNode> proccall
 %type<LValue> lvalue
-%type<OperatorNode> sign mulop addop relop
-%type<LiteralNode> literal discrete string_const
-%type<IdentifierListNode> idlist heritage
-%type<ExpressionListNode> exprlist exprlistopt
-%type<EmumList> enumtype enumtypeellist
+%type<LiteralNode> literal discrete stringconst
+%type<EmumList> enumtype enumtypeellst
 %type<FieldInit> enumtypeel fieldconst
-%type<SetList> setconstructor setlist
 %type<SetElement> setelem
-%type<ConstDeclarationList> constsec
-%type<ExpressionListNode> arrayconst
-%type<FieldInitList>  recordconst fieldconstlist
+
 %type<ClassDefinition> classtype
-%type<ClassType> class_keyword
-%type<ClassStruct> scopesec
-%type<ClassContentList> scopeseclist complist classmethodlistopt methodlist classproplistopt classproplist
-%type<ClassContent> class_comp
+%type<ClassType> classkeyword
+%type<ClassBody> scopesec
+%type<ClassContent> classcomp
 %type<Scope> scope_decl
-%type<ClassFieldList> fieldlist
-%type<VarDeclarationNode> objfield
+%type<VarDeclaration> objfield
 %type<InterfaceDefinition> interftype
 %type<ClassProperty> property
 %type<bool> typeopt 
@@ -169,18 +200,16 @@ namespace crosspascal.parser
 %type<TypeNode> packstructtype packcomptype compositetype
 %type<TypeNode> scalartype realtype inttype chartype stringtype varianttype funcrettype 
 %type<TypeNode> arraytype settype filetype refpointertype funcparamtype  structuredtype
-%type<ArraySizeList>  arraysizelist
-%type<ArraySizeList> arraytypedef
-
-%type<ListNode> propspecifiers constinitexprlist variantlist rscstringlist idlisttypeidlist
 
 %type<PropertySpecifier> propinterfopt defaultdiropt indexspecopt storedspecopt defaultspecopt implementsspecopt readacessoropt writeacessoropt
 %type<Expression> unaryexpr constinitexpr inheritexpr basicliteral simpleconst rangestart functypeinit
 %type<RecordNode> recordtype recordtypebasic
 
-%type<Node> variant_struct varfieldlist varfield  variantvar guid rscstring class_struct rscstringsec idlisttypeid
+%type<Node> variant_struct  varfield  variantvar guid rscstring classbody rscstringsec 
+%type<int> sign addop mulop relop
+%type<int> KW_EQ KW_GT KW_LT KW_LE KW_GE KW_NE KW_IN KW_IS KW_SUM KW_SUB KW_OR KW_XOR KW_MUL KW_DIV KW_QUOT KW_MOD KW_SHL KW_SHR KW_AS KW_AND
 
-
+	
 	
 	// ==============================================================
 	// Tokens declarations
@@ -244,9 +273,9 @@ namespace crosspascal.parser
 	// literais
 %token CONST_INT CONST_REAL CONST_CHAR CONST_STR IDENTIFIER CONST_NIL CONST_BOOL
 	// misc, separators
-%nonassoc KW_RANGE COMMA COLON SEMICOL KW_ASSIGN
+%nonassoc KW_RANGE COMMA COLON SCOL KW_ASSIGN
 	// relational/comparative
-%left KW_EQ KW_GT KW_LT KW_LE KW_GE KW_DIFF KW_IN KW_IS
+%left KW_EQ KW_GT KW_LT KW_LE KW_GE KW_NE KW_IN KW_IS
 	// additive
 %left KW_SUM KW_SUB KW_OR KW_XOR
 	// multiplicative
@@ -279,9 +308,9 @@ file
 	| unit		{ $$ = $1; }
 	;
 
-semicolopt
+scolopt
 	:
-	| SEMICOL
+	| SCOL
 	;
 	
 	/*
@@ -303,80 +332,81 @@ semicolopt
 	// ========================================================================
 
 program
-	: KW_PROGRAM id SEMICOL	usesclauseopt main_block	{ $$ = new ProgramNode($2, $4, $5); }
+	: KW_PROGRAM id SCOL	usesclauseopt main_block	{ $$ = new ProgramNode($2, $4, $5); }
 	| 						usesclauseopt main_block	{ $$ = new ProgramNode("untitled", $1, $2); }
 	;
 
 library
-	: KW_LIBRARY id SEMICOL usesclauseopt main_block	{ $$ = new LibraryNode($2, $4, $5); }
-	;
-
-unit
-	: KW_UNIT id  SEMICOL interfsec implementsec initsec	{ $$ = new UnitNode($2, $4, $5, $6); }
+	: KW_LIBRARY id SCOL usesclauseopt main_block	{ $$ = new LibraryNode($2, $4, $5); }
 	;
 
 package
-	: id id SEMICOL requiresclause containsclause KW_END	{ $$ = new PackageNode($2, $4, $5); }
+	: id id SCOL requiresclause containsclause KW_END	{ $$ = new PackageNode($2, $4, $5); }
 	;
 
 requiresclause
-	: id idlist SEMICOL	{ $$ = new UsesNode($1, $2);}	// check that id == "Requires"
+	: id idlst SCOL	{ $$ = new UsesNode($1, $2);}	// check that id == "Requires"
 	;
 
 containsclause
-	: id idlist SEMICOL	{ $$ = new UsesNode($1, $2);}	// check that id == "Contains"
+	: id idlst SCOL	{ $$ = new UsesNode($1, $2);}	// check that id == "Contains"
 	;
 
 usesclauseopt
-	:							{ $$ = null; }
-	| KW_USES useidlist SEMICOL	{ $$ = $2; }
+	:							{ $$ = new EmptyNode(); }
+	| KW_USES useidlst SCOL	{ $$ = $2; }
 	;
 
-useidlist
-	: useid						{ $$ = new UsesNode($1, null);}
-	| useidlist COMMA useid		{ $$ = new UsesNode($1, $3);}
+useidlst
+	: useid						{ $$ = new NodeList<Node>($1); }
+	| useidlst COMMA useid		{ ListAdd($$, $1, $3); }
 	;
 	
 useid
-	: id						{ $$ = new IdentifierNode($1);}
-	| id KW_IN string_const		{ $$ = new IdentifierNodeWithLocation($1, $3);}
+	: id						{ $$ = new UsesNode($1);}
+	| id KW_IN stringconst		{ $$ = new UsesNode($1, $3);}
 	;
 
-implementsec
-	: KW_IMPL usesclauseopt	maindecllist	{ $$ = new UnitImplementationNode($2, $3);}
-	| KW_IMPL usesclauseopt					{ $$ = new UnitImplementationNode($2, null);}
+unit
+	: KW_UNIT id  SCOL interfsec implsec initsec finalizsec KW_END	{ $$ = new UnitNode($2, $4, $5, $6); }
+	;
+
+implsec
+	: KW_IMPL usesclauseopt	maindecllst		{ $$ = new ImplementationSection($2, $3);}
+	| KW_IMPL usesclauseopt					{ $$ = new ImplementationSection($2, null);}
 	;
 
 interfsec
-	: KW_INTERF usesclauseopt interfdecllist	{ $$ = new UnitInterfaceNode($2, $3);}
+	: KW_INTERF usesclauseopt interfdecllst	{ $$ = new InterfaceSection($2, $3);}
 	;
 
-interfdecllist
-	:								{ $$ = null;}
-	| interfdecllist interfdecl		{ $$ = new DeclarationListNode($2, $1);}
+interfdecllst
+	:											{ $$ = new NodeList<Node>();}
+	| interfdecllst interfdecl					{ ListAdd($$, $1, $2); }
 	;
 
 initsec
-	: KW_INIT stmtlist KW_END							{ $$ = new UnitInitialization($2, null);}
-	| KW_FINALIZ stmtlist KW_END						{ $$ = new UnitInitialization(null, $2);}
-	| KW_INIT stmtlist KW_FINALIZ stmtlist KW_END		{ $$ = new UnitInitialization($2, $4);}
-	| block												{ $$ = new UnitInitialization($1, null);}
-	| KW_END											{ $$ = null;}
-	;
-
-main_block
-	: maindecllist	block	{ $$ = new BlockWithDeclarationsNode($1, $2);}
-	|				block	{ $$ = new BlockWithDeclarationsNode(null, $1);}
+	: KW_INIT  stmtlst							{ $$ = new InitializationSection($2);}
+	| KW_BEGIN stmtlst							{ $$ = new InitializationSection($2);}
 	;
 	
-maindecllist
-	: maindeclsec				{ $$ = new DeclarationListNode($1, null);}
-	| maindecllist maindeclsec	{ $$ = new DeclarationListNode($2, $1);}
+finalizsec
+	: KW_FINALIZ stmtlst 						{ $$ = new FinalizationSection($2);}
+	;
+	
+main_block
+	: maindecllst block			{ $$ = new ProgramBody($1, $2);}
+	|			  block			{ $$ = new ProgramBody(null, $1);}
+	;
+	
+maindecllst
+	: maindeclsec				{ $$ = new NodeList<Node>($1);}
+	| maindecllst maindeclsec	{ ListAdd($$, $1, $2); }
 	;
 
-declseclist
-	: funcdeclsec				{ $$ = new DeclarationListNode($1, null);}
-	| declseclist funcdeclsec	{ $$ = new DeclarationListNode($2, $1);}
+declseclst
+	: funcdeclsec				{ $$ = new NodeList<Node>($1);}
+	| declseclst funcdeclsec	{ ListAdd($$, $1, $2); }
 	;
 
 	
@@ -386,26 +416,26 @@ declseclist
 	// ========================================================================
 
 interfdecl
-	: basicdeclsec					{ $$ = $1; }
-	| staticclassopt procdeclinterf		{ $2.isStatic = $1; $$ = $2;}
-	| thrvarsec						{ $$ = $1; }
-	| rscstringsec					{ $$ = $1; }
+	: basicdeclsec			{ $$ = $1;}
+	| routinedeclinterf		{ $$ = $1;}
+	| thrvarsec				{ $$ = $1;}
+	| rscstringsec			{ $$ = $1;}
 	;
 
 maindeclsec
-	: basicdeclsec					{ $$ = $1;}
-	| thrvarsec						{ $$ = $1;}
-	| exportsec						{ $$ = $1;}
-	| staticclassopt procdeclnondef	{ $2.isStatic = $1; $$ = $2;}
-	| staticclassopt procdefinition	{ $2.isStatic = $1; $$ = $2;}
-	| labeldeclsec					{ $$ = $1;}
+	: basicdeclsec			{ $$ = $1;}
+	| thrvarsec				{ $$ = $1;}
+	| exportsec				{ $$ = $1;}
+	| routinedeclimpl		{ $$ = $1;}
+	| routinedef			{ $$ = $1;}
+	| labeldeclsec			{ $$ = $1;}
 	;
 
 funcdeclsec
 	: basicdeclsec			{ $$ = $1;}
 	| labeldeclsec			{ $$ = $1;}
-	| procdefinition		{ $$ = $1;}
-	| procdeclnondef		{ $$ = $1;}
+	| routinedef			{ $$ = $1;}
+	| routinedeclimpl		{ $$ = $1;}
 	;
 
 basicdeclsec
@@ -415,41 +445,41 @@ basicdeclsec
 	;
 
 typesec
-	: KW_TYPE typedecl		{ $$ = $2; }
-	| typesec typedecl		{ $$ = new TypeDeclarationListNode($2, $1); }
+	: KW_TYPE typedecl		{ $$ = new NodeList<Node>($2); }
+	| typesec typedecl		{ ListAdd($$, $1, $2); }
 	;
 
 	
 	// labels
 	
 labeldeclsec
-	: KW_LABEL labelidlist SEMICOL	{$$ = $2; }
+	: KW_LABEL labelidlst SCOL	{$$ = $2; }
 	;
 	
-labelidlist 
-	: labelid						{ $$ = new LabelDeclarationNode($1, null); }
-	| labelidlist COMMA labelid		{ $$ = new LabelDeclarationNode($3, $1); }
+labelidlst 
+	: labelid						{ $$ = new LabelDeclaration($1, null); }
+	| labelidlst COMMA labelid		{ $$ = new LabelDeclaration($3, $1); }
 	;
 
 labelid
-	: CONST_INT /* decimal int 0..9999 */	{ $$ = new NumberLabelNode(yyLex.value()); }
-	| id									{ $$ = new StringLabelNode($1); }
+	: CONST_INT /* decimal int 0..9999 */	{ $$ = yyVal; }
+	| id									{ $$ = $1; }
 	;
 
 	// Exports
 		
 exportsec	
-	: KW_EXPORTS exportsitemlist		{ $$ = $2; }
+	: KW_EXPORTS exportsitemlst				{ $$ = $2; }
 	;
 
-exportsitemlist
+exportsitemlst
 	: exportsitem							{ $$ = $1; }
-	| exportsitemlist COMMA exportsitem		{ $$ = $1; }
+	| exportsitemlst COMMA exportsitem		{ $$ = $1; }
 	;
 
 exportsitem
 	: id							{ $$ = new ExportItem($1, null, null); }
-	| id KW_NAME  string_const		{ $$ = new ExportItem($1, $3, null); }
+	| id KW_NAME  stringconst		{ $$ = new ExportItem($1, $3, null); }
 	| id KW_INDEX expr				{ $$ = new ExportItem($1, null, $3); }
 	;
 	
@@ -460,52 +490,60 @@ exportsitem
 	// Functions
 	// ========================================================================
 
-	// Prototypes/headings/signatures
-
-	// proc decl for impl sections, needs a external/forward
-procdeclnondef
-	: procdefproto funcqualinterflist funcdirectopt		{ $$ = new ProcedureDefinitionNode($1, null); } 
-	;
-
-procdefinition
-	: procdefproto proc_define SEMICOL	{ $$ = new ProcedureDefinitionNode($1, $2); } 
-	;
-
-procdeclinterf
-	: procdefproto funcqualinterfopt	{ $$ = null; /* TODO */ }
-	;
-
+	// Prototypes/signatures
 	// proc proto for definitions or external/forward decls
 	// check that funcrecopt is null for every kind except FUNCTION
-procdefproto
-	: prockind qualid formalparams funcretopt SEMICOL funcdirectopt		{ $$ = new ProcedureHeaderNode($1, $2, $3, $4, null, $6); }
+
+routinedef
+	: KW_FUNCTION	id formalparams funcret	SCOL funcdirectopt funcdefine SCOL  { $$ = new RoutineFunctionDefinition($2, $3, $4, $6, $7); } 
+	| KW_PROCEDURE	id formalparams			SCOL funcdirectopt funcdefine SCOL  { $$ = new RoutineProcedureDefinition($2, $3, $5, $6); } 
+	| KW_FUNCTION	classid formalparams	SCOL funcdirectopt funcdefine SCOL  { $$ = new MethodFunctionDefinition($2, $3, $5, $6); } 
+	| KW_PROCEDURE	classid formalparams	SCOL funcdirectopt funcdefine SCOL  { $$ = new MethodProcedureDefinition($2, $3, $5, $6); } 
+	| KW_CONSTRUCTOR classid formalparams	SCOL funcdefine SCOL  { $$ = new MethodFunctionDefinition($2, $3, $5); } 
+	| KW_DESTRUCTOR	classid formalparams	SCOL funcdefine SCOL  { $$ = new MethodProcedureDefinition($2, $3, $5); } 
+	// expanded out to avoid LALR's conflicts..
+	| KW_CLASS KW_FUNCTION	classid formalparams SCOL funcdirectopt funcdefine SCOL  { $$ = new MethodFunctionDefinition ($3, $4, $6, $7,true);}
+	| KW_CLASS KW_PROCEDURE	classid formalparams SCOL funcdirectopt funcdefine SCOL  { $$ = new MethodProcedureDefinition($3, $4, $6, $7,true);}
 	;
 
+	// proc decl for implementation sections, needs an external/forward
+routinedeclimpl
+	: KW_FUNCTION  id formalparams funcret SCOL routinedeclimpldirs		{ $$ = new RoutineFunctionDecl($2, $3, $4, $6); } 
+	| KW_PROCEDURE id formalparams         SCOL routinedeclimpldirs		{ $$ = new RoutineProcedureDecl($2, $3, $5); } 
+	;
+
+	// proc decl for implementation sections, needs an external/forward
+routinedeclinterf
+	: KW_FUNCTION  id formalparams funcret SCOL funcdirectopt funcqualinterfopt	{ $$ = new RoutineFunctionDecl($2, $3, $4, $6, $7); }
+	| KW_PROCEDURE id formalparams         SCOL funcdirectopt funcqualinterfopt	{ $$ = new RoutineProcedureDecl($2, $3, $5, $6); } 
+	;
+	
+routinedeclimpldirs
+	: funcdirectopt funcqualinterflst funcdirectopt			{ $2.Add($1); $2.Add($3); $$ = $2; }
+	;
+
+	// compulsory qualified id
+classid
+	: id KW_DOT qualid 					{ $$ = new FieldAccess($1, $3); }
+	;
+	
 funcqualinterfopt
-	: 									{ $$ = null; /* TODO */ }
-	| funcqualinterflist funcdirectopt	{ $$ = null; /* TODO */ }
+	: 									{ $$ = null; }
+	| funcqualinterflst funcdirectopt	{ $1.Add($2); $$ = $1; }
 	;
 
-funcretopt
-	:						{ $$ = null;}
-	| COLON funcrettype		{ $$ = $2;}
+funcret
+	: COLON funcrettype		{ $$ = $2;}
 	;
 
-staticclassopt
-	:							{ $$ = false;}
-	| KW_CLASS					{ $$ = true;}
-	;
-
-prockind
-	: KW_FUNCTION				{ $$ = FunctionClass.Function;}
-	| KW_PROCEDURE				{ $$ = FunctionClass.Procedure;}
-	| KW_CONSTRUCTOR			{ $$ = FunctionClass.Constructor;}
-	| KW_DESTRUCTOR				{ $$ = FunctionClass.Destructor;}
+staticopt
+	:	KW_CLASS						{ $$ = false;}
+	| 								{ $$ = true;}
 	;
 
 proceduresign
-	: KW_PROCEDURE formalparams ofobjectopt		{ $$ = new ProcedureHeaderNode(FunctionKind.Procedure, null, $2, null, $3, null); }
-	| KW_FUNCTION  formalparams COLON funcrettype ofobjectopt { $$ = new ProcedureHeaderNode(FunctionKind.Function, null, $2, $4, $5, null); }
+	: KW_PROCEDURE formalparams ofobjectopt		{ $$ = new RoutineDeclaration(RoutineReturnType.Procedure, null, $2, null, $3, null); }
+	| KW_FUNCTION  formalparams COLON funcrettype ofobjectopt { $$ = new RoutineDeclaration(RoutineReturnType.Function, null, $2, $4, $5, null); }
 	;
 
 procsignfield
@@ -521,12 +559,12 @@ ofobjectopt
 
 	// Function blocks and parameters
 
-proc_define
-	: declseclist func_block				{ $$ = new ProcedureBodyNode($1, $2); }
-	| 			  func_block				{ $$ = new ProcedureBodyNode(null, $1); }
+funcdefine
+	: declseclst funcblock				{ $$ = new RoutineBody($1, $2); }
+	| 			 funcblock				{ $$ = new RoutineBody(null, $1); }
 	;
 
-func_block
+funcblock
 	: block									{ $$ = $1; }
 	| assemblerstmt							{ $$ = $1; }
 	;
@@ -534,23 +572,19 @@ func_block
 formalparams
 	:										{ $$ = null; }
 	| LPAREN RPAREN							{ $$ = null; }
-	| LPAREN formalparamslist RPAREN		{ $$ = $2; }
+	| LPAREN formalparamslst RPAREN		{ $$ = $2; }
 	;
 
-formalparamslist
-	: formalparm							{ $$ = new ParameterNodeList($1, null); }
-	| formalparamslist SEMICOL formalparm	{ $$ = new ParameterNodeList($3, $1); }
+formalparamslst
+	: formalparm							{ $$ = new NodeList<Node>($1); }
+	| formalparamslst SCOL formalparm	{ ListAdd($$, $1, $3); }
 	;
 
 formalparm
-	: paramqualif	idlist paramtypeopt					{ $$ = new ParameterNode($1, $2, $3, null); } 
-	| 				idlist paramtypespec paraminitopt	{ $$ = new ParameterNode(null, $1, $2, $3); }
-	| KW_CONST		idlist paramtypeopt paraminitopt	{ $$ = new ParameterNode(new ConstParameterQualifier(), $2, $3, $4); }
-	;
-
-paramqualif
-	: KW_VAR		{ $$ = new VarParameterQualifier();}
-	| KW_OUT		{ $$ = new OutParameterQualifier();}
+	: KW_VAR	idlst paramtypeopt					{ $$ = new VarParamDeclaration($2, $3); } 
+	| KW_OUT	idlst paramtypeopt					{ $$ = new OutParamDeclaration($2, $3); } 
+	| 			idlst paramtypespec paraminitopt	{ $$ = new ParamDeclaration($1, $2, $3); }
+	| KW_CONST	idlst paramtypeopt paraminitopt		{ $$ = new ConstParamDeclaration($2, $3, $4); }
 	;
 
 paramtypeopt
@@ -577,22 +611,22 @@ functypeinit
 
 funcdir_noterm_opt
 	:									{ $$ = null; /* TODO */ }
-	| funcdirectlist					{ $$ = null; /* TODO */ }
+	| funcdirectlst					{ $$ = null; /* TODO */ }
 	;
 
 funcdirectopt
 	:									{ $$ = null; }
-	| funcdirectlist SEMICOL			{ $$ = $1; }
+	| funcdirectlst SCOL			{ $$ = $1; }
 	;
 
-funcdirectlist
-	: funcdirective									{ $$ = new ProcedureDirectiveList($1, null); }
-	| funcdirectlist SEMICOL funcdirective			{ $$ = new ProcedureDirectiveList($3, $1); }
+funcdirectlst
+	: funcdirective									{ $$ = new NodeList<Node>($1); }
+	| funcdirectlst SCOL funcdirective			{ ListAdd($$, $1, $3); }
 	;
 
-funcqualinterflist									
-	: funcqualinterf SEMICOL						{ $$ = new ProcedureDirectiveList($1, null); }
-	| funcqualinterflist funcqualinterf SEMICOL		{ $$ = new ProcedureDirectiveList($2, $1); }
+funcqualinterflst									
+	: funcqualinterf SCOL						{ $$ = new NodeList<Node>($1); }
+	| funcqualinterflst funcqualinterf SCOL		{ ListAdd($$, $1, $2); }
 	;
 
 funcdirective
@@ -602,43 +636,43 @@ funcdirective
 	;
 
 funcdeprecated
-	: KW_FAR			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Far); }
-	| KW_NEAR			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Near); }
-	| KW_RESIDENT		{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Resident); }
+	: KW_FAR			{ $$ = RoutineDirectiveDeprecated.Far; }
+	| KW_NEAR			{ $$ = RoutineDirectiveDeprecated.Near; }
+	| KW_RESIDENT		{ $$ = RoutineDirectiveDeprecated.Resident; }
 	;
 
 funcqualinterf
-	: KW_EXTERNAL string_const externarg	{ $$ = new ExternalProcedureDirective(new IdentifierNode($2), $3); }
-	| KW_EXTERNAL qualid externarg			{ $$ = new ExternalProcedureDirective($2, $3); }
-	| KW_EXTERNAL							{ $$ = new ExternalProcedureDirective(null, null); }
-	| KW_FORWARD							{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Forward); }
+	: KW_EXTERNAL stringconst externarg	{ $$ = RoutineDirectiveInterface.External($2, $3); }
+	| KW_EXTERNAL qualid externarg			{ $$ = RoutineDirectiveInterface.External($2, $3); }
+	| KW_EXTERNAL							{ $$ = RoutineDirectiveInterface.External; }
+	| KW_FORWARD							{ $$ = RoutineDirectiveInterface.Forward; }
 	;
 
 externarg
 	:						{$$ = null; }
-	| KW_NAME string_const 	{$$ = new IdentifierNode($2);}	// id == NAME		
-	| KW_NAME qualid	 	{$$ = $2;}  // id == NAME		
+	| KW_NAME stringconst 	{$$ = $2; }
+	| KW_NAME qualid	 	{$$ = $2; }
 	;
 
 funcqualif
-	: KW_ABSTRACT			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Abstract); }
-	| KW_ASSEMBLER			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Assembler); }
-	| KW_DYNAMIC			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Dynamic); }
-	| KW_EXPORT				{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Export); }
-	| KW_INLINE				{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Inline); }
-	| KW_OVERRIDE			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Override); }
-	| KW_OVERLOAD			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Overload); }
-	| KW_REINTRODUCE		{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Reintroduce); }
-	| KW_VIRTUAL			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.Virtual); }
-	| KW_VARARGS			{ $$ = new ProcedureDirective(ProcedureDirectiveEnum.VarArgs); }
+	: KW_ABSTRACT			{ $$ = RoutineDirectiveInterface.Abstract; }
+	| KW_ASSEMBLER			{ $$ = RoutineDirectiveInterface.Assembler; }
+	| KW_DYNAMIC			{ $$ = RoutineDirectiveInterface.Dynamic; }
+	| KW_EXPORT				{ $$ = RoutineDirectiveInterface.Export; }
+	| KW_INLINE				{ $$ = RoutineDirectiveInterface.Inline; }
+	| KW_OVERRIDE			{ $$ = RoutineDirectiveInterface.Override; }
+	| KW_OVERLOAD			{ $$ = RoutineDirectiveInterface.Overload; }
+	| KW_REINTRODUCE		{ $$ = RoutineDirectiveInterface.Reintroduce; }
+	| KW_VIRTUAL			{ $$ = RoutineDirectiveInterface.Virtual; }
+	| KW_VARARGS			{ $$ = RoutineDirectiveInterface.VarArgs; }
 	;
 
 funccallconv
-	: KW_PASCAL			{ $$ = new CallConventionNode(CallConvention.Pascal); }
-	| KW_SAFECALL		{ $$ = new CallConventionNode(CallConvention.SafeCall); }
-	| KW_STDCALL		{ $$ = new CallConventionNode(CallConvention.StdCall); }
-	| KW_CDECL			{ $$ = new CallConventionNode(CallConvention.CDecl); }
-	| KW_REGISTER		{ $$ = new CallConventionNode(CallConvention.Register); }
+	: KW_PASCAL			{ $$ = RoutineDirectiveCallConv.Pascal; }
+	| KW_SAFECALL		{ $$ = RoutineDirectiveCallConv.SafeCall; }
+	| KW_STDCALL		{ $$ = RoutineDirectiveCallConv.StdCall; }
+	| KW_CDECL			{ $$ = RoutineDirectiveCallConv.CDecl; }
+	| KW_REGISTER		{ $$ = RoutineDirectiveCallConv.Register; }
 	;
 
 	
@@ -647,12 +681,12 @@ funccallconv
 	// ========================================================================
 
 block
-	: KW_BEGIN stmtlist KW_END		{ $$ = $2; }
+	: KW_BEGIN stmtlst KW_END		{ $$ = $2; }
 	;
 
-stmtlist
-	: stmt SEMICOL stmtlist			{ $$ = new StatementBlock($3, $1); }
-	| stmt							{ $$ = new StatementBlock($1, null); }
+stmtlst
+	: stmt							{ $$ = new NodeList<Statement>($1); }
+	| stmt SCOL stmtlst			{ ListAdd($$, $3, $1); }
 	;
 
 stmt
@@ -674,7 +708,7 @@ nonlbl_stmt
 	| repeatstmt			{ $$ = $1; }
 	| whilestmt				{ $$ = $1; }
 	| forstmt				{ $$ = $1; }
-	| with_stmt				{ $$ = $1; }
+	| withstmt				{ $$ = $1; }
 	| tryexceptstmt			{ $$ = $1; } // purely Delphi stuff!
 	| tryfinallystmt		{ $$ = $1; }
 	| raisestmt				{ $$ = $1; }
@@ -683,8 +717,8 @@ nonlbl_stmt
 	| KW_CONTINUE			{ $$ = new ContinueStatement(); }
 	;
 
-assign
-	: lvalue KW_ASSIGN expr					{ $$ = new AssignementStatement($1, $3, false); }
+assign		// TODO reuse this rule for initializations
+	: lvalue KW_ASSIGN expr					{ $$ = new AssignementStatement($1, $3); }
 	;
 
 goto_stmt
@@ -697,28 +731,28 @@ ifstmt
 	;
 
 casestmt
-	: KW_CASE expr KW_OF caseselectorlist else_case KW_END	{ $$ = new CaseStatement($2, $4, $5); }
+	: KW_CASE expr KW_OF caseselectorlst else_case KW_END	{ $$ = new CaseStatement($2, $4, $5); }
 	;
 
 else_case
 	:								{ $$ = null;}	
 	| KW_ELSE nonlbl_stmt			{ $$ = $2; }
-	| KW_ELSE nonlbl_stmt SEMICOL	{ $$ = $2; }
+	| KW_ELSE nonlbl_stmt SCOL	{ $$ = $2; }
 	;
 
-caseselectorlist
-	: caseselector								{ $$ = new CaseSelectorList($1, null); }
-	| caseselectorlist SEMICOL caseselector		{ $$ = new CaseSelectorList($3, $1); }
+caseselectorlst
+	: caseselector								{ $$ = new NodeList<Node>($1); }
+	| caseselectorlst SCOL caseselector		{ ListAdd($$, $1, $3); }
 	;
 
 caseselector
 	:										{ $$ = null; }
-	| caselabellist COLON nonlbl_stmt		{ $$ = new CaseSelector($1, $3); }
+	| caselabellst COLON nonlbl_stmt		{ $$ = new CaseSelector($1, $3); }
 	;
 
-caselabellist
-	: caselabel							{ $$ = new CaseLabelList($1, null); }
-	| caselabellist COMMA caselabel		{ $$ = new CaseLabelList($3, $1); }
+caselabellst
+	: caselabel							{ $$ = new NodeList<Node>($1); }
+	| caselabellst COMMA caselabel		{ ListAdd($$, $1, $3); }
 	;
 
 caselabel
@@ -727,45 +761,45 @@ caselabel
 	;
 
 repeatstmt
-	: KW_REPEAT stmtlist KW_UNTIL expr	{ $$ = new RepeatStatement($2, $4); }
+	: KW_REPEAT stmtlst KW_UNTIL expr	{ $$ = new RepeatLoop($2, $4); }
 	;
 
 whilestmt
-	: KW_WHILE expr KW_DO nonlbl_stmt	{ $$ = new WhileStatement($2, $4); }
+	: KW_WHILE expr KW_DO nonlbl_stmt	{ $$ = new WhileLoop($2, $4); }
 	;
 
 forstmt
-	: KW_FOR id KW_ASSIGN expr KW_TO	 expr KW_DO nonlbl_stmt	{ $$ = new ForStatement($2, $4, $6, $8, 1); }
-	| KW_FOR id KW_ASSIGN expr KW_DOWNTO expr KW_DO nonlbl_stmt { $$ = new ForStatement($2, $4, $6, $8, -1); }
+	: KW_FOR id KW_ASSIGN expr KW_TO	 expr KW_DO nonlbl_stmt	{ $$ = new ForLoop($2, $4, $6, $8, 1); }
+	| KW_FOR id KW_ASSIGN expr KW_DOWNTO expr KW_DO nonlbl_stmt { $$ = new ForLoop($2, $4, $6, $8, -1); }
 	;
 
 	// expr must yield a ref to a record, object, class, interface or class type
-with_stmt
-	: KW_WITH exprlist KW_DO nonlbl_stmt		{ $$ = new WithStatement($2, $4); }
+withstmt
+	: KW_WITH exprlst KW_DO nonlbl_stmt		{ $$ = new WithStatement($2, $4); }
 	;
 
 tryexceptstmt
-	: KW_TRY stmtlist KW_EXCEPT exceptionblock KW_END	{ $$ = new TryExceptStatement($2, $4); }
+	: KW_TRY stmtlst KW_EXCEPT exceptionblock KW_END	{ $$ = new TryExceptStatement($2, $4); }
 	;
 
 exceptionblock
-	: onlist KW_ELSE stmtlist						{ $$ = new ExceptionBlockNode($1, $3); }
-	| onlist										{ $$ = new ExceptionBlockNode($1, null); }
-	| stmtlist										{ $$ = $1; }
+	: onlst KW_ELSE stmtlst						{ $$ = new ExceptionBlock($1, $3); }
+	| onlst										{ $$ = new ExceptionBlock($1, null); }
+	| stmtlst									{ $$ = $1; }
 	;
 
-onlist
-	: ondef											{ $$ = new OnListNode($1, null); }
-	| onlist ondef									{ $$ = new OnListNode($2, $1); }
+onlst
+	: ondef											{ $$ = new NodeList<Statement>($1); }
+	| onlst ondef									{ ListAdd($$, $1, $2); }
 	;
 
 ondef
-	: KW_ON id COLON id KW_DO nonlbl_stmt SEMICOL	{ $$ = new OnStatement($2, $4, $6); }
-	| KW_ON 		 id KW_DO nonlbl_stmt SEMICOL	{ $$ = new OnStatement(null, $2, $4); }
+	: KW_ON id COLON id KW_DO nonlbl_stmt SCOL	{ $$ = new OnStatement($2, $4, $6); }
+	| KW_ON 		 id KW_DO nonlbl_stmt SCOL	{ $$ = new OnStatement(null, $2, $4); }
 	;
 
 tryfinallystmt
-	: KW_TRY  stmtlist KW_FINALLY stmtlist KW_END	{ $$ = new TryFinallyStatement($2, $4); }
+	: KW_TRY  stmtlst KW_FINALLY stmtlst KW_END	{ $$ = new TryFinallyStatement($2, $4); }
 	;
 
 raisestmt
@@ -776,7 +810,7 @@ raisestmt
 	;
 
 assemblerstmt
-	: KW_ASM asmcode KW_END		{ $$ = new AssemblerProcedureBodyNode($2); }
+	: KW_ASM asmcode KW_END		{ $$ = new AssemblerBlock($2); }
 	;
 
 asmcode
@@ -793,22 +827,22 @@ asmcode
 	// ========================================================================
 
 varsec
-	: KW_VAR vardecllist		{ $$ = $2; }
+	: KW_VAR vardecllst		{ $$ = $2; }
 	;
 	
 thrvarsec
-	: KW_THRVAR vardecllist		{ $$ = $2; }
+	: KW_THRVAR vardecllst		{ $$ = $2; }
 	;
 
-vardecllist
-	: vardecl					{ $$ = new VarDeclarationListNode($1, null); }
-	| vardecllist vardecl		{ $$ = new VarDeclarationListNode($2, $1); }
+vardecllst
+	: vardecl					{ $$ = new NodeList<Node>($1); }
+	| vardecllst vardecl		{ ListAdd($$, $1, $2); }
 	;
 
 vardecl
-	: idlist COLON vartype vardeclopt SEMICOL				{ $$ = new VarDeclarationNode($1, $3, $4); }
-	| idlist COLON proceduresign SEMICOL funcdirectopt		{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, null); }
-	| idlist COLON proceduresign SEMICOL funcdir_noterm_opt functypeinit SEMICOL	{ $$ = new ProcedurePointerDeclarationNode($1, $3, $5, $6); }
+	: idlst COLON vartype vardeclopt SCOL				{ $$ = new VarDeclaration($1, $3, $4); }
+	| idlst COLON proceduresign SCOL funcdirectopt		{ $$ = new CallPointerDeclaration($1, $3, $5, null); }
+	| idlst COLON proceduresign SCOL funcdir_noterm_opt functypeinit SCOL	{ $$ = new CallPointerDeclaration($1, $3, $5, $6); }
 	;
 
 vardeclopt
@@ -820,16 +854,16 @@ vardeclopt
 	// Resourcestrings fom windows
 	
 rscstringsec
-	: TYPE_RSCSTR rscstringlist				{ $$ = $2; }
+	: TYPE_RSCSTR rscstringlst				{ $$ = $2; }
 	;
 	
-rscstringlist
-	: rscstring								{ $$ = new ConstDeclarationList($1, null); }
-	| rscstringlist rscstring				{ $$ = new ConstDeclarationList($2, $1); }
+rscstringlst
+	: rscstring								{ $$ = new NodeList<Node>($1); }
+	| rscstringlst rscstring				{ ListAdd($$, $1, $2); }
 	;
 	
 rscstring
-	:  id KW_EQ string_const SEMICOL		{ $$ = new ConstDeclarationNode($1, null, $3); }
+	:  id KW_EQ stringconst SCOL		{ $$ = new ConstDeclaration($1, null, $3); }
 	;
 
 
@@ -840,80 +874,81 @@ rscstring
 
 inheritexpr
 	: KW_INHERITED id								{ $$ = null; /* TODO */ }
-	| KW_INHERITED id LPAREN exprlistopt RPAREN		{ $$ = null; /* TODO */ }
+	| KW_INHERITED id LPAREN exprlstopt RPAREN		{ $$ = null; /* TODO */ }
 	;
  
 	// func call to be called as statement
 proccall
-	: id									{ $$ = new ProcedureCallNode($1, null); }
-	| lvalue LPAREN exprlistopt RPAREN		{ $$ = new ProcedureCallNode($1, $3); } // pointer deref
-	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); } // field access
+	: id									{ $$ = new RoutineCallNode($1, null); }
+	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCallNode($1, $3); }
+	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	;
 	
 lvalue	// lvalue
 	: id									{ $$ = $1; }
-	| lvalue LPAREN exprlistopt RPAREN		{ $$ = null; /* TODO */ }
-	| lvalue LPAREN casttype RPAREN			{ $$ = null; /* TODO */ }
-	| casttype LPAREN exprlistopt RPAREN	{ $$ = new TypeCastNode($1, $3); } // cast with pre-defined type
-	| lvalue KW_DOT id						{ $$ = null; /* TODO */ }
-	| lvalue KW_DEREF						{ $$ = new PointerDereferenceNode($1); } // pointer deref
-	| lvalue LBRAC exprlist RBRAC			{ $$ = new ArrayAccessNode($1, $3); }	// array access
-	| string_const LBRAC expr RBRAC			{ $$ = new ArrayAccessNode($1, $3); } // string access
-	| LPAREN expr RPAREN					{ $$ = null; /* TODO */ }
+	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCallNode($1, $3); }
+	| lvalue LPAREN casttype RPAREN			{ $$ = new RoutineCallNode($1, $3); }
+	| casttype LPAREN exprlstopt RPAREN		{ $$ = new TypeCast($1, $3); }
+	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
+	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
+	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
+	| stringconst LBRAC expr RBRAC			{ $$ = new ArrayAccess($1, $3); }
+	| LPAREN expr RPAREN					{ $$ = $1; }
 	;
 
 unaryexpr
 	: literal								{ $$ = $1; }
-	| lvalue								{ $$ = new LValueNode($1); }
+	| lvalue								{ $$ = new LvalueExpression($1); }
 	| setconstructor						{ $$ = $1; }
-	| KW_ADDR unaryexpr						{ $$ = new AddressNode($2); }
-	| KW_NOT unaryexpr						{ $$ = new NegationNode($2); }
-	| sign	 unaryexpr 						{ $$ = new UnaryOperationNode($2, $1); }
-	| inheritexpr
+	| KW_ADDR unaryexpr						{ $$ = new AddressLvalue($2); }
+	| KW_NOT unaryexpr						{ $$ = new LogicalNot($2); }
+	| KW_SUM unaryexpr 						{ $$ = new UnaryPlus($1); }
+	| KW_SUB unaryexpr 						{ $$ = new UnaryMinus($1); }
+	| inheritexpr							{ $$ = new Inherited($1); }
 	;
 
 expr
 	: unaryexpr								{ $$ = $1; }
-	| expr relop expr %prec KW_EQ			{ $$ = new BinaryOperationNode($1, $3, $2); }
-	| expr addop expr %prec KW_SUB			{ $$ = new BinaryOperationNode($1, $3, $2); }
-	| expr mulop expr %prec KW_MUL			{ $$ = new BinaryOperationNode($1, $3, $2); }
+	| expr relop expr %prec KW_EQ			{ $$ = CreateBinaryExpression($1, $2, $3); }
+	| expr addop expr %prec KW_SUB			{ $$ = CreateBinaryExpression($1, $2, $3); }
+	| expr mulop expr %prec KW_MUL			{ $$ = CreateBinaryExpression($1, $2, $3); }
 	;
 
 sign
-	: KW_SUB		{ $$ = new OperatorNode("-");}
-	| KW_SUM		{ $$ = new OperatorNode("+");}
+	: KW_SUB		{ $$ = $1; }
+	| KW_SUM		{ $$ = $1; }
 	;
 mulop
-	: KW_MUL		{ $$ = new OperatorNode("*");}
-	| KW_DIV		{ $$ = new OperatorNode("/");}
-	| KW_QUOT		{ $$ = new OperatorNode("div");}
-	| KW_MOD		{ $$ = new OperatorNode("mod");}
-	| KW_SHR		{ $$ = new OperatorNode("shr");}
-	| KW_SHL		{ $$ = new OperatorNode("shl");}
-	| KW_AND		{ $$ = new OperatorNode("and");}
+	: KW_MUL		{ $$ = $1; }
+	| KW_DIV		{ $$ = $1; }
+	| KW_QUOT		{ $$ = $1; }
+	| KW_MOD		{ $$ = $1; }
+	| KW_SHR		{ $$ = $1; }
+	| KW_SHL		{ $$ = $1; }
+	| KW_AND		{ $$ = $1; }
 	;
 addop
-	: KW_SUB	{ $$ = new OperatorNode("-");}
-	| KW_SUM	{ $$ = new OperatorNode("+");}
-	| KW_OR		{ $$ = new OperatorNode("or");}
-	| KW_XOR	{ $$ = new OperatorNode("xor");}
+	: KW_SUB		{ $$ = $1; }
+	| KW_SUM		{ $$ = $1; }
+	| KW_OR			{ $$ = $1; }
+	| KW_XOR		{ $$ = $1; }
 	;
 relop
-	: KW_EQ		{ $$ = new OperatorNode("=");}
-	| KW_DIFF	{ $$ = new OperatorNode("<>");}
-	| KW_LT		{ $$ = new OperatorNode("<");}
-	| KW_LE		{ $$ = new OperatorNode("<=");}
-	| KW_GT		{ $$ = new OperatorNode(">");}
-	| KW_GE		{ $$ = new OperatorNode(">=");}
-	| KW_IN		{ $$ = new OperatorNode("in");}
-	| KW_IS		{ $$ = new OperatorNode("is");}
-	| KW_AS		{ $$ = new OperatorNode("as");}
+	: KW_EQ			{ $$ = $1; }
+	| KW_NE			{ $$ = $1; }
+	| KW_LT			{ $$ = $1; }
+	| KW_LE			{ $$ = $1; }
+	| KW_GT			{ $$ = $1; }
+	| KW_GE			{ $$ = $1; }
+	| KW_IN			{ $$ = $1; }
+	| KW_IS			{ $$ = $1; }
+	| KW_AS			{ $$ = $1; }
 	;
 
 
 literal
 	: basicliteral	{ $$ = $1; }
-	| string_const	{ $$ = new StringLiteralNode($1);}
+	| stringconst	{ $$ = new StringLiteral($1);}
 	;
 
 basicliteral
@@ -929,34 +964,34 @@ discrete
 	| CONST_BOOL	{ $$ = new BoolLiteral(yyVal);}
 	;
 
-string_const
+stringconst
 	: CONST_STR					{ $$ = yyVal; }
 	| CONST_CHAR				{ $$ = ""+yyVal; }
-	| string_const CONST_STR	{ $$ = $1 + ""+yyVal; }
-	| string_const CONST_CHAR	{ $$ = $1 + ""+yyVal; }
+	| stringconst CONST_STR	{ $$ = $1 + ""+yyVal; }
+	| stringconst CONST_CHAR	{ $$ = $1 + ""+yyVal; }
 	;
 
-id	: IDENTIFIER	{ $$ = new IdentifierNode(yyVal); }
+id	: IDENTIFIER				{ $$ = yyVal; /* string */ }
 	;
 
-idlist
-	: id				{ $$ = new IdentifierListNode($1, null); }
-	| idlist COMMA id	{ $$ = new IdentifierListNode($3, $1); }
+idlst
+	: id						{ $$ = new List<string>($1); }
+	| idlst COMMA id			{ $1.Add($3); $$ = $1; }
 	;
 
 qualid
-	: id				{ $$ = $1; }
-	| qualid KW_DOT id	{ $$ = new IdentifierNodeWithField($3.value, $1.value); }
+	: id						{ $$ = new Identifier($1); }
+	| qualid KW_DOT id			{ $$ = new FieldAccess($3, $1); }
 	;
 	
-exprlist
-	: expr					{ $$ = new ExpressionListNode($1, null); }
-	| exprlist COMMA expr	{ $$ = new ExpressionListNode($3, $1); }
+exprlst
+	: expr						{ $$ = new NodeList<Node>($1); }
+	| exprlst COMMA expr		{ ListAdd($$, $1, $3); }
 	;
 
-exprlistopt
-	:						{ $$ = null; }
-	| exprlist				{ $$ = $1; }
+exprlstopt
+	:							{ $$ = new NodeList<Node>(); }
+	| exprlst					{ $$ = $1; }
 	;
 
 
@@ -964,19 +999,6 @@ exprlistopt
 	// ========================================================================
 	// Sets and Enums literals
 	// ========================================================================
-
-	/* examples:
-		SmallNums : Set of 0..55;		// Set of the first 56 set members
-		SmallNums := [3..12,23,30..32];	// Set only some of the members on
-		
-		type TDay = (Mon=1, Tue, Wed, Thu, Fri, Sat, Sun);	// Enumeration values
-		TWeekDays = Mon..Fri;	// Enumeration subranges
-		TWeekend  = Sat..Sun;
-
-		[red, green, MyColor]
-		[1, 5, 10..K mod 12, 23]
-		['A'..'Z', 'a'..'z', Chr(Digit + 48)]
-	*/
 
 rangetype			// must be const
 	: rangestart KW_RANGE expr		{ $$ = new SetElement($1, $3); }
@@ -989,12 +1011,12 @@ rangestart
 	;
 
 enumtype
-	: LPAREN enumtypeellist RPAREN		{ $$ = $2; }
+	: LPAREN enumtypeellst RPAREN		{ $$ = $2; }
 	;
 
-enumtypeellist
-	: enumtypeel							{ $$ = new EnumList($1, null); }
-	| enumtypeellist COMMA enumtypeel		{ $$ = new EnumList($3, $1); }
+enumtypeellst
+	: enumtypeel							{ $$ = new NodeList<Node>($1); }
+	| enumtypeellst COMMA enumtypeel		{ ListAdd($$, $1, $3); }
 	;
 
 enumtypeel
@@ -1004,12 +1026,12 @@ enumtypeel
 
 setconstructor
 	: LBRAC	RBRAC				{ $$ = null;}
-	| LBRAC setlist	RBRAC		{ $$ = $2; }
+	| LBRAC setlst	RBRAC		{ $$ = $2; }
 	;
 
-setlist
-	: setelem					{ $$ = new SetList($1, null); }
-	| setlist COMMA setelem		{ $$ = new SetList($3, $1); }
+setlst
+	: setelem					{ $$ = new NodeList<Node>($1); }
+	| setlst COMMA setelem		{ ListAdd($$, $1, $3); }
 	;
 	
 setelem
@@ -1024,14 +1046,14 @@ setelem
 	// ========================================================================
 
 constsec
-	: KW_CONST constdecl	{ $$ = new ConstDeclarationList($2, null); }
-	| constsec constdecl	{ $$ = new ConstDeclarationList($2, $1); }
+	: KW_CONST constdecl	{ $$ = new NodeList<Node>($2); }
+	| constsec constdecl	{ ListAdd($$, $1, $2); }
 	;
 
 constdecl
-	: id KW_EQ constinitexpr  SEMICOL				{ $$ = new ConstDeclarationNode($1, null, $3); }			// true const
-	| id COLON vartype KW_EQ constinitexpr SEMICOL	{ $$ = new ConstDeclarationNode($1, $3, $5); }	// typed const
-	| id COLON proceduresign funcdir_noterm_opt functypeinit SEMICOL		{ $$ = null; /* TODO */ }
+	: id KW_EQ constinitexpr  SCOL				{ $$ = new ConstDeclaration($1, null, $3); }			// true const
+	| id COLON vartype KW_EQ constinitexpr SCOL	{ $$ = new ConstDeclaration($1, $3, $5); }	// typed const
+	| id COLON proceduresign funcdir_noterm_opt functypeinit SCOL		{ $$ = null; /* TODO */ }
 	;
 
 constinitexpr
@@ -1047,22 +1069,22 @@ constexpr
 
 	// 1 or more exprs
 arrayconst
-	: LPAREN constexpr COMMA constinitexprlist RPAREN	{ $$ = new ExpressionListNode($2, $4); }
+	: LPAREN constexpr COMMA constinitexprlst RPAREN	{ $$ = new ArrayConst($2, $4); }
 	;
 
-constinitexprlist
-	: constexpr								{ $$ = new ExpressionListNode($1, null); }
-	| constinitexprlist COMMA constexpr		{ $$ = new ExpressionListNode($3, $1); }
+constinitexprlst
+	: constexpr								{ $$ = new NodeList<Node>($1); }
+	| constinitexprlst COMMA constexpr		{ ListAdd($$, $1, $3); }
 	;
 
 recordconst
-	: LPAREN fieldconstlist RPAREN			{$$ = $2; }
-	| LPAREN fieldconstlist SEMICOL RPAREN	{$$ = $2; }
+	: LPAREN fieldconstlst RPAREN			{$$ = $2; }
+	| LPAREN fieldconstlst SCOL RPAREN	{$$ = $2; }
 	;
 
-fieldconstlist
-	: fieldconst							{ $$ = FieldInitList($1, null);}
-	| fieldconstlist SEMICOL fieldconst		{ $$ = FieldInitList($3, $1);}
+fieldconstlst
+	: fieldconst							{ $$ = new NodeList<Node>($1); }
+	| fieldconstlst SCOL fieldconst		{ ListAdd($$, $1, $3); }
 	;
 
 fieldconst
@@ -1086,37 +1108,37 @@ simpleconst
 
 recordtypebasic
 	: KW_RECORD KW_END						{ $$ = null; /* TODO */ }
-	| KW_RECORD fieldlist semicolopt KW_END		{ $$ = null; /* TODO */ }
+	| KW_RECORD fieldlst scolopt KW_END		{ $$ = null; /* TODO */ }
 	;
 	
 recordtype
-	: recordtypebasic		{ $$ = null; /* TODO */ }
-	| KW_RECORD fieldlist SEMICOL variant_struct semicolopt KW_END		{ $$ = null; /* TODO */ }
-	| KW_RECORD variant_struct semicolopt KW_END		{ $$ = null; /* TODO */ }
+	: recordtypebasic												{ $$ = null; /* TODO */ }
+	| KW_RECORD fieldlst SCOL variant_struct scolopt KW_END		{ $$ = null; /* TODO */ }
+	| KW_RECORD variant_struct scolopt KW_END						{ $$ = null; /* TODO */ }
 	;
 	
 variant_struct
-	: KW_CASE id COLON ordinaltype KW_OF varfieldlist		{ $$ = null; /* TODO */ }
-	| KW_CASE ordinaltype KW_OF varfieldlist		{ $$ = null; /* TODO */ }
+	: KW_CASE id COLON ordinaltype KW_OF varfieldlst		{ $$ = null; /* TODO */ }
+	| KW_CASE ordinaltype KW_OF varfieldlst					{ $$ = null; /* TODO */ }
 	;
 
-varfieldlist
-	: varfield %prec LOWESTPREC		{ $$ = null; /* TODO */ }
-	| varfield SEMICOL		{ $$ = null; /* TODO */ }
-	| varfield SEMICOL varfieldlist		{ $$ = null; /* TODO */ }
+varfieldlst
+	: varfield %prec LOWESTPREC			{ $$ = null; /* TODO */ }
+	| varfield SCOL					{ $$ = null; /* TODO */ }
+	| varfield SCOL varfieldlst		{ $$ = null; /* TODO */ }
 	;
 
 varfield
-	: simpleconst COLON LPAREN variantlist semicolopt RPAREN		{ $$ = null; /* TODO */ }
+	: simpleconst COLON LPAREN variantlst scolopt RPAREN		{ $$ = null; /* TODO */ }
 	;
 	
-variantlist
-	: variantvar		{ $$ = null; /* TODO */ }
-	| variantlist SEMICOL variantvar		{ $$ = null; /* TODO */ }
+variantlst
+	: variantvar						{ $$ = null; /* TODO */ }
+	| variantlst SCOL variantvar		{ $$ = null; /* TODO */ }
 	;
 
 variantvar
-	: objfield		{ $$ = null; /* TODO */ }
+	: objfield				{ $$ = null; /* TODO */ }
 	| variant_struct		{ $$ = null; /* TODO */ }
 	;
 	
@@ -1129,33 +1151,33 @@ variantvar
 
 	// Objects are treated as classes
 classtype
-	: class_keyword heritage class_struct KW_END	{ $$ = new ClassDefinition($1, $2, $3); }
-	| class_keyword heritage						{ $$ = new ClassDefinition($1, $2, null); } // forward decl			
+	: classkeyword heritage classbody KW_END	{ $$ = new ClassDefinition($1, $2, $3); }
+	| classkeyword heritage						{ $$ = new ClassDefinition($1, $2, null); } // forward decl			
 	;
 
-class_keyword
+classkeyword
 	: KW_CLASS		{ $$ = ClassType.Class; }
 	| KW_OBJECT		{ $$ = ClassType.Object; }
 	;
 
 heritage
 	:						{ $$ = null; /* TODO */ }
-	| LPAREN idlist RPAREN	{ $$ = $2; }		// inheritance from class and interf(s)			
+	| LPAREN idlst RPAREN	{ $$ = $2; }		// inheritance from class and interf(s)			
 	;
 
-class_struct
-	: fieldlist SEMICOL complist scopeseclist		{ $$ = new ClassStruct(Scope.Public, $3, $4);  }
-	|					complist scopeseclist		{ $$ = new ClassStruct(Scope.Public, $1, $2);  }
+classbody
+	: fieldlst SCOL	complst scopeseclst		{ $$ = new ClassBody(Scope.Public, $3, $4);  }
+	|					complst scopeseclst		{ $$ = new ClassBody(Scope.Public, $1, $2);  }
 	;
 
-scopeseclist
-	:							{ $$ = null; }
-	| scopeseclist scopesec		{ $$ = new ClassContentList($2, $1);  }
+scopeseclst
+	:							{ $$ = new NodeList<Node>(); }
+	| scopeseclst scopesec		{ ListAdd($$, $1, $2); }
 	;
 
 scopesec
-	: scope_decl fieldlist SEMICOL complist			{ $$ = new ClassStruct($1, $2, $4);  }
-	| scope_decl				   complist			{ $$ = new ClassStruct($1, null, $2);  }
+	: scope_decl fieldlst SCOL complst			{ $$ = new ClassBody($1, $2, $4);  }
+	| scope_decl				   complst			{ $$ = new ClassBody($1, null, $2);  }
 	;
 	
 scope_decl
@@ -1165,89 +1187,95 @@ scope_decl
 	| KW_PRIVATE			{ $$ = Scope.Private; }
 	;
 
-fieldlist
-	: objfield					{ $$ = $1; }
-	| fieldlist SEMICOL objfield { $$ = new ClassFieldList($3, $1); }
+fieldlst
+	: objfield					{ $$ = new NodeList<Node>($1); }
+	| fieldlst SCOL objfield { ListAdd($$, $1, $3); }
 	;
 	
-complist
-	:							{ $$ = null; }
-	| complist class_comp		{ $$ = new ClassContentList($2, $1); }
+complst
+	:							{ $$ = new NodeList<Node>(); }
+	| complst classcomp		{ ListAdd($$, $1, $2); }
 	;
 
 objfield
-	: idlist COLON vartype		{ $$ = new VarDeclarationNode($1, $3, null); }
-	| idlist COLON procsignfield	{ $$ = null; /* TODO */ }
-//	| idlist COLON proceduresign funcdir_noterm_opt
+	: idlst COLON vartype		{ $$ = new VarDeclaration($1, $3, null); }
+	| idlst COLON procsignfield	{ $$ = null; /* TODO */ }
+//	| idlst COLON proceduresign funcdir_noterm_opt
 	;
 	
-class_comp
-	: staticclassopt procdefproto	{ $2.isStatic = $1; $$ = $2; }
+classcomp
+	: staticopt methoddecl		{ $2.isStatic = $1; $$ = $2; }
 	| property						{ $$ = $1; }
 	;
 
 interftype
-	: KW_INTERF heritage guid classmethodlistopt classproplistopt KW_END	{ $$ = new InterfaceDefinition($2, $4, $5); }
-	| KW_INTERF heritage classmethodlistopt classproplistopt KW_END			{ $$ = new InterfaceDefinition($2, $3, $4); }
+	: KW_INTERF heritage guid classmethodlstopt classproplstopt KW_END	{ $$ = new InterfaceDefinition($2, $4, $5); }
+	| KW_INTERF heritage classmethodlstopt classproplstopt KW_END			{ $$ = new InterfaceDefinition($2, $3, $4); }
 	| KW_INTERF heritage %prec LOWESTPREC									{ $$ = null; /* TODO */ }
 	;
 
 guid
-	: LBRAC string_const RBRAC		{ $$ = null; /* TODO */ }
+	: LBRAC stringconst RBRAC		{ $$ = null; /* TODO */ }
 	| LBRAC qualid RBRAC			{ $$ = null; /* TODO */ }
 	;
 
-classmethodlistopt
-	: methodlist		{ $$ = $1; }
+classmethodlstopt
+	: methodlst			{ $$ = $1; }
 	|					{ $$ = null; }
 	;
 
-methodlist
-	: procdefproto					{ $$ = new ClassContentList(new ClassMethod($1), null); }
-	| methodlist procdefproto		{ $$ = new ClassContentList(new ClassMethod($2), $1); }
+methodlst
+	: methoddecl				{ $$ = new NodeList<Node>(new ClassMethod($1)); }
+	| methodlst methoddecl		{ ListAdd($$, $1, $2); }
 	;
 
+	// check that funcrecopt is null for every kind except FUNCTION
+methoddecl
+	: KW_FUNCTION    id formalparams funcret SCOL funcdirectopt	{ $$ = new MethodFunctionDecl   ($2, $3, $4, $6); }
+	| KW_PROCEDURE   id formalparams         SCOL funcdirectopt	{ $$ = new MethodProcedureDecl  ($2, $3, $5); }
+	| KW_CONSTRUCTOR id formalparams         SCOL               { $$ = new MethodConstructorDecl($2, $3); }
+	| KW_DESTRUCTOR  id formalparams         SCOL               { $$ = new MethodDestructorDecl ($2, $3); }
+	;
 
-	
 	
 	
 	// ========================================================================
 	// Properties
 	// ========================================================================
 	
-classproplistopt
-	: classproplist		{ $$ = $1; }
+classproplstopt
+	: classproplst		{ $$ = $1; }
 	|					{ $$ = null; }
 	;
 
-classproplist
-	: property					{ $$ = new ClassContentList($1, null); }
-	| classproplist property	{ $$ = new ClassContentList($2, $1); }
+classproplst
+	: property					{ $$ = new NodeList<Node>($1); }
+	| classproplst property		{ ListAdd($$, $1, $2); }
 	;
 
 property
-	: KW_PROPERTY id SEMICOL		{ $$ = null; }
-	| KW_PROPERTY id propinterfopt COLON funcrettype propspecifiers SEMICOL defaultdiropt { $$ = new ClassProperty($2, $5, $6, $3, $8); }
+	: KW_PROPERTY id SCOL		{ $$ = null; }
+	| KW_PROPERTY id propinterfopt COLON funcrettype propspecifiers SCOL defaultdiropt { $$ = new ClassProperty($2, $5, $6, $3, $8); }
 	;
 
 defaultdiropt
 	:				{ $$ = null; /* TODO */ }
-	| id SEMICOL	{ $$ = new PropertyDefault($1); }	// id == DEFAULT
+	| id SCOL	{ $$ = new PropertyDefault($1); }	// id == DEFAULT
 	;
 
 propinterfopt
 	:									{ $$ = null; }
-	| LBRAC idlisttypeidlist RBRAC		{ $$ = null; /* TODO */ }
+	| LBRAC idlsttypeidlst RBRAC		{ $$ = null; /* TODO */ }
 	;
 	
-idlisttypeidlist
-	: idlisttypeid								{ $$ = null; /* TODO */ }
-	| idlisttypeidlist SEMICOL idlisttypeid		{ $$ = null; /* TODO */ }
+idlsttypeidlst
+	: idlsttypeid								{ $$ = null; /* TODO */ }
+	| idlsttypeidlst SCOL idlsttypeid		{ $$ = null; /* TODO */ }
 	;
 
-idlisttypeid
-	: idlist COLON funcparamtype		{ $$ = null; /* TODO */ }
-	| KW_CONST idlist COLON funcparamtype		{ $$ = null; /* TODO */ }
+idlsttypeid
+	: idlst COLON funcparamtype		{ $$ = null; /* TODO */ }
+	| KW_CONST idlst COLON funcparamtype		{ $$ = null; /* TODO */ }
 	;
 
 
@@ -1295,9 +1323,9 @@ writeacessoropt
 	// ========================================================================
 
 typedecl
-	: id KW_EQ typeopt vartype  SEMICOL							{ $$ = new TypeDeclarationNode($1, $4); }
-	| id KW_EQ typeopt proceduresign  SEMICOL funcdirectopt		{ $$ = new proceduresignDeclarationNode($1, $4, $6); }
-	| id KW_EQ typeopt packcomptype SEMICOL						{ $$ = null; /* TODO */ }
+	: id KW_EQ typeopt vartype  SCOL							{ $$ = new TypeDeclarationNode($1, $4); }
+	| id KW_EQ typeopt proceduresign  SCOL funcdirectopt		{ $$ = new proceduresignDeclarationNode($1, $4, $6); }
+	| id KW_EQ typeopt packcomptype SCOL						{ $$ = null; /* TODO */ }
 	;
 
 typeopt
@@ -1402,9 +1430,9 @@ structuredtype
 	| recordtype		{ $$ = $1; }
 	;
 	
-arraysizelist
-	: rangetype								{ $$ = new ArraySizeList($1, null); }
-	| arraysizelist COMMA rangetype			{ $$ = new ArraySizeList($3, $1); }
+arraysizelst
+	: rangetype								{ $$ = new NodeList<Node>($1); }
+	| arraysizelst COMMA rangetype			{ ListAdd($$, $1, $3); }
 	;
 
 arraytype
@@ -1413,10 +1441,10 @@ arraytype
 	;
 
 arraytypedef
-	: arraysizelist		{ $$ = $1; }
-	| inttype			{ $$ = new ArrayTypeList($1); }
-	| chartype			{ $$ = new ArrayTypeList($1); }
-	| qualid			{ $$ = new ArrayTypeList($1); }
+	: arraysizelst		{ $$ = $1; }
+	| inttype			{ $$ = $1; }
+	| chartype			{ $$ = $1; }
+	| qualid			{ $$ = $1; }
 	;
 
 settype
