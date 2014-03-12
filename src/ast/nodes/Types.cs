@@ -158,10 +158,10 @@ namespace crosspascal.ast.nodes
 	public class ClassDefinition : TypeNode
 	{
 		public ClassType classType;
-		public IdentifierList heritage;
+		public NodeList<Identifier> heritage;
 		public ClassBody ClassBody;
 
-		public ClassDefinition(ClassType classType, IdentifierList heritage, ClassBody ClassBody)
+		public ClassDefinition(ClassType classType, NodeList<Identifier> heritage, ClassBody ClassBody)
 			: base()
 		{
 			this.classType = classType;
@@ -174,11 +174,11 @@ namespace crosspascal.ast.nodes
 
 	public class InterfaceDefinition : TypeNode
 	{
-		public IdentifierList heritage;
+		public NodeList<Identifier> heritage;
 		public ClassContentList methods;
 		public ClassContentList properties;
 
-		public InterfaceDefinition(IdentifierList heritage, ClassContentList methods, ClassContentList properties)
+		public InterfaceDefinition(NodeList<Identifier> heritage, ClassContentList methods, ClassContentList properties)
 			: base()
 		{
 			this.heritage = heritage;

@@ -66,9 +66,9 @@ namespace crosspascal.ast.nodes
 	public class ProcedureBodyNode : Node
 	{
 		public DeclarationNodeList decls;
-		public StatementBlock body;
+		public BlockStatement body;
 
-		public ProcedureBodyNode(DeclarationNodeList decls, StatementBlock body)
+		public ProcedureBodyNode(DeclarationNodeList decls, BlockStatement body)
 		{
 			this.decls = decls;
 			this.body = body;

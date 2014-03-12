@@ -176,14 +176,6 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	/// <summary>
-	/// CompilationUnit: top level source file. Can be Program, Unit, Library or Package
-	/// </summary>
-	public abstract class CompilationUnit : Node
-	{
-
-	}
-
 
 	// =========================================================================
 	// Node Lists

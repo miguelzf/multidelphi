@@ -238,12 +238,12 @@ namespace crosspascal.ast.nodes
 
 
 
-	public class StatementBlock : Statement
+	public class BlockStatement : Statement
 	{
 		public Statement stmt;
-		public StatementBlock next;
+		public BlockStatement next;
 
-		public StatementBlock(Statement stmt, StatementBlock next)
+		public BlockStatement(Statement stmt, BlockStatement next)
 		{
 			this.stmt = stmt;
 			this.next = next;

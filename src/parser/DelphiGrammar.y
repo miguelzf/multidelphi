@@ -170,7 +170,7 @@ namespace crosspascal.parser
 %type<Expression> paraminitopt expr rangetype  rangestart constexpr functypeinit
 %type<ProcedureDirective> funcdirective funcqualinterf funcqualif funcdeprecated funcqualinterfopt
 %type<CallConventionNode> funccallconv
-%type<StatementBlock> block 
+%type<BlockStatement> block
 %type<Statement> stmt nonlbl_stmt assign goto_stmt ifstmt casestmt else_case repeatstmt whilestmt forstmt withstmt tryexceptstmt tryfinallystmt raisestmt assemblerstmt asmcode
 %type<CaseSelector> caseselector
 %type<CaseLabel> caselabel
@@ -1164,7 +1164,7 @@ heritage
 
 classbody
 	: fieldlst SCOL	complst scopeseclst		{ $$ = new ClassBody(Scope.Public, $3, $4);  }
-	|					complst scopeseclst		{ $$ = new ClassBody(Scope.Public, $1, $2);  }
+	|				complst scopeseclst		{ $$ = new ClassBody(Scope.Public, $1, $2);  }
 	;
 
 scopeseclst

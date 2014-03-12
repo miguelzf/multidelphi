@@ -6,41 +6,32 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
+	//==========================================================================
+	// Top-Level Source Files/Units
+	//==========================================================================
 
+	#region Compilation Units
 
-	public class UsesNode : Node
+	/// <summary>
+	/// CompilationUnit: top level source file. Can be Program, Unit, Library or Package
+	/// </summary>
+	public abstract class CompilationUnit : Node
 	{
-		public Identifier ident;
-		public UsesNode next;
+		public String name;
 
-		public UsesNode(Identifier ident, UsesNode next)
+		public CompilationUnit(String name) 
 		{
-			this.ident = ident;
-			this.next = next;
-		}
-	}
-
-	public class BlockWithDeclarationsNode : Node
-	{
-		public DeclarationNode decls;
-		public StatementBlock block;
-
-		public BlockWithDeclarationsNode(DeclarationNode decls, StatementBlock block)
-		{
-			this.decls = decls;
-			this.block = block;
+			this.name = name;
 		}
 	}
 
 	public class ProgramNode : CompilationUnit
 	{
-		public Identifier identifier;
-		public BlockWithDeclarationsNode body;
-		public UsesNode uses;
+		public ProgramBody body;
+		public NodeList uses;
 
-		public ProgramNode(Identifier ident, UsesNode uses, BlockWithDeclarationsNode body)
+		public ProgramNode(String name, NodeList uses, ProgramBody body) : base(name)
 		{
-			this.identifier = ident;
 			this.uses = uses;
 			this.body = body;
 		}
@@ -48,76 +39,24 @@ namespace crosspascal.ast.nodes
 
 	public class LibraryNode : CompilationUnit
 	{
-		public Identifier identifier;
-		public BlockWithDeclarationsNode body;
-		public UsesNode uses;
+		public ProgramBody body;
+		public UsesItem uses;
 
-		public LibraryNode(Identifier ident, UsesNode uses, BlockWithDeclarationsNode body)
+		public LibraryNode(String name, UsesItem uses, ProgramBody body) : base(name)
 		{
-			this.identifier = ident;
 			this.uses = uses;
 			this.body = body;
 		}
 	}
 
-	public class DeclarationNodeList : DeclarationNode
-	{
-		public DeclarationNode decl;
-		public DeclarationNodeList next;
-
-		public DeclarationNodeList(DeclarationNode decl, DeclarationNodeList next)
-		{
-			this.decl = decl;
-			this.next = next;
-		}
-	}
-
-	public class InterfaceSection : Node
-	{
-		public UsesNode uses;
-		public DeclarationNode decls;
-
-		public InterfaceSection(UsesNode uses, DeclarationNode decls)
-		{
-			this.uses = uses;
-			this.decls = decls;
-		}
-	}
-
-	public class ImplementationSection : Node
-	{
-		public UsesNode uses;
-		public DeclarationNode decls;
-
-		public ImplementationSection(UsesNode uses, DeclarationNode decls)
-		{
-			this.uses = uses;
-			this.decls = decls;
-		}
-	}
-
-	public class InitializationSection : Node
-	{
-		public Statement initialization;
-		public Statement finalization;
-
-		public InitializationSection(Statement initialization, Statement finalization)
-		{
-			this.initialization = initialization;
-			this.finalization = finalization;
-		}
-	}
-
 	public class UnitNode : CompilationUnit
 	{
-		public Identifier identifier;
 		public InterfaceSection interfce;
 		public ImplementationSection implementation;
 		public Node init;
 
-		public UnitNode(Identifier ident, InterfaceSection interfce, ImplementationSection impl, Node init)
+		public UnitNode(String name, InterfaceSection interfce, ImplementationSection impl, Node init) : base(name)
 		{
-			this.identifier = ident;
 			this.interfce = interfce;
 			this.implementation = impl;
 			this.init = init;
@@ -126,36 +65,143 @@ namespace crosspascal.ast.nodes
 
 	public class PackageNode : CompilationUnit
 	{
-		public Identifier identifier;
-		public UsesNode requires;
-		public UsesNode contains;
+		public UsesItem requires;
+		public UsesItem contains;
 
-		public PackageNode(Identifier ident, UsesNode requires, UsesNode contains)
+		public PackageNode(String name, UsesItem requires, UsesItem contains) : base(name)
 		{
-			this.identifier = ident;
 			this.requires = requires;
 			this.contains = contains;
 		}
 	}
 
-	public class ExportItem : DeclarationNode
+	#endregion
+
+
+	//==========================================================================
+	// Units directives
+	//==========================================================================
+
+	#region Units directives
+
+	public abstract class UnitItem : Node
 	{
-		public Identifier ident;
-		public string name;
+		public String name;
+
+		public UnitItem(String name)
+		{
+			this.name = name;
+		}
+	}
+
+	public class UsesItem : UnitItem
+	{
+		public UsesItem(String name) : base(name) { }
+	}
+
+	public class RequiresItem : UnitItem
+	{
+		public RequiresItem(String name) : base(name) { }
+	}
+
+	public class ContainsItem : UnitItem
+	{
+		public ContainsItem(String name) : base(name) { }
+	}
+
+	public class ExportItem : UnitItem
+	{
+		public String exportname;
 		public Expression index;
 
-		public ExportItem(Identifier ident, string name, Expression index)
+		public ExportItem(String name, String exportname) :base(name)
 		{
-			this.ident = ident;
-			this.name = name;
+			this.exportname = exportname;
+		}
+
+		public ExportItem(String name,  Expression index) :base(name)
+		{
 			this.index = index;
 		}
 	}
 
-	public class ExportItemNodeList : DeclarationNode
+	#endregion
+
+	
+	//==========================================================================
+	// Sections/Scopes
+	//==========================================================================
+
+	#region Sections/Scopes
+
+	public abstract class Section : Node
 	{
-		public ExportItem export;
-		public ExportItemNodeList next;
+		public NodeList decls;
+
+		public Section(NodeList decls)
+		{
+			this.decls = decls;
+		}
 	}
+
+	public abstract class CodeSection : Section
+	{
+		public BlockStatement block;
+
+		public CodeSection(NodeList decls, BlockStatement block) : base(decls)
+		{
+			this.block = block;
+		}
+	}
+
+	public class ProgramBody : CodeSection
+	{
+		public ProgramBody(NodeList decls, BlockStatement block) : base(decls, block) { }
+	}
+
+	public class RoutineBody : CodeSection
+	{
+		public RoutineBody(NodeList decls, BlockStatement block) : base(decls, block) { }
+	}
+
+	public class InitializationSection : CodeSection
+	{
+		public InitializationSection(BlockStatement body) : base(null, body) { }
+	}
+
+	public class FinalizationSection : CodeSection
+	{
+		public FinalizationSection(BlockStatement body) : base(null, body) { }
+	}
+
+
+	public abstract class DeclarationSection : Section
+	{
+		public NodeList uses;
+
+		public DeclarationSection(NodeList uses, NodeList decls) : base(decls)
+		{
+			this.uses = uses;
+		}
+	}
+	
+	public class InterfaceSection : DeclarationSection
+	{
+		public InterfaceSection(NodeList uses, NodeList decls) : base(uses, decls) { }
+	}
+
+	public class ImplementationSection : DeclarationSection
+	{
+		public ImplementationSection(NodeList uses, NodeList decls) : base(uses, decls) { }
+	}
+
+
+	public class ClassBody : Section
+	{
+		public ClassBody(NodeList decls) : base(decls) { }
+	}
+
+
+	#endregion
 
 }
