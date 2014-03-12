@@ -114,7 +114,7 @@ namespace crosspascal.ast.nodes
 		public Identifier ident;
 		public TypeNode type;
 		public PropertyIndex index;
-		public PropertySpecifierNode specs;
+		public PropertySpecifiers specs;
 		public PropertyDefault def;
 
 		public ClassProperty(Identifier ident, TypeNode type, PropertyIndex index, PropertySpecifierNode specs, PropertyDefault def)
@@ -162,16 +162,24 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class PropertySpecifierNode : Node
+	public class PropertySpecifiers : Node
 	{
+		public PropertyIndex index;
 		public PropertyReadNode read;
 		public PropertyWriteNode write;
-		// add more here as necessary
+		public PropertyStored stored;
+		public PropertyDefault def;
+		public PropertyImplements impl;
 
-		public PropertySpecifierNode(PropertyReadNode read, PropertyWriteNode write)
+		public PropertySpecifiers(PropertyIndex index, PropertyReadNode read, PropertyWriteNode write, 
+			PropertyStored stored, PropertyDefault def, PropertyImplements impl)
 		{
+			this.index = index;
 			this.read = read;
 			this.write = write;
+			this.stored = stored;
+			this.def = def;
+			this.impl = impl;
 		}
 	}
 
@@ -185,13 +193,33 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	public class PropertyImplements : Node
+	{
+		public Identifier ident;
+
+		public PropertyImplements(Identifier ident)
+		{
+			this.ident = ident;
+		}
+	}
+
+	public class PropertyStored : Node
+	{
+		public Identifier ident;
+
+		public PropertyStored(Identifier ident)
+		{
+			this.ident = ident;
+		}
+	}
+
 	public class PropertyIndex : Node
 	{
-		public Expression expr;
+		public int value;
 
-		public PropertyIndex(Expression expr)
+		public PropertyIndex(int value)
 		{
-			this.expr = expr;
+			this.value = value;
 		}
 	}
 
