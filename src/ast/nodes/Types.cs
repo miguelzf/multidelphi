@@ -13,35 +13,35 @@ namespace crosspascal.ast.nodes
 	//==========================================================================
 
 	#region Type hierarchy
-	///		Types
-	///			DeclaredType => may be any, user-defined
-	///			UndefinedType	< for untyped parameters. incompatible with any type >
-	///			RoutineType
-	///			ClassType
-	///			VariableType
-	///				ScalarType
-	///					SimpleType		: IOrdinalType
-	///						IntegerType
-	///							UnsignedInt	...
-	///							SignedInt	...
-	///						Bool
-	///						Char
-	///					RealtType
-	///						FloatType
-	///						DoubleType
-	///						ExtendedType
-	///						CurrencyType
-	///					StringType
-	///					VariantType
-	///					PointerType <ScalarType> 
-	///				EnumType			: IOrdinalType
-	///				RangeType			: IOrdinalType
-	///				MetaclassType < id>
-	///				StructuredType
-	///					Array < VariableType> 
-	///					Set	  < VariableType> 
-	///					File  < VariableType> 
-	///				Record
+	/// Types
+	/// 	DeclaredType => may be any, user-defined
+	/// 	UndefinedType	< for untyped parameters. incompatible with any type >
+	/// 	RoutineType
+	/// 	ClassType
+	/// 	VariableType
+	/// 		ScalarType
+	/// 			SimpleType		: IOrdinalType
+	/// 				IntegerType
+	/// 					UnsignedInt	...
+	/// 					SignedInt	...
+	/// 				Bool
+	/// 				Char
+	/// 			RealType
+	/// 				FloatType
+	/// 				DoubleType
+	/// 				ExtendedType
+	/// 				CurrencyType
+	/// 			StringType
+	/// 			VariantType
+	/// 			PointerType <ScalarType> 
+	/// 		EnumType			: IOrdinalType
+	/// 		RangeType			: IOrdinalType
+	/// 		MetaclassType < id>
+	/// 		StructuredType
+	/// 			Array < VariableType> 
+	/// 			Set	  < VariableType> 
+	/// 			File  < VariableType> 
+	/// 		Record
 	#endregion
 
 
@@ -55,6 +55,8 @@ namespace crosspascal.ast.nodes
 
 			return (this.GetType() == o.GetType());
 		}
+
+		public abstract bool ISA(TypeNode o);
 	}
 
 	/// <summary>
@@ -63,7 +65,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class UndefinedType: TypeNode
 	{
-		public static readonly UndefinedType Default = new UndefinedType();
+		public static readonly UndefinedType Single = new UndefinedType();
 
 	}
 
@@ -165,10 +167,12 @@ namespace crosspascal.ast.nodes
 
 	public class TypeUnknown : TypeNode
 	{
-		public static readonly UndefinedType Default = new UndefinedType();
+		public static readonly UndefinedType Single = new UndefinedType();
 
 	}
 
+
+	#region Ordinal Types
 
 	public interface IOrdinalType : IComparable
 	{
@@ -182,7 +186,53 @@ namespace crosspascal.ast.nodes
 	}
 
 
+	public class EnumType : IOrdinalType
+	{
+		EnumValueList enumVals;
 
+		public ValueType MinValue();
+
+		public ValueType MaxValue();
+
+		public UInt64 ValueRange();
+
+		public bool Equals(Object o);
+
+		public EnumType(EnumValueList enumVals)
+		{
+			this.enumVals = enumVals;
+		}
+	}
+
+	public class RangeType : VariableType, IOrdinalType
+	{
+		Literal low;
+		Literal high;
+
+		public ValueType MinValue() { return low.value; }
+
+		public ValueType MaxValue() { return high.value; }
+
+		public UInt64  ValueRange() { return high.value - low.value; }
+
+		public bool Equals(Object o)
+		{
+			if (o == null || this.GetType() != o.GetType())
+				return false;
+
+			RangeType r = (RangeType)o;
+			return (this.Equals(r) && low == r.low && high == r.high);
+		}
+
+		public RangeType(Literal low, Literal high)
+		{
+			this.low  = low;
+			this.high = high;
+		}
+	}
+
+	#endregion
+	
 
 	#region Scalar Types
 
@@ -210,6 +260,11 @@ namespace crosspascal.ast.nodes
 	public abstract class ScalarType : VariableType
 	{
 
+		/// <summary>
+		/// Default Scalar Type comparison: directly compare references to singleton objects
+		/// </summary>
+		/// <param name="o"></param>
+		/// <returns></returns>
 		public override virtual bool Equals(Object o)
 		{
 			if (o == null)
@@ -221,7 +276,7 @@ namespace crosspascal.ast.nodes
 
 	public class StringType : ScalarType
 	{
-		public static readonly StringType Default = new StringType();
+		public static readonly StringType Single = new StringType();
 	}
 
 	public class VariantType : ScalarType
@@ -277,29 +332,31 @@ namespace crosspascal.ast.nodes
 
 			return (this.GetType() == o.GetType());
 		}
+
+		protected IntegralType() { }
 	}
 	
 
 	#region Integer Types
 
-	public abstract class IntegerType : IntegralType
+	public class IntegerType : IntegralType
 	{
-
+		public static readonly IntegerType Single = new IntegerType();
 	}
 
-	public abstract class SignedIntegerType : IntegerType
+	public class SignedIntegerType : IntegerType
 	{
-
+		public static readonly SignedIntegerType Single = new SignedIntegerType();
 	}
 
-	public abstract class UnsignedIntegerType : IntegerType
+	public class UnsignedIntegerType : IntegerType
 	{
-
+		public static readonly UnsignedIntegerType Single = new UnsignedIntegerType();
 	}
 
 	public class UnsignedInt8Type : UnsignedIntegerType // byte
 	{
-		public static readonly UnsignedInt8Type Default = new UnsignedInt8Type();
+		public static readonly UnsignedInt8Type Single = new UnsignedInt8Type();
 
 		public ValueType MinValue() { return Byte.MinValue; }
 
@@ -310,7 +367,7 @@ namespace crosspascal.ast.nodes
 
 	public class UnsignedInt16Type : UnsignedIntegerType // word
 	{
-		public static readonly UnsignedInt16Type Default = new UnsignedInt16Type();
+		public static readonly UnsignedInt16Type Single = new UnsignedInt16Type();
 
 		public ValueType MinValue() { return UInt16.MinValue; }
 
@@ -321,7 +378,7 @@ namespace crosspascal.ast.nodes
 
 	public class UnsignedInt32Type : UnsignedIntegerType		// cardinal
 	{
-		public static readonly UnsignedInt32Type Default = new UnsignedInt32Type();
+		public static readonly UnsignedInt32Type Single = new UnsignedInt32Type();
 
 		public ValueType MinValue() { return UInt32.MinValue; }
 
@@ -332,7 +389,7 @@ namespace crosspascal.ast.nodes
 
 	public class UnsignedInt64Type : UnsignedIntegerType	 // uint64
 	{
-		public static readonly UnsignedInt64Type Default = new UnsignedInt64Type();
+		public static readonly UnsignedInt64Type Single = new UnsignedInt64Type();
 
 		public ValueType MinValue() { return UInt64.MinValue; }
 
@@ -343,7 +400,7 @@ namespace crosspascal.ast.nodes
 
 	public class SignedInt8Type : SignedIntegerType		// smallint
 	{
-		public static readonly SignedInt8Type Default = new SignedInt8Type();
+		public static readonly SignedInt8Type Single = new SignedInt8Type();
 
 		public ValueType MinValue() { return SByte.MinValue; }
 
@@ -354,7 +411,7 @@ namespace crosspascal.ast.nodes
 
 	public class SignedInt16Type : SignedIntegerType	 // smallint
 	{
-		public static readonly SignedInt16Type Default = new SignedInt16Type();
+		public static readonly SignedInt16Type Single = new SignedInt16Type();
 
 		public ValueType MinValue() { return Int16.MinValue; }
 
@@ -365,7 +422,7 @@ namespace crosspascal.ast.nodes
 
 	public class SignedInt32Type : SignedIntegerType	// integer
 	{
-		public static readonly SignedInt32Type Default = new SignedInt32Type();
+		public static readonly SignedInt32Type Single = new SignedInt32Type();
 
 		public ValueType MinValue() { return Int32.MinValue; }
 
@@ -376,7 +433,7 @@ namespace crosspascal.ast.nodes
 
 	public class SignedInt64Type : IntegerType // int64
 	{
-		public static readonly SignedInt64Type Default = new SignedInt64Type();
+		public static readonly SignedInt64Type Single = new SignedInt64Type();
 
 		public ValueType MinValue() { return Int64.MinValue; }
 
@@ -390,7 +447,7 @@ namespace crosspascal.ast.nodes
 
 	public class BoolType : IntegralType
 	{
-		public static readonly BoolType Default = new BoolType();
+		public static readonly BoolType Single = new BoolType();
 
 		public ValueType MinValue() { return false; }
 
@@ -401,7 +458,7 @@ namespace crosspascal.ast.nodes
 
 	public class CharType : IntegralType
 	{
-		public static readonly CharType Default = new CharType();
+		public static readonly CharType Single = new CharType();
 
 		public ValueType MinValue() { return Char.MinValue; }
 
@@ -430,22 +487,22 @@ namespace crosspascal.ast.nodes
 
 	public class FloatType : RealType
 	{
-		public static readonly FloatType Default = new FloatType();
+		public static readonly FloatType Single = new FloatType();
 	}
 
 	public class DoubleType : RealType
 	{
-		public static readonly DoubleType Default = new DoubleType();
+		public static readonly DoubleType Single = new DoubleType();
 	}
 
 	public class ExtendedType : RealType
 	{
-		public static readonly ExtendedType Default = new ExtendedType();
+		public static readonly ExtendedType Single = new ExtendedType();
 	}
 
 	public class CurrencyType : RealType
 	{
-		public static readonly CurrencyType Default = new CurrencyType();
+		public static readonly CurrencyType Single = new CurrencyType();
 	}
 
 	#endregion

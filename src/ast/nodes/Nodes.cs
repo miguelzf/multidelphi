@@ -55,9 +55,10 @@ namespace crosspascal.ast.nodes
 	///			
 	///		Statement
 	///			EmptyStmt
-	///			LabeledStmt		// Label + Stmt
-	///			ProcCallStmt	// includes inherits
-	///			Assign
+	///			LabeledStmt	< Label, Stmt >
+	///			ProcCallStmt <RoutineCall expr>
+	///			Assign < lvalue, expression>
+	///			Inherited stmt < Statement >
 	///			Block
 	///			With
 	///			AsmBlock
@@ -99,40 +100,36 @@ namespace crosspascal.ast.nodes
 	///				Multiplicative
 	///				Conditional
 	///				
-	///				enums, sets, ranges, initializers TODO
 	///				
-	///		Types
-	///			User-defined type => may be any
-	///			RoutineType
-	///			ClassType
-	///			InterfaceType
-	///			VariableType
-	///				SimpleType
-	///					ScalarType		: IOrdinalType
-	///						IntegerType
-	///							UnsignedInt	...
-	///							SignedInt	...
-	///						Bool
-	///						Char
-	///					FloatingPointType
-	///						FloatType
-	///						DoubleType
-	///						ExtendedType
-	///						CurrencyType
-	///					StringType
-	///					VariantType
-	///					PointerType
-	///				EnumType			: IOrdinalType
-	///				RangeType			: IOrdinalType
-	///				RefPointerType < VariableType> 
-	///				MetaclassType < id>
-	///				StructuredType
-	///					Array < VariableType> 
-	///					Set < VariableType> 
-	///					File
-	///					Record
-	///			
-	///			InterfaceDeclaration/ClassRefType
+	/// Types
+	/// 	DeclaredType => may be any, user-defined
+	/// 	UndefinedType	< for untyped parameters. incompatible with any type >
+	/// 	RoutineType
+	/// 	ClassType
+	/// 	VariableType
+	/// 		ScalarType
+	/// 			SimpleType		: IOrdinalType
+	/// 				IntegerType
+	/// 					UnsignedInt	...
+	/// 					SignedInt	...
+	/// 				Bool
+	/// 				Char
+	/// 			RealType
+	/// 				FloatType
+	/// 				DoubleType
+	/// 				ExtendedType
+	/// 				CurrencyType
+	/// 			StringType
+	/// 			VariantType
+	/// 			PointerType <ScalarType> 
+	/// 		EnumType			: IOrdinalType
+	/// 		RangeType			: IOrdinalType
+	/// 		MetaclassType < id>
+	/// 		StructuredType
+	/// 			Array < VariableType> 
+	/// 			Set	  < VariableType> 
+	/// 			File  < VariableType> 
+	/// 		Record
 	///			
 	///  </summary>
 
@@ -192,8 +189,6 @@ namespace crosspascal.ast.nodes
 
 	#region Node Lists
 
-	// Cannot use generics since YACC/JAY does not support them as rules' types
-
 	/// <summary>
 	/// Lists of Nodes, Expressions, Statements etc
 	/// </summary>
@@ -224,26 +219,47 @@ namespace crosspascal.ast.nodes
 
 	public class NodeList : ListNode<Node>
 	{
+		public NodeList() { }
 	}
 
 	public class ExpressionList : ListNode<Expression>
 	{
+		public ExpressionList() { }
 	}
 
 	public class StatementList : ListNode<Statement>
 	{
+		public StatementList() { }
 	}
 
 	public class TypeList : ListNode<TypeNode>
 	{
+		public TypeList() { }
 	}
 
 	public class OrdinalTypeList : ListNode<IOrdinalType>
 	{
+		public OrdinalTypeList() { }
 	}
 
 	public class IdentifierList : ListNode<Identifier>
 	{
+		public IdentifierList() { }
+	}
+
+	public class DeclarationList : ListNode<Declaration>
+	{
+		public DeclarationList() { }
+	}
+
+	public class EnumValueList : ListNode<EnumValue>
+	{
+		public EnumValueList() { }
+	}
+
+	public class ParameterList : ListNode<ParameterDeclaration>
+	{
+		public ParameterList() { }
 	}
 
 	#endregion

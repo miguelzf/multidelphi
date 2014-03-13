@@ -19,9 +19,14 @@ namespace crosspascal.ast.nodes
 		public TypeNode type { get; set; }
 
 		/// <summary>
-		/// Indicates if expression is be constant
+		/// Indicates if expression is constant
 		/// </summary>
 		public bool isConst { get; set; }
+
+		/// <summary>
+		/// Expression value, if constant
+		/// </summary>
+		public Literal constantValue { get; set; }
 
 		/// <summary>
 		/// Indicates if expression must be constant
@@ -54,13 +59,13 @@ namespace crosspascal.ast.nodes
 
 	}
 
-	public abstract class Literal<T> : UnaryExpression
+	public abstract class Literal : UnaryExpression
 	{
-		public T value;
+		public ValueType value;
 
 		public Literal() { }
 
-		public Literal(T t)
+		public Literal(ValueType t)
 		{
 			value = t;
 		}
@@ -229,18 +234,17 @@ namespace crosspascal.ast.nodes
 	// Literals
 	//==========================================================================
 
-
-	public class IntLiteral : Literal<Int32>
+	public class IntLiteral : Literal
 	{
 		public IntLiteral(Int32 value) : base(value) { }
 	}
 
-	public class CharLiteral : Literal<Char>
+	public class CharLiteral : Literal
 	{
 		public CharLiteral(Char value) : base(value) { }
 	}
 
-	public class StringLiteral : Literal<String>
+	public class StringLiteral : Literal
 	{
 		public bool isChar;
 
@@ -251,17 +255,17 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class BoolLiteral : Literal<Boolean>
+	public class BoolLiteral : Literal
 	{
 		public BoolLiteral(Boolean value) : base(value) { }
 	}
 
-	public class RealLiteral : Literal<Double>
+	public class RealLiteral : Literal
 	{
 		public RealLiteral(Double value) : base(value) { }
 	}
 
-	public class PointerLiteral : Literal<uint>
+	public class PointerLiteral : Literal
 	{
 		public PointerLiteral(uint value)
 		{

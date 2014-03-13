@@ -7,82 +7,33 @@ using System.Threading.Tasks;
 namespace crosspascal.ast.nodes
 {
 
-	public enum RoutineReturnType
-	{
-		Procedure,
-		Function,
-		Constructor,
-		Destructor
-	}
-
-	public enum CallConvention
-	{
-		Pascal,
-		SafeCall,
-		StdCall,
-		CDecl,
-		Register
-	}
-
-
-	public class CallConventionNode : Node
-	{
-		public CallConvention convention;
-
-		public CallConventionNode(CallConvention convention)
-		{
-			this.convention = convention;
-		}
-	}
-
-
-
-	public abstract class DeclarationNode : Node
-	{
-
-	}
-	public class RoutineDeclaration : Node
+	public abstract partial class RoutineDeclaration : TypeDeclaration
 	{
 		public bool isStatic;
-		public RoutineReturnType kind;
-		public Identifier ident;
-		public TypeNode returnType;
-		public bool obj;
-		public ParamDeclarationList parameters;
+		public string qualifname;
+		public ParameterList parameters;
 		public ProcedureDirectiveList directives;
+		public CallConvention callconv;
 
-		public RoutineDeclaration(RoutineReturnType kind, Identifier ident, ParamDeclarationList parameters, TypeNode returnType, bool obj, ProcedureDirectiveList directives)
+		public RoutineDeclaration(string name, ParameterList @params, CallConvention callconv = CallConvention.Register,
+									ProcedureDirectiveList directives)
 		{
 			this.isStatic = false;
-			this.kind = kind;
-			this.ident = ident;
-			this.obj = obj;
-			this.parameters = parameters;
-			this.returnType = returnType;
+			this.qualifname = name;
+			this.parameters = @params;
 			this.directives = directives;
 		}
 	}
 
 	public class ProcedureBodyNode : Node
 	{
-		public DeclarationNodeList decls;
+		public DeclarationList decls;
 		public BlockStatement body;
 
-		public ProcedureBodyNode(DeclarationNodeList decls, BlockStatement body)
+		public ProcedureBodyNode(DeclarationList decls, BlockStatement body)
 		{
 			this.decls = decls;
 			this.body = body;
-		}
-	}
-
-	public class AssemblerProcedureBodyNode : ProcedureBodyNode
-	{
-		public AssemblerNodeList asm;
-
-		public AssemblerProcedureBodyNode(AssemblerNodeList asm)
-			: base(null, null)
-		{
-			this.asm = asm;
 		}
 	}
 
@@ -114,6 +65,35 @@ namespace crosspascal.ast.nodes
 		Virtual,
 		VarArgs
 	}
+
+	public enum RoutineReturnType
+	{
+		Procedure,
+		Function,
+		Constructor,
+		Destructor
+	}
+
+	public enum CallConvention
+	{
+		Pascal,
+		SafeCall,
+		StdCall,
+		CDecl,
+		Register
+	}
+
+
+	public class CallConventionNode : Node
+	{
+		public CallConvention convention;
+
+		public CallConventionNode(CallConvention convention)
+		{
+			this.convention = convention;
+		}
+	}
+
 
 	public class ProcedureDirective : Node
 	{

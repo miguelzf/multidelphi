@@ -27,9 +27,9 @@ namespace crosspascal.ast.nodes
 
 	public class VarDeclaration : Declaration
 	{
-		List<String> names;
-		Expression init;
-		String shareVal;
+		public List<String> names;
+		public Expression init;
+		public String shareVal;
 
 		public VarDeclaration(List<String> ids, TypeNode t, Expression init = null)
 		{
@@ -56,9 +56,17 @@ namespace crosspascal.ast.nodes
 
 	public class ParameterDeclaration : VarDeclaration
 	{
-		public ParameterDeclaration(List<String> ids, TypeNode t = UndefinedType, Expression init = null) : base(ids, t, init) { }
+		public ParameterDeclaration(List<String> ids, TypeNode t = null, Expression init = null) : base(ids, t, init)
+		{
+			if (t == null)
+				t = UndefinedType.Single;
+		}
 
-		public ParameterDeclaration(String id, TypeNode t = UndefinedType, Expression init = null) : base(id, t, init) { }
+		public ParameterDeclaration(String id, TypeNode t = null, Expression init = null) : base(id, t, init)
+		{
+			if (t == null)
+				t = UndefinedType.Single;
+		}
 	}
 
 	public class VarParameterDeclaration : ParameterDeclaration
@@ -89,36 +97,84 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public abstract class ConstDeclaration : Declaration
 	{
-		Expression init;
+		public Expression init;
 
 		public ConstDeclaration(String name, Expression init) : base(name)
 		{
 			this.init = init;
+			init.enforceConst = true;
 			this.type = init.type;
 		}
 	}
 
 	public class EnumDeclaration : Declaration
 	{
+		public EnumValueList enumlist;
 
-	}
-
-	public class EnumValueDeclaration : VarDeclaration
-	{
-		public Expression init;
-
-		public EnumValueDeclaration(string val) : base(val, new IntegerType()) { }
-
-		public EnumValueDeclaration(string val, Expression init) : this(val)
+		public EnumDeclaration(EnumValueList enumlist)
 		{
-			this.init = init;
+			this.enumlist = enumlist;
+		}
+
+		/// <summary>
+		/// Determine and assign the Enum initializers, from the user-defined to the automatic
+		/// </summary>
+		public void AssignEnumInitializers()
+		{
+			int val = 0;	// default start val
+
+			foreach (EnumValue al in enumlist)
+			{
+				if (al.init == null)
+					al.init = new IntLiteral(val);
+				else
+				{
+					if (al.init.constantValue.type.ISA(IntegerType.Single))
+						val = (int)al.init.constantValue.value;
+					else
+						Error("Enum initializer must be an integer");
+				}
+				val++;
+			}
 		}
 	}
 
+	// TODO move this to types. 
+	// Create initilization node
 
-	public abstract class TypeDeclaration : Declaration
+	public class EnumValue : ConstDeclaration
 	{
-		// TODO
+		// Init value to be computed a posterior
+		public EnumValue(string val) : base(val, null) { }
+
+		public EnumValue(string val, Expression init) : base(val, init)
+		{
+			init.forcedType = IntegerType.Single;
+		}
 	}
 
+	/// <summary>
+	/// Creates a custom, user-defined name for some Type
+	/// </summary>
+	public class TypeDeclaration : Declaration
+	{
+		String typename;
+		VariableType reftype;
+
+		public TypeDeclaration(String name, VariableType type)
+		{
+			typename = name;
+			reftype = type;
+		}
+	}
+
+	public abstract partial class CompositeDeclaration : TypeDeclaration
+	{
+		// In file Composites.cs
+	}
+
+	public abstract partial class RoutineDeclaration : TypeDeclaration
+	{
+		// In file Routines.cs
+	}
 }

@@ -201,6 +201,11 @@ namespace crosspascal.ast.nodes
 		public ClassBody(NodeList decls) : base(decls) { }
 	}
 
+	public class AssemblerRoutineBody : RoutineBody
+	{
+		public AssemblerRoutineBody(AssemblerBlock asm) 
+				: base(new DeclarationList(), asm) { }
+	}
 
 	#endregion
 

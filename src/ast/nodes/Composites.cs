@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
+	public abstract partial class CompositeDeclaration : TypeDeclaration
+	{
+	
+	}
 
 	public enum Scope
 	{
@@ -16,7 +20,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public class ClassDefinition : Node
+	public class ClassDefinition : CompositeDeclaration
 	{
 		public ClassType classType;
 		public IdentifierList heritage;
@@ -30,7 +34,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class InterfaceDefinition : Node
+	public class InterfaceDefinition : CompositeDeclaration
 	{
 		public IdentifierList heritage;
 		public ClassContentList methods;

@@ -29,62 +29,23 @@ namespace crosspascal.ast.nodes
 		// Do nothing
 	}
 
-	public abstract class LabelNode : Node
-	{
-	}
-
-	public class StringLabel : LabelNode
-	{
-		public Identifier name;
-
-		public StringLabel(Identifier name)
-		{
-			this.name = name;
-		}
-	}
-
-	public class NumberLabel : LabelNode
-	{
-		public int number;
-
-		public NumberLabel(int number)
-		{
-			this.number = number;
-		}
-	}
-
-	public class LabelDeclaration : DeclarationNode
-	{
-		public LabelNode label;
-		public LabelDeclaration next;
-
-		public LabelDeclaration(LabelNode label, LabelDeclaration next)
-		{
-			this.label = label;
-			this.next = next;
-		}
-	}
-
-
 	public class AssignementStatement : Statement
 	{
 		public LvalueExpression lvalue;
 		public Expression expr;
-		public bool inherited;
 
-		public AssignementStatement(LvalueExpression lvalue, Expression expr, bool inherited)
+		public AssignementStatement(LvalueExpression lvalue, Expression expr)
 		{
 			this.lvalue = lvalue;
 			this.expr = expr;
-			this.inherited = inherited;
 		}
 	}
 
 	public class GotoStatement : Statement
 	{
-		public LabelNode gotolabel;
+		public string gotolabel;
 
-		public GotoStatement(LabelNode label)
+		public GotoStatement(string label)
 		{
 			this.gotolabel = label;
 		}
@@ -128,24 +89,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class OnNodeList : Node
-	{
-		public OnStatement stmt;
-		public OnNodeList next;
-
-		public OnNodeList(OnStatement stmt, OnNodeList next)
-		{
-			this.stmt = stmt;
-			this.next = next;
-		}
-	}
-
 	public class ExceptionBlock : Node
 	{
-		public OnNodeList stmts;
+		public NodeList stmts;
 		public Statement onElse;
 
-		public ExceptionBlock(OnNodeList stmts, Statement onElse)
+		public ExceptionBlock(NodeList stmts, Statement onElse)
 		{
 			this.stmts = stmts;
 			this.onElse = onElse;
@@ -176,42 +125,26 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class CaseLabelList : Node
-	{
-		public CaseLabel caselabel;
-		public CaseLabelList next;
-
-		public CaseLabelList(CaseLabel caselabel, CaseLabelList next)
-		{
-			this.caselabel = caselabel;
-			this.next = next;
-		}
-	}
-
 	public class CaseSelectorNode : Node
 	{
-		public CaseLabelList list;
+		public NodeList list;
 		public Statement stmt;
 
-		public CaseSelectorNode(CaseLabelList list, Statement stmt)
+		public CaseSelectorNode(NodeList list, Statement stmt)
 		{
 			this.list = list;
 			this.stmt = stmt;
 		}
 	}
 
-	public class CaseSelectorList : Node
-	{
-
-	}
 
 	public class CaseStatement : Statement
 	{
 		public Expression condition;
-		public CaseSelectorList selectors;
+		public NodeList selectors;
 		public Statement caseelse;
 
-		public CaseStatement(Expression condition, CaseSelectorList selectors, Statement caseelse)
+		public CaseStatement(Expression condition, NodeList selectors, Statement caseelse)
 		{
 			this.condition = condition;
 			this.selectors = selectors;
@@ -219,45 +152,54 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class RepeatLoop : Statement
+	public class LoopStatement : Statement
 	{
 		public Expression condition;
 		public Statement block;
 
-		public RepeatLoop(Statement block, Expression condition)
+		public LoopStatement(Statement block, Expression condition)
 		{
 			this.condition = condition;
 			this.block = block;
 		}
 	}
 
-	public class WhileLoop : Statement
+	public class RepeatLoop : LoopStatement
 	{
-		public Expression condition;
-		public Statement block;
+		public RepeatLoop(Statement block, Expression condition) 
+				: base(block, condition) { }
+	}
 
+	public class WhileLoop : LoopStatement
+	{
 		public WhileLoop(Expression condition, Statement block)
-		{
-			this.condition = condition;
-			this.block = block;
-		}
+				: base(block, condition) { }
 	}
 
+	public class ForLoop : LoopStatement
+	{
+		public Identifier var;
+		public Expression start;
+		public Expression end;
+		public int direction;
 
-
-
-
+		public ForLoop(Identifier var, Expression start, Expression end, Statement body)
+				: base(body, null)
+		{
+			this.var = var;
+			this.start = start;
+			this.end = end;
+		}
+	}
 
 
 	public class BlockStatement : Statement
 	{
-		public Statement stmt;
-		public BlockStatement next;
-
-		public BlockStatement(Statement stmt, BlockStatement next)
+		public StatementList stmts;
+		
+		public BlockStatement(StatementList stmts)
 		{
-			this.stmt = stmt;
-			this.next = next;
+			this.stmts = stmts;
 		}
 	}
 
@@ -270,23 +212,6 @@ namespace crosspascal.ast.nodes
 		{
 			this.body = body;
 			this.with = with;
-		}
-	}
-
-	public class ForLoop : Statement
-	{
-		public Statement body;
-		public Identifier var;
-		public Expression start;
-		public Expression end;
-		public int direction;
-
-		public ForLoop(Identifier var, Expression start, Expression end, Statement body)
-		{
-			this.body = body;
-			this.var = var;
-			this.start = start;
-			this.end = end;
 		}
 	}
 
@@ -314,18 +239,15 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class AssemblerNodeList : Node
+	public class AssemblerBlock : BlockStatement
 	{
-		public string asmop;
-		public AssemblerNodeList next;
+		public NodeList asmInstrs;
 
-		public AssemblerNodeList(string asmop, AssemblerNodeList next)
+		public AssemblerBlock(NodeList asm)
 		{
-			this.asmop = asmop;
-			this.next = next;
+			this.asmInstrs = asm;
 		}
 	}
-
 
 
 
