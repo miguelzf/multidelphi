@@ -151,9 +151,9 @@ namespace crosspascal.parser
 
 %type<NodeList> interfdecllst maindecllst declseclst formalparams formalparamslst constsec
 %type<NodeList> funcdirectopt funcdir_noterm_opt funcdirectlst funcqualinterflst stmtlst routinedecldirs
-%type<NodeList> caseselectorlst caselabellst onlst recfieldlst idlsttypeid
+%type<NodeList> caseselectorlst caselabellst onlst recfieldlst propfield
 %type<NodeList> scopeseclst complst classmethodlstopt methodlst classproplstopt classproplst fieldlst 
-%type<NodeList> propspecifiers constinitexprlst recvarlst rscstringlst idlsttypeidlst
+%type<NodeList> propspecifiers constinitexprlst recvarlst rscstringlst propfieldlst
 %type<NodeList> idlst heritage exprlst exprlstopt 
 %type<NodeList> setelemlst arrayconst recordconst fieldconstlst arrayszlst arraytypedef 
 
@@ -197,7 +197,7 @@ namespace crosspascal.parser
 %type<TypeNode> integraltype realtype inttype chartype stringtype varianttype funcrettype 
 %type<TypeNode> arraytype settype filetype pointertype funcparamtype  structuredtype
 
-%type<PropertySpecifier> propinterfopt defaultdiropt indexspecopt storedspecopt defaultspecopt implementsspecopt readacessoropt writeacessoropt
+%type<PropertySpecifier> propinterfopt defaultdiropt indexopt storedopt defaultopt implopt readopt writeopt
 %type<Expression> unaryexpr constinitexpr inheritexpr basicliteral rangestart functypeinit set
 %type<RecordNode> recordtype recordtypebasic
 
@@ -1246,62 +1246,63 @@ property
 	;
 
 defaultdiropt
-	:							{ $$ = null; /* TODO */ }
-	| id SCOL					{ $$ = new PropertyDefault($1); }	// id == DEFAULT
+	:							{ $$ = null;}
+	| id SCOL					{ $$ = new PropertyDefault($1); }
 	;
 
 propinterfopt
 	:							{ $$ = null; }
-	| LBRAC idlsttypeidlst RBRAC{ $$ = null; /* TODO */ }
+	| LBRAC propfieldlst RBRAC	{ $$ = null; /* TODO */ }
 	;
 	
-idlsttypeidlst
-	: idlsttypeid							{ $$ = null; /* TODO */ }
-	| idlsttypeidlst SCOL idlsttypeid		{ $$ = null; /* TODO */ }
+propfieldlst
+	: propfield							{ $$ = null; /* TODO */ }
+	| propfieldlst SCOL propfield		{ $$ = null; /* TODO */ }
 	;
 
-idlsttypeid
-	: idlst COLON funcparamtype	{ $$ = null; /* TODO */ }
-	| KW_CONST idlst COLON funcparamtype		{ $$ = null; /* TODO */ }
+propfield
+	: idlst COLON funcparamtype				{ $$ = null; /* TODO */ }
+	| KW_CONST idlst COLON funcparamtype	{ $$ = null; /* TODO */ }
 	;
 
 
 	// Properties directive: emitted as keywords caught from within a lexical scope
 
 propspecifiers
-	: indexspecopt readacessoropt writeacessoropt storedspecopt defaultspecopt implementsspecopt		{ $$ = null; /* TODO */ }
+	: indexopt readopt writeopt storedopt defaultopt implopt	{ $$ = new PropertySpecifiers($1, $2, $3, $4, $5, $6); }
 	;
 
-indexspecopt
+indexopt
 	:							{ $$ = null; }
-	| KW_INDEX CONST_INT		{ $$ = new PropertyIndex(yyVal); }
+	| KW_INDEX CONST_INT		{ $$ = new PropertyIndex($2);  }
 	;
 
-storedspecopt
-	:							{ $$ = null; /* TODO */ }
-	| KW_STORED id				{ $$ = null; /* TODO */ }
+storedopt
+	:							{ $$ = null;  }
+	| KW_STORED id				{ $$ = new PropertyStored($2); }
 	;
 
-defaultspecopt
-	:							{ $$ = null; /* TODO */ }
-	| KW_DEFAULT literal		{ $$ = null; /* TODO */ }
-	| KW_NODEFAULT				{ $$ = null; /* TODO */ }
+defaultopt
+	:							{ $$ = null;  }
+	| KW_DEFAULT literal		{ $$ = new PropertyIndex($2); }
+	| KW_NODEFAULT				{ $$ = null;  }
 	;
 
-implementsspecopt
-	:							{ $$ = null; /* TODO */ }
-	| KW_IMPLEMENTS id			{ $$ = null; /* TODO */ }
+implopt
+	:							{ $$ = null;  }
+	| KW_IMPLEMENTS id			{ $$ = new PropertyImplements($2); }
 	;
 
-readacessoropt
-	:							{ $$ = null; /* TODO */ }
-	| KW_READ	id				{ $$ = null; /* TODO */ }
+readopt
+	:							{ $$ = null;  }
+	| KW_READ	id				{ $$ = new PropertyReadNode($2); }
 	;
 
-writeacessoropt
-	:							{ $$ = null; /* TODO */ }
-	| KW_WRITE	id				{ $$ = null; /* TODO */ }
+writeopt
+	:							{ $$ = null; }
+	| KW_WRITE	id				{ $$ = new PropertyWriteNode($2); }
 	;
+
 
 	
 	
