@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -44,9 +45,16 @@ namespace crosspascal.ast.nodes
 	#endregion
 
 
-	public abstract class TypeNode : Node
+	public abstract class TypeNode : Node, IComparable
 	{
 
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null)
+				return false;
+
+			return (this.GetType() == o.GetType());
+		}
 	}
 
 	/// <summary>
@@ -56,6 +64,7 @@ namespace crosspascal.ast.nodes
 	public class UndefinedType: TypeNode
 	{
 		public static readonly UndefinedType Default = new UndefinedType();
+
 	}
 
 	/// <summary>
@@ -63,17 +72,37 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class DeclaredType : TypeNode
 	{
-		String name;
+		public String name;
 
 		public DeclaredType(String name)
 		{
 			this.name = name;
 		}
+
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null)
+				return false;
+
+			DeclaredType type = (DeclaredType) o;
+			return (name == type.name);
+		}
 	}
 
+	/// <summary>
+	/// Type of a Routine (function, procedure, method, etc)
+	/// </summary>
 	public class RoutineType : TypeNode
 	{
 		// TODO
+
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null)
+				return false;
+
+			return (this.GetType() == o.GetType());
+		}
 	}
 
 	public class ClassType : DeclaredType
@@ -84,27 +113,34 @@ namespace crosspascal.ast.nodes
 	public abstract class VariableType : TypeNode
 	{
 		public int typeSize;
+
 	}
 
 	public class RecordType : VariableType
 	{
-		TypeList compTypes;
+		OrdinalTypeList compTypes;
 
-		public RecordType(TypeList compTypes)
+		public RecordType(OrdinalTypeList compTypes)
 		{
 			this.compTypes = compTypes;
 		}
-	}
 
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null || this.GetType() != o.GetType())
+				return false;
 
+			RecordType rtype = (RecordType) o;
+			var types = compTypes.Zip(rtype.compTypes, (x,y) => {return new KeyValuePair<IOrdinalType,IOrdinalType>(x,y); });
 
-	public interface IOrdinalType<T> 
-	{
-		public T MinValue();
+			foreach (var x in types)
+				if (!x.Key.Equals(x.Value))
+					return false;
 
-		public T MaxValue();
-
-		public UInt64 ValueRange();
+		//	var list = new List<KeyValuePair<IOrdinalType,IOrdinalType>>(types);
+		//	list.ForEach( (x) => {	if (!x.Key.Equals(x.Value.Equals)) return false; });
+			return true;
+		}
 	}
 
 	public class MetaclassType : TypeNode
@@ -115,13 +151,36 @@ namespace crosspascal.ast.nodes
 		{
 			this.baseType = baseType;
 		}
+
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null || this.GetType() != o.GetType())
+				return false;
+
+			MetaclassType rtype = (MetaclassType) o;
+			return (this.Equals(rtype));
+		}
 	}
 
 
 	public class TypeUnknown : TypeNode
 	{
-		public static readonly UndefinedType Default = new UndefinedType();	
+		public static readonly UndefinedType Default = new UndefinedType();
+
 	}
+
+
+	public interface IOrdinalType : IComparable
+	{
+		public ValueType MinValue();
+
+		public ValueType MaxValue();
+
+		public UInt64 ValueRange();
+
+		public bool Equals(Object o);
+	}
+
 
 
 
@@ -151,19 +210,37 @@ namespace crosspascal.ast.nodes
 	public abstract class ScalarType : VariableType
 	{
 
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null)
+				return false;
+
+			return (this.GetType() == o.GetType());
+		}
 	}
 
 	public class StringType : ScalarType
 	{
-
+		public static readonly StringType Default = new StringType();
 	}
 
 	public class VariantType : ScalarType
 	{
+		ScalarType type;
 
+		/// <summary>
+		/// Actual type cannot be initially known.
+		/// </summary>
+		public VariantType() { }
+
+		public override virtual bool Equals(Object o)
+		{
+			// TODO
+			return true;
+		}
 	}
 
-	public class PointerType<T> : ScalarType where T : ScalarType
+	public class PointerType : ScalarType
 	{
 		ScalarType pointedType;
 
@@ -171,149 +248,166 @@ namespace crosspascal.ast.nodes
 		{
 			this.pointedType = pointedType;
 		}
+
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null || this.GetType() != o.GetType())
+				return false;
+
+			PointerType otype = (PointerType) o;
+			return pointedType.Equals(otype.pointedType);
+		}
 	}
 
 
-	#region Discrete Types
+	#region Integral Types
 
-	public abstract class IntegralType<ValueType> : ScalarType, IOrdinalType<ValueType>
+	public abstract class IntegralType : ScalarType, IOrdinalType
 	{
 		public abstract ValueType MinValue();
 
 		public abstract ValueType MaxValue();
 
-		public abstract UInt64 ValueRange(); 
+		public abstract UInt64 ValueRange();
+
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null)
+				return false;
+
+			return (this.GetType() == o.GetType());
+		}
 	}
 	
 
 	#region Integer Types
 
-	public abstract class IntegerType<T> : IntegralType<T>
+	public abstract class IntegerType : IntegralType
 	{
 
 	}
 
-	public abstract class SignedIntegerType<T> : IntegerType<T>
+	public abstract class SignedIntegerType : IntegerType
 	{
 
 	}
 
-	public abstract class UnsignedIntegerType<T> : IntegerType<T>
+	public abstract class UnsignedIntegerType : IntegerType
 	{
 
 	}
 
-	public class UnsignedInt8Type : UnsignedIntegerType<Byte> // byte
+	public class UnsignedInt8Type : UnsignedIntegerType // byte
 	{
 		public static readonly UnsignedInt8Type Default = new UnsignedInt8Type();
 
-		public Byte MinValue() { return Byte.MinValue; }
+		public ValueType MinValue() { return Byte.MinValue; }
 
-		public Byte MaxValue() { return Byte.MaxValue; }
+		public ValueType MaxValue() { return Byte.MaxValue; }
 
-		public UInt64 ValueRange() { return (UInt64) (MaxValue() - MinValue()); }
+		public UInt64 ValueRange() { return Byte.MaxValue - Byte.MinValue; }
 	}
 
-	public class UnsignedInt16Type : UnsignedIntegerType<UInt16> // word
+	public class UnsignedInt16Type : UnsignedIntegerType // word
 	{
 		public static readonly UnsignedInt16Type Default = new UnsignedInt16Type();
 
-		public UInt16 MinValue() { return UInt16.MinValue; }
+		public ValueType MinValue() { return UInt16.MinValue; }
 
-		public UInt16 MaxValue() { return UInt16.MaxValue; }
+		public ValueType MaxValue() { return UInt16.MaxValue; }
 
-		public UInt64 ValueRange() { return (UInt64)(MaxValue() - MinValue()); }
+		public UInt64 ValueRange() { return UInt16.MaxValue - UInt16.MinValue; }
 	}
 
-	public class UnsignedInt32Type : UnsignedIntegerType<UInt32> // cardinal
+	public class UnsignedInt32Type : UnsignedIntegerType		// cardinal
 	{
 		public static readonly UnsignedInt32Type Default = new UnsignedInt32Type();
 
-		public UInt32 MinValue() { return UInt32.MinValue; }
+		public ValueType MinValue() { return UInt32.MinValue; }
 
-		public UInt32 MaxValue() { return UInt32.MaxValue; }
+		public ValueType MaxValue() { return UInt32.MaxValue; }
 
-		public UInt64 ValueRange() { return (UInt64)(MaxValue() - MinValue()); }
+		public UInt64 ValueRange() { return UInt32.MaxValue - UInt32.MinValue; }
 	}
 
-	public class UnsignedInt64Type : UnsignedIntegerType<UInt64> // uint64
+	public class UnsignedInt64Type : UnsignedIntegerType	 // uint64
 	{
 		public static readonly UnsignedInt64Type Default = new UnsignedInt64Type();
 
-		public UInt64 MinValue() { return UInt64.MinValue; }
+		public ValueType MinValue() { return UInt64.MinValue; }
 
-		public UInt64 MaxValue() { return UInt64.MaxValue; }
+		public ValueType MaxValue() { return UInt64.MaxValue; }
 
-		public UInt64 ValueRange() { return (UInt64)(MaxValue() - MinValue()); }
+		public UInt64 ValueRange() { return UInt64.MaxValue - UInt64.MinValue; }
 	}
 
-	public class SignedInt8Type : SignedIntegerType<SByte> // smallint
+	public class SignedInt8Type : SignedIntegerType		// smallint
 	{
 		public static readonly SignedInt8Type Default = new SignedInt8Type();
 
-		public SByte MinValue() { return SByte.MinValue; }
+		public ValueType MinValue() { return SByte.MinValue; }
 
-		public SByte MaxValue() { return SByte.MaxValue; }
+		public ValueType MaxValue() { return SByte.MaxValue; }
 
-		public UInt64 ValueRange() { return (UInt64)(MaxValue() - MinValue()); }
+		public UInt64 ValueRange() { return sbyte.MaxValue - (int)sbyte.MinValue; }
 	}
 
-	public class SignedInt16Type : SignedIntegerType<Int16> // smallint
+	public class SignedInt16Type : SignedIntegerType	 // smallint
 	{
 		public static readonly SignedInt16Type Default = new SignedInt16Type();
 
-		public Int16 MinValue() { return Int16.MinValue; }
+		public ValueType MinValue() { return Int16.MinValue; }
 
-		public Int16 MaxValue() { return Int16.MaxValue; }
+		public ValueType MaxValue() { return Int16.MaxValue; }
 
-		public UInt64 ValueRange() { return (UInt64)(MaxValue() - MinValue()); }
+		public UInt64 ValueRange() { return short.MaxValue - (int)short.MinValue; }
 	}
 
-	public class SignedInt32Type : SignedIntegerType<Int32> // integer
+	public class SignedInt32Type : SignedIntegerType	// integer
 	{
 		public static readonly SignedInt32Type Default = new SignedInt32Type();
 
-		public Int32 MinValue() { return Int32.MinValue; }
+		public ValueType MinValue() { return Int32.MinValue; }
 
-		public Int32 MaxValue() { return Int32.MaxValue; }
+		public ValueType MaxValue() { return Int32.MaxValue; }
 
-		public UInt64 ValueRange() { return (UInt64)(MaxValue() - MinValue()); }
+		public UInt64 ValueRange() { return int.MaxValue - (long) int.MinValue; }
 	}
 
-	public class SignedInt64Type : IntegerType<Int64> // int64
+	public class SignedInt64Type : IntegerType // int64
 	{
 		public static readonly SignedInt64Type Default = new SignedInt64Type();
 
-		public Int64 MinValue() { return Int64.MinValue; }
+		public ValueType MinValue() { return Int64.MinValue; }
 
-		public Int64 MaxValue() { return Int64.MaxValue; }
+		public ValueType MaxValue() { return Int64.MaxValue; }
 
-		public UInt64 ValueRange() { return (UInt64)(MaxValue() - MinValue()); }
+		public UInt64 ValueRange() { return Int64.MaxValue; }
 	}
 
 	#endregion
 
 
-	public class BoolType : IntegralType<Boolean>
+	public class BoolType : IntegralType
 	{
 		public static readonly BoolType Default = new BoolType();
 
-		public Boolean MinValue() { return false; }
+		public ValueType MinValue() { return false; }
 
-		public Boolean MaxValue() { return true; }
+		public ValueType MaxValue() { return true; }
 
 		public UInt64 ValueRange() { return 2; }
 	}
 
-	public class CharType : IntegralType<Char>
+	public class CharType : IntegralType
 	{
 		public static readonly CharType Default = new CharType();
 
-		public Char MinValue () { return Char.MinValue; }
+		public ValueType MinValue() { return Char.MinValue; }
 
-		public Char MaxValue () { return Char.MaxValue; }
+		public ValueType MaxValue() { return Char.MaxValue; }
 
-		public UInt64 ValueRange() { return (UInt64)(MaxValue() - MinValue()); }
+		public UInt64 ValueRange() { return Char.MaxValue - Char.MinValue; }
 	}
 
 
@@ -325,6 +419,13 @@ namespace crosspascal.ast.nodes
 	public abstract class RealType : ScalarType
 	{
 
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null)
+				return false;
+
+			return (this.GetType() == o.GetType());
+		}
 	}
 
 	public class FloatType : RealType
@@ -366,11 +467,20 @@ namespace crosspascal.ast.nodes
 
 	public abstract class StructuredType<T> : VariableType where T : VariableType
 	{
-		public VariableType basetype;
+		public T basetype;
 
-		protected StructuredType(VariableType t)
+		protected StructuredType(T t)
 		{
 			basetype = t;
+		}
+
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null || this.GetType() != o.GetType())
+				return false;
+
+			StructuredType<T> otype = (StructuredType<T>)o;
+			return basetype.Equals(otype.basetype);
 		}
 	}
 
@@ -386,12 +496,12 @@ namespace crosspascal.ast.nodes
 			dimensions.Add((int)size);
 		}
 
-		public ArrayType(VariableType type) : base(type)
+		public ArrayType(T type) : base(type)
 		{
 			// dynamic array
 		}
 
-		public ArrayType(VariableType type, NodeList dims) : base(type)
+		public ArrayType(T type, NodeList dims) : base(type)
 		{
 			// TODO Check constant and compute value
 			foreach (Node n in dims)
@@ -402,27 +512,39 @@ namespace crosspascal.ast.nodes
 			}
 		}
 
-		public ArrayType(VariableType type, String ordinalTypeId) : base(type)
+		public ArrayType(T type, String ordinalTypeId) : base(type)
 		{
 			// TODO Resolve and check type size
 		}
 
-		public ArrayType(VariableType type, IntegralType<T> sizeType): base(type)
+		public ArrayType(T type, IntegralType sizeType): base(type)
 		{
 			UInt64 size = sizeType.ValueRange();
 			if (size > Int32.MaxValue) size = Int32.MaxValue;
 			AddDimension((uint) size);
 		}
+
+		public override virtual bool Equals(Object o)
+		{
+			if (o == null || this.GetType() != o.GetType())
+				return false;
+
+			ArrayType<T> otype = (ArrayType<T>) o;
+			if (!dimensions.Equals(otype.dimensions))
+				return false;
+
+			return basetype.Equals(otype.basetype);
+		}
 	}
 
 	public class SetType<T> : StructuredType<T> where T : VariableType
 	{
-		public SetType(VariableType type) : base(type) { }
+		public SetType(T type) : base(type) { }
 	}
 
 	public class FileType<T> : StructuredType<T> where T : VariableType
 	{
-		public FileType(VariableType type = null) : base(type) { }
+		public FileType(T type = null) : base(type) { }
 	}
 
 	#endregion
