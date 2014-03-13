@@ -121,7 +121,7 @@ namespace crosspascal.ast.nodes
 		public PropertySpecifiers specs;
 		public PropertyDefault def;
 
-		public ClassProperty(Identifier ident, TypeNode type, PropertyIndex index, PropertySpecifierNode specs, PropertyDefault def)
+		public ClassProperty(Identifier ident, TypeNode type, PropertyIndex index, PropertySpecifiers specs, PropertyDefault def)
 		{
 			this.ident = ident;
 			this.type = type;
