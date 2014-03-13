@@ -102,29 +102,37 @@ namespace crosspascal.ast.nodes
 	///				enums, sets, ranges, initializers TODO
 	///				
 	///		Types
-	///			ArrayType
-	///			SetType		
-	///			FileType
+	///			User-defined type => may be any
+	///			RoutineType
 	///			ClassType
-	///			VariantType
-	///			CharType
-	///			BoolType
-	///			IntegerType
-	///				UnsignedInt8Type
-	///				UnsignedInt16Type
-	///				UnsignedInt32Type
-	///				UnsignedInt64Type
-	///				SignedInt8Type
-	///				SignedInt16Type
-	///				SignedInt32Type
-	///				SignedInt64Type
-	///			FloatingPointType
-	///				FloatType
-	///				DoubleType
-	///				ExtendedType
-	///				CurrencyType
-	///			StringType
-	///			InterfaceDefinition
+	///			InterfaceType
+	///			VariableType
+	///				SimpleType
+	///					ScalarType		: IOrdinalType
+	///						IntegerType
+	///							UnsignedInt	...
+	///							SignedInt	...
+	///						Bool
+	///						Char
+	///					FloatingPointType
+	///						FloatType
+	///						DoubleType
+	///						ExtendedType
+	///						CurrencyType
+	///					StringType
+	///					VariantType
+	///					PointerType
+	///				EnumType			: IOrdinalType
+	///				RangeType			: IOrdinalType
+	///				RefPointerType < VariableType> 
+	///				MetaclassType < id>
+	///				StructuredType
+	///					Array < VariableType> 
+	///					Set < VariableType> 
+	///					File
+	///					Record
+	///			
+	///			InterfaceDeclaration/ClassRefType
 	///			
 	///  </summary>
 
@@ -177,6 +185,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
+
 	// =========================================================================
 	// Node Lists
 	// =========================================================================
@@ -189,89 +198,52 @@ namespace crosspascal.ast.nodes
 	/// Lists of Nodes, Expressions, Statements etc
 	/// </summary>
 
-	public class NodeList : Node
+	public abstract class ListNode<T> : Node, IEnumerable<T>
+		where T : Node
 	{
-		List<Node> nodes = new List<Node>();
+		List<T> nodes = new List<T>();
 
-		public void Add(Node t)
+		public void Add(T t)
 		{
 			if (t != null)
 				nodes.Add(t);
 		}
 
+		IEnumerator<T> IEnumerable<T>.GetEnumerator()
+		{
+			return nodes.GetEnumerator();
+		}
+
 		public override void Accept(Processor visitor)
 		{
-			foreach (Node node in nodes)
+			foreach (T node in nodes)
 				node.Accept(visitor);
 		}
 	}
 
-	public class ExpressionList : NodeList
+
+	public class NodeList : ListNode<Node>
 	{
-		List<Expression> nodes = new List<Expression>();
-
-		public void Add(Expression t)
-		{
-			if (t != null)
-				nodes.Add(t);
-		}
-
-		public override void Accept(Processor visitor)
-		{
-			foreach (Expression node in nodes)
-				node.Accept(visitor);
-		}
 	}
 
-	public class StatementList : NodeList
+	public class ExpressionList : ListNode<Expression>
 	{
-		List<Statement> nodes = new List<Statement>();
-
-		public void Add(Statement t)
-		{
-			if (t != null)
-				nodes.Add(t);
-		}
-
-		public override void Accept(Processor visitor)
-		{
-			foreach (Statement node in nodes)
-				node.Accept(visitor);
-		}
 	}
 
-	public class TypeList : NodeList
+	public class StatementList : ListNode<Statement>
 	{
-		List<TypeNode> nodes = new List<TypeNode>();
-
-		public void Add(TypeNode t)
-		{
-			if (t != null)
-				nodes.Add(t);
-		}
-
-		public override void Accept(Processor visitor)
-		{
-			foreach (TypeNode node in nodes)
-				node.Accept(visitor);
-		}
 	}
 
-	public class IdentifierList : ExpressionList
+	public class TypeList : ListNode<TypeNode>
 	{
-		List<Identifier> nodes = new List<Identifier>();
+	}
 
-		public void Add(Identifier t)
-		{
-			if (t != null)
-				nodes.Add(t);
-		}
+	public class OrdinalTypeList : ListNode<IOrdinalType>
+	{
+	}
 
-		public override void Accept(Processor visitor)
-		{
-			foreach (Identifier node in nodes)
-				node.Accept(visitor);
-		}
+	public class IdentifierList : ListNode<Identifier>
+	{
 	}
 
 	#endregion

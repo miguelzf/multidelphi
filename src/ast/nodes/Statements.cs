@@ -24,6 +24,11 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	public class EmptyStatement : Statement
+	{
+		// Do nothing
+	}
+
 	public abstract class LabelNode : Node
 	{
 	}
