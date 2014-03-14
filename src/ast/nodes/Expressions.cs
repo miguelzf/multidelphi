@@ -6,37 +6,65 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
+	#region Expressions hierarchy
+	/// <remarks>
+	///		Expression
+	///			EmptyExpr
+	///			ExpressionList
+	///			ConstExpression
+	///			UnaryExpr
+	///				Literal
+	///					Int
+	///					Char
+	///					String
+	///					Real
+	///					Ptr (nil)
+	///					Bool
+	///				PtrDeref
+	///				LogicalNotExpr
+	///				AddrExpr
+	///				Lvalue
+	///					Identifier
+	///					RoutineCall
+	///					CastExpr
+	///					FieldAccess
+	///					ArrayAcess
+	///			BinaryExpr
+	///				Arithmetic
+	///				Type
+	///				Logical
+	/// </remarks>
+	#endregion
 
 	//==========================================================================
 	// Expressions' base classes
 	//==========================================================================
-
 	public abstract class Expression : Node
 	{
 		/// <summary>
 		/// Expression type, to be checked or determined in static type-validation
 		/// </summary>
-		public TypeNode type { get; set; }
+		public TypeNode Type { get; set; }
 
 		/// <summary>
 		/// Indicates if expression is constant
 		/// </summary>
-		public bool isConst { get; set; }
+		public bool IsConst { get; set; }
 
 		/// <summary>
 		/// Expression value, if constant
 		/// </summary>
-		public Literal constantValue { get; set; }
+		public Literal Value { get; set; }
 
 		/// <summary>
 		/// Indicates if expression must be constant
 		/// </summary>
-		public bool enforceConst { get; set; }
+		public bool EnforceConst { get; set; }
 
 		/// <summary>
 		/// Type that must be enforced/checked
 		/// </summary>
-		public TypeNode forcedType { get; set; }
+		public TypeNode ForcedType { get; set; }
 	}
 
 	public class EmptyExpression : Expression
@@ -45,38 +73,139 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public abstract class UnaryExpression : Expression
+	public class ExpressionList : Expression, IListNode<Expression>
 	{
+		List<Expression> nodes = new List<Expression>();
 
+		public virtual void Add(IEnumerable<Expression> t)
+		{
+			nodes.AddRange(t);
+		}
+		
+		public ExpressionList()
+		{
+		}
+
+		public ExpressionList(IEnumerable<Expression> t)
+		{
+			Add(t);
+		}
+
+		public virtual void Add(Expression t)
+		{
+			if (t != null)
+				nodes.Add(t);
+		}
+
+		public virtual void InsertAt(int idx, Expression t)
+		{
+			if (t != null)
+				nodes.Insert(idx, t);
+		}
+
+		IEnumerator<Expression> IEnumerable<Expression>.GetEnumerator()
+		{
+			return nodes.GetEnumerator();
+		}
+
+		public override void Accept(Processor visitor)
+		{
+			foreach (Expression node in nodes)
+				node.Accept(visitor);
+		}
 	}
+
+
+	#region Constant and initiliazer expressions
+	//==========================================================================
+	// Constants and Initializers
+	//==========================================================================
+
+	/// <summary>
+	/// Wrapper node for const expressions
+	/// Should be used for all initializations
+	/// </summary>
+	public class ConstExpression : Expression
+	{
+		Expression expr;
+
+		public ConstExpression(Expression expr)
+		{
+			this.expr = expr;
+			this.EnforceConst = true;
+			expr.EnforceConst = true;
+		}
+	}
+
+	public abstract class StructuredConstant : ConstExpression
+	{
+		public StructuredConstant(ExpressionList exprlist) : base(exprlist) { }
+	}
+
+	public class ArrayConst : StructuredConstant
+	{
+		public ArrayConst(ExpressionList exprlist) : base(exprlist) { }
+
+		/// <summary>
+		/// String initializer for Char Arrays
+		/// </summary>
+		/// <param name="arrayElems"></param>
+		public ArrayConst(String arrayElems)
+			: base(new ExpressionList(arrayElems.ToCharArray().Select(x => new CharLiteral(x)))){ }
+	}
+
+	public class RecordConst : StructuredConstant
+	{
+		public RecordConst(FieldInitList exprlist) : base(exprlist) { }
+	}
+
+	public class FieldInitList : ExpressionList
+	{
+		List<FieldInit> nodes = new List<FieldInit>();
+
+		public void Add(FieldInit t)
+		{
+			if (t != null)
+				nodes.Add(t);
+		}
+	}
+
+	public class FieldInit : ConstExpression
+	{
+		string fieldname;
+
+		public FieldInit(string name, Expression expr)
+			: base(expr)
+		{
+			fieldname = name;
+		}
+	}
+
+	#endregion
+
+
+	#region Binary Expressions
+	//==========================================================================
+	// Binary Expressions
+	//==========================================================================
 
 	public abstract class BinaryExpression : Expression
 	{
 	}
 
-	public abstract class LvalueExpression : UnaryExpression
+	public class SetIn : BinaryExpression
 	{
+		Expression expr;
+		Expression set;		// enforce that 'set' is in fact a set
 
-	}
-
-	public abstract class Literal : UnaryExpression
-	{
-		public ValueType value;
-
-		public Literal() { }
-
-		public Literal(ValueType t)
+		public SetIn(Expression e1, Expression e2)
 		{
-			value = t;
+			expr = e1;
+			set = e2;
 		}
 	}
 
-
-	//==========================================================================
-	// Binary Expressions
-	//==========================================================================
-
-	#region Binary Expressions
+	#region Arithmetic Binary Expressions
 
 	public abstract class ArithmethicBinaryExpression : BinaryExpression
 	{
@@ -129,7 +258,9 @@ namespace crosspascal.ast.nodes
 	{
 		public ShiftLeft(Expression e1, Expression e2) : base(e1, e2) { }
 	}
+	#endregion
 
+	#region Logical Binary Expressions
 
 	public abstract class LogicalBinaryExpression : BinaryExpression
 	{
@@ -188,17 +319,9 @@ namespace crosspascal.ast.nodes
 		public GreaterOrEqual(Expression e1, Expression e2) : base(e1, e2) { }
 	}
 
-	public class SetIn : BinaryExpression
-	{
-		Expression expr;
-		Expression set;		// enforce that 'set' is in fact a set
+	#endregion
 
-		public SetIn(Expression e1, Expression e2)
-		{
-			expr = e1;
-			set  = e2;
-		}
-	}
+	#region Typing Binary Expressions
 
 	public abstract class TypeBinaryExpression : BinaryExpression
 	{
@@ -208,7 +331,7 @@ namespace crosspascal.ast.nodes
 		public TypeBinaryExpression(Expression e1, TypeNode e2)
 		{
 			expr = e1;
-			type = e2;
+			Type = e2;
 		}
 	}
 
@@ -224,65 +347,19 @@ namespace crosspascal.ast.nodes
 	{
 		public TypeCast(Expression e1, TypeNode e2) : base(e1, e2) { }
 	}
-
 	#endregion
 
+	#endregion	// Binary expressions
 
-	#region Literals
-
-	//==========================================================================
-	// Literals
-	//==========================================================================
-
-	public class IntLiteral : Literal
-	{
-		public IntLiteral(Int32 value) : base(value) { }
-	}
-
-	public class CharLiteral : Literal
-	{
-		public CharLiteral(Char value) : base(value) { }
-	}
-
-	public class StringLiteral : Literal
-	{
-		public bool isChar;
-
-		public StringLiteral(String value) : base(value)
-		{
-			if (value.Length == 1)
-				isChar = true;
-		}
-	}
-
-	public class BoolLiteral : Literal
-	{
-		public BoolLiteral(Boolean value) : base(value) { }
-	}
-
-	public class RealLiteral : Literal
-	{
-		public RealLiteral(Double value) : base(value) { }
-	}
-
-	public class PointerLiteral : Literal
-	{
-		public PointerLiteral(uint value)
-		{
-			if (value != 0x0)	// Const_NIl
-				Error("Pointer constant can only be nil");
-			this.value = value;
-		}
-	}
-
-	#endregion
 
 	#region Unary Expressions
-
 	//==========================================================================
 	// Unary Expressions
 	//==========================================================================
 
+	public abstract class UnaryExpression : Expression
+	{
+	}
 
 	public class LogicalNot : UnaryExpression
 	{
@@ -316,13 +393,88 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	public class Set : UnaryExpression
+	{
+		public ExpressionList setelems;
+
+		public Set(ExpressionList elems)
+		{
+			setelems = elems;
+		}
+	}
+
 	#endregion
 
-	#region L-values
 
+	#region Literals
+	//==========================================================================
+	// Literals
+	//==========================================================================
+
+	public abstract class Literal : UnaryExpression
+	{
+		public Object value;
+
+		public Literal() { }
+
+		public Literal(Object t)
+		{
+			value = t;
+		}
+	}
+
+	public class IntLiteral : Literal
+	{
+		public IntLiteral(Int32 value) : base(value) { }
+	}
+
+	public class CharLiteral : Literal
+	{
+		public CharLiteral(Char value) : base(value) { }
+	}
+
+	public class StringLiteral : Literal
+	{
+		public bool isChar;
+
+		public StringLiteral(string value) : base(value)
+		{
+			if (value.Length == 1)
+				isChar = true;
+		}
+	}
+
+	public class BoolLiteral : Literal
+	{
+		public BoolLiteral(Boolean value) : base(value) { }
+	}
+
+	public class RealLiteral : Literal
+	{
+		public RealLiteral(Double value) : base(value) { }
+	}
+
+	public class PointerLiteral : Literal
+	{
+		public PointerLiteral(uint value)
+		{
+			if (value != 0x0)	// Const_NIl
+				Error("Pointer constant can only be nil");
+			this.value = value;
+		}
+	}
+
+	#endregion
+
+
+	#region Left-value expressions
 	//==========================================================================
 	// Lvalue Expressions
 	//==========================================================================
+
+	public abstract class LvalueExpression : UnaryExpression
+	{
+	}
 
 	public class ArrayAccess : LvalueExpression
 	{
@@ -346,12 +498,20 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	public class InheritedCall : LvalueExpression
+	{
+		RoutineCall call;
+
+		public InheritedCall(RoutineCall call)
+		{
+			this.call = call;
+		}
+	}
 
 	public class RoutineCall : LvalueExpression
 	{
 		public Identifier fname;
 		public ExpressionList args;
-		public bool inherited;
 
 		public RoutineCall(Identifier fname)
 		{
@@ -375,12 +535,6 @@ namespace crosspascal.ast.nodes
 			this.obj = obj;
 			this.field = field;
 		}
-
-		public FieldAcess(LvalueExpression obj, Identifier field)
-		{
-			this.obj = obj;
-			this.field = field;
-		}
 	}
 
 	/// <summary>
@@ -397,16 +551,5 @@ namespace crosspascal.ast.nodes
 	}
 
 	#endregion
-
-
-	public class Set : UnaryExpression
-	{
-		public Expression setelems;
-
-		public Set(Expression elems)
-		{
-			setelems = elems;
-		}
-	}
 
 }

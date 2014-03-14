@@ -136,9 +136,14 @@ namespace crosspascal.ast.nodes
 
 	public abstract class Section : Node
 	{
-		public NodeList decls;
+		public DeclarationList decls;
 
-		public Section(NodeList decls)
+		public Section()
+		{
+			decls = new DeclarationList();
+		}
+
+		public Section(DeclarationList decls)
 		{
 			this.decls = decls;
 		}
@@ -148,7 +153,8 @@ namespace crosspascal.ast.nodes
 	{
 		public BlockStatement block;
 
-		public CodeSection(NodeList decls, BlockStatement block) : base(decls)
+		public CodeSection(DeclarationList decls, BlockStatement block)
+			: base(decls)
 		{
 			this.block = block;
 		}
@@ -156,12 +162,12 @@ namespace crosspascal.ast.nodes
 
 	public class ProgramBody : CodeSection
 	{
-		public ProgramBody(NodeList decls, BlockStatement block) : base(decls, block) { }
+		public ProgramBody(DeclarationList decls, BlockStatement block) : base(decls, block) { }
 	}
 
 	public class RoutineBody : CodeSection
 	{
-		public RoutineBody(NodeList decls, BlockStatement block) : base(decls, block) { }
+		public RoutineBody(DeclarationList decls, BlockStatement block) : base(decls, block) { }
 	}
 
 	public class InitializationSection : CodeSection
@@ -179,7 +185,8 @@ namespace crosspascal.ast.nodes
 	{
 		public NodeList uses;
 
-		public DeclarationSection(NodeList uses, NodeList decls) : base(decls)
+		public DeclarationSection(NodeList uses, DeclarationList decls)
+			: base(decls)
 		{
 			this.uses = uses;
 		}
@@ -187,18 +194,30 @@ namespace crosspascal.ast.nodes
 	
 	public class InterfaceSection : DeclarationSection
 	{
-		public InterfaceSection(NodeList uses, NodeList decls) : base(uses, decls) { }
+		public InterfaceSection(NodeList uses, DeclarationList decls) : base(uses, decls) { }
 	}
 
 	public class ImplementationSection : DeclarationSection
 	{
-		public ImplementationSection(NodeList uses, NodeList decls) : base(uses, decls) { }
+		public ImplementationSection(NodeList uses, DeclarationList decls) : base(uses, decls) { }
 	}
 
 
 	public class ClassBody : Section
 	{
-		public ClassBody(NodeList decls) : base(decls) { }
+		// TODO rever
+
+		public Scope scope;
+		public ClassFieldList fields;
+		public ClassContentList content;
+
+		public ClassBody(Scope scope, ClassFieldList fields, ClassContentList content)
+		{
+			this.scope = scope;
+			this.fields = fields;
+			this.content = content;
+		}
+		public ClassBody(DeclarationList decls) : base(decls) { }
 	}
 
 	public class AssemblerRoutineBody : RoutineBody

@@ -28,109 +28,6 @@ namespace crosspascal.ast.nodes
 	///			Exports
 	///			RoutineBody
 	///	
-	///		Declaration
-	///			FuncRetDecl
-	///			FuncParamDel	// of routines
-	///				DefaultParam
-	///				VarParam
-	///				OutParam
-	///				ConstParam
-	///			TypeDecl
-	///				ObjectDecl
-	///					Interf
-	///					Record
-	///					Class
-	///					Object
-	///			VarDecl
-	///			ConstDecl
-	///			RscStrDecl
-	///			RoutineDecl
-	///				Function
-	///				Procedure
-	///				Constructor
-	///				Destructor
-	///				Property !? or PropertyAcessor/Specified??
-	///				
-	///			ObjFieldDecl !?
-	///			
-	///		Statement
-	///			EmptyStmt
-	///			LabeledStmt	< Label, Stmt >
-	///			ProcCallStmt <RoutineCall expr>
-	///			Assign < lvalue, expression>
-	///			Inherited stmt < Statement >
-	///			Block
-	///			With
-	///			AsmBlock
-	///			If
-	///			TryExcept
-	///			TryFinally
-	///			Raise
-	///			Loop
-	///				For
-	///				While
-	///				RepeatUntil
-	///			Case
-	///			ControlFlowStmt
-	///				Break
-	///				Continue
-	///				Goto
-	/// 
-	///		Expression
-	///			EmptyExpr
-	///			UnaryExpr
-	///				Literal
-	///					Int
-	///					Char
-	///					String
-	///					Real
-	///					Ptr (nil)
-	///					Bool
-	///				PtrDeref
-	///				LogicalNotExpr
-	///				AddrExpr
-	///				Lvalue
-	///					Identifier
-	///					RoutineCall
-	///					CastExpr
-	///					FieldAccess
-	///					ArrayAcess
-	///			BinaryExpr
-	///				Additive
-	///				Multiplicative
-	///				Conditional
-	///				
-	///				
-	/// Types
-	/// 	DeclaredType => may be any, user-defined
-	/// 	UndefinedType	< for untyped parameters. incompatible with any type >
-	/// 	RoutineType
-	/// 	ClassType
-	/// 	VariableType
-	/// 		ScalarType
-	/// 			SimpleType		: IOrdinalType
-	/// 				IntegerType
-	/// 					UnsignedInt	...
-	/// 					SignedInt	...
-	/// 				Bool
-	/// 				Char
-	/// 			RealType
-	/// 				FloatType
-	/// 				DoubleType
-	/// 				ExtendedType
-	/// 				CurrencyType
-	/// 			StringType
-	/// 			VariantType
-	/// 			PointerType <ScalarType> 
-	/// 		EnumType			: IOrdinalType
-	/// 		RangeType			: IOrdinalType
-	/// 		MetaclassType < id>
-	/// 		StructuredType
-	/// 			Array < VariableType> 
-	/// 			Set	  < VariableType> 
-	/// 			File  < VariableType> 
-	/// 		Record
-	///			
 	///  </summary>
 
 
@@ -139,13 +36,14 @@ namespace crosspascal.ast.nodes
 	{
 
 		/// <summary>
-		/// Report and propagate errors ocurred during the syntactic 
-		/// and simple-semantic checks done at the construction of nodes
+		/// Report and propagate errors from the syntactic and simple-semantic checks done during the creation of the AST
 		/// </summary>
 		/// <param name="visitor"></param>
-		protected void Error(string msg)
+		static protected bool Error(string msg)
 		{
-			throw new crosspascal.parser.AstNodeException(msg);
+			// throw new crosspascal.parser.AstNodeException(msg);
+			Console.Error.WriteLine(msg);
+			return false;
 		}
 
 		/// <summary>
@@ -192,16 +90,50 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// Lists of Nodes, Expressions, Statements etc
 	/// </summary>
+	/// 
+	public interface IListNode<T> : IEnumerable<T> where T : Node
+	{
+		void Add(T t);
 
-	public abstract class ListNode<T> : Node, IEnumerable<T>
-		where T : Node
+		void InsertAt(int idx, T t);
+	
+		// IEnumerator<T> IEnumerable<T>.GetEnumerator();
+
+		void Accept(Processor visitor);
+	}
+
+	public abstract class ListNode<T> : Node, IListNode<T> where T : Node
 	{
 		List<T> nodes = new List<T>();
+
+		public T Get(int idx)
+		{
+			if (idx < 0 || idx > nodes.Count - 1)
+				return null;
+			else
+				return nodes.ElementAt(idx);
+		}
+
+		public T GetFirst()
+		{
+			return nodes.ElementAt(0);
+		}
+
+		public T GetLast()
+		{
+			return nodes.ElementAt(nodes.Count-1);
+		}
 
 		public void Add(T t)
 		{
 			if (t != null)
 				nodes.Add(t);
+		}
+
+		public void InsertAt(int idx, T t)
+		{
+			if ( t!= null)
+				nodes.Insert(idx, t);
 		}
 
 		IEnumerator<T> IEnumerable<T>.GetEnumerator()
@@ -217,14 +149,10 @@ namespace crosspascal.ast.nodes
 	}
 
 
+
 	public class NodeList : ListNode<Node>
 	{
 		public NodeList() { }
-	}
-
-	public class ExpressionList : ListNode<Expression>
-	{
-		public ExpressionList() { }
 	}
 
 	public class StatementList : ListNode<Statement>
@@ -237,8 +165,14 @@ namespace crosspascal.ast.nodes
 		public TypeList() { }
 	}
 
-	public class OrdinalTypeList : ListNode<IOrdinalType>
+	public class OrdinalTypeList : Node, System.Collections.IEnumerable
 	{
+		public System.Collections.IEnumerator GetEnumerator()
+		{
+			// TODO
+			return null;
+		}
+
 		public OrdinalTypeList() { }
 	}
 
@@ -260,6 +194,11 @@ namespace crosspascal.ast.nodes
 	public class ParameterList : ListNode<ParameterDeclaration>
 	{
 		public ParameterList() { }
+	}
+
+	public class FieldList : ListNode<FieldDeclaration>
+	{
+		public FieldList() { }
 	}
 
 	#endregion

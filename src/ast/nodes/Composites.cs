@@ -48,32 +48,6 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-
-
-	public class FieldInit : Node
-	{
-		public Identifier ident;
-		public Expression expr;
-
-		public FieldInit(Identifier ident, Expression expr)
-		{
-			this.ident = ident;
-			this.expr = expr;
-		}
-	}
-
-	public class FieldInitList : Node
-	{
-		public FieldInit init;
-		public FieldInitList next;
-
-		public FieldInitList(FieldInit init, FieldInitList next)
-		{
-			this.init = init;
-			this.next = next;
-		}
-	}
-
 	public class ClassFieldList : Node
 	{
 		public VarDeclaration decl;
@@ -131,19 +105,6 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ClassBody : ClassContent
-	{
-		public Scope scope;
-		public ClassFieldList fields;
-		public ClassContentList content;
-
-		public ClassBody(Scope scope, ClassFieldList fields, ClassContentList content)
-		{
-			this.scope = scope;
-			this.fields = fields;
-			this.content = content;
-		}
-	}
 
 
 	public class PropertyReadNode : Node

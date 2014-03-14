@@ -6,10 +6,36 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
+	#region Statements hierarchy
+	/// <remarks>
+	///		Statement
+	///			EmptyStmt
+	///			LabeledStmt	- Label, Stmt 
+	///			ProcCallStmt -RoutineCall expr
+	///			Assign - lvalue, expression
+	///			InheritedStmt - Statement 
+	///			Block
+	///			With
+	///			AsmBlock
+	///			If
+	///			TryExcept
+	///			TryFinally
+	///			Raise
+	///			Loop
+	///				For
+	///				While
+	///				RepeatUntil
+	///			Case
+	///			ControlFlowStmt
+	///				Break
+	///				Continue
+	///				Goto
+	/// </remarks>
+	#endregion
 
 	public abstract class Statement : Node
 	{
-		public string label;
+
 	}
 
 	public class LabelStatement : Statement
@@ -29,12 +55,12 @@ namespace crosspascal.ast.nodes
 		// Do nothing
 	}
 
-	public class AssignementStatement : Statement
+	public class Assignement : Statement
 	{
 		public LvalueExpression lvalue;
 		public Expression expr;
 
-		public AssignementStatement(LvalueExpression lvalue, Expression expr)
+		public Assignement(LvalueExpression lvalue, Expression expr)
 		{
 			this.lvalue = lvalue;
 			this.expr = expr;
@@ -65,15 +91,16 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class InheritedStatement : Statement
+	public class ExpressionStatement : Statement
 	{
-		public Statement body;
+		Expression expr;
 
-		public InheritedStatement(Statement body)
+		public ExpressionStatement(Expression expr)
 		{
-			this.body = body;
+			this.expr = expr;
 		}
 	}
+
 
 	public class OnStatement : Statement
 	{
@@ -192,18 +219,19 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-
 	public class BlockStatement : Statement
 	{
 		public StatementList stmts;
-		
+
+		protected BlockStatement() { }
+
 		public BlockStatement(StatementList stmts)
 		{
 			this.stmts = stmts;
 		}
 	}
 
-	public class WithStatement : Statement
+	public class WithStatement : BlockStatement
 	{
 		public Statement body;
 		public Expression with;

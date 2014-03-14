@@ -7,198 +7,354 @@ using System.Threading.Tasks;
 namespace crosspascal.ast.nodes
 {
 
-	public abstract partial class RoutineDeclaration : TypeDeclaration
+	/// <summary>
+	/// Type of a Routine (function, procedure, method, etc)
+	/// </summary>
+	public partial class ProceduralType : TypeNode
 	{
-		public bool isStatic;
-		public string qualifname;
-		public ParameterList parameters;
-		public ProcedureDirectiveList directives;
-		public CallConvention callconv;
+		public ParameterList @params;
 
-		public RoutineDeclaration(string name, ParameterList @params, CallConvention callconv = CallConvention.Register,
-									ProcedureDirectiveList directives)
+		/// <summary>
+		/// Function's return type. Must be null for every non-function routine.
+		/// </summary>
+		public ScalarType funcret { get; set; }
+
+		CallableDirectives _directives;
+		public CallableDirectives Directives
 		{
-			this.isStatic = false;
-			this.qualifname = name;
-			this.parameters = @params;
-			this.directives = directives;
+			get { return _directives; }
+			set
+			{
+				_directives = value;
+				_directives.CheckDirectives();
+			}
+		}
+
+		public ProceduralType(ParameterList @params, ScalarType ret = null, CallableDirectives dirs = null)
+		{
+			this.@params = @params;
+			this.funcret = ret;
+			if (dirs != null)
+				Directives = dirs;
+		}
+
+
+		public override bool Equals(Object o)
+		{
+			if (o == null || this.GetType() != o.GetType())
+				return false;
+
+			ProceduralType rtype = (ProceduralType)o;
+			var types = @params.Zip(rtype.@params,
+				(x, y) => {
+					return new KeyValuePair<TypeNode, TypeNode>(x.type, y.type);
+				});
+
+			foreach (var x in types)
+				if (!x.Key.Equals(x.Value))
+					return false;
+			return true;
 		}
 	}
 
-	public class ProcedureBodyNode : Node
+	public class MethodType : ProceduralType
 	{
-		public DeclarationList decls;
-		public BlockStatement body;
+		public MethodType(ParameterList @params, ScalarType ret = null, CallableDirectives dirs = null)
+			: base(@params, ret, dirs) { }
+	}
 
-		public ProcedureBodyNode(DeclarationList decls, BlockStatement body)
+
+	/// <summary>
+	/// Declaration of a procedural type, i.e. Callable unit
+	/// </summary>
+	public abstract partial class CallableDeclaration : TypeDeclaration
+	{
+
+		public CallableDeclaration(string name, ParameterList @params, ScalarType ret = null, CallableDirectives dirs = null)
+			: base(name, new ProceduralType(@params, ret, dirs))
 		{
-			this.decls = decls;
-			this.body = body;
 		}
 	}
+
+	/// <summary>
+	/// Declaration of a global Routine
+	/// </summary>
+	public class RoutineDeclaration : CallableDeclaration
+	{
+		public RoutineDeclaration(string name, ParameterList @params, ScalarType ret = null, RoutineDirectives dirs = null)
+			: base(name, @params, ret, dirs) { }
+	}
+
+	/// <summary>
+	/// Declaration of a Method
+	/// </summary>
+	public class MethodDeclaration : CallableDeclaration
+	{
+		public bool isStatic { get; set; }
+		public String objname;
+
+		public MethodDeclaration(string name, string objname, ParameterList @params, ScalarType ret = null, MethodDirectives dirs = null)
+			: base(name, @params, ret, dirs)
+		{
+			this.objname = objname;
+			isStatic = false;
+		}
+	}
+
+	public class SpecialMethodDeclaration : MethodDeclaration
+	{
+		public SpecialMethodDeclaration(string name, string objname, ParameterList @params)
+			: base(name, objname, @params)	{	}
+	}
+
+	public class ConstructorDeclaration : SpecialMethodDeclaration
+	{
+		public ConstructorDeclaration(string name, string objname, ParameterList @params)
+			: base(name, objname, @params)	{	}
+	}
+
+	public class DestructorDeclaration : SpecialMethodDeclaration
+	{
+		public DestructorDeclaration(string name, string objname, ParameterList @params)
+			: base(name, objname, @params) { }
+	}
+
 
 	public class RoutineDefinition : Node
 	{
 		public RoutineDeclaration header;
-		public ProcedureBodyNode body;
+		public RoutineBody body;
 
-		public RoutineDefinition(RoutineDeclaration header, ProcedureBodyNode body)
+		public RoutineDefinition(RoutineDeclaration header, RoutineBody body)
 		{
 			this.header = header;
 			this.body = body;
 		}
 	}
 
-	public enum RoutineDirective
+
+
+	#region Directives Aggregators
+
+	/// <summary>
+	/// Callable Units Directives
+	/// </summary>
+	public abstract class CallableDirectives : Node
 	{
-		Absolute,
-		Abstract,
-		Assembler,
-		Dynamic,
-		Export,
-		Inline,
-		Override,
-		Overload,
-		Reintroduce,
-		External,
-		Forward,
-		Virtual,
-		VarArgs
+		private CallConvention _callconv = 0;
+		public CallConvention   Callconv
+		{
+			get { return _callconv ; }
+			set {
+				if (_callconv != 0) Error("Cannot specify more than 1 Call convention");
+				else				_callconv = value; 
+			}
+		}
+
+		HashSet<GeneralDirective> generaldirs = new HashSet<GeneralDirective>();
+
+		public CallableDirectives()
+		{
+			_callconv = 0;
+		}
+
+		public virtual void Add(CallableDirectives dirs)
+		{
+			if (dirs == null)
+				return;
+			if (dirs.Callconv != 0)
+				Callconv = dirs.Callconv;
+			foreach (GeneralDirective dir in dirs.generaldirs)
+				generaldirs.Add(dir);
+		}
+
+		public virtual void Add(int dir)
+		{
+			if (Enum.IsDefined(typeof(GeneralDirective), dir))
+				generaldirs.Add((GeneralDirective)dir);
+			else if (Enum.IsDefined(typeof(CallConvention), dir))
+				Callconv = (CallConvention)dir;
+			else
+				Error("Invalid routine diretive");
+		}
+
+		/// <summary>
+		/// Checks the immediate coherence between function directives.
+		/// Must be called after all directives are added
+		/// </summary>
+		/// <returns></returns>
+		internal virtual bool CheckDirectives()
+		{
+			bool ret = true;
+			if (_callconv == 0)
+				_callconv = CallConvention.Register;
+
+			if (generaldirs.Contains(GeneralDirective.VarArgs) && Callconv != CallConvention.CDecl)
+				ret |= Error("Varargs directive can only be used with the Cdecl calling convention");
+
+			return ret;
+		}
+
+		public override bool Equals(object o)
+		{
+			if (o == null || !o.GetType().IsSubclassOf(this.GetType()))
+				return false;
+			CallableDirectives rtype = (CallableDirectives) o;
+			return Callconv == rtype.Callconv && generaldirs == rtype.generaldirs;
+		}
 	}
 
-	public enum RoutineReturnType
+
+	/// <summary>
+	/// Routine Directives
+	/// </summary>
+	public class RoutineDirectives : CallableDirectives
 	{
-		Procedure,
-		Function,
-		Constructor,
-		Destructor
+		private ImportDirective _importdir = ImportDirective.Default;
+		public ImportDirective Importdir
+		{
+			get { return _importdir; }
+			set
+			{
+				if (_importdir != 0) Error("Cannot specify more than external/forward directive");
+				else _importdir = value;
+			}
+		}
+
+		public ExternalDirective External { get; set; }
+
+		/// <summary>
+		/// Checks the immediate coherence between function directives.
+		/// Must be called after all directives are added
+		/// </summary>
+		/// <returns></returns>
+		internal override bool CheckDirectives()
+		{
+			return base.CheckDirectives();
+		}
+
+		public override bool Equals(object o)
+		{
+			if (!base.Equals(o))
+				return false;
+			var ot = (RoutineDirectives) o;
+			return Importdir == ot.Importdir && External  == ot.External;
+		}
+	}
+
+	/// <summary>
+	/// Method Directives
+	/// </summary>
+	public class MethodDirectives : CallableDirectives
+	{
+		HashSet<MethodDirective> methoddirs = new HashSet<MethodDirective>();
+
+		public override void Add(int dir)
+		{
+			if (Enum.IsDefined(typeof(MethodDirective), dir))
+				methoddirs.Add((MethodDirective)dir);
+			else
+				base.Add(dir);
+		}
+
+		public void Add(MethodDirectives dirs)
+		{
+			base.Add(dirs);
+			foreach (MethodDirective dir in dirs.methoddirs)
+				methoddirs.Add(dir);
+		}
+
+		/// <summary>
+		/// Checks the immediate coherence between function directives.
+		/// Must be called after all directives are added
+		/// </summary>
+		/// <returns></returns>
+		internal override bool CheckDirectives()
+		{
+			base.CheckDirectives();
+
+			if (methoddirs.Contains(MethodDirective.Override) && methoddirs.Contains(MethodDirective.Abstract))
+				Error("Method cannot be have both Override and Abstract directives");
+
+			if (methoddirs.Contains(MethodDirective.Abstract) && !methoddirs.Contains(MethodDirective.Virtual))
+				Error("Abstract Method must also be Virtual");
+
+			if (methoddirs.Contains(MethodDirective.Dynamic) && !methoddirs.Contains(MethodDirective.Virtual))
+				Error("Method cannot be both Dynamic and Virtual");
+
+			return true;
+		}
+
+		public override bool Equals(object o)
+		{
+			return base.Equals(o) && methoddirs == ((MethodDirectives) o).methoddirs;
+		}
+	}
+
+	#endregion
+
+
+	#region Directives enums
+
+	public class ExternalDirective
+	{
+		public ConstExpression File { get; set; }
+		public ConstExpression Name { get; set; }
+
+		public ExternalDirective(ConstExpression file, ConstExpression name = null)
+		{
+			File = file;
+			Name = name;
+			File.ForcedType = StringType.Single;
+			Name.ForcedType = StringType.Single;
+		}
+	}
+
+
+	/// <summary>
+	/// Directives constraints:
+	///		Override | Abstract
+	///		Abstract => virtual
+	///		varargs => cdecl
+	/// </summary>
+
+	public enum MethodDirective
+	{
+		Abstract = 1000,
+		Override,
+		Virtual,		// optimised for memory
+		Dynamic,		// same as Virtual. optimised for speed
+		Reintroduce,	// suppress warnings when shadowing inherited methods (~= C#'s 'new' qualifier)
+	}
+
+	public enum GeneralDirective
+	{
+		Overload = 2000,
+		Assembler,		// routine body must be defined in ASM
+		Export,		// export function 
+		Inline,
+		VarArgs,		// for C Cdecl varargs
+		Far,
+		Near,
+		Resident,
+	}
+
+	public enum ImportDirective
+	{
+		Default = 3000,
+		External,
+		Forward,
 	}
 
 	public enum CallConvention
 	{
-		Pascal,
+		Pascal = 4000,
 		SafeCall,
 		StdCall,
 		CDecl,
 		Register
 	}
 
-
-	public class CallConventionNode : Node
-	{
-		public CallConvention convention;
-
-		public CallConventionNode(CallConvention convention)
-		{
-			this.convention = convention;
-		}
-	}
-
-
-	public class ProcedureDirective : Node
-	{
-		public RoutineDirective type;
-
-		public ProcedureDirective(RoutineDirective type)
-		{
-			this.type = type;
-		}
-	}
-
-	public class ProcedureDirectiveList : Node
-	{
-		public ProcedureDirective dir;
-		public ProcedureDirectiveList next;
-
-		public ProcedureDirectiveList(ProcedureDirective dir, ProcedureDirectiveList next)
-		{
-			this.dir = dir;
-			this.next = next;
-		}
-	}
-
-	public class ExternalProcedureDirective : ProcedureDirective
-	{
-		public Identifier importLib;
-		public string importName;
-
-		public ExternalProcedureDirective(Identifier importLib, string importName)
-			: base(RoutineDirective.External)
-		{
-			this.importLib = importLib;
-			this.importName = importName;
-		}
-	}
-
-	public class CallPointerDeclaration : DeclarationNode
-	{
-		public IdentifierList ids;
-		public RoutineDeclaration proc;
-		public ProcedureDirectiveList dirs;
-
-		public CallPointerDeclaration(IdentifierList ids, RoutineDeclaration proc, ProcedureDirectiveList dirs, Node init)
-		{
-			this.ids = ids;
-			this.proc = proc;
-			this.dirs = dirs;
-			//this.init = init;
-		}
-	}
-
-	public class ProcedureTypeDeclarationNode : TypeDeclarationNode
-	{
-		public ProcedureDirectiveList dirs;
-
-		public ProcedureTypeDeclarationNode(Identifier ident, TypeNode type, ProcedureDirectiveList dirs)
-			: base(ident, type)
-		{
-			this.dirs = dirs;
-		}
-	}
-
-	public abstract class ParameterQualifierNode : Node
-	{
-	}
-
-	public class ConstParameterQualifier : ParameterQualifierNode
-	{
-	}
-
-	public class VarParameterQualifier : ParameterQualifierNode
-	{
-	}
-
-	public class OutParameterQualifier : ParameterQualifierNode
-	{
-	}
-
-	public class ParamDeclaration : Node
-	{
-		public IdentifierList idlist;
-		public Identifier type;
-		public ParameterQualifierNode qualifier;
-		public Expression init;
-
-		public ParamDeclaration(ParameterQualifierNode qualifier, IdentifierList idlist, Identifier type, Expression init)
-		{
-			this.idlist = idlist;
-			this.type = type;
-			this.qualifier = qualifier;
-			this.init = init;
-		}
-	}
-
-	public class ParamDeclarationList : Node
-	{
-		public ParamDeclaration param;
-		public ParamDeclarationList next;
-
-		public ParamDeclarationList(ParamDeclaration param, ParamDeclarationList next)
-		{
-			this.param = param;
-			this.next = next;
-		}
-	}
-
+	#endregion
 
 }

@@ -6,165 +6,169 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
+
+	#region Declarations hierarchy
+	/// <remarks>
+	///	Declaration
+	///		Constant
+	///		RscStr
+	///		Variable
+	///			Parameter	// of routines
+	///				DefaultParam
+	///				VarParam
+	///				OutParam
+	///				ConstParam
+	///		ObjectField
+	///		TypeDecl
+	///			Custom-Type
+	///			
+	///			CallableUnit
+	///				Routine
+	///				Method
+	///					SpecialMethod
+	///						Constructor
+	///						Destructor
+	///			ObjectDecl
+	///				Interf
+	///				Record
+	///				Class/Object
+	///			
+	/// </remarks>
+	#endregion
+
 	public abstract class Declaration : Node
 	{
-		public String name;
+		public List<String> names;
 		public TypeNode type;
 
-		public Declaration() { }
+		protected Declaration() { }
 
-		public Declaration(String name, TypeNode t = null)
+		protected Declaration(TypeNode t = null)
 		{
-			this.name = name;
-			this.type = t;
+			if (t != null)	type = t;
+			else	type = UndefinedType.Single;
+		}
+
+		public Declaration(List<String> names, TypeNode t = null) : this(t)
+		{
+			names.AddRange(names);
+		}
+
+		public Declaration(String name, TypeNode t = null) : this(t)
+		{
+			names.Add(name);
 		}
 	}
 
 	public class LabelDeclaration : Declaration
 	{
 		public LabelDeclaration(String name) : base(name, null) { }
+
+		public LabelDeclaration(List<String> names) : base(names, null) { }
 	}
 
 	public class VarDeclaration : Declaration
 	{
-		public List<String> names;
 		public Expression init;
 		public String shareVal;
 
 		public VarDeclaration(List<String> ids, TypeNode t, Expression init = null)
-		{
-			this.name = ids[0];
-			this.init = init;
-		}
-
-		public VarDeclaration(String name, TypeNode t, Expression init = null) : base(name, t)
+			: base(ids, t)
 		{
 			this.init = init;
 		}
 
-		public VarDeclaration(List<String> ids, TypeNode t, String shareVal)
-		{
-			this.name = ids[0];
-			this.shareVal = shareVal;
-		}
-
-		public VarDeclaration(String name, TypeNode t, String shareVal) : base(name, t)
+		public VarDeclaration(List<String> ids, TypeNode t, String shareVal) 
+			: base(ids, t)
 		{
 			this.shareVal = shareVal;
 		}
 	}
 
+	/// <summary>
+	/// Routine parameters
+	/// </summary>
+
 	public class ParameterDeclaration : VarDeclaration
 	{
-		public ParameterDeclaration(List<String> ids, TypeNode t = null, Expression init = null) : base(ids, t, init)
+		public ParameterDeclaration(List<String> ids, ScalarType t = null, Expression init = null) : base(ids, t, init)
 		{
-			if (t == null)
-				t = UndefinedType.Single;
-		}
-
-		public ParameterDeclaration(String id, TypeNode t = null, Expression init = null) : base(id, t, init)
-		{
-			if (t == null)
-				t = UndefinedType.Single;
 		}
 	}
 
 	public class VarParameterDeclaration : ParameterDeclaration
 	{
-		public VarParameterDeclaration(List<String> ids, TypeNode t, Expression init = null) : base(ids, t, init) { }
-
-		public VarParameterDeclaration(String id, TypeNode t, Expression init = null) : base(id, t, init) { }
+		public VarParameterDeclaration(List<String> ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
 	}
 
 	public class ConstParameterDeclaration : ParameterDeclaration
 	{
-		public ConstParameterDeclaration(List<String> ids, TypeNode t, Expression init = null) : base(ids, t, init) { }
-
-		public ConstParameterDeclaration(String id, TypeNode t, Expression init = null) : base(id, t, init) { }
+		public ConstParameterDeclaration(List<String> ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
 	}
 
 	public class OutParameterDeclaration : ParameterDeclaration
 	{
-		public OutParameterDeclaration(List<String> ids, TypeNode t, Expression init = null) : base(ids, t, init) { }
-
-		public OutParameterDeclaration(String id, TypeNode t, Expression init = null) : base(id, t, init) { }
+		public OutParameterDeclaration(List<String> ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
 	}
 
 
+	/// <summary>
+	/// Composite object field declaration
+	/// </summary>
+	public class FieldDeclaration : Declaration
+	{
+		public FieldDeclaration(List<String> ids, VariableType t = null)
+			: base(ids, t)
+		{
+		}
+	}
 
 	/// <summary>
 	/// TODO!! Must Derive type
 	/// </summary>
-	public abstract class ConstDeclaration : Declaration
+	public class ConstDeclaration : Declaration
 	{
 		public Expression init;
 
 		public ConstDeclaration(String name, Expression init) : base(name)
 		{
 			this.init = init;
-			init.enforceConst = true;
-			this.type = init.type;
+			init.EnforceConst = true;
+			this.type = init.Type;
 		}
 	}
 
-	public class EnumDeclaration : Declaration
-	{
-		public EnumValueList enumlist;
-
-		public EnumDeclaration(EnumValueList enumlist)
-		{
-			this.enumlist = enumlist;
-		}
-
-		/// <summary>
-		/// Determine and assign the Enum initializers, from the user-defined to the automatic
-		/// </summary>
-		public void AssignEnumInitializers()
-		{
-			int val = 0;	// default start val
-
-			foreach (EnumValue al in enumlist)
-			{
-				if (al.init == null)
-					al.init = new IntLiteral(val);
-				else
-				{
-					if (al.init.constantValue.type.ISA(IntegerType.Single))
-						val = (int)al.init.constantValue.value;
-					else
-						Error("Enum initializer must be an integer");
-				}
-				val++;
-			}
-		}
-	}
 
 	// TODO move this to types. 
 	// Create initilization node
 
 	public class EnumValue : ConstDeclaration
 	{
-		// Init value to be computed a posterior
+		// Init value to be computed a posteriori
 		public EnumValue(string val) : base(val, null) { }
 
 		public EnumValue(string val, Expression init) : base(val, init)
 		{
-			init.forcedType = IntegerType.Single;
+			init.ForcedType = IntegerType.Single;
 		}
 	}
 
 	/// <summary>
 	/// Creates a custom, user-defined name for some Type
+	/// 
+	/// TODO fetch custom type for typename
 	/// </summary>
 	public class TypeDeclaration : Declaration
 	{
 		String typename;
-		VariableType reftype;
 
-		public TypeDeclaration(String name, VariableType type)
+		protected TypeDeclaration() { }
+
+		public TypeDeclaration(String name, TypeNode type) : base(name, type) { }
+
+		public TypeDeclaration(String name, String typename) : base(name)
 		{
-			typename = name;
-			reftype = type;
+			this.typename = typename;
 		}
 	}
 
@@ -173,7 +177,7 @@ namespace crosspascal.ast.nodes
 		// In file Composites.cs
 	}
 
-	public abstract partial class RoutineDeclaration : TypeDeclaration
+	public abstract partial class CallableDeclaration : TypeDeclaration
 	{
 		// In file Routines.cs
 	}
