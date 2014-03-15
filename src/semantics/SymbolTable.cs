@@ -17,13 +17,13 @@ namespace crosspascal.semantics
 
 		public SymbolTable()
 		{
-			Push("initial defaul");
+			Push("initial default");
 		}
 
 		/// <summary>
 		/// Create a new Symbol context and push it onto the stack
 		/// </summary>
-		public void Push(string id = null, bool shadowing = false)
+		public void Push(string id = null, bool shadowing = true)
 		{
 			current = new SymbolContext<T>(id, shadowing);
 			contexts.Push(current);
@@ -74,14 +74,14 @@ namespace crosspascal.semantics
 
 			T t;
 			foreach (var c in contexts.Reverse())
-				if ((t = c.Lookup(key)) != null && !c.allowShadowing)
+				if ((t = c.Lookup(key)) != null && c.allowShadowing)
 					return t;
 			return null;
 		}
 
 		/// <summary>
-		/// Add symbol to current context.
-		/// Checks if symbol has not been defined in any previous context that does allow shadowing
+		/// Add symbol to current context. Checks that the symbol has not been defined 
+		/// in any previous context that does allow shadowing
 		/// </summary>
 		public bool Add(String key, T symbol)
 		{
@@ -106,7 +106,7 @@ namespace crosspascal.semantics
 			internal bool allowShadowing;
 			internal string id;
 
-			internal SymbolContext(String id = null, bool allowShadowing = false)
+			internal SymbolContext(String id = null, bool allowShadowing = true)
 			{
 				this.id = id;
 				this.allowShadowing = allowShadowing;
