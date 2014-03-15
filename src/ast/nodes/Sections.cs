@@ -40,9 +40,9 @@ namespace crosspascal.ast.nodes
 	public class LibraryNode : CompilationUnit
 	{
 		public ProgramBody body;
-		public UsesItem uses;
+		public NodeList uses;
 
-		public LibraryNode(String name, UsesItem uses, ProgramBody body) : base(name)
+		public LibraryNode(String name, NodeList uses, ProgramBody body) : base(name)
 		{
 			this.uses = uses;
 			this.body = body;
@@ -65,10 +65,11 @@ namespace crosspascal.ast.nodes
 
 	public class PackageNode : CompilationUnit
 	{
-		public UsesItem requires;
-		public UsesItem contains;
+		public NodeList requires;
+		public NodeList contains;
 
-		public PackageNode(String name, UsesItem requires, UsesItem contains) : base(name)
+		public PackageNode(String name, NodeList requires, NodeList contains)
+			: base(name)
 		{
 			this.requires = requires;
 			this.contains = contains;
@@ -96,7 +97,14 @@ namespace crosspascal.ast.nodes
 
 	public class UsesItem : UnitItem
 	{
+		public String location;
+	
 		public UsesItem(String name) : base(name) { }
+
+		public UsesItem(String name, String location) : base(name)
+		{
+			this.location = location;
+		}
 	}
 
 	public class RequiresItem : UnitItem
@@ -106,20 +114,27 @@ namespace crosspascal.ast.nodes
 
 	public class ContainsItem : UnitItem
 	{
+		public String location;
+
 		public ContainsItem(String name) : base(name) { }
+
+		public ContainsItem(String name, String location) : base(name)
+		{
+			this.location = location;
+		}
 	}
 
 	public class ExportItem : UnitItem
 	{
 		public String exportname;
-		public Expression index;
+		public int index;
 
-		public ExportItem(String name, String exportname) :base(name)
+		public ExportItem(String name, String exportname = null) : base(name)
 		{
 			this.exportname = exportname;
 		}
 
-		public ExportItem(String name,  Expression index) :base(name)
+		public ExportItem(String name, int index) :base(name)
 		{
 			this.index = index;
 		}
@@ -151,9 +166,9 @@ namespace crosspascal.ast.nodes
 
 	public abstract class CodeSection : Section
 	{
-		public BlockStatement block;
+		public Statement block;
 
-		public CodeSection(DeclarationList decls, BlockStatement block)
+		public CodeSection(DeclarationList decls, Statement block)
 			: base(decls)
 		{
 			this.block = block;
@@ -162,22 +177,22 @@ namespace crosspascal.ast.nodes
 
 	public class ProgramBody : CodeSection
 	{
-		public ProgramBody(DeclarationList decls, BlockStatement block) : base(decls, block) { }
+		public ProgramBody(DeclarationList decls, Statement block) : base(decls, block) { }
 	}
 
 	public class RoutineBody : CodeSection
 	{
-		public RoutineBody(DeclarationList decls, BlockStatement block) : base(decls, block) { }
+		public RoutineBody(DeclarationList decls, Statement block) : base(decls, block) { }
 	}
 
 	public class InitializationSection : CodeSection
 	{
-		public InitializationSection(BlockStatement body) : base(null, body) { }
+		public InitializationSection(Statement body) : base(null, body) { }
 	}
 
 	public class FinalizationSection : CodeSection
 	{
-		public FinalizationSection(BlockStatement body) : base(null, body) { }
+		public FinalizationSection(Statement body) : base(null, body) { }
 	}
 
 
@@ -200,24 +215,6 @@ namespace crosspascal.ast.nodes
 	public class ImplementationSection : DeclarationSection
 	{
 		public ImplementationSection(NodeList uses, DeclarationList decls) : base(uses, decls) { }
-	}
-
-
-	public class ClassBody : Section
-	{
-		// TODO rever
-
-		public Scope scope;
-		public ClassFieldList fields;
-		public ClassContentList content;
-
-		public ClassBody(Scope scope, ClassFieldList fields, ClassContentList content)
-		{
-			this.scope = scope;
-			this.fields = fields;
-			this.content = content;
-		}
-		public ClassBody(DeclarationList decls) : base(decls) { }
 	}
 
 	public class AssemblerRoutineBody : RoutineBody

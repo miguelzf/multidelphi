@@ -54,7 +54,7 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Expression value, if constant
 		/// </summary>
-		public Literal Value { get; set; }
+		public ConstantValue Value { get; set; }
 
 		/// <summary>
 		/// Indicates if expression must be constant
@@ -65,6 +65,28 @@ namespace crosspascal.ast.nodes
 		/// Type that must be enforced/checked
 		/// </summary>
 		public TypeNode ForcedType { get; set; }
+
+
+		/// <summary>
+		/// Downcast the ConstantValue to an IntegralType, and return the content
+		/// The type of the expression must be checked first to ensure
+		/// </summary>
+		public ulong GetIntegralValue()
+		{
+			if (!Type.ISA(typeof(IntegralType)))
+			{
+				ErrorInternal("Attempt to downcast ConstantValue to Integral Value, real type is " + Type);
+				return 0;
+			}
+
+			return ((IntegralValue) Value).val;
+		}
+
+
+		public bool Equals(Expression obj)
+		{
+			return obj != null && Value.Equals(obj) && Type.Equals(obj);
+		}
 	}
 
 	public class EmptyExpression : Expression
@@ -77,20 +99,22 @@ namespace crosspascal.ast.nodes
 	{
 		List<Expression> nodes = new List<Expression>();
 
-		public virtual void Add(IEnumerable<Expression> t)
-		{
-			nodes.AddRange(t);
-		}
-		
 		public ExpressionList()
 		{
 		}
-
+		public ExpressionList(Expression t)
+		{
+			Add(t);
+		}
 		public ExpressionList(IEnumerable<Expression> t)
 		{
 			Add(t);
 		}
 
+		public virtual void Add(IEnumerable<Expression> t)
+		{
+			nodes.AddRange(t);
+		}
 		public virtual void Add(Expression t)
 		{
 			if (t != null)
@@ -104,6 +128,11 @@ namespace crosspascal.ast.nodes
 		}
 
 		IEnumerator<Expression> IEnumerable<Expression>.GetEnumerator()
+		{
+			return nodes.GetEnumerator();
+		}
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
 		{
 			return nodes.GetEnumerator();
 		}
@@ -202,6 +231,15 @@ namespace crosspascal.ast.nodes
 		{
 			expr = e1;
 			set = e2;
+		}
+	}
+
+	public class SetRange : BinaryExpression
+	{
+		public SetRange(RangeType type)
+		{
+			this.ForcedType = this.Type = type;
+			this.EnforceConst = true;
 		}
 	}
 
@@ -345,8 +383,9 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class TypeCast : TypeBinaryExpression
 	{
-		public TypeCast(Expression e1, TypeNode e2) : base(e1, e2) { }
+		public TypeCast(TypeNode t,  Expression e) : base(e, t) { }
 	}
+
 	#endregion
 
 	#endregion	// Binary expressions
@@ -361,41 +400,46 @@ namespace crosspascal.ast.nodes
 	{
 	}
 
-	public class LogicalNot : UnaryExpression
+	public abstract class SimpleUnaryExpression : Expression
 	{
-		public Expression exp;
+		public Expression expr;
 
-		public LogicalNot(Expression exp)
+		public SimpleUnaryExpression() { }
+
+		public SimpleUnaryExpression(Expression expr)
 		{
-			this.exp = exp;
+			this.expr = expr;
 		}
 	}
 
-	public class AddressLvalue : UnaryExpression
+	public class UnaryPlus : SimpleUnaryExpression
 	{
-		public LvalueExpression exp;
-
-		public AddressLvalue(LvalueExpression exp)
-		{
-			this.exp = exp;
-		}
+		public UnaryPlus(Expression expr) : base(expr) { }
 	}
 
-	public class SetRange : UnaryExpression
+	public class UnaryMinus : SimpleUnaryExpression
 	{
-		public Expression min;
-		public Expression max;
+		public UnaryMinus(Expression expr) : base(expr) { }
+	}
 
-		public SetRange(Expression min, Expression max)
-		{
-			this.min = min;
-			this.max = max;
-		}
+	public class LogicalNot : SimpleUnaryExpression
+	{
+		public LogicalNot(Expression expr) : base(expr) { }
+	}
+
+	public class AddressLvalue : SimpleUnaryExpression
+	{
+		public AddressLvalue(Expression expr) : base(expr) { }
 	}
 
 	public class Set : UnaryExpression
 	{
 		public ExpressionList setelems;
+
+		public Set()
+		{
+			setelems = new ExpressionList();
+		}
 
 		public Set(ExpressionList elems)
 		{
@@ -403,6 +447,116 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	#endregion
+
+	#region Compile-time computed values
+	#pragma warning disable 659
+
+	public abstract class ConstantValue : Node
+	{
+	}
+
+	// For ints, chars and bools
+	public class IntegralValue : ConstantValue
+	{
+		public ulong val;
+		public IntegralValue(ulong val) { this.val = val; }
+
+		public override bool Equals(object obj)
+		{
+			if (obj == null || obj.GetType() != this.GetType())
+				return false;
+
+			return val == ((IntegralValue)obj).val;
+		}
+
+/*		public override ulong range(OrdinalLiteral l2)
+		{
+			if (base.range(l2) == 0)
+				return 0;
+
+			long val1 = (long)Value;
+			if (l2.GetType() == typeof(SIntLiteral))
+			{
+				long val2 = (long) l2.Value;
+				if (val2 < val1)
+				{	Error("Invalid range: upper limit less than lower");
+					return 0;
+				}
+
+				if ((val1 < 0) == (val2 < 0))	// same sign
+					return (ulong) (val2 - val1);
+				else	// diff sign
+					return (ulong)val1 + (ulong)val2;
+			}
+			else	// l1 == UIntLiteral
+			{
+				ulong val2 = (ulong)l2.Value;
+				if (val1 < 0)	// negative
+				{
+					return val2. + (ulong)val1;
+				}
+				else	// positive
+				if (val2 < (ulong) val1)
+				{	Error("Invalid range: upper limit less than lower");
+					return 0;
+				}
+
+			}
+		}
+		protected override ulong range(OrdinalLiteral l1)
+		{
+			if (!l1.ISA(typeof(IntLiteral)))
+			{
+				ErrorInternal("Int Literal range with non integer type");
+				return 0;
+			}
+			return 1;
+		}
+		// range(this... other)
+		public abstract ulong range(OrdinalLiteral l1);
+
+		public override ulong range(OrdinalLiteral l1)
+		{
+			if (base.range(l1) == 0)
+				return 0;
+
+			if ((long)Value - (long)l1.Value)
+
+			return Math.Abs((long)Value - (long)l1.Value);
+		}
+*/
+	}
+
+	public class StringValue : ConstantValue
+	{
+		public string val;
+		public StringValue(string val) { this.val = val; }
+
+		public override bool Equals(object obj)
+		{
+			if (obj == null || obj.GetType() != this.GetType())
+				return false;
+
+			return val == ((StringValue)obj).val;
+		}
+	}
+
+	public class RealValue : ConstantValue
+	{
+		public double val;
+		public RealValue(double val) { this.val = val; }
+
+		public override bool Equals(object obj)
+		{
+			if (obj == null || obj.GetType() != this.GetType())
+				return false;
+
+			return val == ((RealValue)obj).val;
+		}
+	}
+
+	#pragma warning restore 659
 	#endregion
 
 
@@ -413,54 +567,62 @@ namespace crosspascal.ast.nodes
 
 	public abstract class Literal : UnaryExpression
 	{
-		public Object value;
-
 		public Literal() { }
 
-		public Literal(Object t)
+		public Literal(ConstantValue val, ScalarType t)
 		{
-			value = t;
+			this.Type = this.ForcedType = t;
+			this.Value = val;
+			this.IsConst = this.EnforceConst = true;
 		}
 	}
 
-	public class IntLiteral : Literal
+	public abstract class OrdinalLiteral : Literal
 	{
-		public IntLiteral(Int32 value) : base(value) { }
+		public OrdinalLiteral() { }
+
+		public OrdinalLiteral(ulong v, IntegralType t) : base(new IntegralValue(v),t) { }
 	}
 
-	public class CharLiteral : Literal
+	public class IntLiteral : OrdinalLiteral
 	{
-		public CharLiteral(Char value) : base(value) { }
+		public IntLiteral(ulong val)	: base((ulong) val, IntegerType.Single) { }
+	}
+
+	public class CharLiteral : OrdinalLiteral
+	{
+		public CharLiteral(char value)	: base((ulong)value, CharType.Single) { }
+	}
+
+	public class BoolLiteral : OrdinalLiteral
+	{
+		public BoolLiteral(bool value)	: base(Convert.ToUInt64(value), BoolType.Single) { }
 	}
 
 	public class StringLiteral : Literal
 	{
 		public bool isChar;
 
-		public StringLiteral(string value) : base(value)
+		public StringLiteral(string value)
+			: base(new StringValue(value), StringType.Single)
 		{
 			if (value.Length == 1)
 				isChar = true;
 		}
 	}
 
-	public class BoolLiteral : Literal
-	{
-		public BoolLiteral(Boolean value) : base(value) { }
-	}
-
 	public class RealLiteral : Literal
 	{
-		public RealLiteral(Double value) : base(value) { }
+		public RealLiteral(double value) : base(new RealValue(value),RealType.Single) { }
 	}
 
 	public class PointerLiteral : Literal
 	{
-		public PointerLiteral(uint value)
+		public PointerLiteral(ulong value)
+			: base(new IntegralValue(value), PointerType.Single)
 		{
 			if (value != 0x0)	// Const_NIl
 				Error("Pointer constant can only be nil");
-			this.value = value;
 		}
 	}
 
@@ -480,6 +642,14 @@ namespace crosspascal.ast.nodes
 	{
 		public LvalueExpression lvalue;
 		public ExpressionList acessors;
+		// object alternative to lvalue
+		public ArrayConst array;
+
+		public ArrayAccess(ArrayConst array, ExpressionList acessors)
+		{
+			this.array = array;
+			this.acessors = acessors;
+		}
 
 		public ArrayAccess(LvalueExpression lvalue, ExpressionList acessors)
 		{
@@ -510,27 +680,35 @@ namespace crosspascal.ast.nodes
 
 	public class RoutineCall : LvalueExpression
 	{
-		public Identifier fname;
+		public LvalueExpression func;
 		public ExpressionList args;
+		public ScalarType basictype;
 
-		public RoutineCall(Identifier fname)
+		public RoutineCall(LvalueExpression func)
 		{
-			this.fname = fname;
+			this.func = func;
 			args = new ExpressionList();
 		}
 
-		public RoutineCall(Identifier fname, ExpressionList args) :this(fname)
+		public RoutineCall(LvalueExpression fname, ExpressionList args)
+			: this(fname)
 		{
 			this.args = args;
+		}
+
+		public RoutineCall(LvalueExpression fname, ScalarType t)
+			: this(fname)
+		{
+			basictype = t;
 		}
 	}
 
 	public class FieldAcess : LvalueExpression
 	{
 		public LvalueExpression obj;
-		public Identifier field;
+		public string field;
 
-		public FieldAcess(LvalueExpression obj, Identifier field)
+		public FieldAcess(LvalueExpression obj, string field)
 		{
 			this.obj = obj;
 			this.field = field;

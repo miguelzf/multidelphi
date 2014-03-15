@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -41,10 +42,40 @@ namespace crosspascal.ast.nodes
 		/// <param name="visitor"></param>
 		static protected bool Error(string msg)
 		{
-			// throw new crosspascal.parser.AstNodeException(msg);
-			Console.Error.WriteLine(msg);
+			string outp = "[ERROR] " + msg;
+			// throw new crosspascal.parser.AstNodeException(outp);
+			Console.Error.WriteLine(outp);
 			return false;
 		}
+
+		/// <summary>
+		/// Report internal errors
+		/// </summary>
+		/// <param name="visitor"></param>
+		static protected bool ErrorInternal(string msg)
+		{
+			string outp = "[ERROR internal] " + msg;
+			// throw new crosspascal.parser.AstNodeException(outp);
+			Console.Error.WriteLine(outp);
+			return false;
+		}
+
+		/// <summary>
+		/// Determines whether the current class is a, or derives, from the class of the specified System.Type
+		/// </summary>
+		public virtual bool ISA(System.Type o)
+		{
+			return this.GetType().IsSubclassOf(o) || this.GetType() == o;
+		}
+
+		/// <summary>
+		/// Determines whether the current class is a, or derives, from the class of the specified Node
+		/// </summary>
+		public virtual bool ISA(Node o)
+		{
+			return ISA(o.GetType());
+		}
+
 
 		/// <summary>
 		/// TODO make abstract
@@ -90,21 +121,26 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// Lists of Nodes, Expressions, Statements etc
 	/// </summary>
-	/// 
 	public interface IListNode<T> : IEnumerable<T> where T : Node
 	{
 		void Add(T t);
 
 		void InsertAt(int idx, T t);
 	
-		// IEnumerator<T> IEnumerable<T>.GetEnumerator();
-
 		void Accept(Processor visitor);
 	}
 
 	public abstract class ListNode<T> : Node, IListNode<T> where T : Node
 	{
 		List<T> nodes = new List<T>();
+
+		public ListNode()
+		{
+		}
+		public ListNode(T t)
+		{
+			Add(t);
+		}
 
 		public T Get(int idx)
 		{
@@ -130,6 +166,12 @@ namespace crosspascal.ast.nodes
 				nodes.Add(t);
 		}
 
+		public void Add(IEnumerable<T> t)
+		{
+			if (t != null && t.Count<T>() > 0)
+				nodes.AddRange(t);
+		}
+
 		public void InsertAt(int idx, T t)
 		{
 			if ( t!= null)
@@ -137,6 +179,11 @@ namespace crosspascal.ast.nodes
 		}
 
 		IEnumerator<T> IEnumerable<T>.GetEnumerator()
+		{
+			return nodes.GetEnumerator();
+		}
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
 		{
 			return nodes.GetEnumerator();
 		}
@@ -149,31 +196,34 @@ namespace crosspascal.ast.nodes
 	}
 
 
+	/// <remarks>
+	/// Do not use generics, since Yacc/Jay doesn't support them as nodes' types
+	/// </remarks>
 
 	public class NodeList : ListNode<Node>
 	{
-		public NodeList() { }
+		public NodeList() : base() { }
+
+		public NodeList(Node t) : base(t) { }
 	}
 
 	public class StatementList : ListNode<Statement>
 	{
-		public StatementList() { }
+		public StatementList() : base() { }
+
+		public StatementList(Statement t) : base(t) { }
 	}
 
 	public class TypeList : ListNode<TypeNode>
 	{
 		public TypeList() { }
+
+		public TypeList(TypeNode t) : base(t) { }
 	}
 
-	public class OrdinalTypeList : Node, System.Collections.IEnumerable
+	public class IntegralTypeList : ListNode<IntegralType>
 	{
-		public System.Collections.IEnumerator GetEnumerator()
-		{
-			// TODO
-			return null;
-		}
-
-		public OrdinalTypeList() { }
+		public IntegralTypeList() { }
 	}
 
 	public class IdentifierList : ListNode<Identifier>
@@ -183,17 +233,23 @@ namespace crosspascal.ast.nodes
 
 	public class DeclarationList : ListNode<Declaration>
 	{
-		public DeclarationList() { }
+		public DeclarationList() : base() { }
+
+		public DeclarationList(Declaration t) : base(t) { }
 	}
 
 	public class EnumValueList : ListNode<EnumValue>
 	{
 		public EnumValueList() { }
+
+		public EnumValueList(EnumValue t) : base(t) { }
 	}
 
 	public class ParameterList : ListNode<ParameterDeclaration>
 	{
 		public ParameterList() { }
+
+		public ParameterList(ParameterDeclaration t) : base(t) { }
 	}
 
 	public class FieldList : ListNode<FieldDeclaration>

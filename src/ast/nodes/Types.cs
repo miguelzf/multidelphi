@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
+	// override Equals but not GetHashCode warning
+	#pragma warning disable 659
 
 	//==========================================================================
 	// Types' base classes
@@ -21,7 +23,7 @@ namespace crosspascal.ast.nodes
 	/// 	ClassType
 	/// 	VariableType
 	/// 		ScalarType
-	/// 			SimpleType		: IOrdinalType
+	/// 			IntegralType		: IOrdinalType
 	/// 				IntegerType
 	/// 					UnsignedInt	...
 	/// 					SignedInt	...
@@ -42,7 +44,7 @@ namespace crosspascal.ast.nodes
 	/// 			Array > VariableType 
 	/// 			Set	  > VariableType 
 	/// 			File  > VariableType
-	/// 		Record
+	///		 		Record !??
 	/// </remarks>
 	#endregion
 
@@ -57,9 +59,6 @@ namespace crosspascal.ast.nodes
 
 			return (this.GetType() == o.GetType());
 		}
-
-		// TODO
-	//	public abstract bool ISA(TypeNode o);
 	}
 
 	/// <summary>
@@ -95,7 +94,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public class RecordType : VariableType
+	public class RecordType : StructuredType
 	{
 		FieldList compTypes;
 
@@ -177,9 +176,9 @@ namespace crosspascal.ast.nodes
 
 	public interface IOrdinalType
 	{
-		Object MinValue();
+		Int64 MinValue();
 
-		Object MaxValue();
+		Int64 MaxValue();
 
 		UInt64 ValueRange();
 	}
@@ -189,14 +188,12 @@ namespace crosspascal.ast.nodes
 	{
 		public EnumValueList enumVals;
 
-		public Object MinValue()	{ return enumVals.GetFirst().init.Value; }
+		public Int64 MinValue() { return (long) enumVals.GetFirst().init.GetIntegralValue(); }
 
-		public Object MaxValue()	{ return enumVals.GetLast().init.Value; }
+		public Int64 MaxValue() { return (long) enumVals.GetLast().init.GetIntegralValue(); }
 
 		public UInt64 ValueRange() {
-			// TODO
-			// return enumVals.GetLast().init.constantValue - enumVals.GetFirst().init.constantValue; 
-			return 0;
+			return enumVals.GetLast().init.GetIntegralValue() - enumVals.GetFirst().init.GetIntegralValue();
 		}
 
 		public override bool Equals(Object o)
@@ -225,18 +222,19 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Determine and assign the Enum initializers, from the user-defined to the automatic
 		/// </summary>
+		// TODO move this elsewhere. Constant-Inference visitor
 		public void AssignEnumInitializers()
 		{
-			int val = 0;	// default start val
+			long val = 0;	// default start val
 
 			foreach (EnumValue al in enumVals)
 			{
 				if (al.init == null)
-					al.init = new IntLiteral(val);
+					al.init = new IntLiteral((ulong) val);
 				else
 				{
-					if (al.init.Value.Type.GetType().IsSubclassOf(typeof(IntegerType)))
-						val = (int)al.init.Value.value;
+					if (al.init.Type.ISA(typeof(IntegerType)))
+						val = (long) al.init.GetIntegralValue();
 					else
 						Error("Enum initializer must be an integer");
 				}
@@ -247,28 +245,51 @@ namespace crosspascal.ast.nodes
 
 	public class RangeType : VariableType, IOrdinalType
 	{
-		Literal low;
-		Literal high;
+		public ConstExpression min;
+		public ConstExpression max;
 
-		public Object MinValue() { return low.value; }
+		public RangeType(ConstExpression min, ConstExpression max)
+		{
+			this.min = min;
+			this.max = max;
+			this.max.ForcedType = this.min.ForcedType = IntegralType.Single;
 
-		public Object MaxValue() { return high.value; }
+			// TODO check that:
+			//	min.type == max.type
+			//	min.value < max.value
+			//	value.range <= type.range:
+		}
 
-		public UInt64 ValueRange() { return 0; } // high.value - low.value; }
+		public RangeType(Expression min, Expression max)
+			: this(new ConstExpression(min), new ConstExpression(max)) { }
+
+		public Int64 MinValue()
+		{
+			return (long) min.GetIntegralValue();
+		}
+
+		public Int64 MaxValue()
+		{
+			return (long) max.GetIntegralValue();
+		}
+
+		public UInt64 ValueRange()
+		{
+			ulong ret = max.GetIntegralValue() - min.GetIntegralValue();
+
+			// TODO move this elsehwere
+			if (ret > ((IntegralType)max.Type).ValueRange())
+				ErrorInternal("RangeType value range exceeds the base type value range");
+			return ret;
+		}
 
 		public override bool Equals(Object o)
 		{
 			if (o == null || this.GetType() != o.GetType())
 				return false;
 
-			RangeType r = (RangeType)o;
-			return (this.Equals(r) && low == r.low && high == r.high);
-		}
-
-		public RangeType(Literal low, Literal high)
-		{
-			this.low  = low;
-			this.high = high;
+			return	min.Equals(((RangeType)o).min)
+			&&		max.Equals(((RangeType)o).max);
 		}
 	}
 
@@ -320,6 +341,23 @@ namespace crosspascal.ast.nodes
 		public static readonly StringType Single = new StringType();
 	}
 
+	public class FixedStringType : ScalarType
+	{
+		ConstExpression expr;
+		public int Len { get; set; }
+
+		public FixedStringType(ConstExpression expr)
+		{
+			this.expr = expr;
+
+			// TODO in constant-checking
+		/*	if (len > 255)
+				Error("String too long. Maximum alloweed is 255");
+			Len = (int)len;
+		 */
+		}
+	}
+
 	public class VariantType : ScalarType
 	{
 		ScalarType type;
@@ -339,6 +377,8 @@ namespace crosspascal.ast.nodes
 	public class PointerType : ScalarType
 	{
 		ScalarType pointedType;
+
+		public static readonly PointerType Single = new PointerType(null);
 
 		public PointerType(ScalarType pointedType)
 		{
@@ -371,13 +411,12 @@ namespace crosspascal.ast.nodes
 		}
 
 		// Should not be used
-		public virtual Object MinValue() { return 0; }
-		public virtual Object MaxValue() { return 0; }
+		public virtual Int64 MinValue() { return 0; }
+		public virtual Int64 MaxValue() { return 0; }
 		public virtual UInt64 ValueRange() { return 0; }
 
 		protected IntegralType() { }
 	}
-	
 
 	#region Integer Types
 
@@ -386,8 +425,8 @@ namespace crosspascal.ast.nodes
 		public static new readonly IntegerType Single = new IntegerType();
 
 		// Should not be used
-		public override Object MinValue() { return 0; }
-		public override Object MaxValue() { return 0; }
+		public override Int64 MinValue() { return 0; }
+		public override Int64 MaxValue() { return 0; }
 		public override UInt64 ValueRange() { return 0; }
 	}
 
@@ -396,8 +435,8 @@ namespace crosspascal.ast.nodes
 		public static new readonly SignedIntegerType Single = new SignedIntegerType();
 
 		// Should not be used
-		public override Object MinValue() { return 0; }
-		public override Object MaxValue() { return 0; }
+		public override Int64 MinValue() { return 0; }
+		public override Int64 MaxValue() { return 0; }
 		public override UInt64 ValueRange() { return 0; }
 	}
 
@@ -406,8 +445,8 @@ namespace crosspascal.ast.nodes
 		public static new readonly UnsignedIntegerType Single = new UnsignedIntegerType();
 
 		// Should not be used
-		public override Object MinValue() { return 0; }
-		public override Object MaxValue() { return 0; }
+		public override Int64 MinValue() { return 0; }
+		public override Int64 MaxValue() { return 0; }
 		public override UInt64 ValueRange() { return 0; }
 	}
 
@@ -415,9 +454,9 @@ namespace crosspascal.ast.nodes
 	{
 		public static new readonly UnsignedInt8Type Single = new UnsignedInt8Type();
 
-		public override Object MinValue() { return Byte.MinValue; }
+		public override Int64 MinValue() { return Byte.MinValue; }
 
-		public override Object MaxValue() { return Byte.MaxValue; }
+		public override Int64 MaxValue() { return Byte.MaxValue; }
 
 		public override UInt64 ValueRange() { return Byte.MaxValue - Byte.MinValue; }
 	}
@@ -426,9 +465,9 @@ namespace crosspascal.ast.nodes
 	{
 		public static new readonly UnsignedInt16Type Single = new UnsignedInt16Type();
 
-		public override Object MinValue() { return UInt16.MinValue; }
+		public override Int64 MinValue() { return UInt16.MinValue; }
 
-		public override Object MaxValue() { return UInt16.MaxValue; }
+		public override Int64 MaxValue() { return UInt16.MaxValue; }
 
 		public override UInt64 ValueRange() { return UInt16.MaxValue - UInt16.MinValue; }
 	}
@@ -437,9 +476,9 @@ namespace crosspascal.ast.nodes
 	{
 		public new static readonly UnsignedInt32Type Single = new UnsignedInt32Type();
 
-		public override Object MinValue() { return UInt32.MinValue; }
+		public override Int64 MinValue() { return UInt32.MinValue; }
 
-		public override Object MaxValue() { return UInt32.MaxValue; }
+		public override Int64 MaxValue() { return UInt32.MaxValue; }
 
 		public override UInt64 ValueRange() { return UInt32.MaxValue - UInt32.MinValue; }
 	}
@@ -448,9 +487,9 @@ namespace crosspascal.ast.nodes
 	{
 		public static new readonly UnsignedInt64Type Single = new UnsignedInt64Type();
 
-		public override Object MinValue() { return UInt64.MinValue; }
+		public override Int64 MinValue() { return (long) ulong.MinValue; }
 
-		public override Object MaxValue() { return UInt64.MaxValue; }
+		public override Int64 MaxValue() { unchecked { return (long)ulong.MaxValue; } }
 
 		public override UInt64 ValueRange() { return UInt64.MaxValue - UInt64.MinValue; }
 	}
@@ -459,9 +498,9 @@ namespace crosspascal.ast.nodes
 	{
 		public static new readonly SignedInt8Type Single = new SignedInt8Type();
 
-		public override Object MinValue() { return SByte.MinValue; }
+		public override Int64 MinValue() { return SByte.MinValue; }
 
-		public override Object MaxValue() { return SByte.MaxValue; }
+		public override Int64 MaxValue() { return SByte.MaxValue; }
 
 		public override UInt64 ValueRange() { return sbyte.MaxValue - (int)sbyte.MinValue; }
 	}
@@ -470,9 +509,9 @@ namespace crosspascal.ast.nodes
 	{
 		public static new readonly SignedInt16Type Single = new SignedInt16Type();
 
-		public override Object MinValue() { return Int16.MinValue; }
+		public override Int64 MinValue() { return Int16.MinValue; }
 
-		public override Object MaxValue() { return Int16.MaxValue; }
+		public override Int64 MaxValue() { return Int16.MaxValue; }
 
 		public override UInt64 ValueRange() { return short.MaxValue - (int)short.MinValue; }
 	}
@@ -481,9 +520,9 @@ namespace crosspascal.ast.nodes
 	{
 		public static new readonly SignedInt32Type Single = new SignedInt32Type();
 
-		public override Object MinValue() { return Int32.MinValue; }
+		public override Int64 MinValue() { return Int32.MinValue; }
 
-		public override Object MaxValue() { return Int32.MaxValue; }
+		public override Int64 MaxValue() { return Int32.MaxValue; }
 
 		public override UInt64 ValueRange() { return int.MaxValue - (long) int.MinValue; }
 	}
@@ -492,9 +531,9 @@ namespace crosspascal.ast.nodes
 	{
 		public static new readonly SignedInt64Type Single = new SignedInt64Type();
 
-		public override Object MinValue() { return Int64.MinValue; }
+		public override Int64 MinValue() { return Int64.MinValue; }
 
-		public override Object MaxValue() { return Int64.MaxValue; }
+		public override Int64 MaxValue() { return Int64.MaxValue; }
 
 		public override UInt64 ValueRange() { return Int64.MaxValue; }
 	}
@@ -506,9 +545,9 @@ namespace crosspascal.ast.nodes
 	{
 		public static new readonly BoolType Single = new BoolType();
 
-		public override Object MinValue() { return false; }
+		public override Int64 MinValue() { return 0; }
 
-		public override Object MaxValue() { return true; }
+		public override Int64 MaxValue() { return 1; }
 
 		public override UInt64 ValueRange() { return 2; }
 	}
@@ -517,9 +556,9 @@ namespace crosspascal.ast.nodes
 	{
 		public static new readonly CharType Single = new CharType();
 
-		public override Object MinValue() { return Char.MinValue; }
+		public override Int64 MinValue() { return Char.MinValue; }
 
-		public override Object MaxValue() { return Char.MaxValue; }
+		public override Int64 MaxValue() { return Char.MaxValue; }
 
 		public override UInt64 ValueRange() { return Char.MaxValue - Char.MinValue; }
 	}
@@ -580,12 +619,16 @@ namespace crosspascal.ast.nodes
 	///			Set	  < VariableType> 
 	///			File  < VariableType> 
 
-	public abstract class StructuredType<T> : VariableType where T : VariableType
+	public abstract class StructuredType : VariableType
 	{
-		public T basetype;
-		bool IsPacked { get; set; }
+		public VariableType basetype;
+		public bool IsPacked { get; set; }
 
-		protected StructuredType(T t)
+		protected StructuredType()
+		{
+		}
+
+		protected StructuredType(VariableType t)
 		{
 			basetype = t;
 		}
@@ -595,12 +638,12 @@ namespace crosspascal.ast.nodes
 			if (o == null || this.GetType() != o.GetType())
 				return false;
 
-			StructuredType<T> otype = (StructuredType<T>)o;
+			StructuredType otype = (StructuredType)o;
 			return basetype.Equals(otype.basetype);
 		}
 	}
 
-	public class ArrayType<T> : StructuredType<T> where T : VariableType
+	public class ArrayType : StructuredType
 	{
 		public List<int> dimensions = new List<int>();
 
@@ -612,28 +655,33 @@ namespace crosspascal.ast.nodes
 			dimensions.Add((int)size);
 		}
 
-		public ArrayType(T type) : base(type)
+		public ArrayType(VariableType type) : base(type)
 		{
 			// dynamic array
 		}
 
-		public ArrayType(T type, NodeList dims) : base(type)
+		public ArrayType(VariableType type, DeclaredType dtype)
+		{
+			// TODO resolve
+		}
+
+		public ArrayType(VariableType type, TypeList dims) : base(type)
 		{
 			// TODO Check constant and compute value
 			foreach (Node n in dims)
 			{
-				SetRange range = (SetRange)n;
+				RangeType range = (RangeType)n;
 			//	int dim = range.max - range.min;
 			//	AddDimension(dim);
 			}
 		}
 
-		public ArrayType(T type, String ordinalTypeId) : base(type)
+		public ArrayType(VariableType type, String ordinalTypeId) : base(type)
 		{
 			// TODO Resolve and check type size
 		}
 
-		public ArrayType(T type, IntegralType sizeType): base(type)
+		public ArrayType(VariableType type, IntegralType sizeType): base(type)
 		{
 			UInt64 size = sizeType.ValueRange();
 			if (size > Int32.MaxValue) size = Int32.MaxValue;
@@ -645,7 +693,7 @@ namespace crosspascal.ast.nodes
 			if (o == null || this.GetType() != o.GetType())
 				return false;
 
-			ArrayType<T> otype = (ArrayType<T>) o;
+			ArrayType otype = (ArrayType) o;
 			if (!dimensions.Equals(otype.dimensions))
 				return false;
 
@@ -653,15 +701,16 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class SetType<T> : StructuredType<T> where T : VariableType
+	public class SetType : StructuredType
 	{
-		public SetType(T type) : base(type) { }
+		public SetType(VariableType type) : base(type) { }
 	}
 
-	public class FileType<T> : StructuredType<T> where T : VariableType
+	public class FileType : StructuredType
 	{
-		public FileType(T type = null) : base(type) { }
+		public FileType(VariableType type = null) : base(type) { }
 	}
+
 
 	#endregion
 

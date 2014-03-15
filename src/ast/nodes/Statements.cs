@@ -40,10 +40,10 @@ namespace crosspascal.ast.nodes
 
 	public class LabelStatement : Statement
 	{
-		public Identifier label;
+		public String label;
 		public Statement stmt;
 
-		public LabelStatement(Identifier label, Statement stmt)
+		public LabelStatement(String label, Statement stmt)
 		{
 			this.label = label;
 			this.stmt = stmt;
@@ -53,6 +53,14 @@ namespace crosspascal.ast.nodes
 	public class EmptyStatement : Statement
 	{
 		// Do nothing
+	}
+
+	public class BreakStatement : Statement
+	{
+	}
+
+	public class ContinueStatement : Statement
+	{
 	}
 
 	public class Assignement : Statement
@@ -80,14 +88,14 @@ namespace crosspascal.ast.nodes
 	public class IfStatement : Statement
 	{
 		public Expression condition;
-		public Statement ifTrue;
-		public Statement ifFalse;
+		public Statement thenblock;
+		public Statement elseblock;
 
 		public IfStatement(Expression condition, Statement ifTrue, Statement ifFalse)
 		{
 			this.condition = condition;
-			this.ifTrue = ifTrue;
-			this.ifFalse = ifFalse;
+			this.thenblock = ifTrue;
+			this.elseblock = ifFalse;
 		}
 	}
 
@@ -101,77 +109,25 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-
-	public class OnStatement : Statement
+	public class CaseSelector : Statement
 	{
-		public Identifier ident;
-		public Identifier type;
-		public Statement body;
-
-		public OnStatement(Identifier ident, Identifier type, Statement body)
-		{
-			this.ident = ident;
-			this.type = type;
-			this.body = body;
-		}
-	}
-
-	public class ExceptionBlock : Node
-	{
-		public NodeList stmts;
-		public Statement onElse;
-
-		public ExceptionBlock(NodeList stmts, Statement onElse)
-		{
-			this.stmts = stmts;
-			this.onElse = onElse;
-		}
-	}
-
-	public class RaiseStatement : Statement
-	{
-		public LvalueExpression lvalue;
-		public Expression expr;
-
-		public RaiseStatement(LvalueExpression lvalue, Expression expr)
-		{
-			this.lvalue = lvalue;
-			this.expr = expr;
-		}
-	}
-
-	public class CaseLabel : Node
-	{
-		public Expression minRange;
-		public Expression maxRange;
-
-		public CaseLabel(Expression minRange, Expression maxRange)
-		{
-			this.minRange = minRange;
-			this.maxRange = maxRange;
-		}
-	}
-
-	public class CaseSelectorNode : Node
-	{
-		public NodeList list;
+		public ExpressionList list;
 		public Statement stmt;
 
-		public CaseSelectorNode(NodeList list, Statement stmt)
+		public CaseSelector(ExpressionList list, Statement stmt)
 		{
 			this.list = list;
 			this.stmt = stmt;
 		}
 	}
 
-
 	public class CaseStatement : Statement
 	{
 		public Expression condition;
-		public NodeList selectors;
+		public StatementList selectors;
 		public Statement caseelse;
 
-		public CaseStatement(Expression condition, NodeList selectors, Statement caseelse)
+		public CaseStatement(Expression condition, StatementList selectors, Statement caseelse)
 		{
 			this.condition = condition;
 			this.selectors = selectors;
@@ -210,12 +166,13 @@ namespace crosspascal.ast.nodes
 		public Expression end;
 		public int direction;
 
-		public ForLoop(Identifier var, Expression start, Expression end, Statement body)
+		public ForLoop(Identifier var, Expression start, Expression end, Statement body, int dir)
 				: base(body, null)
 		{
 			this.var = var;
 			this.start = start;
 			this.end = end;
+			direction = dir;
 		}
 	}
 
@@ -231,24 +188,27 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class WithStatement : BlockStatement
+	public class WithStatement
 	{
-		public Statement body;
 		public Expression with;
+		public Statement body;
 
 		public WithStatement(Expression with, Statement body)
 		{
-			this.body = body;
 			this.with = with;
+			this.body = body;
 		}
 	}
 
+
+	#region Exceptions
+
 	public class TryFinallyStatement : Statement
 	{
-		public Statement body;
-		public Statement final;
+		public BlockStatement body;
+		public BlockStatement final;
 
-		public TryFinallyStatement(Statement body, Statement final)
+		public TryFinallyStatement(BlockStatement body, BlockStatement final)
 		{
 			this.body = body;
 			this.final = final;
@@ -257,26 +217,62 @@ namespace crosspascal.ast.nodes
 
 	public class TryExceptStatement : Statement
 	{
-		public Statement body;
-		public Statement final;
+		public BlockStatement body;
+		public ExceptionBlock final;
 
-		public TryExceptStatement(Statement body, Statement final)
+		public TryExceptStatement(BlockStatement body, ExceptionBlock final)
 		{
 			this.body = body;
 			this.final = final;
 		}
 	}
 
-	public class AssemblerBlock : BlockStatement
+	public class ExceptionBlock : Statement
 	{
-		public NodeList asmInstrs;
-
-		public AssemblerBlock(NodeList asm)
+		public StatementList onList;
+		public BlockStatement @default;	// else or default, same semantics
+		
+		public ExceptionBlock(StatementList onList, BlockStatement @default = null)
 		{
-			this.asmInstrs = asm;
+			this.onList = onList;
+			this.@default = @default;
 		}
 	}
 
+	public class RaiseStatement : Statement
+	{
+		public LvalueExpression lvalue;
+		public Expression expr;
 
+		public RaiseStatement(LvalueExpression lvalue, Expression expr)
+		{
+			this.lvalue = lvalue;
+			this.expr = expr;
+		}
+	}
+
+	public class OnStatement : Statement
+	{
+		public String ident;
+		public String type;
+		public Statement body;
+
+		public OnStatement(String ident, String type, Statement body)
+		{
+			this.ident = ident;
+			this.type = type;
+			this.body = body;
+		}
+	}
+
+	#endregion
+
+	public class AssemblerBlock : BlockStatement
+	{
+		public AssemblerBlock(StatementList asmInstrs)
+			: base(asmInstrs)
+		{
+		}
+	}
 
 }

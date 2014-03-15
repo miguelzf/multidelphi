@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -38,7 +39,7 @@ namespace crosspascal.ast.nodes
 
 	public abstract class Declaration : Node
 	{
-		public List<String> names;
+		public ArrayList names;
 		public TypeNode type;
 
 		protected Declaration() { }
@@ -49,7 +50,7 @@ namespace crosspascal.ast.nodes
 			else	type = UndefinedType.Single;
 		}
 
-		public Declaration(List<String> names, TypeNode t = null) : this(t)
+		public Declaration(ArrayList names, TypeNode t = null) : this(t)
 		{
 			names.AddRange(names);
 		}
@@ -64,21 +65,22 @@ namespace crosspascal.ast.nodes
 	{
 		public LabelDeclaration(String name) : base(name, null) { }
 
-		public LabelDeclaration(List<String> names) : base(names, null) { }
+		public LabelDeclaration(ArrayList names) : base(names, null) { }
 	}
 
 	public class VarDeclaration : Declaration
 	{
 		public Expression init;
 		public String shareVal;
+		public bool isThrVar;
 
-		public VarDeclaration(List<String> ids, TypeNode t, Expression init = null)
+		public VarDeclaration(ArrayList ids, TypeNode t, Expression init = null)
 			: base(ids, t)
 		{
 			this.init = init;
 		}
 
-		public VarDeclaration(List<String> ids, TypeNode t, String shareVal) 
+		public VarDeclaration(ArrayList ids, TypeNode t, String shareVal) 
 			: base(ids, t)
 		{
 			this.shareVal = shareVal;
@@ -91,24 +93,24 @@ namespace crosspascal.ast.nodes
 
 	public class ParameterDeclaration : VarDeclaration
 	{
-		public ParameterDeclaration(List<String> ids, ScalarType t = null, Expression init = null) : base(ids, t, init)
+		public ParameterDeclaration(ArrayList ids, ScalarType t = null, Expression init = null) : base(ids, t, init)
 		{
 		}
 	}
 
 	public class VarParameterDeclaration : ParameterDeclaration
 	{
-		public VarParameterDeclaration(List<String> ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
+		public VarParameterDeclaration(ArrayList ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
 	}
 
 	public class ConstParameterDeclaration : ParameterDeclaration
 	{
-		public ConstParameterDeclaration(List<String> ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
+		public ConstParameterDeclaration(ArrayList ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
 	}
 
 	public class OutParameterDeclaration : ParameterDeclaration
 	{
-		public OutParameterDeclaration(List<String> ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
+		public OutParameterDeclaration(ArrayList ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
 	}
 
 
@@ -117,7 +119,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class FieldDeclaration : Declaration
 	{
-		public FieldDeclaration(List<String> ids, VariableType t = null)
+		public FieldDeclaration(ArrayList ids, TypeNode t = null)
 			: base(ids, t)
 		{
 		}
@@ -130,11 +132,14 @@ namespace crosspascal.ast.nodes
 	{
 		public Expression init;
 
-		public ConstDeclaration(String name, Expression init) : base(name)
+		public ConstDeclaration(String name, Expression init, TypeNode t = null)
+			: base(name, t)
 		{
 			this.init = init;
 			init.EnforceConst = true;
-			this.type = init.Type;
+
+			if (t == null)
+				this.type = init.Type;
 		}
 	}
 

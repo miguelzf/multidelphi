@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,8 @@ namespace crosspascal.ast.nodes
 {
 	public abstract partial class CompositeDeclaration : TypeDeclaration
 	{
-	
+		public bool IsPacked;
+
 	}
 
 	public enum Scope
@@ -19,14 +21,37 @@ namespace crosspascal.ast.nodes
 		Published
 	}
 
+	public enum ClassKind
+	{
+		Class,
+		Object
+	}
+
+	public class ClassBody : Section
+	{
+		// TODO rever
+
+		public Scope scope;
+		public NodeList fields;
+		public NodeList content;
+
+		public ClassBody(Scope scope, NodeList fields, NodeList content)
+		{
+			this.scope = scope;
+			this.fields = fields;
+			this.content = content;
+		}
+		public ClassBody(NodeList decls) { }
+	}
+
 
 	public class ClassDefinition : CompositeDeclaration
 	{
-		public ClassType classType;
-		public IdentifierList heritage;
+		public ClassKind classType;
+		public ArrayList heritage;
 		public ClassBody ClassBody;
 
-		public ClassDefinition(ClassType classType, IdentifierList heritage, ClassBody ClassBody)
+		public ClassDefinition(ClassKind classType, ArrayList heritage, ClassBody ClassBody)
 		{
 			this.classType = classType;
 			this.heritage = heritage;
@@ -36,11 +61,11 @@ namespace crosspascal.ast.nodes
 
 	public class InterfaceDefinition : CompositeDeclaration
 	{
-		public IdentifierList heritage;
-		public ClassContentList methods;
-		public ClassContentList properties;
+		public ArrayList heritage;
+		public NodeList methods;
+		public NodeList properties;
 
-		public InterfaceDefinition(IdentifierList heritage, ClassContentList methods, ClassContentList properties)
+		public InterfaceDefinition(ArrayList heritage, NodeList methods, NodeList properties)
 		{
 			this.heritage = heritage;
 			this.methods = methods;
@@ -48,33 +73,9 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ClassFieldList : Node
-	{
-		public VarDeclaration decl;
-		public ClassFieldList next;
-
-		public ClassFieldList(VarDeclaration decl, ClassFieldList next)
-		{
-			this.decl = decl;
-			this.next = next;
-		}
-	}
-
 	public abstract class ClassContent : Node
 	{
 
-	}
-
-	public class ClassContentList : ClassContent
-	{
-		public ClassContent content;
-		public ClassContentList next;
-
-		public ClassContentList(ClassContent content, ClassContentList next)
-		{
-			this.content = content;
-			this.next = next;
-		}
 	}
 
 	public class ClassMethod : ClassContent
@@ -87,15 +88,18 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
+	#region Properties
+
 	public class ClassProperty : ClassContent
 	{
-		public Identifier ident;
+		public String ident;
 		public TypeNode type;
 		public PropertyIndex index;
 		public PropertySpecifiers specs;
 		public PropertyDefault def;
 
-		public ClassProperty(Identifier ident, TypeNode type, PropertyIndex index, PropertySpecifiers specs, PropertyDefault def)
+		public ClassProperty(String ident, TypeNode type, PropertyIndex index, PropertySpecifiers specs, PropertyDefault def)
 		{
 			this.ident = ident;
 			this.type = type;
@@ -105,13 +109,11 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-
-
 	public class PropertyReadNode : Node
 	{
-		public Identifier ident;
+		public String ident;
 
-		public PropertyReadNode(Identifier ident)
+		public PropertyReadNode(String ident)
 		{
 			this.ident = ident;
 		}
@@ -119,9 +121,9 @@ namespace crosspascal.ast.nodes
 
 	public class PropertyWriteNode : Node
 	{
-		public Identifier ident;
+		public String ident;
 
-		public PropertyWriteNode(Identifier ident)
+		public PropertyWriteNode(String ident)
 		{
 			this.ident = ident;
 		}
@@ -129,15 +131,15 @@ namespace crosspascal.ast.nodes
 
 	public class PropertySpecifiers : Node
 	{
-		public PropertyIndex index;
-		public PropertyReadNode read;
-		public PropertyWriteNode write;
-		public PropertyStored stored;
-		public PropertyDefault def;
-		public PropertyImplements impl;
+		public PropertySpecifier index;
+		public PropertySpecifier read;
+		public PropertySpecifier write;
+		public PropertySpecifier stored;
+		public PropertySpecifier def;
+		public PropertySpecifier impl;
 
-		public PropertySpecifiers(PropertyIndex index, PropertyReadNode read, PropertyWriteNode write, 
-			PropertyStored stored, PropertyDefault def, PropertyImplements impl)
+		public PropertySpecifiers(PropertySpecifier index, PropertySpecifier read, PropertySpecifier write,
+			PropertySpecifier stored, PropertySpecifier def, PropertySpecifier impl)
 		{
 			this.index = index;
 			this.read = read;
@@ -148,44 +150,51 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class PropertyDefault : Node
+	public abstract class PropertySpecifier
 	{
-		public Identifier ident;
 
-		public PropertyDefault(Identifier ident)
+	}
+
+	public class PropertyDefault : PropertySpecifier
+	{
+		public Literal lit;
+
+		public PropertyDefault(Literal lit)
+		{
+			this.lit = lit;
+		}
+	}
+
+	public class PropertyImplements : PropertySpecifier
+	{
+		public String ident;
+
+		public PropertyImplements(String ident)
 		{
 			this.ident = ident;
 		}
 	}
 
-	public class PropertyImplements : Node
+	public class PropertyStored : PropertySpecifier
 	{
-		public Identifier ident;
+		public String ident;
 
-		public PropertyImplements(Identifier ident)
+		public PropertyStored(String ident)
 		{
 			this.ident = ident;
 		}
 	}
 
-	public class PropertyStored : Node
+	public class PropertyIndex : PropertySpecifier
 	{
-		public Identifier ident;
+		public uint value;
 
-		public PropertyStored(Identifier ident)
-		{
-			this.ident = ident;
-		}
-	}
-
-	public class PropertyIndex : Node
-	{
-		public int value;
-
-		public PropertyIndex(int value)
+		public PropertyIndex(uint value)
 		{
 			this.value = value;
 		}
 	}
+
+	#endregion
 
 }

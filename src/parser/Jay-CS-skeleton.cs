@@ -26,12 +26,15 @@
 .  /* An EOF token */
 .  public int eof_token;
 .
+.	public int ErrorCount = 0;
+.
 .  /** (syntax) error message.
 .      Can be overwritten to control message format.
 .      @param message text to be displayed.
 .      @param expected vector of acceptable tokens, if available.
 .    */
 .  public void yyerror (string message, string[] expected) {
+.	 ErrorCount++;
 .    if ((DebugLevel > 0) && (expected != null) && (expected.Length  > 0)) {
 .      ErrorOutput.Write (message+", expecting");
 .      for (int n = 0; n < expected.Length; ++ n)

@@ -104,8 +104,27 @@ namespace crosspascal.parser
 		// Internal helper functions
 			
 		
-		Int32 GetInt(string str, int numbase) { return Convert.ToInt32(str, numbase); }
-		Double GetReal(string str) { return Convert.ToDouble(str); }
+		UInt64 GetInt(string str, int numbase)
+		{
+			try {
+				return Convert.ToUInt64(str, numbase);
+			}
+			catch (OverflowException)
+			{	yyerror("Value exceeds the maximum range for an integer constant (2^64)");
+				return 0;
+			}
+		}
+		
+		Double GetReal(string str)
+		{
+			try {
+				return Convert.ToDouble(str);
+			}
+			catch (OverflowException)
+			{	yyerror("Value exceeds the maximum range for an floating-point constant");
+				return 0.0;
+			}
+		}
 
 		string GetDirectiveArg(string directive)
 		{
@@ -116,8 +135,8 @@ namespace crosspascal.parser
 		void InitLexer(TextReader sr)
 		{
 			stateNames = new string[] {
-				"INITIAL", "XCOMMENT1", "XCOMMENT2", "XASMCODESEC", "XNOTDEF",  
-				"XFUNCW_PARAMS", "XFUNCW_RET", "XFUNCDIRECTS", "XFUNCEXTERN" };
+				"XASMCODESEC", "XFUNCW_PARAMS", "XFUNCW_RET", "XFUNCDIRECTS", "XFUNCEXTERN",
+				"SFUNCDECL", "SPROPSPECS", "SPACKAGES" };
 
 			yyreset(sr);
 			// set yylval and text to null before each executing each rule's action
@@ -131,11 +150,11 @@ namespace crosspascal.parser
 	// exclusive states
 %x XASMCODESEC XFUNCW_PARAMS XFUNCW_RET XFUNCDIRECTS XFUNCEXTERN
 	// inclusive states. shared with INITIAL
-%s SFUNCDECL SPROPSPECS
+%s SFUNCDECL SPROPSPECS SPACKAGES
 
 DEC     = [0-9]
 HEXA    = [0-9a-fA-F]
-ALPH	= [a-zA-Z]
+	/* ALPH	= [a-zA-Z] */
 ID      = [0-9a-zA-Z_]
 NL      = (\r|\n|\r\n)
 	
@@ -337,7 +356,7 @@ on			{ return KW_ON; }
 	read		{ return KW_READ; }
 	stored		{ return KW_STORED; }
 	write		{ return KW_WRITE; }
-		
+
 	";" 		{ // signal to leave this state
 					yypopstate();
 					return SCOL;
@@ -354,12 +373,19 @@ published	{ return KW_PUBLISHED;	}
 private		{ return KW_PRIVATE;	}
 
 	
-	/* packages: emitted as identifiers
-	package		{ return KW_PACKAGE; }
+ 	/**************************************************************/
+	// Lexical Scope for Packages
+	
+package		{ yypushstate(SPACKAGES); yylval = yytext(); return IDENTIFIER; }
+<SPACKAGES> {
 	requires	{ return KW_REQUIRES; }
 	contains	{ return KW_CONTAINS; }
-	*/
-	
+}
+
+
+ 	/**************************************************************/
+	// Lexical Scope for Types - TODO
+
 		/* types: integers */
 	byte		{ return TYPE_BYTE; }
 	shortint	{ return TYPE_SHORTINT; }
@@ -369,8 +395,8 @@ private		{ return KW_PRIVATE;	}
 	integer		{ return TYPE_INT; }
 	longword	{ return TYPE_LONGWORD; }
 	longint		{ return TYPE_LONGINT; }
-		/* int64		{ return TYPE_INT64; }	*/
-		/* uint64		{ return TYPE_UINT64; }	*/
+	int64		{ return TYPE_INT64; }
+	uint64		{ return TYPE_UINT64; }
 
 		/* types: floats */
 	single		{ return TYPE_FLOAT; }
@@ -432,7 +458,7 @@ nil					{ return CONST_NIL; }
 {DEC}+e[+-]?{DEC}+	{ yylval = GetReal(yytext()); return CONST_REAL; }
 {DEC}+\.{DEC}+e[+-]?{DEC}+	{ yylval = GetReal(yytext()); return CONST_REAL; }
 	
-	/* literals: ALPHnumeric */
+	/* literals: Alphanumeric */
 '.'					{ yylval = yytext()[1]; return CONST_CHAR; }
 	// check that num < 255
 \#{DEC}+			{ yylval = GetInt(yytext().Substring(1), 10); return CONST_CHAR; }

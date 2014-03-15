@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
+	// override Equals but not GetHashCode warning
+	#pragma warning disable 659
 
 	/// <summary>
 	/// Type of a Routine (function, procedure, method, etc)
@@ -38,7 +40,6 @@ namespace crosspascal.ast.nodes
 				Directives = dirs;
 		}
 
-
 		public override bool Equals(Object o)
 		{
 			if (o == null || this.GetType() != o.GetType())
@@ -69,6 +70,22 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public abstract partial class CallableDeclaration : TypeDeclaration
 	{
+		/// <summary>
+		/// Gets this callable Procedural Type (downcasted from the Declaration's base type)
+		/// </summary>
+		public ProceduralType Type
+		{
+			get { return (ProceduralType) this.type; }
+		}
+
+		/// <summary>
+		/// Gets this callable type's Directives
+		/// </summary>
+		public CallableDirectives Directives
+		{
+			get { return Type.Directives; }
+			set { Type.Directives = value;}
+		}
 
 		public CallableDeclaration(string name, ParameterList @params, ScalarType ret = null, CallableDirectives dirs = null)
 			: base(name, new ProceduralType(@params, ret, dirs))
@@ -120,7 +137,8 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public class RoutineDefinition : Node
+	// not really a declaration, not it makes the grammar cleaner..
+	public class RoutineDefinition : Declaration
 	{
 		public RoutineDeclaration header;
 		public RoutineBody body;
