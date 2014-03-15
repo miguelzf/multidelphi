@@ -89,11 +89,11 @@
     <Compile Include="parser\ParserExceptions.cs" />
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
-    <Compile Include="TestProgram.cs" />
+    <Compile Include="core\TestProgram.cs" />
     <Compile Include="testunits\TestDriver.cs" />
     <Compile Include="utils\Logger.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="core\Program.cs" />
+    <Compile Include="core\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -106,7 +106,7 @@ namespace crosspascal.parser
 		
 		public string GetOutput()
 		{
-			return strbuilder.ToString();
+			return strbuilder.ToString().ToLowerInvariant();	// Delphi is case-insensitive
 		}
 
 		// Emit newline if it's in the original src file

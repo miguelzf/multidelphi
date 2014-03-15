@@ -51,21 +51,22 @@ namespace crosspascal.parser
 				Console.Write("####### PARSE file " + Path.GetFileName(s) + ": ");
 
 				preproc.InitLexer(s);
-				preproc.AddDefine("LINUX");	// test
+				preproc.AddDefine("WINDOWS");	// test
+
 				try
 				{
 					preproc.Preprocess();
 				}
-				catch (PreprocessorException)
+				catch (PreprocessorException e)
 				{
 					Console.Error.WriteLine("Parsing failed");
 					continue;
 				}
 
-				string preprocfiletext = preproc.GetOutput().ToLowerInvariant();	// Delphi is case-insensitive
+				string preprocfiletext = preproc.GetOutput();
 				StringReader sr = new StringReader(preprocfiletext);
-				try
-				{
+
+				try {
 					CompilationUnit tree = (CompilationUnit) parser.Parse(sr);
 					Console.WriteLine("Parsed OK: " + tree.name + " " + tree.ToString());
 				}
@@ -73,6 +74,7 @@ namespace crosspascal.parser
 				{
 					Console.Error.WriteLine(e);
 					Console.Error.WriteLine("Parsing failed");
+					throw e;
 				}
 			}
 

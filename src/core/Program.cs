@@ -7,7 +7,7 @@ using crosspascal.ast;
 using crosspascal.ast.nodes;
 using crosspascal.parser;
 
-namespace crosspascal
+namespace crosspascal.core
 {
 
 	class Program
