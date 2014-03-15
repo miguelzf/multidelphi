@@ -156,7 +156,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class ConstExpression : Expression
 	{
-		Expression expr;
+		public Expression expr;
 
 		public ConstExpression(Expression expr)
 		{
@@ -190,18 +190,15 @@ namespace crosspascal.ast.nodes
 
 	public class FieldInitList : ExpressionList
 	{
-		List<FieldInit> nodes = new List<FieldInit>();
-
 		public void Add(FieldInit t)
 		{
-			if (t != null)
-				nodes.Add(t);
+			base.Add(t);
 		}
 	}
 
 	public class FieldInit : ConstExpression
 	{
-		string fieldname;
+		public String fieldname;
 
 		public FieldInit(string name, Expression expr)
 			: base(expr)
@@ -224,8 +221,8 @@ namespace crosspascal.ast.nodes
 
 	public class SetIn : BinaryExpression
 	{
-		Expression expr;
-		Expression set;		// enforce that 'set' is in fact a set
+		public Expression expr;
+		public Expression set;		// enforce that 'set' is in fact a set
 
 		public SetIn(Expression e1, Expression e2)
 		{
@@ -247,8 +244,8 @@ namespace crosspascal.ast.nodes
 
 	public abstract class ArithmethicBinaryExpression : BinaryExpression
 	{
-		Expression left;
-		Expression right;
+		public Expression left;
+		public Expression right;
 
 		public ArithmethicBinaryExpression(Expression e1, Expression e2)
 		{
@@ -363,8 +360,8 @@ namespace crosspascal.ast.nodes
 
 	public abstract class TypeBinaryExpression : BinaryExpression
 	{
-		Expression expr;
-		TypeNode types;
+		public Expression expr;
+		public TypeNode types;
 
 		public TypeBinaryExpression(Expression e1, TypeNode e2)
 		{
@@ -670,7 +667,7 @@ namespace crosspascal.ast.nodes
 
 	public class InheritedCall : LvalueExpression
 	{
-		RoutineCall call;
+		public RoutineCall call;
 
 		public InheritedCall(RoutineCall call)
 		{

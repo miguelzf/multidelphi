@@ -101,7 +101,7 @@ namespace crosspascal.ast.nodes
 
 	public class ExpressionStatement : Statement
 	{
-		Expression expr;
+		public Expression expr;
 
 		public ExpressionStatement(Expression expr)
 		{
@@ -134,6 +134,9 @@ namespace crosspascal.ast.nodes
 			this.caseelse = caseelse;
 		}
 	}
+
+
+	#region Loops
 
 	public class LoopStatement : Statement
 	{
@@ -176,6 +179,9 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	#endregion
+
+
 	public class BlockStatement : Statement
 	{
 		public StatementList stmts;
@@ -201,7 +207,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	#region Exceptions
+	#region Exception handling
 
 	public class TryFinallyStatement : Statement
 	{

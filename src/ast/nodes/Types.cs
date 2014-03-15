@@ -295,8 +295,6 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Default Scalar Type comparison: directly compare references to singleton objects
 		/// </summary>
-		/// <param name="o"></param>
-		/// <returns></returns>
 		public override bool Equals(Object o)
 		{
 			if (o == null)
@@ -327,7 +325,7 @@ namespace crosspascal.ast.nodes
 
 	public class FixedStringType : ScalarType
 	{
-		ConstExpression expr;
+		public ConstExpression expr;
 		public int Len { get; set; }
 
 		public FixedStringType(ConstExpression expr)
@@ -344,7 +342,7 @@ namespace crosspascal.ast.nodes
 
 	public class VariantType : ScalarType
 	{
-		ScalarType type;
+		public ScalarType actualtype;
 
 		/// <summary>
 		/// Actual type cannot be initially known.
@@ -360,7 +358,7 @@ namespace crosspascal.ast.nodes
 
 	public class PointerType : ScalarType
 	{
-		ScalarType pointedType;
+		public ScalarType pointedType;
 
 		public static readonly PointerType Single = new PointerType(null);
 
@@ -699,7 +697,7 @@ namespace crosspascal.ast.nodes
 	/// </remarks>
 	public class RecordType : StructuredType
 	{
-		FieldList compTypes;
+		public FieldList compTypes;
 
 		public RecordType(FieldList compTypes)
 		{
