@@ -6,9 +6,20 @@ using System.Threading.Tasks;
 
 namespace crosspascal.semantics
 {
-	class SymbolTable
+	public class SymbolTable<T>
 	{
+		private class SymbolContext<T>
+		{
 
+
+		}
+
+		Stack<SymbolContext<T>> contexts = new Stack<SymbolContext<T>>();
+
+		public SymbolTable()
+		{
+
+		}
 
 	}
 }

@@ -49,7 +49,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>crosspascal.parser.ParserDriverTest</StartupObject>
+    <StartupObject>crosspascal.core.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

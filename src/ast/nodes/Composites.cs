@@ -150,7 +150,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public abstract class PropertySpecifier
+	public abstract class PropertySpecifier : Node
 	{
 
 	}

@@ -6,21 +6,26 @@ using System.Text;
 using crosspascal.ast;
 using crosspascal.ast.nodes;
 using crosspascal.parser;
+using crosspascal.cpp;
 
-namespace crosspascal.core
+namespace crosspascal
 {
 
-	class Program
+	public class Program
 	{
 		static void Main(string[] args)
 		{
+			CompilationUnit tree = null;
 			var sw = new Stopwatch();
 
 			Console.WriteLine("CrossPascal Delphi compiler");
 
 			DelphiParser parser = new DelphiParser();
 			DelphiPreprocessor preproc = new DelphiPreprocessor();
-			preproc.LoadIncludePaths("include-paths.txt");
+			preproc.LoadIncludePaths("bin\\include-paths.txt");
+
+			args = new string[1];
+			args[0] = "Tests\\test1.dpr";
 
 			// TestReadAll(args);
 			foreach (string s in args)
@@ -41,7 +46,7 @@ namespace crosspascal.core
 
 				string preprocfiletext = preproc.GetOutput().ToLowerInvariant();	// Delphi is case-insensitive
 				StringReader sr = new StringReader(preprocfiletext);
-				CompilationUnit tree = null;
+				
 				try
 				{
 					tree = (CompilationUnit)parser.Parse(sr);
@@ -57,6 +62,7 @@ namespace crosspascal.core
 			sw.Stop();
 			Console.WriteLine("READING from StringStream all files took " + (sw.ElapsedMilliseconds / 1000.0) + " secs");
 
+			CppCodegen cppProcessor = new CppCodegen();
 			MapTraverser mt = new MapTraverser(cppProcessor);
 			mt.traverse(tree);
 

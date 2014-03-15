@@ -273,7 +273,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class MethodDirectives : CallableDirectives
 	{
-		HashSet<MethodDirective> methoddirs = new HashSet<MethodDirective>();
+		public HashSet<MethodDirective> methoddirs = new HashSet<MethodDirective>();
 
 		public override void Add(int dir)
 		{

@@ -171,7 +171,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class TypeDeclaration : Declaration
 	{
-		String typename;
+		public String typename;
 
 		protected TypeDeclaration() { }
 
