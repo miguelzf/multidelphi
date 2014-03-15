@@ -40,7 +40,7 @@ namespace crosspascal.ast.nodes
 
 	public abstract class Declaration : Node
 	{
-		public ArrayList names;
+		public ArrayList names = new ArrayList();
 		public TypeNode type;
 
 		public void AddName(String name)

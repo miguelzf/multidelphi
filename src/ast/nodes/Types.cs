@@ -272,6 +272,7 @@ namespace crosspascal.ast.nodes
 	///	==========================================================================
 	/// <remarks>
 	///	ScalarType
+	///		ScalarTypeForward	- temporary, to be resolved when the pointed type is declalred
 	///		DiscreteType		: IOrdinalType
 	///			IntegerType
 	///				UnsignedInt	...
@@ -302,6 +303,20 @@ namespace crosspascal.ast.nodes
 				return false;
 
 			return (this.GetType() == o.GetType());
+		}
+	}
+
+	/// <summary>
+	/// Temporary scalar type to support forward declarations.
+	/// This type has to be converted to its actual type by resolving the declared name.
+	/// </summary>
+	public class ScalarTypeForward : ScalarType
+	{
+		public String forwardname;
+
+		public ScalarTypeForward(String name)
+		{
+			forwardname = name;
 		}
 	}
 

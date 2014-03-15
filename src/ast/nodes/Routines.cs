@@ -30,8 +30,9 @@ namespace crosspascal.ast.nodes
 			get { return _directives; }
 			set
 			{
+				if (value != null)
+					value.CheckDirectives();
 				_directives = value;
-				_directives.CheckDirectives();
 			}
 		}
 

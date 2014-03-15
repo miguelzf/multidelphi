@@ -10,7 +10,7 @@ using crosspascal.utils;
 using crosspascal.parser;
 
 
-namespace crosspascal
+namespace crosspascal.core
 {
 	class TestProgram
 	{

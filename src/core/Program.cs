@@ -8,7 +8,7 @@ using crosspascal.cpp;
 using crosspascal.ast;
 using crosspascal.parser;
 
-namespace crosspascal
+namespace crosspascal.core
 {
 	class Program
 	{

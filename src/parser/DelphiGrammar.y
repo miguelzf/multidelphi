@@ -81,7 +81,11 @@ namespace crosspascal.parser
 			}
 			
 			TReg = new TypeRegistry();
-			
+			TReg.LoadBuiltinTypesBasic();
+			TReg.LoadBuiltinTypesPointer();
+			TReg.LoadBuiltinTypesWindows();	// test
+
+
 			lexer = new DelphiScanner(tr);
 			
 			try {
@@ -228,7 +232,7 @@ namespace crosspascal.parser
 %type<PropertySpecifiers> propspecifiers
 
 	// Types
-%type<ScalarType> scalartype pointertype casttype
+%type<ScalarType> scalartype pointertype casttype pointedtype
 	// realtype inttype chartype stringtype varianttype scalartype  
 %type<ScalarType> funcrettype funcret paramtypeopt paramtypespec 
 %type<StructuredType> structuredtype
@@ -514,9 +518,9 @@ vardecl
 	: idlst COLON vartype SCOL							{ $$ = new VarDeclaration($1, $3); }
 	| idlst COLON vartype KW_EQ constinitexpr SCOL		{ $$ = new VarDeclaration($1, $3, $5); }
 	| idlst COLON vartype KW_ABSOLUTE id SCOL			{ $$ = new VarDeclaration($1, $3, $5); }
-	| idlst COLON proceduraltype SCOL funcdirectopt		{ $$ = new VarDeclaration($1, $3); $3.Directives.Add($5); }
+	| idlst COLON proceduraltype SCOL funcdirectopt		{ $$ = new VarDeclaration($1, $3); $3.Directives = $5; }
 	| idlst COLON proceduraltype SCOL
-			funcdir_noterm_opt functypeinit SCOL		{ $$ = new VarDeclaration($1, $3, $6); $3.Directives.Add($5); }
+			funcdir_noterm_opt functypeinit SCOL		{ $$ = new VarDeclaration($1, $3, $6); $3.Directives = $5; }
 	;
 
 
@@ -1155,7 +1159,7 @@ constdecl
 	: id KW_EQ constinitexpr  SCOL				{ $$ = new ConstDeclaration($1, $3); }	// true const
 	| id COLON vartype KW_EQ constinitexpr SCOL	{ $$ = new ConstDeclaration($1, $5, $3); }		// typed const
 	| id COLON proceduraltype funcdir_noterm_opt
-							functypeinit SCOL	{ $$ = new ConstDeclaration($1, $5, $3); $3.Directives.Add($4); }
+							functypeinit SCOL	{ $$ = new ConstDeclaration($1, $5, $3); $3.Directives = $4; }
 	;
 	
 constinitexpr
@@ -1412,7 +1416,7 @@ writeopt
 
 typedecl
 	: id KW_EQ typeopt vartype  SCOL						{ $$ = new TypeDeclaration($1, $4); }
-	| id KW_EQ typeopt proceduraltype SCOL funcdirectopt	{ $$ = new TypeDeclaration($1, $4); $4.Directives.Add($6); }
+	| id KW_EQ typeopt proceduraltype SCOL funcdirectopt	{ $$ = new TypeDeclaration($1, $4); $4.Directives = $6; }
 	| id KW_EQ typeopt packcomptype SCOL					{ lastObjectName = $1; $$ = $4; }
 	;
 
@@ -1493,8 +1497,15 @@ casttype
 	;
 
 pointertype
-	: KW_DEREF scalartype 		{ $$ = new PointerType($2); }
+	: KW_DEREF pointedtype 		{ $$ = new PointerType($2); }
 	| TYPE_PTR					{ $$ = PointerType.Single; }
+	;
+
+	// Scalartype that allows for forward type declarations
+pointedtype
+	: id						{ $$ = new ScalarTypeForward($1); }
+	| TYPE_STR /*dynamic size*/	{ $$ = StringType.Single; }
+	| pointertype				{ $$ = $1; }
 	;
 
 funcparamtype

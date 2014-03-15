@@ -9,11 +9,17 @@ namespace crosspascal.parser
 {
 	public class TypeRegistry
 	{
-		Dictionary<String, Declaration> types = new Dictionary<String, Declaration>();
+		// Programatically-defined types. Cannot be redeclared
+		Dictionary<String, Declaration> decls = new Dictionary<String, Declaration>();
+		// Default types. Can be redeclared
+		Dictionary<String, Declaration> builtins = new Dictionary<String, Declaration>();
 
 		public void RegisterDeclaration(String name, Declaration decl)
 		{
-			types.Add(name, decl);
+			if (decls.ContainsKey(name))
+				throw new ParserException("Cannot redeclare identifier '" + name + "'");
+
+			decls[name] = decl;
 		}
 
 		public ScalarType FetchTypeScalar(String name)
@@ -36,10 +42,10 @@ namespace crosspascal.parser
 
 		public TypeNode FetchType(String name)
 		{
-			if (!types.ContainsKey(name))
+			if (!decls.ContainsKey(name))
 				throw new ParserException("Type '" + name + "' is unknown");
 
-			Declaration decl = types[name];
+			Declaration decl = decls[name];
 			if (!decl.ISA(typeof(TypeDeclaration)))
 				throw new ParserException("Identifier '" + name + "' does not refer to a type");
 
@@ -49,20 +55,26 @@ namespace crosspascal.parser
 
 		void CreateBuiltinType(String name, VariableType type)
 		{
-			types.Add(name, new TypeDeclaration(name, type));
+			builtins.Add(name, new TypeDeclaration(name, type));
 		}
 
-		void LoadBuiltinTypes()
+		/// <summary>
+		/// Load the built-in basic types.
+		/// </summary>
+		/// <remarks>
+		/// Warning! Cannot be called from the constructor. Creates a circular dependency where 
+		/// for each created built-in, the Declaration tries to register the typename in the global TRegister
+		/// </remarks>
+		public void LoadBuiltinTypesBasic()
 		{
 			CreateBuiltinType("boolean", BoolType.Single);
-			CreateBuiltinType("pchar", StringType.Single);
 			CreateBuiltinType("shortstring", StringType.Single);
 			CreateBuiltinType("widestr", StringType.Single);
 			CreateBuiltinType("real48", DoubleType.Single);
-			CreateBuiltinType("float", FloatType .Single);
+			CreateBuiltinType("single", FloatType .Single);
 			CreateBuiltinType("double", DoubleType.Single);
 			CreateBuiltinType("extended", ExtendedType.Single);
-			CreateBuiltinType("curryency", CurrencyType.Single);
+			CreateBuiltinType("currency", CurrencyType.Single);
 			CreateBuiltinType("byte", UnsignedInt8Type.Single);
 			CreateBuiltinType("integer",  SignedInt32Type.Single);
 			CreateBuiltinType("shortint", SignedInt8Type .Single);
@@ -80,9 +92,49 @@ namespace crosspascal.parser
 			CreateBuiltinType("olevariant", new VariantType());
 		}
 
+		/// <summary>
+		/// Load the built-in pointer types.
+		/// </summary>
+		/// <remarks>
+		/// Warning! Cannot be called from the constructor. Creates a circular dependency where 
+		/// for each created built-in, the Declaration tries to register the typename in the global TRegister
+		/// </remarks>
+		public void LoadBuiltinTypesPointer()
+		{
+			CreateBuiltinType("pchar", new PointerType(StringType.Single));
+			CreateBuiltinType("pboolean", new PointerType(BoolType.Single));
+			CreateBuiltinType("pbyte", new PointerType(BoolType.Single));
+
+			CreateBuiltinType("pshortstring", new PointerType(StringType.Single));
+			CreateBuiltinType("pwidestr", new PointerType(StringType.Single));
+			CreateBuiltinType("preal48", new PointerType(DoubleType.Single));
+			CreateBuiltinType("psingle", new PointerType(FloatType.Single));
+			CreateBuiltinType("pdouble", new PointerType(DoubleType.Single));
+			CreateBuiltinType("pextended", new PointerType(ExtendedType.Single));
+			CreateBuiltinType("pcurryency", new PointerType(CurrencyType.Single));
+			CreateBuiltinType("pinteger", new PointerType(SignedInt32Type.Single));
+			CreateBuiltinType("pshortint", new PointerType(SignedInt8Type.Single));
+			CreateBuiltinType("psmallint", new PointerType(SignedInt16Type.Single));
+			CreateBuiltinType("plongint", new PointerType(SignedInt32Type.Single));
+			CreateBuiltinType("pint64", new PointerType(SignedInt64Type.Single));
+			CreateBuiltinType("puint64", new PointerType(UnsignedInt64Type.Single));
+			CreateBuiltinType("pword", new PointerType(UnsignedInt16Type.Single));
+			CreateBuiltinType("plongword", new PointerType(UnsignedInt32Type.Single));
+			CreateBuiltinType("pcardinal", new PointerType(UnsignedInt32Type.Single));
+			CreateBuiltinType("pcomp", new PointerType(SignedInt64Type.Single));
+			CreateBuiltinType("pwidechar", new PointerType(CharType.Single));
+			CreateBuiltinType("pvariant", new PointerType(new VariantType()));
+			CreateBuiltinType("polevariant", new PointerType(new VariantType()));
+		}
+
+		public void LoadBuiltinTypesWindows()
+		{
+			CreateBuiltinType("thandle", IntegerType.Single);
+		}
+
+
 		public TypeRegistry()
 		{
-			LoadBuiltinTypes();
 		}
 	}
 }
