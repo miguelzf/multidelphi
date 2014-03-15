@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>crosspascal</RootNamespace>
     <AssemblyName>crosspascal</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -27,6 +27,7 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <IntermediateOutputPath>..\obj\</IntermediateOutputPath>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -48,7 +49,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>crosspascal.Program</StartupObject>
+    <StartupObject>crosspascal.parser.ParserDriverTest</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -70,6 +71,7 @@
     <Compile Include="ast\nodes\Nodes.cs" />
     <Compile Include="ast\Processor.cs" />
     <Compile Include="ast\ProcessorGenerated.cs" />
+    <Compile Include="parser\TypeRegistry.cs" />
     <Compile Include="ast\VisitorTraverser.cs" />
     <Compile Include="ast\MapTraverser.cs" />
     <Compile Include="ast\Traverser.cs" />

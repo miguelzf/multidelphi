@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using crosspascal.parser;
 
 namespace crosspascal.ast.nodes
 {
@@ -42,6 +43,12 @@ namespace crosspascal.ast.nodes
 		public ArrayList names;
 		public TypeNode type;
 
+		public void AddName(String name)
+		{
+			names.Add(name);
+			DelphiParser.TReg.RegisterDeclaration(name, this);
+		}
+
 		protected Declaration() { }
 
 		protected Declaration(TypeNode t = null)
@@ -52,12 +59,13 @@ namespace crosspascal.ast.nodes
 
 		public Declaration(ArrayList names, TypeNode t = null) : this(t)
 		{
-			names.AddRange(names);
+			foreach (String name in names)
+				AddName(name);
 		}
 
 		public Declaration(String name, TypeNode t = null) : this(t)
 		{
-			names.Add(name);
+			AddName(name);
 		}
 	}
 
@@ -160,8 +168,6 @@ namespace crosspascal.ast.nodes
 
 	/// <summary>
 	/// Creates a custom, user-defined name for some Type
-	/// 
-	/// TODO fetch custom type for typename
 	/// </summary>
 	public class TypeDeclaration : Declaration
 	{
@@ -170,16 +176,6 @@ namespace crosspascal.ast.nodes
 		protected TypeDeclaration() { }
 
 		public TypeDeclaration(String name, TypeNode type) : base(name, type) { }
-
-		public TypeDeclaration(String name, String typename) : base(name)
-		{
-			this.typename = typename;
-		}
-	}
-
-	public abstract partial class CompositeDeclaration : TypeDeclaration
-	{
-		// In file Composites.cs
 	}
 
 	public abstract partial class CallableDeclaration : TypeDeclaration

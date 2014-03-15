@@ -50,7 +50,7 @@ namespace crosspascal.ast
 			if (nodeType.IsGenericType)
 			{
 				System.Type nodetype = n.GetType();
-				System.Type paramType = nodetype.GenericTypeArguments[0];
+				System.Type paramType = nodetype.GetGenericArguments()[0];
 
 				Logger.log.Write(nodetype.Name);
 

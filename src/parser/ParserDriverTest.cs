@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using crosspascal.ast.nodes;
 
 namespace crosspascal.parser
 {
@@ -37,7 +38,8 @@ namespace crosspascal.parser
 		public static void Main(string[] args)
 		{
 			var sw = new Stopwatch();
-			sw.Start();
+
+			Console.WriteLine("CrossPascal Delphi compiler");
 
 			DelphiParser parser = new DelphiParser();
 			DelphiPreprocessor preproc = new DelphiPreprocessor();
@@ -60,13 +62,12 @@ namespace crosspascal.parser
 					continue;
 				}
 
-				string preprocfiletext = preproc.GetOutput();
+				string preprocfiletext = preproc.GetOutput().ToLowerInvariant();	// Delphi is case-insensitive
 				StringReader sr = new StringReader(preprocfiletext);
-
 				try
 				{
-					Object tree = parser.Parse(sr);
-					Console.WriteLine("Parsed OK");
+					CompilationUnit tree = (CompilationUnit) parser.Parse(sr);
+					Console.WriteLine("Parsed OK: " + tree.name + " " + tree.ToString());
 				}
 				catch (ParserException e)
 				{

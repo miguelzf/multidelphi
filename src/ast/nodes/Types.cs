@@ -17,10 +17,11 @@ namespace crosspascal.ast.nodes
 	#region Type hierarchy
 	/// <remarks>
 	/// Types
-	/// 	DeclaredType => may be any, user-defined
 	/// 	UndefinedType	> for untyped parameters. incompatible with any type >
 	/// 	ProceduralType
-	/// 	ClassType
+	/// 	CompositeType
+	///			ClassType
+	///			InterfaceType
 	/// 	VariableType
 	/// 		ScalarType
 	/// 			IntegralType		: IOrdinalType
@@ -72,61 +73,6 @@ namespace crosspascal.ast.nodes
 	}
 
 	/// <summary>
-	/// Custom/User-defined type
-	/// </summary>
-	public class DeclaredType : TypeNode
-	{
-		public String name;
-
-		public DeclaredType(String name)
-		{
-			this.name = name;
-		}
-
-		public override bool Equals(Object o)
-		{
-			if (o == null)
-				return false;
-
-			DeclaredType type = (DeclaredType) o;
-			return (name == type.name);
-		}
-	}
-
-
-	public class RecordType : StructuredType
-	{
-		FieldList compTypes;
-
-		public RecordType(FieldList compTypes)
-		{
-			this.compTypes = compTypes;
-		}
-
-		public override bool Equals(Object o)
-		{
-			if (o == null || this.GetType() != o.GetType())
-				return false;
-
-			RecordType rtype = (RecordType)o;
-			var types = compTypes.Zip(rtype.compTypes,
-				(x, y) =>
-				{
-					return new KeyValuePair<TypeNode, TypeNode>(x.type, y.type);
-				});
-
-			foreach (var x in types)
-				if (!x.Key.Equals(x.Value))
-					return false;
-
-			//	var list = new List<KeyValuePair<IOrdinalType,IOrdinalType>>(types);
-			//	list.ForEach( (x) => {	if (!x.Key.Equals(x.Value.Equals)) return false; });
-			return true;
-		}
-	}
-
-
-	/// <summary>
 	/// Type of a Routine (function, procedure, method, etc)
 	/// </summary>
 	public partial class ProceduralType : TypeNode
@@ -134,18 +80,41 @@ namespace crosspascal.ast.nodes
 		// In file Routines.cs
 	}
 
-	public class ClassType : DeclaredType
+	/// <summary>
+	/// Type of a Class
+	/// </summary>
+	public partial class CompositeType : TypeNode
 	{
-		public ClassType(String name) : base(name) { }
+		// In file Composites.cs
 	}
 
+	/// <summary>
+	/// Type of a Class
+	/// </summary>
+	public partial class ClassType : CompositeType
+	{
+		// In file Composites.cs
+	}
+
+	/// <summary>
+	/// Type of an Interface
+	/// </summary>
+	public partial class InterfaceType : CompositeType
+	{
+		// In file Composites.cs
+	}
+
+
+	/// <summary>
+	/// Variable types: types can be used in simple variable declarations
+	/// </summary>
 	public abstract class VariableType : TypeNode
 	{
+		// TODO each derive should set the typesize
 		public int typeSize;
-
 	}
 
-	public class MetaclassType : TypeNode
+	public class MetaclassType : VariableType
 	{
 		public TypeNode baseType;
 
@@ -660,11 +629,6 @@ namespace crosspascal.ast.nodes
 			// dynamic array
 		}
 
-		public ArrayType(VariableType type, DeclaredType dtype)
-		{
-			// TODO resolve
-		}
-
 		public ArrayType(VariableType type, TypeList dims) : base(type)
 		{
 			// TODO Check constant and compute value
@@ -711,6 +675,42 @@ namespace crosspascal.ast.nodes
 		public FileType(VariableType type = null) : base(type) { }
 	}
 
+	/// <summary>
+	/// RecordType. Records can only have fields, not methods
+	/// </summary>
+	/// <remarks>
+	/// Although their structure is more alike to Composite types, their use is closer to StructuredTypes:
+	///		they can be defined and used anonymously, with Record-type consts
+	/// </remarks>
+	public class RecordType : StructuredType
+	{
+		FieldList compTypes;
+
+		public RecordType(FieldList compTypes)
+		{
+			this.compTypes = compTypes;
+		}
+
+		public override bool Equals(Object o)
+		{
+			if (o == null || this.GetType() != o.GetType())
+				return false;
+
+			RecordType rtype = (RecordType)o;
+			var types = compTypes.Zip(rtype.compTypes,
+				(x, y) =>
+				{
+					return new KeyValuePair<TypeNode, TypeNode>(x.type, y.type);
+				});
+
+			foreach (var x in types)
+				if (!x.Key.Equals(x.Value))
+					return false;
+
+			// types.ForEach( (x) => {	if (!x.Key.Equals(x.Value.Equals)) return false; });
+			return true;
+		}
+	}
 
 	#endregion
 

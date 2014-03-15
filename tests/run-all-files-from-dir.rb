@@ -17,4 +17,4 @@ dirs = Dir.glob(globexp).reject{|x| File.directory?(x)}.join(' ')
 
 #puts outp = %x[ parser-delphi.exe #{dirs} ]
 
-system 'parser-delphi.exe '+dirs
+system 'bin\crosspascal.exe ' + dirs

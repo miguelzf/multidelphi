@@ -41,11 +41,13 @@ namespace crosspascal.parser
 		}
 
 		
-		//	Encoding.Default);	// typically Single-Bye char set
+		//Encoding.Default;	// typically Single-Bye char set
 		// TODO change charset to unicode, use %unicode in flex
 		public static readonly Encoding DefaultEncoding = Encoding.GetEncoding("iso-8859-1");
 
-		DelphiScanner lexer;		
+		DelphiScanner lexer;
+		// to be fetched in AST nodes
+		public static TypeRegistry TReg;
 		
 		// Entry point and public interface
 		
@@ -57,19 +59,17 @@ namespace crosspascal.parser
 			}
 			
 			eof_token = DelphiScanner.YYEOF;
-			
 		}
 
-		internal DelphiParser()
-		{
-			this.debug = new Func<ParserDebug>(
+		internal DelphiParser() 
+			: this(new Func<ParserDebug>(
 					() => {	switch(DelphiParser.DebugLevel)
 						{	case 1: return new DebugPrintFinal();
 							case 2: return new DebugPrintAll();
 							default: return null;
 						}
-					})();
-			eof_token = DelphiScanner.YYEOF;
+					})())
+		{
 		}
 		
 		// wrapper for yyparse
@@ -79,6 +79,8 @@ namespace crosspascal.parser
 				this.debug = (ParserDebug) dgb;
 				DebugLevel = 1;
 			}
+			
+			TReg = new TypeRegistry();
 			
 			lexer = new DelphiScanner(tr);
 			
@@ -226,15 +228,16 @@ namespace crosspascal.parser
 %type<PropertySpecifiers> propspecifiers
 
 	// Types
-%type<ScalarType> realtype inttype chartype stringtype varianttype scalartype casttype pointertype 
+%type<ScalarType> scalartype pointertype casttype
+	// realtype inttype chartype stringtype varianttype scalartype  
 %type<ScalarType> funcrettype funcret paramtypeopt paramtypespec 
 %type<StructuredType> structuredtype
 %type<VariableType> funcparamtype arraytype settype filetype packstructtype
 %type<VariableType> vartype enumtype rangetype metaclasstype 
-%type<IntegralType> arraytypedef
+	// %type<IntegralType> arraytypedef integraltype
 %type<CompositeDeclaration> packcomptype compositetype
 %type<RecordType> recordtype recordtypebasic
-%type<TypeNode> integraltype ordinaltype
+%type<TypeNode> ordinaltype
 %type<ProceduralType> proceduraltype proctypefield
 
 
@@ -956,7 +959,6 @@ routinecall
 lvalue	// lvalue
 	: identifier							{ $$ = $1; }
 	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCall($1, $3); }
-	| lvalue LPAREN casttype RPAREN			{ $$ = new RoutineCall($1, $3); }
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
@@ -972,7 +974,6 @@ unaryexpr
 	: literal								{ $$ = $1; }
 	| lvalue								{ $$ = $1; }
 	| set									{ $$ = $1; }
-	| casttype LPAREN exprlstopt RPAREN		{ $$ = new TypeCast($1, $3); }
 	| KW_ADDR unaryexpr						{ $$ = new AddressLvalue($2); }
 	| KW_NOT unaryexpr						{ $$ = new LogicalNot($2); }
 	| KW_SUM unaryexpr 						{ $$ = new UnaryPlus($2); }
@@ -1424,7 +1425,6 @@ vartype
 	: scalartype				{ $$ = $1; }
 	| enumtype					{ $$ = $1; }
 	| rangetype					{ $$ = $1; }
-	// metaclasse
 	| metaclasstype				{ $$ = $1; }
 	| packstructtype			{ $$ = $1; }
 	;
@@ -1440,7 +1440,7 @@ compositetype
 	;
 
 metaclasstype
-	: KW_CLASS KW_OF id			{ $$ = new ClassType($3); }
+	: KW_CLASS KW_OF id			{ $$ = new MetaclassType(TReg.FetchType($3)); }
 	;
 
 packstructtype
@@ -1462,18 +1462,12 @@ arrayszlst
 
 arraytype
 	: TYPE_ARRAY LBRAC arrayszlst   RBRAC KW_OF vartype 	{ $$ = new ArrayType($6, $3); }
-	| TYPE_ARRAY LBRAC arraytypedef RBRAC KW_OF vartype 	{ $$ = new ArrayType($6, $3); }
-	| TYPE_ARRAY LBRAC id 			RBRAC KW_OF vartype		{ $$ = new ArrayType($6, new DeclaredType($3)); }
+	| TYPE_ARRAY LBRAC id 			RBRAC KW_OF vartype		{ $$ = new ArrayType($6, TReg.FetchTypeIntegral($3)); }
 	| TYPE_ARRAY KW_OF vartype 	{ $$ = new ArrayType($3); }
 	;
 
-arraytypedef
-	: inttype					{ $$ = $1; }
-	| chartype					{ $$ = $1; }
-	;
-
 settype
-	: TYPE_SET KW_OF ordinaltype{ /* TODO!! $$ = new SetType($3);*/ }
+	: TYPE_SET KW_OF ordinaltype { /* TODO!! $$ = new SetType($3);*/ }
 	;
 
 filetype
@@ -1481,67 +1475,21 @@ filetype
 	| TYPE_FILE					{ $$ = new FileType(); }
 	;
 
-
 scalartype
-	: integraltype				{ $$ = $1; }
-	| realtype					{ $$ = $1; }
-	| stringtype				{ $$ = $1; }
-	| varianttype				{ $$ = $1; }
+	: id						{ $$ = TReg.FetchTypeScalar($1); }
+	| TYPE_STR /*dynamic size*/	{ $$ = StringType.Single; }
+	| TYPE_STR LBRAC constexpr RBRAC { $$ = new FixedStringType($3); }
 	| pointertype				{ $$ = $1; }
 	;
-
+	
 ordinaltype
 	: rangetype					{ $$ = $1; }
 	| enumtype					{ $$ = $1; }
-	| integraltype				{ $$ = $1; }
+	| id						{ $$ = TReg.FetchTypeIntegral($1); }
 	;
-
-integraltype
-	: inttype					{ $$ = $1; }
-	| chartype					{ $$ = $1; }
-	| TYPE_BOOL					{ $$ = BoolType.Single; }
-								// TODO solve ambiguity, integral or not, declaredtype may not be integral
-	| id						{ $$ = new DeclaredType($1); }
-	;
-
-realtype
-	: TYPE_REAL48				{ $$ = DoubleType.Single; }
-	| TYPE_FLOAT				{ $$ = FloatType .Single; }
-	| TYPE_DOUBLE				{ $$ = DoubleType.Single; }
-	| TYPE_EXTENDED				{ $$ = ExtendedType.Single; }
-	| TYPE_CURR					{ $$ = CurrencyType.Single; }
-	;
-
-inttype
-	: TYPE_BYTE					{ $$ = UnsignedInt8Type.Single; }
-	| TYPE_INT					{ $$ = SignedInt32Type.Single; }
-	| TYPE_SHORTINT				{ $$ = SignedInt8Type .Single;  }
-	| TYPE_SMALLINT				{ $$ = SignedInt16Type.Single; }
-	| TYPE_LONGINT				{ $$ = SignedInt32Type.Single; }
-	| TYPE_INT64				{ $$ = SignedInt64Type.Single; }
-	| TYPE_UINT64				{ $$ = UnsignedInt64Type.Single; }
-	| TYPE_WORD					{ $$ = UnsignedInt16Type.Single; }
-	| TYPE_LONGWORD				{ $$ = UnsignedInt32Type.Single; }
-	| TYPE_CARDINAL				{ $$ = UnsignedInt32Type.Single; }
-	| TYPE_COMP					{ $$ = SignedInt64Type	.Single; }
-	;
-
-chartype
-	: TYPE_CHAR					{ $$ = CharType.Single; }
-	| TYPE_WIDECHAR				{ $$ = CharType.Single; }
-	;
-
-stringtype
-	: TYPE_STR /*dynamic size*/	{ $$ = StringType.Single; }
-	| TYPE_PCHAR				{ $$ = StringType.Single; }
-	| TYPE_STR LBRAC constexpr RBRAC { $$ = new FixedStringType($3); }
-	| TYPE_SHORTSTR				{ $$ = StringType.Single; }
-	| TYPE_WIDESTR				{ $$ = StringType.Single; }
-	;
-
-varianttype
-	: TYPE_VAR					{ $$ = new VariantType(); }
-	| TYPE_OLEVAR				{ $$ = new VariantType(); }
+	
+casttype
+	: id						{ $$ = TReg.FetchTypeScalar($1); }
 	;
 
 pointertype
@@ -1556,15 +1504,6 @@ funcparamtype
 
 funcrettype
 	: scalartype				{ $$ = $1; }
-	;
-	
-	// scalartype w/o user-defined types
-casttype
-	: inttype					{ $$ = $1; }
-	| chartype					{ $$ = $1; }
-	| realtype					{ $$ = $1; }
-	| stringtype				{ $$ = $1; }
-	| pointertype				{ $$ = $1; }
 	;
 
 

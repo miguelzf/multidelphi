@@ -34,8 +34,8 @@ namespace crosspascal.parser
 
 //%column
 %line
-//Delphi is case insensitive
-%ignorecase
+//Delphi is case insensitive, but the stringstream has been converted to lowercase. Simpler and faster
+//%ignorecase
 
 // ------------------------------------------------------
 // EOF treatment:
@@ -153,9 +153,9 @@ namespace crosspascal.parser
 %s SFUNCDECL SPROPSPECS SPACKAGES
 
 DEC     = [0-9]
-HEXA    = [0-9a-fA-F]
-	/* ALPH	= [a-zA-Z] */
-ID      = [0-9a-zA-Z_]
+HEXA    = [0-9a-f]
+ID      = [0-9a-z_]
+ID1		= [_a-z]
 NL      = (\r|\n|\r\n)
 	
 
@@ -202,6 +202,7 @@ const		{ return KW_CONST; }
 var			{ return KW_VAR; }
 threadvar	{ return KW_THRVAR; }
 type		{ return KW_TYPE; }
+resourcestring	{ return TYPE_RSCSTR; }
 
 	/* blocks */
 begin		{ return KW_BEGIN; }
@@ -249,7 +250,7 @@ on			{ return KW_ON; }
 	// wait for function params or return (when function has no params)
 <XFUNCW_PARAMS> {
 	// function name
-	[_a-zA-Z]{ID}*	{ yylval = yytext(); return IDENTIFIER; }
+	{ID1}{ID}*	{ yylval = yytext(); return IDENTIFIER; }
 	"."			{ return KW_DOT; }
 	
 	"("			{	switchstate(XFUNCW_RET);
@@ -326,7 +327,7 @@ on			{ return KW_ON; }
 	// leave func directives:
 	"="			{ yypopstate(); return KW_EQ; }
 		// for IDs that start with a keyword part. ex: forward_dffdg
-	[_a-zA-Z]{ID}*	{ yypopstate(); yypushback(yylength()); }
+	{ID1}{ID}*	{ yypopstate(); yypushback(yylength()); }
 	. 			{ yypopstate();	yypushback(1); }
 }
 
@@ -335,7 +336,7 @@ on			{ return KW_ON; }
 	name 		{ return KW_NAME; }
 	'[^']*'		{ yylval = yytext().Substring(1, yylength()-2); return CONST_STR; }
 	"."			{ return KW_DOT; }
-	[_a-zA-Z]{ID}*	{ yylval = yytext(); return IDENTIFIER; }
+	{ID1}{ID}*	{ yylval = yytext(); return IDENTIFIER; }
 	
 	";"			{ yypopstate(); return SCOL; }
 	[ \t\n\r]+	{ }
@@ -384,9 +385,9 @@ package		{ yypushstate(SPACKAGES); yylval = yytext(); return IDENTIFIER; }
 
 
  	/**************************************************************/
-	// Lexical Scope for Types - TODO
-
-		/* types: integers */
+	/* Built-in types: emitted as identifiers */
+/*
+		// types: integers
 	byte		{ return TYPE_BYTE; }
 	shortint	{ return TYPE_SHORTINT; }
 	word		{ return TYPE_WORD; }
@@ -397,32 +398,32 @@ package		{ yypushstate(SPACKAGES); yylval = yytext(); return IDENTIFIER; }
 	longint		{ return TYPE_LONGINT; }
 	int64		{ return TYPE_INT64; }
 	uint64		{ return TYPE_UINT64; }
+	comp		{ return TYPE_COMP; }
 
-		/* types: floats */
+		// types: floats
 	single		{ return TYPE_FLOAT; }
 	real48		{ return TYPE_REAL48; }
 	extended	{ return TYPE_EXTENDED; }
 	double		{ return TYPE_DOUBLE; }
 	real		{ return TYPE_DOUBLE; }
+	currency	{ return TYPE_CURR; }
 
-		/* types: chars */
+		// types: chars 
 	char		{ return TYPE_CHAR; }
 	pchar		{ return TYPE_PCHAR; }
 	ansichar	{ return TYPE_PCHAR; }
 	widechar	{ return TYPE_WIDECHAR; }
-	string		{ return TYPE_STR; }
 	shortstring	{ return TYPE_SHORTSTR; }
 	widestring	{ return TYPE_WIDESTR; }
 	ansistring	{ return TYPE_STR; }
-	resourcestring	{ return TYPE_RSCSTR; }
 	 
-		/* types others */
+		// types others
 	boolean		{ return TYPE_BOOL; }
 	olevariant	{ return TYPE_OLEVAR; }
 	variant		{ return TYPE_VAR; }
-	comp		{ return TYPE_COMP; }
-	currency	{ return TYPE_CURR; }
+*/
 
+string		{ return TYPE_STR; }
 array		{ return TYPE_ARRAY; }
 pointer		{ return TYPE_PTR; }
 file		{ return TYPE_FILE; }
@@ -441,7 +442,7 @@ asm						{	yypushstate(XASMCODESEC);
 							return KW_END;
 						}
 	// ignore IDs that start with 'end'
- [_a-zA-Z]{ID}*			{ }
+ {ID1}{ID}*			{ }
 
  .|{NL}					{ }	// return ASM_OP; }
 }
@@ -530,7 +531,7 @@ in			{ return KW_IN; }	// is in set
 
 	/**************************************************************/
 
-[_a-zA-Z]{ID}*		{ yylval = yytext(); return IDENTIFIER; }
+{ID1}{ID}*		{ yylval = yytext(); return IDENTIFIER; }
 
 [ \t]+				{ }     /* ignore whitespace */
 

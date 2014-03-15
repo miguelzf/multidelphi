@@ -9,6 +9,9 @@ namespace crosspascal.ast.nodes
 	// override Equals but not GetHashCode warning
 	#pragma warning disable 659
 
+
+	#region ProceduralTypes
+
 	/// <summary>
 	/// Type of a Routine (function, procedure, method, etc)
 	/// </summary>
@@ -64,6 +67,10 @@ namespace crosspascal.ast.nodes
 			: base(@params, ret, dirs) { }
 	}
 
+	#endregion
+
+
+	#region Routines' Declarations
 
 	/// <summary>
 	/// Declaration of a procedural type, i.e. Callable unit
@@ -136,6 +143,7 @@ namespace crosspascal.ast.nodes
 			: base(name, objname, @params) { }
 	}
 
+	#endregion
 
 	// not really a declaration, not it makes the grammar cleaner..
 	public class RoutineDefinition : Declaration
@@ -151,8 +159,7 @@ namespace crosspascal.ast.nodes
 	}
 
 
-
-	#region Directives Aggregators
+	#region Directives' Aggregators
 
 	/// <summary>
 	/// Callable Units Directives
@@ -312,7 +319,7 @@ namespace crosspascal.ast.nodes
 	#endregion
 
 
-	#region Directives enums
+	#region Directives' Constants
 
 	public class ExternalDirective
 	{
