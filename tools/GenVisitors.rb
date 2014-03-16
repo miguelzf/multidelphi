@@ -12,7 +12,7 @@ end
 $genfile="ProcessorGenerated.cs"
 $genclassname="Processor"
 $genbasevisitor = true
-$visitreturntype = "void"
+$visitreturntype = "bool"
 
 $srcfilename=ARGV[0]
 if !File.exist?($srcfilename)

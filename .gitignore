@@ -125,3 +125,4 @@ UpgradeLog*.XML
 
 
 /src/parser/DelphiPreprocessor.cs
+/src/ast/ProcessorGenerated.cs
