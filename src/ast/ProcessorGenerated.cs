@@ -100,14 +100,19 @@ namespace crosspascal.ast
 			Visit((Declaration) node);
 		}
 		
-		public virtual void Visit(VarDeclaration node)
+		public virtual void Visit(ValueDeclaration node)
 		{
 			Visit((Declaration) node);
 		}
 		
+		public virtual void Visit(VarDeclaration node)
+		{
+			Visit((ValueDeclaration) node);
+		}
+		
 		public virtual void Visit(ParameterDeclaration node)
 		{
-			Visit((VarDeclaration) node);
+			Visit((ValueDeclaration) node);
 		}
 		
 		public virtual void Visit(VarParameterDeclaration node)
@@ -127,12 +132,12 @@ namespace crosspascal.ast
 		
 		public virtual void Visit(FieldDeclaration node)
 		{
-			Visit((Declaration) node);
+			Visit((ValueDeclaration) node);
 		}
 		
 		public virtual void Visit(ConstDeclaration node)
 		{
-			Visit((Declaration) node);
+			Visit((ValueDeclaration) node);
 		}
 		
 		public virtual void Visit(EnumValue node)

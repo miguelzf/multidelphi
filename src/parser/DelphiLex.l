@@ -480,14 +480,10 @@ false				{ yylval = false; return CONST_BOOL; }
 "("			{ return LPAREN; }
 "]"			{ return RBRAC;	}
 
-";"			{	if (yylaststate() == XFUNCDIRECTS)
-					yypopstate();
-				return SCOL;
+";"			{	if (yylaststate() == XFUNCDIRECTS) yypopstate(); return SCOL;
 			}
 
-")"			{	if (yylaststate() == XFUNCW_RET)
-					yypopstate();
-				return RPAREN;
+")"			{	if (yylaststate() == XFUNCW_RET) yypopstate(); return RPAREN;
 			}
 
 	/* expr: general */
@@ -531,7 +527,7 @@ in			{ return KW_IN; }	// is in set
 
 	/**************************************************************/
 
-{ID1}{ID}*		{ yylval = yytext(); return IDENTIFIER; }
+{ID1}{ID}*			{ yylval = yytext(); return IDENTIFIER; }
 
 [ \t]+				{ }     /* ignore whitespace */
 

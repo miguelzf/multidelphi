@@ -1,4 +1,6 @@
-﻿using System;
+﻿using crosspascal.parser;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +25,7 @@ namespace crosspascal.ast.nodes
 		/// Function's return type. Must be null for every non-function routine.
 		/// </summary>
 		public ScalarType funcret { get; set; }
+		public OutParameterDeclaration returnVar;
 
 		CallableDirectives _directives;
 		public CallableDirectives Directives
@@ -42,6 +45,9 @@ namespace crosspascal.ast.nodes
 			this.funcret = ret;
 			if (dirs != null)
 				Directives = dirs;
+			if (ret != null)
+				// TODO check and emit error if any parameter is named 'Result'
+				returnVar = new OutParameterDeclaration(new ArrayList() { "result" }, ret);
 		}
 
 		public override bool Equals(Object o)
@@ -65,7 +71,9 @@ namespace crosspascal.ast.nodes
 	public class MethodType : ProceduralType
 	{
 		public MethodType(ParameterList @params, ScalarType ret = null, CallableDirectives dirs = null)
-			: base(@params, ret, dirs) { }
+			: base(@params, ret, dirs)
+		{ 
+		}
 	}
 
 	#endregion

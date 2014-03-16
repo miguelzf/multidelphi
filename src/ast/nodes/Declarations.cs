@@ -12,15 +12,16 @@ namespace crosspascal.ast.nodes
 	#region Declarations hierarchy
 	/// <remarks>
 	///	Declaration
-	///		Constant
-	///		RscStr
-	///		Variable
+	///		LabelDeclaration
+	///		ValueDeclaration
+	///			Constant
+	///			Variable
 	///			Parameter	// of routines
 	///				DefaultParam
 	///				VarParam
 	///				OutParam
 	///				ConstParam
-	///		ObjectField
+	///			Field
 	///		TypeDecl
 	///			Custom-Type
 	///			
@@ -46,7 +47,16 @@ namespace crosspascal.ast.nodes
 		public void AddName(String name)
 		{
 			names.Add(name);
-			DelphiParser.TReg.RegisterDeclaration(name, this);
+
+			// Console.WriteLine("DECLARE " + name + " with type: " + type);
+			// HACK!! FIXME TODO
+			// constructs with a declaring context (i.e. routines & composites)
+			// are wrongly being declared in their own sub context.
+			// Should be declared in the upper context
+			if (type.ISA(typeof(ProceduralType)) || type.ISA(typeof(CompositeType)))
+				DelphiParser.DeclRegistry.RegisterPreviousDeclaration(name, this);
+			else  // normal cases
+				DelphiParser.DeclRegistry.RegisterDeclaration(name, this);
 		}
 
 		protected Declaration() { }
@@ -76,7 +86,16 @@ namespace crosspascal.ast.nodes
 		public LabelDeclaration(ArrayList names) : base(names, null) { }
 	}
 
-	public class VarDeclaration : Declaration
+
+	public abstract class ValueDeclaration : Declaration
+	{
+		public ValueDeclaration(ArrayList names, TypeNode t = null) : base(names, t) { }
+
+		public ValueDeclaration(String name, TypeNode t = null) : base(name, t) { }
+	}
+
+
+	public class VarDeclaration : ValueDeclaration
 	{
 		public Expression init;
 		public String shareVal;
@@ -95,14 +114,20 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
+	#region Parameters' Declarations
 	/// <summary>
 	/// Routine parameters
 	/// </summary>
 
-	public class ParameterDeclaration : VarDeclaration
+	public class ParameterDeclaration : ValueDeclaration
 	{
-		public ParameterDeclaration(ArrayList ids, ScalarType t = null, Expression init = null) : base(ids, t, init)
+		public Expression init;
+
+		public ParameterDeclaration(ArrayList ids, ScalarType t, Expression init = null)
+			: base(ids, t)
 		{
+			this.init = init;
 		}
 	}
 
@@ -121,11 +146,13 @@ namespace crosspascal.ast.nodes
 		public OutParameterDeclaration(ArrayList ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
 	}
 
+	#endregion
+
 
 	/// <summary>
 	/// Composite object field declaration
 	/// </summary>
-	public class FieldDeclaration : Declaration
+	public class FieldDeclaration : ValueDeclaration
 	{
 		public FieldDeclaration(ArrayList ids, TypeNode t = null)
 			: base(ids, t)
@@ -136,7 +163,7 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// TODO!! Must Derive type
 	/// </summary>
-	public class ConstDeclaration : Declaration
+	public class ConstDeclaration : ValueDeclaration
 	{
 		public Expression init;
 
@@ -147,7 +174,7 @@ namespace crosspascal.ast.nodes
 			init.EnforceConst = true;
 
 			if (t == null)
-				this.type = init.Type;
+				type = init.Type;
 		}
 	}
 
@@ -166,13 +193,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
 	/// <summary>
 	/// Creates a custom, user-defined name for some Type
 	/// </summary>
 	public class TypeDeclaration : Declaration
 	{
-		public String typename;
-
 		protected TypeDeclaration() { }
 
 		public TypeDeclaration(String name, TypeNode type) : base(name, type) { }

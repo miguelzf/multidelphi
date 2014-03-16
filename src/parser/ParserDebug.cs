@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace crosspascal.parser
 {
-	interface ParserDebug
+	public interface ParserDebug
 	{
 		void push (int state, Object value);
 		void lex (int state, int token, string name, Object value);

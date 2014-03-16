@@ -838,7 +838,7 @@ char *name;
 	    ++outline;
     	putchar(c);
       }
-      printf(default_line_format, ++outline + 1);
+      if (!lflag) printf(default_line_format, ++outline + 1);
     }
     fclose(in);
 }
@@ -1073,7 +1073,7 @@ output_trailing_text()
 	if ((c = getc(in)) == EOF)
 	    return;
         ++outline;
-	printf(line_format, lineno, input_file_name);
+	if (!lflag) printf(line_format, lineno, input_file_name);
 	if (c == '\n')
 	    ++outline;
 	putchar(c);
@@ -1082,7 +1082,7 @@ output_trailing_text()
     else
     {
 	++outline;
-	printf(line_format, lineno, input_file_name);
+	if (!lflag) printf(line_format, lineno, input_file_name);
 	do { putchar(c); } while ((c = *++cptr) != '\n');
 	++outline;
 	putchar('\n');
@@ -1102,7 +1102,7 @@ output_trailing_text()
 	++outline;
 	putchar('\n');
     }
-    printf(default_line_format, ++outline + 1);
+    if (!lflag) printf(default_line_format, ++outline + 1);
 }
 
 
@@ -1136,7 +1136,7 @@ output_semantic_actions()
 	putchar('\n');
     }
 
-    printf(default_line_format, ++outline + 1);
+    if (!lflag) printf(default_line_format, ++outline + 1);
 }
 
 

@@ -27,7 +27,11 @@ namespace crosspascal.core
 				string text = File.ReadAllText(fileName);
 				// Parser parser = Parser.FromText(text, fileName, CompilerDefines.CreateStandard(), new MemoryFileLoader());
 			//	Node tree = parser.ParseRule(_ruleType);
-
+		/*
+				CppCodegen proc = new CppCodegen();
+				proc.traverse = new VisitorTraverser(proc).traverse;
+				proc.Visit(tree);
+		*/	
 			//	String treestr = printTree(tree, typeof(MapTraverser), 4);
 			/*	PrintAST proc = new PrintAST();
 				new MapTraverser(proc);

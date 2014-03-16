@@ -1536,9 +1536,10 @@ sealed public class Emitter {
           if ( scanner.columnCount ) print("yycolumn+1, ");
           println("yytext());");
 
-          print("            Console.WriteLine(\"action ["+action.priority+"] { ");
-          print(escapify(action.content));
-          println(" }\");");
+		// Miguel: do not print actions
+		//  print("            Console.WriteLine(\"action ["+action.priority+"] { ");
+        // print(escapify(action.content));
+        //  println(" }\");");
         }
 
 		if (Options.emitlines) println("#line " + action.priority + " \"" + escapify(scanner.file) + "\"");

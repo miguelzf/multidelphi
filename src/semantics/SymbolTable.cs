@@ -17,7 +17,7 @@ namespace crosspascal.semantics
 
 		public SymbolTable()
 		{
-			Push("initial default");
+			Push("initial: empty default context");
 		}
 
 		/// <summary>
@@ -30,12 +30,26 @@ namespace crosspascal.semantics
 		}
 
 		/// <summary>
-		/// Destroyy the current Symbol context and pop it from the stack
+		/// Destroy the current Symbol context and pop it from the stack
 		/// </summary>
 		public void Pop()
 		{
 			contexts.Pop();
 			current = contexts.Peek();
+		}
+
+		/// <summary>
+		/// Add to previous context (internal)
+		/// </summary>
+		public bool AddToPrevious(String key, T symb)
+		{
+			if (!CheckValidKey(key))
+				return false;
+
+			if (LookupUnshadowable(key) != null)
+				return false;
+
+			return contexts.ElementAt(contexts.Count - 2).Add(key,symb);
 		}
 
 		bool CheckValidKey(String key)

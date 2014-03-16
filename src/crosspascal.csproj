@@ -49,7 +49,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>crosspascal.parser.ParserDriverTest</StartupObject>
+    <StartupObject>crosspascal.testunits.TestDriver</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -71,28 +71,28 @@
     <Compile Include="ast\nodes\Nodes.cs" />
     <Compile Include="ast\Processor.cs" />
     <Compile Include="ast\ProcessorGenerated.cs" />
-    <Compile Include="parser\TypeRegistry.cs" />
     <Compile Include="ast\VisitorTraverser.cs" />
     <Compile Include="ast\MapTraverser.cs" />
     <Compile Include="ast\Traverser.cs" />
     <Compile Include="ast\PrintAST.cs" />
+    <Compile Include="core\Compiler.cs" />
+    <Compile Include="core\ErrorHandling.cs" />
     <Compile Include="cpp\DelphiToCpp.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
     <Compile Include="parser\DelphiParser.cs" />
     <Compile Include="parser\DelphiPreprocessor.cs" />
     <Compile Include="parser\DelphiProcessorSupport.cs" />
     <Compile Include="parser\DelphiScanner.cs" />
-    <Compile Include="parser\ErrorMessages.cs" />
     <Compile Include="parser\IScanner.cs" />
     <Compile Include="parser\ParserDebug.cs" />
-    <Compile Include="parser\ParserDriverTest.cs" />
-    <Compile Include="parser\ParserExceptions.cs" />
+    <Compile Include="parser\SyntacticErrors.cs" />
+    <Compile Include="semantics\DeclarationsRegistry.cs" />
+    <Compile Include="semantics\SemanticErrors.cs" />
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
-    <Compile Include="core\TestProgram.cs" />
     <Compile Include="testunits\TestDriver.cs" />
+    <Compile Include="testunits\TestProgram.cs" />
     <Compile Include="utils\Logger.cs" />
-    <Compile Include="core\Program.cs" />
     <Compile Include="core\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

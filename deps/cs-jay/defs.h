@@ -218,6 +218,7 @@ struct action
 /* global variables */
 
 extern char tflag;
+extern char lflag;	// Miguel: -l option
 extern char vflag;
 
 extern char *myname;

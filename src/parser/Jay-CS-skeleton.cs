@@ -134,15 +134,14 @@ t    this.debug = (ParserDebug)yyd;
 .    */
 .		// miguelzf: Moved outside yyparse, to allow other methods to manipulate these parse state vars
 .	private int yyState = 0;                    // state stack ptr
-.	private Object yyVal = null;                // value stack ptr
-.	private int yyToken = -1;					// current input
 .
 .  internal Object yyparse (IScanner yyLex)
 .  {
 .	  // reset
 .    yyState = 0;                    // state stack ptr
-.	 yyVal = null;                   // value stack ptr
-.	 yyToken = -1;					// current input
+.    int currentToken = -1;
+.	 Object yyVal = null;                   // value stack ptr
+.	 int yyToken = -1;					// current input
 .
 .    if (yyMax <= 0) yyMax = 256;			// initial size
 .    int [] yyStates = new int[yyMax];	                // state stack 
@@ -168,7 +167,7 @@ t      if (debug != null) debug.push(yyState, yyVal);
 .        int yyN;
 .        if ((yyN = yyDefRed[yyState]) == 0) {	// else [default] reduce (yyN)
 .          if (yyToken < 0) {
-.            yyToken = yyLex.advance() ? yyLex.token() : 0;
+.            currentToken = yyToken = yyLex.advance() ? yyLex.token() : 0;
 
 t            if (debug != null)
 t              debug.lex(yyState, yyToken, yyname(yyToken), yyLex.value());
@@ -240,8 +239,7 @@ t          debug.reduce(yyState, yyStates[yyV-1], yyN, YYRules.getRule (yyN), yy
 t          if (debug != null) debug.shift(0, yyFinal);
 .          yyState = yyFinal;
 .          if (yyToken < 0) {
-.            yyToken = yyLex.advance() ? yyLex.token() : 0;
-		
+.            currentToken = yyToken = yyLex.advance() ? yyLex.token() : 0;
 t            if (debug != null)
 t               debug.lex(yyState, yyToken,yyname(yyToken), yyLex.value());
 .          }

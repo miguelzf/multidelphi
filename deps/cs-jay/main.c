@@ -48,6 +48,7 @@ static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #include "defs.h"
 
 char tflag;
+char lflag;
 char vflag;
 int csharp = 0;
 
@@ -153,6 +154,8 @@ char *argv[];
     register int i;
     register char *s;
 
+	lflag = 0;
+	
     if (argc > 0) myname = argv[0];
     for (i = 1; i < argc; ++i)
     {
@@ -165,7 +168,7 @@ char *argv[];
 	    if (i + 1 < argc) usage();
 	    return;
 
-        case '-':
+    case '-':
             ++i;
             goto no_more_options;
 
@@ -178,8 +181,13 @@ char *argv[];
 		usage();
 	    continue;
 
-        case 't':
+    case 't':
             tflag = 1;
+            break;
+
+	// Miguel:  -l option
+	case 'l':
+            lflag = 1;
             break;
 
 	case 'p':
@@ -211,16 +219,21 @@ char *argv[];
 		tflag = 1;
 		break;
 
+		// Miguel:  -l option
+		case 'l':
+            lflag = 1;
+            break;
+
 	    case 'v':
 		vflag = 1;
 		break;
 
-            case 'p':
+        case 'p':
                 print_skel_dir ();
                 break;
 
-            case 'c':
-		csharp = 1;
+        case 'c':
+			csharp = 1;
 	        line_format = "#line %d \"%s\"\n";
         	default_line_format = "#line default\n";
 
@@ -234,6 +247,7 @@ end_of_option:;
     }
 
 no_more_options:;
+
     if (i + 1 != argc) usage();
     input_file_name = argv[i];
 }
