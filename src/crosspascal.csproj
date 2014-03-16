@@ -77,6 +77,7 @@
     <Compile Include="ast\PrintAST.cs" />
     <Compile Include="core\Compiler.cs" />
     <Compile Include="core\ErrorHandling.cs" />
+    <Compile Include="CppProgram.cs" />
     <Compile Include="cpp\DelphiToCpp.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
     <Compile Include="parser\DelphiParser.cs" />

@@ -15,10 +15,13 @@ namespace crosspascal.ast
 
 		public VisitorTraverser(Processor processor) : base(processor) { }
 
-		public override void traverse(Node n)
+		public override bool traverse(Node n)
 		{
-			if (n != null)
-				n.Accept(Processor);
+			if (n == null)
+				return true;
+			else
+				return n.Accept(Processor);
+
 		}
 	}
 }

@@ -13,11 +13,11 @@ namespace crosspascal.ast
 
 	class MapTraverser : Traverser
 	{
-		Dictionary<System.Type, MethodInfo> methodMapping;
+		Dictionary<System.Type, MethodInfo> methodsMapping;
 
 		private void CreateMappings(Processor proc)
 		{
-			methodMapping = new Dictionary<System.Type, MethodInfo>();
+			methodsMapping = new Dictionary<System.Type, MethodInfo>();
 
 			Type procType = proc.GetType();
 
@@ -26,7 +26,7 @@ namespace crosspascal.ast
 				if (mi.DeclaringType == procType && mi.GetParameters().Length == 1)
 				{
 					System.Type paramType = mi.GetParameters()[0].ParameterType;
-					methodMapping.Add(paramType, mi);
+					methodsMapping.Add(paramType, mi);
 				}
 		}
 
@@ -40,10 +40,10 @@ namespace crosspascal.ast
 		public MapTraverser(Processor processor) : base(processor)	{}
 
 
-		public override void traverse(Node n)
+		public override bool traverse(Node n)
 		{
 			if (n == null)
-				return;
+				return true;
 
 			System.Type nodeType = n.GetType();
 
@@ -74,11 +74,18 @@ namespace crosspascal.ast
 		 */
 			}
 
-			if (!methodMapping.ContainsKey(nodeType))
-				return;		// method not mapped. Nothing to do
+			if (!methodsMapping.ContainsKey(nodeType))
+				return true;		// method not mapped. Nothing to do
 
-			MethodInfo mi = methodMapping[nodeType];
-			mi.Invoke(Processor, new object[] { n });
+			MethodInfo mi = methodsMapping[nodeType];
+			Object oret = mi.Invoke(Processor, new object[] { n });
+
+			if (oret == null)
+			{	Logger.log.Error("Process method " + mi + " invocation failed");
+				return false;
+			}
+
+			return (bool) oret;
 		}
 	}
 }

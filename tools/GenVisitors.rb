@@ -113,7 +113,7 @@ def gen_concrete_visit(node,names)
 	
 	for field in cfields
 		type,name = field.split(' ')[0,2];
-		if names.include? type and (/<|>/ =~ type) 	# do not visit generic types
+		if names.include? type and !(/<|>/ =~ type) 	# do not visit generic types
 			arrcode << "\t" + "traverse(node." + name + ");"
 		end
 	end
@@ -164,12 +164,18 @@ nodelines = []
 if File.directory?($srcfilename)
 	dirpath = $srcfilename.dup
 	dirpath.gsub!(File::ALT_SEPARATOR, File::SEPARATOR)
-	dirfiles = Dir.glob(dirpath+"**/*.cs")
+	dirpath += File::SEPARATOR
+#	dirfiles = Dir.glob(dirpath+"**/*.cs")
+	# Specific file order
+	dirfiles = ["Nodes", "Sections", "Declarations", "Routines", "Composites", "Statements", "Expressions", "Types"]
+	dirfiles = dirfiles.map {|x| dirpath+x+".cs" }
 	nodelines = dirfiles.map {|x| File.readlines(x) }
 	nodelines.flatten!
-else	# is file
-	dirpath = File.dirname($srcfilename)
-	nodelines = File.readlines($srcfilename)
+
+	# Do not accept files now
+#else	# is file
+#	dirpath = File.dirname($srcfilename)
+#	nodelines = File.readlines($srcfilename)
 end
 
 genfilename = dirpath+File::SEPARATOR+".."+File::SEPARATOR+$genfile

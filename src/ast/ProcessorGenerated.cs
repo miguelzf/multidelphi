@@ -15,99 +15,210 @@ namespace crosspascal.ast
 	{
 		//	Complete interface to be implemented by any specific AST processor	
 
-		public virtual bool Visit(CompositeDeclaration node)
+		public virtual bool Visit(Node node)
 		{
-			Visit((TypeDeclaration) node);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassBody node)
+		public virtual bool Visit(FixmeNode node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(NotSupportedNode node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(EmptyNode node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(NodeList node)
+		{
+			return true;
+		}
+		
+		public virtual bool Visit(StatementList node)
+		{
+			return true;
+		}
+		
+		public virtual bool Visit(TypeList node)
+		{
+			return true;
+		}
+		
+		public virtual bool Visit(IntegralTypeList node)
+		{
+			return true;
+		}
+		
+		public virtual bool Visit(IdentifierList node)
+		{
+			return true;
+		}
+		
+		public virtual bool Visit(DeclarationList node)
+		{
+			return true;
+		}
+		
+		public virtual bool Visit(EnumValueList node)
+		{
+			return true;
+		}
+		
+		public virtual bool Visit(ParameterList node)
+		{
+			return true;
+		}
+		
+		public virtual bool Visit(FieldList node)
+		{
+			return true;
+		}
+		
+		public virtual bool Visit(CompilationUnit node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ProgramNode node)
+		{
+			Visit((CompilationUnit) node);
+			traverse(node.body);
+			traverse(node.uses);
+			return true;
+		}
+		
+		public virtual bool Visit(LibraryNode node)
+		{
+			Visit((CompilationUnit) node);
+			traverse(node.body);
+			traverse(node.uses);
+			return true;
+		}
+		
+		public virtual bool Visit(UnitNode node)
+		{
+			Visit((CompilationUnit) node);
+			traverse(node.interfce);
+			traverse(node.implementation);
+			traverse(node.init);
+			return true;
+		}
+		
+		public virtual bool Visit(PackageNode node)
+		{
+			Visit((CompilationUnit) node);
+			traverse(node.requires);
+			traverse(node.contains);
+			return true;
+		}
+		
+		public virtual bool Visit(UnitItem node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(UsesItem node)
+		{
+			Visit((UnitItem) node);
+			return true;
+		}
+		
+		public virtual bool Visit(RequiresItem node)
+		{
+			Visit((UnitItem) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ContainsItem node)
+		{
+			Visit((UnitItem) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ExportItem node)
+		{
+			Visit((UnitItem) node);
+			return true;
+		}
+		
+		public virtual bool Visit(Section node)
+		{
+			Visit((Node) node);
+			traverse(node.decls);
+			return true;
+		}
+		
+		public virtual bool Visit(CodeSection node)
 		{
 			Visit((Section) node);
+			traverse(node.block);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassDefinition node)
+		public virtual bool Visit(ProgramBody node)
 		{
-			Visit((CompositeDeclaration) node);
+			Visit((CodeSection) node);
 			return true;
 		}
 		
-		public virtual bool Visit(InterfaceDefinition node)
+		public virtual bool Visit(RoutineBody node)
 		{
-			Visit((CompositeDeclaration) node);
+			Visit((CodeSection) node);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassContent node)
+		public virtual bool Visit(InitializationSection node)
 		{
-			Visit((Node) node);
+			Visit((CodeSection) node);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassMethod node)
+		public virtual bool Visit(FinalizationSection node)
 		{
-			Visit((ClassContent) node);
+			Visit((CodeSection) node);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassProperty node)
+		public virtual bool Visit(DeclarationSection node)
 		{
-			Visit((ClassContent) node);
+			Visit((Section) node);
+			traverse(node.uses);
 			return true;
 		}
 		
-		public virtual bool Visit(PropertyReadNode node)
+		public virtual bool Visit(InterfaceSection node)
 		{
-			Visit((Node) node);
+			Visit((DeclarationSection) node);
 			return true;
 		}
 		
-		public virtual bool Visit(PropertyWriteNode node)
+		public virtual bool Visit(ImplementationSection node)
 		{
-			Visit((Node) node);
+			Visit((DeclarationSection) node);
 			return true;
 		}
 		
-		public virtual bool Visit(PropertySpecifiers node)
+		public virtual bool Visit(AssemblerRoutineBody node)
 		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertySpecifier node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertyDefault node)
-		{
-			Visit((PropertySpecifier) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertyImplements node)
-		{
-			Visit((PropertySpecifier) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertyStored node)
-		{
-			Visit((PropertySpecifier) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertyIndex node)
-		{
-			Visit((PropertySpecifier) node);
+			Visit((RoutineBody) node);
 			return true;
 		}
 		
 		public virtual bool Visit(Declaration node)
 		{
 			Visit((Node) node);
+			traverse(node.type);
 			return true;
 		}
 		
@@ -126,12 +237,14 @@ namespace crosspascal.ast
 		public virtual bool Visit(VarDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
+			traverse(node.init);
 			return true;
 		}
 		
 		public virtual bool Visit(ParameterDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
+			traverse(node.init);
 			return true;
 		}
 		
@@ -162,6 +275,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(ConstDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
+			traverse(node.init);
 			return true;
 		}
 		
@@ -180,12 +294,367 @@ namespace crosspascal.ast
 		public virtual bool Visit(CallableDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
+			traverse(node.Type);
+			traverse(node.Directives);
+			return true;
+		}
+		
+		public virtual bool Visit(ProceduralType node)
+		{
+			Visit((TypeNode) node);
+			return true;
+		}
+		
+		public virtual bool Visit(MethodType node)
+		{
+			Visit((ProceduralType) node);
+			return true;
+		}
+		
+		public virtual bool Visit(RoutineDeclaration node)
+		{
+			Visit((CallableDeclaration) node);
+			return true;
+		}
+		
+		public virtual bool Visit(MethodDeclaration node)
+		{
+			Visit((CallableDeclaration) node);
+			return true;
+		}
+		
+		public virtual bool Visit(SpecialMethodDeclaration node)
+		{
+			Visit((MethodDeclaration) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ConstructorDeclaration node)
+		{
+			Visit((SpecialMethodDeclaration) node);
+			return true;
+		}
+		
+		public virtual bool Visit(DestructorDeclaration node)
+		{
+			Visit((SpecialMethodDeclaration) node);
+			return true;
+		}
+		
+		public virtual bool Visit(RoutineDefinition node)
+		{
+			Visit((Declaration) node);
+			traverse(node.header);
+			traverse(node.body);
+			return true;
+		}
+		
+		public virtual bool Visit(CallableDirectives node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(RoutineDirectives node)
+		{
+			Visit((CallableDirectives) node);
+			traverse(node.External);
+			return true;
+		}
+		
+		public virtual bool Visit(MethodDirectives node)
+		{
+			Visit((CallableDirectives) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ExternalDirective node)
+		{
+			Visit((Node) node);
+			traverse(node.File);
+			traverse(node.Name);
+			return true;
+		}
+		
+		public virtual bool Visit(CompositeDeclaration node)
+		{
+			Visit((TypeDeclaration) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ClassBody node)
+		{
+			Visit((Section) node);
+			traverse(node.fields);
+			traverse(node.content);
+			return true;
+		}
+		
+		public virtual bool Visit(ClassDefinition node)
+		{
+			Visit((CompositeDeclaration) node);
+			traverse(node.ClassBody);
+			return true;
+		}
+		
+		public virtual bool Visit(InterfaceDefinition node)
+		{
+			Visit((CompositeDeclaration) node);
+			traverse(node.methods);
+			traverse(node.properties);
+			return true;
+		}
+		
+		public virtual bool Visit(ClassContent node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ClassMethod node)
+		{
+			Visit((ClassContent) node);
+			traverse(node.decl);
+			return true;
+		}
+		
+		public virtual bool Visit(ClassProperty node)
+		{
+			Visit((ClassContent) node);
+			traverse(node.type);
+			traverse(node.index);
+			traverse(node.specs);
+			traverse(node.def);
+			return true;
+		}
+		
+		public virtual bool Visit(PropertyReadNode node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(PropertyWriteNode node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(PropertySpecifiers node)
+		{
+			Visit((Node) node);
+			traverse(node.index);
+			traverse(node.read);
+			traverse(node.write);
+			traverse(node.stored);
+			traverse(node.def);
+			traverse(node.impl);
+			return true;
+		}
+		
+		public virtual bool Visit(PropertySpecifier node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(PropertyDefault node)
+		{
+			Visit((PropertySpecifier) node);
+			traverse(node.lit);
+			return true;
+		}
+		
+		public virtual bool Visit(PropertyImplements node)
+		{
+			Visit((PropertySpecifier) node);
+			return true;
+		}
+		
+		public virtual bool Visit(PropertyStored node)
+		{
+			Visit((PropertySpecifier) node);
+			return true;
+		}
+		
+		public virtual bool Visit(PropertyIndex node)
+		{
+			Visit((PropertySpecifier) node);
+			return true;
+		}
+		
+		public virtual bool Visit(Statement node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(LabelStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.stmt);
+			return true;
+		}
+		
+		public virtual bool Visit(EmptyStatement node)
+		{
+			Visit((Statement) node);
+			return true;
+		}
+		
+		public virtual bool Visit(BreakStatement node)
+		{
+			Visit((Statement) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ContinueStatement node)
+		{
+			Visit((Statement) node);
+			return true;
+		}
+		
+		public virtual bool Visit(Assignement node)
+		{
+			Visit((Statement) node);
+			traverse(node.lvalue);
+			traverse(node.expr);
+			return true;
+		}
+		
+		public virtual bool Visit(GotoStatement node)
+		{
+			Visit((Statement) node);
+			return true;
+		}
+		
+		public virtual bool Visit(IfStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.condition);
+			traverse(node.thenblock);
+			traverse(node.elseblock);
+			return true;
+		}
+		
+		public virtual bool Visit(ExpressionStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.expr);
+			return true;
+		}
+		
+		public virtual bool Visit(CaseSelector node)
+		{
+			Visit((Statement) node);
+			traverse(node.list);
+			traverse(node.stmt);
+			return true;
+		}
+		
+		public virtual bool Visit(CaseStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.condition);
+			traverse(node.selectors);
+			traverse(node.caseelse);
+			return true;
+		}
+		
+		public virtual bool Visit(LoopStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.condition);
+			traverse(node.block);
+			return true;
+		}
+		
+		public virtual bool Visit(RepeatLoop node)
+		{
+			Visit((LoopStatement) node);
+			return true;
+		}
+		
+		public virtual bool Visit(WhileLoop node)
+		{
+			Visit((LoopStatement) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ForLoop node)
+		{
+			Visit((LoopStatement) node);
+			traverse(node.var);
+			traverse(node.start);
+			traverse(node.end);
+			return true;
+		}
+		
+		public virtual bool Visit(BlockStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.stmts);
+			return true;
+		}
+		
+		public virtual bool Visit(WithStatement node)
+		{
+			traverse(node.with);
+			traverse(node.body);
+			return true;
+		}
+		
+		public virtual bool Visit(TryFinallyStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.body);
+			traverse(node.final);
+			return true;
+		}
+		
+		public virtual bool Visit(TryExceptStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.body);
+			traverse(node.final);
+			return true;
+		}
+		
+		public virtual bool Visit(ExceptionBlock node)
+		{
+			Visit((Statement) node);
+			traverse(node.onList);
+			traverse(node.@default);
+			return true;
+		}
+		
+		public virtual bool Visit(RaiseStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.lvalue);
+			traverse(node.expr);
+			return true;
+		}
+		
+		public virtual bool Visit(OnStatement node)
+		{
+			Visit((Statement) node);
+			traverse(node.body);
+			return true;
+		}
+		
+		public virtual bool Visit(AssemblerBlock node)
+		{
+			Visit((BlockStatement) node);
 			return true;
 		}
 		
 		public virtual bool Visit(Expression node)
 		{
 			Visit((Node) node);
+			traverse(node.Type);
+			traverse(node.Value);
+			traverse(node.ForcedType);
 			return true;
 		}
 		
@@ -204,6 +673,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(ConstExpression node)
 		{
 			Visit((Expression) node);
+			traverse(node.expr);
 			return true;
 		}
 		
@@ -246,6 +716,8 @@ namespace crosspascal.ast
 		public virtual bool Visit(SetIn node)
 		{
 			Visit((BinaryExpression) node);
+			traverse(node.expr);
+			traverse(node.set);
 			return true;
 		}
 		
@@ -258,6 +730,8 @@ namespace crosspascal.ast
 		public virtual bool Visit(ArithmethicBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
+			traverse(node.left);
+			traverse(node.right);
 			return true;
 		}
 		
@@ -312,6 +786,8 @@ namespace crosspascal.ast
 		public virtual bool Visit(LogicalBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
+			traverse(node.left);
+			traverse(node.right);
 			return true;
 		}
 		
@@ -372,6 +848,8 @@ namespace crosspascal.ast
 		public virtual bool Visit(TypeBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
+			traverse(node.expr);
+			traverse(node.types);
 			return true;
 		}
 		
@@ -396,6 +874,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(SimpleUnaryExpression node)
 		{
 			Visit((Expression) node);
+			traverse(node.expr);
 			return true;
 		}
 		
@@ -426,6 +905,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(Set node)
 		{
 			Visit((UnaryExpression) node);
+			traverse(node.setelems);
 			return true;
 		}
 		
@@ -510,432 +990,45 @@ namespace crosspascal.ast
 		public virtual bool Visit(ArrayAccess node)
 		{
 			Visit((LvalueExpression) node);
+			traverse(node.lvalue);
+			traverse(node.acessors);
+			traverse(node.array);
 			return true;
 		}
 		
 		public virtual bool Visit(PointerDereference node)
 		{
 			Visit((LvalueExpression) node);
+			traverse(node.expr);
 			return true;
 		}
 		
 		public virtual bool Visit(InheritedCall node)
 		{
 			Visit((LvalueExpression) node);
+			traverse(node.call);
 			return true;
 		}
 		
 		public virtual bool Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
+			traverse(node.func);
+			traverse(node.args);
+			traverse(node.basictype);
 			return true;
 		}
 		
 		public virtual bool Visit(FieldAcess node)
 		{
 			Visit((LvalueExpression) node);
+			traverse(node.obj);
 			return true;
 		}
 		
 		public virtual bool Visit(Identifier node)
 		{
 			Visit((LvalueExpression) node);
-			return true;
-		}
-		
-		public virtual bool Visit(Node node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(FixmeNode node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(NotSupportedNode node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(EmptyNode node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(NodeList node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(StatementList node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(TypeList node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(IntegralTypeList node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(IdentifierList node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(DeclarationList node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(EnumValueList node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(ParameterList node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(FieldList node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(ProceduralType node)
-		{
-			Visit((TypeNode) node);
-			return true;
-		}
-		
-		public virtual bool Visit(MethodType node)
-		{
-			Visit((ProceduralType) node);
-			return true;
-		}
-		
-		public virtual bool Visit(RoutineDeclaration node)
-		{
-			Visit((CallableDeclaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(MethodDeclaration node)
-		{
-			Visit((CallableDeclaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(SpecialMethodDeclaration node)
-		{
-			Visit((MethodDeclaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ConstructorDeclaration node)
-		{
-			Visit((SpecialMethodDeclaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(DestructorDeclaration node)
-		{
-			Visit((SpecialMethodDeclaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(RoutineDefinition node)
-		{
-			Visit((Declaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(CallableDirectives node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(RoutineDirectives node)
-		{
-			Visit((CallableDirectives) node);
-			return true;
-		}
-		
-		public virtual bool Visit(MethodDirectives node)
-		{
-			Visit((CallableDirectives) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ExternalDirective node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(CompilationUnit node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ProgramNode node)
-		{
-			Visit((CompilationUnit) node);
-			return true;
-		}
-		
-		public virtual bool Visit(LibraryNode node)
-		{
-			Visit((CompilationUnit) node);
-			return true;
-		}
-		
-		public virtual bool Visit(UnitNode node)
-		{
-			Visit((CompilationUnit) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PackageNode node)
-		{
-			Visit((CompilationUnit) node);
-			return true;
-		}
-		
-		public virtual bool Visit(UnitItem node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(UsesItem node)
-		{
-			Visit((UnitItem) node);
-			return true;
-		}
-		
-		public virtual bool Visit(RequiresItem node)
-		{
-			Visit((UnitItem) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ContainsItem node)
-		{
-			Visit((UnitItem) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ExportItem node)
-		{
-			Visit((UnitItem) node);
-			return true;
-		}
-		
-		public virtual bool Visit(Section node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(CodeSection node)
-		{
-			Visit((Section) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ProgramBody node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(RoutineBody node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(InitializationSection node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(FinalizationSection node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(DeclarationSection node)
-		{
-			Visit((Section) node);
-			return true;
-		}
-		
-		public virtual bool Visit(InterfaceSection node)
-		{
-			Visit((DeclarationSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ImplementationSection node)
-		{
-			Visit((DeclarationSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(AssemblerRoutineBody node)
-		{
-			Visit((RoutineBody) node);
-			return true;
-		}
-		
-		public virtual bool Visit(Statement node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(LabelStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(EmptyStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(BreakStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ContinueStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(Assignement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(GotoStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(IfStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ExpressionStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(CaseSelector node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(CaseStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(LoopStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(RepeatLoop node)
-		{
-			Visit((LoopStatement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(WhileLoop node)
-		{
-			Visit((LoopStatement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ForLoop node)
-		{
-			Visit((LoopStatement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(BlockStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(WithStatement node)
-		{
-			return true;
-		}
-		
-		public virtual bool Visit(TryFinallyStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(TryExceptStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ExceptionBlock node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(RaiseStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(OnStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public virtual bool Visit(AssemblerBlock node)
-		{
-			Visit((BlockStatement) node);
 			return true;
 		}
 		
@@ -978,6 +1071,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(MetaclassType node)
 		{
 			Visit((VariableType) node);
+			traverse(node.baseType);
 			return true;
 		}
 		
@@ -990,12 +1084,15 @@ namespace crosspascal.ast
 		public virtual bool Visit(EnumType node)
 		{
 			Visit((VariableType) node);
+			traverse(node.enumVals);
 			return true;
 		}
 		
 		public virtual bool Visit(RangeType node)
 		{
 			Visit((VariableType) node);
+			traverse(node.min);
+			traverse(node.max);
 			return true;
 		}
 		
@@ -1020,18 +1117,21 @@ namespace crosspascal.ast
 		public virtual bool Visit(FixedStringType node)
 		{
 			Visit((ScalarType) node);
+			traverse(node.expr);
 			return true;
 		}
 		
 		public virtual bool Visit(VariantType node)
 		{
 			Visit((ScalarType) node);
+			traverse(node.actualtype);
 			return true;
 		}
 		
 		public virtual bool Visit(PointerType node)
 		{
 			Visit((ScalarType) node);
+			traverse(node.pointedType);
 			return true;
 		}
 		
@@ -1152,6 +1252,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(StructuredType node)
 		{
 			Visit((VariableType) node);
+			traverse(node.basetype);
 			return true;
 		}
 		
@@ -1176,6 +1277,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
+			traverse(node.compTypes);
 			return true;
 		}
 	}

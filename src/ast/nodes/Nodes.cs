@@ -81,9 +81,9 @@ namespace crosspascal.ast.nodes
 		/// TODO make abstract
 		/// </summary>
 		/// <param name="visitor"></param>
-		public virtual void Accept(Processor visitor)
+		public virtual bool Accept(Processor visitor)
 		{
-
+			return visitor.Visit(this);
 		}
 	}
 
@@ -125,9 +125,9 @@ namespace crosspascal.ast.nodes
 	{
 		void Add(T t);
 
+		void Add(IEnumerable<T> t);
+
 		void InsertAt(int idx, T t);
-	
-		void Accept(Processor visitor);
 	}
 
 	public abstract class ListNode<T> : Node, IListNode<T> where T : Node
@@ -188,10 +188,12 @@ namespace crosspascal.ast.nodes
 			return nodes.GetEnumerator();
 		}
 
-		public override void Accept(Processor visitor)
+		public override bool Accept(Processor visitor)
 		{
+			bool ret = true;
 			foreach (T node in nodes)
-				node.Accept(visitor);
+				ret &= node.Accept(visitor);
+			return ret;
 		}
 	}
 

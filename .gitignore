@@ -123,3 +123,4 @@ UpgradeLog*.XML
 /src/parser/*~
 /src/parser/yacc.*
 /src/parser/DelphiPreprocessor.cs
+/src/CppProgram.cs
