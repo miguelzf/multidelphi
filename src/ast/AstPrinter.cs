@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using crosspascal.ast.nodes;
+using System.Reflection;
+using System.Collections;
 
 namespace crosspascal.ast
 {
@@ -44,10 +46,42 @@ namespace crosspascal.ast
 
 		// =================================================
 
+		private String GetNodeNames(Node n)
+		{
+			BindingFlags allbindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy;
+			StringComparison scase = StringComparison.OrdinalIgnoreCase;
+
+			Type ntype = n.GetType();
+			string names = "";
+
+			foreach (var f in ntype.GetFields(allbindings))
+			{
+				string fname = f.Name;
+				if (f.FieldType.Name.Equals("string", scase))
+				{
+					if (fname.EndsWith("name", scase) || fname.EndsWith("id", scase) || fname.StartsWith("id", scase))
+						names += " " + f.GetValue(n);
+				}
+				else if (f.FieldType.Name.Equals("ArrayList", scase))
+				{
+					if (fname.EndsWith("names", scase) || fname.EndsWith("ids", scase))
+					{
+						foreach (string s in ((ArrayList)f.GetValue(n)))
+							names += " " + s;
+					}
+				}
+			}
+
+			if (names != "")
+				names = ": " + names;
+			return names;
+		}
+
+
 		// Printing helper
 		private void EnterNode(Node n)
 		{
-			string name = n.GetType().Name;
+			string name = n.GetType().Name + GetNodeNames(n);
 			builder.Append(' ', identLevel);
 			builder.AppendLine(name);
 			identLevel++;
