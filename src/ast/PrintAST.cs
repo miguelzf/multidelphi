@@ -16,16 +16,6 @@ namespace crosspascal.ast
 		private StringBuilder builder = new StringBuilder();
 
 
-		// =================================================
-		// Public interface
-
-		public PrintAST(System.Type t) : base(t) { }
-
-		public PrintAST(Traverser t) : base(t) { }
-
-		public PrintAST(TreeTraverse t = null) : base(t) { }
-
-
 		public override string ToString()
 		{
 			return builder.ToString();
@@ -58,635 +48,1278 @@ namespace crosspascal.ast
 			identLevel--;
 		}
 
-/*		public override void VisitDelimitedItemNode(Node node, Node item, Token delimiter)
+		public override bool Visit(Node node)
 		{
-			EnterNode(node);
-			traverse(item);
-			LeaveNode(node);
+			Console.WriteLine(node.GetType().Name);
+			return true;
 		}
 
-		public override void VisitListNode(Node node, IEnumerable<Node> items)
+/*
+		public override bool Visit(FixmeNode node)
 		{
-			EnterNode(node);
-			foreach (Node item in items)
-				traverse(item);
-			LeaveNode(node);
+			Visit((Node)node);
+			return true;
 		}
 
-		// Only called from Visit(CodeBase codeBase)
-		public override void VisitSourceFile(string fileName, Node node)
+		public override bool Visit(NotSupportedNode node)
 		{
-			EnterNode(node);
-			traverse(node);
-			LeaveNode(node);
+			Visit((Node)node);
+			return true;
 		}
 
-		public override void VisitArrayTypeNode(ArrayTypeNode node)
+		public override bool Visit(EmptyNode node)
 		{
-			EnterNode(node);
-			traverse(node.IndexListNode);
-			traverse(node.TypeNode);
-			LeaveNode(node);
+			Visit((Node)node);
+			return true;
 		}
 
-		public override void VisitAssemblerStatementNode(AssemblerStatementNode node)
+		public override bool Visit(NodeList node)
 		{
-			EnterNode(node);
-			LeaveNode(node);
+			return true;
 		}
 
-		public override void VisitAttributeNode(AttributeNode node)
+		public override bool Visit(StatementList node)
 		{
-			EnterNode(node);
-			traverse(node.ScopeNode);
-			traverse(node.ValueNode);
-			LeaveNode(node);
+			return true;
 		}
 
-		public override void VisitBinaryOperationNode(BinaryOperationNode node)
+		public override bool Visit(TypeList node)
 		{
-			EnterNode(node);
-			traverse(node.LeftNode);
-			traverse(node.OperatorNode);
-			traverse(node.RightNode);
-			LeaveNode(node);
+			return true;
 		}
 
-		public override void VisitBlockNode(BlockNode node)
+		public override bool Visit(IntegralTypeList node)
 		{
-			EnterNode(node);
-			traverse(node.StatementListNode);
-			LeaveNode(node);
+			return true;
 		}
 
-		public override void VisitCaseSelectorNode(CaseSelectorNode node)
+		public override bool Visit(IdentifierList node)
 		{
-			EnterNode(node);
-			traverse(node.ValueListNode);
-			traverse(node.StatementNode);
-			LeaveNode(node);
+			return true;
 		}
 
-		public override void VisitCaseStatementNode(CaseStatementNode node)
+		public override bool Visit(DeclarationList node)
 		{
-			EnterNode(node);
-			traverse(node.ExpressionNode);
-			traverse(node.SelectorListNode);
-			traverse(node.ElseStatementListNode);
-			LeaveNode(node);
+			return true;
 		}
 
-		public override void VisitClassOfNode(ClassOfNode node)
+		public override bool Visit(EnumValueList node)
 		{
-			EnterNode(node);
-			traverse(node.TypeNode);
-			LeaveNode(node);
+			return true;
 		}
 
-		public override void VisitClassTypeNode(ClassTypeNode node)
+		public override bool Visit(ParameterList node)
 		{
-			EnterNode(node);
-			traverse(node.DispositionNode);
-			traverse(node.InheritanceListNode);
-			traverse(node.ContentListNode);
-			LeaveNode(node);
+			return true;
 		}
 
-		public override void VisitConstantDeclNode(ConstantDeclNode node)
+		public override bool Visit(FieldList node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.TypeNode);
-			traverse(node.ValueNode);
-			traverse(node.PortabilityDirectiveListNode);
-			LeaveNode(node);
+			return true;
 		}
 
-		public override void VisitConstantListNode(ConstantListNode node)
+		public override bool Visit(CompilationUnit node)
 		{
-			EnterNode(node);
-			traverse(node.ItemListNode);
-			LeaveNode(node);
+			Visit((Node)node);
+			return true;
 		}
 
-		public override void VisitConstSectionNode(ConstSectionNode node)
+		public override bool Visit(ProgramNode node)
 		{
-			EnterNode(node);
-			traverse(node.ConstListNode);
-			LeaveNode(node);
+			Visit((CompilationUnit)node);
+			traverse(node.body);
+			traverse(node.uses);
+			return true;
 		}
 
-		public override void VisitDirectiveNode(DirectiveNode node)
+		public override bool Visit(LibraryNode node)
 		{
-			EnterNode(node);
-			traverse(node.ValueNode);
-			traverse(node.DataNode);
-			LeaveNode(node);
+			Visit((CompilationUnit)node);
+			traverse(node.body);
+			traverse(node.uses);
+			return true;
 		}
 
-		public override void VisitEnumeratedTypeElementNode(EnumeratedTypeElementNode node)
+		public override bool Visit(UnitNode node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.ValueNode);
-			LeaveNode(node);
+			Visit((CompilationUnit)node);
+			traverse(node.interfce);
+			traverse(node.implementation);
+			traverse(node.init);
+			return true;
 		}
 
-		public override void VisitEnumeratedTypeNode(EnumeratedTypeNode node)
+		public override bool Visit(PackageNode node)
 		{
-			EnterNode(node);
-			traverse(node.ItemListNode);
-			LeaveNode(node);
+			Visit((CompilationUnit)node);
+			traverse(node.requires);
+			traverse(node.contains);
+			return true;
 		}
 
-		public override void VisitExceptionItemNode(ExceptionItemNode node)
+		public override bool Visit(UnitItem node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.TypeNode);
-			traverse(node.StatementNode);
-			LeaveNode(node);
+			Visit((Node)node);
+			return true;
 		}
 
-		public override void VisitExportsItemNode(ExportsItemNode node)
+		public override bool Visit(UsesItem node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.SpecifierListNode);
-			LeaveNode(node);
+			Visit((UnitItem)node);
+			return true;
 		}
 
-		public override void VisitExportsSpecifierNode(ExportsSpecifierNode node)
+		public override bool Visit(RequiresItem node)
 		{
-			EnterNode(node);
-			traverse(node.ValueNode);
-			LeaveNode(node);
+			Visit((UnitItem)node);
+			return true;
 		}
 
-		public override void VisitExportsStatementNode(ExportsStatementNode node)
+		public override bool Visit(ContainsItem node)
 		{
-			EnterNode(node);
-			traverse(node.ItemListNode);
-			LeaveNode(node);
+			Visit((UnitItem)node);
+			return true;
 		}
 
-		public override void VisitFancyBlockNode(FancyBlockNode node)
+		public override bool Visit(ExportItem node)
 		{
-			EnterNode(node);
-			traverse(node.DeclListNode);
-			traverse(node.BlockNode);
-			LeaveNode(node);
+			Visit((UnitItem)node);
+			return true;
 		}
 
-		public override void VisitFieldDeclNode(FieldDeclNode node)
+		public override bool Visit(Section node)
 		{
-			EnterNode(node);
-			traverse(node.NameListNode);
-			traverse(node.TypeNode);
-			traverse(node.PortabilityDirectiveListNode);
-			LeaveNode(node);
+			Visit((Node)node);
+			traverse(node.decls);
+			return true;
 		}
 
-		public override void VisitFieldSectionNode(FieldSectionNode node)
+		public override bool Visit(CodeSection node)
 		{
-			EnterNode(node);
-			traverse(node.FieldListNode);
-			LeaveNode(node);
+			Visit((Section)node);
+			traverse(node.block);
+			return true;
 		}
 
-		public override void VisitFileTypeNode(FileTypeNode node)
+		public override bool Visit(ProgramBody node)
 		{
-			EnterNode(node);
-			traverse(node.TypeNode);
-			LeaveNode(node);
+			Visit((CodeSection)node);
+			return true;
 		}
 
-		public override void VisitForInStatementNode(ForInStatementNode node)
+		public override bool Visit(RoutineBody node)
 		{
-			EnterNode(node);
-			traverse(node.LoopVariableNode);
-			traverse(node.ExpressionNode);
-			traverse(node.StatementNode);
-			LeaveNode(node);
+			Visit((CodeSection)node);
+			return true;
 		}
 
-		public override void VisitForStatementNode(ForStatementNode node)
+		public override bool Visit(InitializationSection node)
 		{
-			EnterNode(node);
-			traverse(node.LoopVariableNode);
+			Visit((CodeSection)node);
+			return true;
+		}
+
+		public override bool Visit(FinalizationSection node)
+		{
+			Visit((CodeSection)node);
+			return true;
+		}
+
+		public override bool Visit(DeclarationSection node)
+		{
+			Visit((Section)node);
+			traverse(node.uses);
+			return true;
+		}
+
+		public override bool Visit(InterfaceSection node)
+		{
+			Visit((DeclarationSection)node);
+			return true;
+		}
+
+		public override bool Visit(ImplementationSection node)
+		{
+			Visit((DeclarationSection)node);
+			return true;
+		}
+
+		public override bool Visit(AssemblerRoutineBody node)
+		{
+			Visit((RoutineBody)node);
+			return true;
+		}
+
+		public override bool Visit(Declaration node)
+		{
+			Visit((Node)node);
+			traverse(node.type);
+			return true;
+		}
+
+		public override bool Visit(LabelDeclaration node)
+		{
+			Visit((Declaration)node);
+			return true;
+		}
+
+		public override bool Visit(ValueDeclaration node)
+		{
+			Visit((Declaration)node);
+			return true;
+		}
+
+		public override bool Visit(VarDeclaration node)
+		{
+			Visit((ValueDeclaration)node);
+			traverse(node.init);
+			return true;
+		}
+
+		public override bool Visit(ParameterDeclaration node)
+		{
+			Visit((ValueDeclaration)node);
+			traverse(node.init);
+			return true;
+		}
+
+		public override bool Visit(VarParameterDeclaration node)
+		{
+			Visit((ParameterDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(ConstParameterDeclaration node)
+		{
+			Visit((ParameterDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(OutParameterDeclaration node)
+		{
+			Visit((ParameterDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(FieldDeclaration node)
+		{
+			Visit((ValueDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(ConstDeclaration node)
+		{
+			Visit((ValueDeclaration)node);
+			traverse(node.init);
+			return true;
+		}
+
+		public override bool Visit(EnumValue node)
+		{
+			Visit((ConstDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(TypeDeclaration node)
+		{
+			Visit((Declaration)node);
+			return true;
+		}
+
+		public override bool Visit(CallableDeclaration node)
+		{
+			Visit((TypeDeclaration)node);
+			traverse(node.Type);
+			traverse(node.Directives);
+			return true;
+		}
+
+		public override bool Visit(ProceduralType node)
+		{
+			Visit((TypeNode)node);
+			return true;
+		}
+
+		public override bool Visit(MethodType node)
+		{
+			Visit((ProceduralType)node);
+			return true;
+		}
+
+		public override bool Visit(RoutineDeclaration node)
+		{
+			Visit((CallableDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(MethodDeclaration node)
+		{
+			Visit((CallableDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(SpecialMethodDeclaration node)
+		{
+			Visit((MethodDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(ConstructorDeclaration node)
+		{
+			Visit((SpecialMethodDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(DestructorDeclaration node)
+		{
+			Visit((SpecialMethodDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(RoutineDefinition node)
+		{
+			Visit((Declaration)node);
+			traverse(node.header);
+			traverse(node.body);
+			return true;
+		}
+
+		public override bool Visit(CallableDirectives node)
+		{
+			Visit((Node)node);
+			return true;
+		}
+
+		public override bool Visit(RoutineDirectives node)
+		{
+			Visit((CallableDirectives)node);
+			traverse(node.External);
+			return true;
+		}
+
+		public override bool Visit(MethodDirectives node)
+		{
+			Visit((CallableDirectives)node);
+			return true;
+		}
+
+		public override bool Visit(ExternalDirective node)
+		{
+			Visit((Node)node);
+			traverse(node.File);
+			traverse(node.Name);
+			return true;
+		}
+
+		public override bool Visit(CompositeDeclaration node)
+		{
+			Visit((TypeDeclaration)node);
+			return true;
+		}
+
+		public override bool Visit(ClassBody node)
+		{
+			Visit((Section)node);
+			traverse(node.fields);
+			traverse(node.content);
+			return true;
+		}
+
+		public override bool Visit(ClassDefinition node)
+		{
+			Visit((CompositeDeclaration)node);
+			traverse(node.ClassBody);
+			return true;
+		}
+
+		public override bool Visit(InterfaceDefinition node)
+		{
+			Visit((CompositeDeclaration)node);
+			traverse(node.methods);
+			traverse(node.properties);
+			return true;
+		}
+
+		public override bool Visit(ClassContent node)
+		{
+			Visit((Node)node);
+			return true;
+		}
+
+		public override bool Visit(ClassMethod node)
+		{
+			Visit((ClassContent)node);
+			traverse(node.decl);
+			return true;
+		}
+
+		public override bool Visit(ClassProperty node)
+		{
+			Visit((ClassContent)node);
+			traverse(node.type);
+			traverse(node.index);
+			traverse(node.specs);
+			traverse(node.def);
+			return true;
+		}
+
+		public override bool Visit(PropertyReadNode node)
+		{
+			Visit((Node)node);
+			return true;
+		}
+
+		public override bool Visit(PropertyWriteNode node)
+		{
+			Visit((Node)node);
+			return true;
+		}
+
+		public override bool Visit(PropertySpecifiers node)
+		{
+			Visit((Node)node);
+			traverse(node.index);
+			traverse(node.read);
+			traverse(node.write);
+			traverse(node.stored);
+			traverse(node.def);
+			traverse(node.impl);
+			return true;
+		}
+
+		public override bool Visit(PropertySpecifier node)
+		{
+			Visit((Node)node);
+			return true;
+		}
+
+		public override bool Visit(PropertyDefault node)
+		{
+			Visit((PropertySpecifier)node);
+			traverse(node.lit);
+			return true;
+		}
+
+		public override bool Visit(PropertyImplements node)
+		{
+			Visit((PropertySpecifier)node);
+			return true;
+		}
+
+		public override bool Visit(PropertyStored node)
+		{
+			Visit((PropertySpecifier)node);
+			return true;
+		}
+
+		public override bool Visit(PropertyIndex node)
+		{
+			Visit((PropertySpecifier)node);
+			return true;
+		}
+
+		public override bool Visit(Statement node)
+		{
+			Visit((Node)node);
+			return true;
+		}
+
+		public override bool Visit(LabelStatement node)
+		{
+			Visit((Statement)node);
+			traverse(node.stmt);
+			return true;
+		}
+
+		public override bool Visit(EmptyStatement node)
+		{
+			Visit((Statement)node);
+			return true;
+		}
+
+		public override bool Visit(BreakStatement node)
+		{
+			Visit((Statement)node);
+			return true;
+		}
+
+		public override bool Visit(ContinueStatement node)
+		{
+			Visit((Statement)node);
+			return true;
+		}
+
+		public override bool Visit(Assignement node)
+		{
+			Visit((Statement)node);
+			traverse(node.lvalue);
+			traverse(node.expr);
+			return true;
+		}
+
+		public override bool Visit(GotoStatement node)
+		{
+			Visit((Statement)node);
+			return true;
+		}
+
+		public override bool Visit(IfStatement node)
+		{
+			Visit((Statement)node);
+			traverse(node.condition);
+			traverse(node.thenblock);
+			traverse(node.elseblock);
+			return true;
+		}
+
+		public override bool Visit(ExpressionStatement node)
+		{
+			Visit((Statement)node);
+			traverse(node.expr);
+			return true;
+		}
+
+		public override bool Visit(CaseSelector node)
+		{
+			Visit((Statement)node);
+			traverse(node.list);
+			traverse(node.stmt);
+			return true;
+		}
+
+		public override bool Visit(CaseStatement node)
+		{
+			Visit((Statement)node);
+			traverse(node.condition);
+			traverse(node.selectors);
+			traverse(node.caseelse);
+			return true;
+		}
+
+		public override bool Visit(LoopStatement node)
+		{
+			Visit((Statement)node);
+			traverse(node.condition);
+			traverse(node.block);
+			return true;
+		}
+
+		public override bool Visit(RepeatLoop node)
+		{
+			Visit((LoopStatement)node);
+			return true;
+		}
+
+		public override bool Visit(WhileLoop node)
+		{
+			Visit((LoopStatement)node);
+			return true;
+		}
 
-			traverse(node.StartingValueNode);
-			traverse(node.DirectionNode);
-			traverse(node.EndingValueNode);
-			traverse(node.StatementNode);
-			LeaveNode(node);
+		public override bool Visit(ForLoop node)
+		{
+			Visit((LoopStatement)node);
+			traverse(node.var);
+			traverse(node.start);
+			traverse(node.end);
+			return true;
+		}
+
+		public override bool Visit(BlockStatement node)
+		{
+			outputCode("{", true, true);
+			PushIdent();
+			Visit((Statement)node);
+			traverse(node.stmts);
+			PopIdent();
+			outputCode("}", true, true);
+			return true;
+		}
+
+		public override bool Visit(WithStatement node)
+		{
+			traverse(node.with);
+			traverse(node.body);
+			return true;
+		}
+
+		public override bool Visit(TryFinallyStatement node)
+		{
+			Visit((Statement)node);
+			traverse(node.body);
+			traverse(node.final);
+			return true;
+		}
+
+		public override bool Visit(TryExceptStatement node)
+		{
+			Visit((Statement)node);
+			traverse(node.body);
+			traverse(node.final);
+			return true;
+		}
+
+		public override bool Visit(ExceptionBlock node)
+		{
+			Visit((Statement)node);
+			traverse(node.onList);
+			traverse(node.@default);
+			return true;
+		}
+
+		public override bool Visit(RaiseStatement node)
+		{
+			Visit((Statement)node);
+			traverse(node.lvalue);
+			traverse(node.expr);
+			return true;
+		}
+
+		public override bool Visit(OnStatement node)
+		{
+			Visit((Statement)node);
+			traverse(node.body);
+			return true;
+		}
+
+		public override bool Visit(AssemblerBlock node)
+		{
+			Visit((BlockStatement)node);
+			return true;
+		}
+
+		public override bool Visit(Expression node)
+		{
+			Visit((Node)node);
+			traverse(node.Type);
+			traverse(node.Value);
+			traverse(node.ForcedType);
+			return true;
+		}
+
+		public override bool Visit(EmptyExpression node)
+		{
+			Visit((Expression)node);
+			return true;
+		}
+
+		public override bool Visit(ExpressionList node)
+		{
+			Visit((Expression)node);
+			return true;
+		}
+
+		public override bool Visit(ConstExpression node)
+		{
+			Visit((Expression)node);
+			traverse(node.expr);
+			return true;
+		}
+
+		public override bool Visit(StructuredConstant node)
+		{
+			Visit((ConstExpression)node);
+			return true;
+		}
+
+		public override bool Visit(ArrayConst node)
+		{
+			Visit((StructuredConstant)node);
+			return true;
+		}
+
+		public override bool Visit(RecordConst node)
+		{
+			Visit((StructuredConstant)node);
+			return true;
+		}
+
+		public override bool Visit(FieldInitList node)
+		{
+			Visit((ExpressionList)node);
+			return true;
+		}
+
+		public override bool Visit(FieldInit node)
+		{
+			Visit((ConstExpression)node);
+			return true;
+		}
+
+		public override bool Visit(BinaryExpression node)
+		{
+			Visit((Expression)node);
+			return true;
+		}
+
+		public override bool Visit(SetIn node)
+		{
+			Visit((BinaryExpression)node);
+			traverse(node.expr);
+			traverse(node.set);
+			return true;
+		}
+
+		public override bool Visit(SetRange node)
+		{
+			Visit((BinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(ArithmethicBinaryExpression node)
+		{
+			Visit((BinaryExpression)node);
+			traverse(node.left);
+			traverse(node.right);
+			return true;
+		}
+
+		public override bool Visit(Subtraction node)
+		{
+			Visit((ArithmethicBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(Addition node)
+		{
+			Visit((ArithmethicBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(Product node)
+		{
+			Visit((ArithmethicBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(Division node)
+		{
+			Visit((ArithmethicBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(Quotient node)
+		{
+			Visit((ArithmethicBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(Modulus node)
+		{
+			Visit((ArithmethicBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(ShiftRight node)
+		{
+			Visit((ArithmethicBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(ShiftLeft node)
+		{
+			Visit((ArithmethicBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(LogicalBinaryExpression node)
+		{
+			Visit((BinaryExpression)node);
+			traverse(node.left);
+			traverse(node.right);
+			return true;
+		}
+
+		public override bool Visit(LogicalAnd node)
+		{
+			Visit((LogicalBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(LogicalOr node)
+		{
+			Visit((LogicalBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(LogicalXor node)
+		{
+			Visit((LogicalBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(Equal node)
+		{
+			Visit((LogicalBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(NotEqual node)
+		{
+			Visit((LogicalBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(LessThan node)
+		{
+			Visit((LogicalBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(LessOrEqual node)
+		{
+			Visit((LogicalBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(GreaterThan node)
+		{
+			Visit((LogicalBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(GreaterOrEqual node)
+		{
+			Visit((LogicalBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(TypeBinaryExpression node)
+		{
+			Visit((BinaryExpression)node);
+			traverse(node.expr);
+			traverse(node.types);
+			return true;
+		}
+
+		public override bool Visit(TypeIs node)
+		{
+			Visit((TypeBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(TypeCast node)
+		{
+			Visit((TypeBinaryExpression)node);
+			return true;
+		}
+
+		public override bool Visit(UnaryExpression node)
+		{
+			Visit((Expression)node);
+			return true;
+		}
+
+		public override bool Visit(SimpleUnaryExpression node)
+		{
+			Visit((Expression)node);
+			traverse(node.expr);
+			return true;
 		}
 
-		public override void VisitGotoStatementNode(GotoStatementNode node)
+		public override bool Visit(UnaryPlus node)
 		{
-			EnterNode(node);
-			traverse(node.LabelIdNode);
-			LeaveNode(node);
+			Visit((SimpleUnaryExpression)node);
+			return true;
 		}
 
-		public override void VisitIfStatementNode(IfStatementNode node)
+		public override bool Visit(UnaryMinus node)
 		{
-			EnterNode(node);
-			traverse(node.ConditionNode);
-			traverse(node.ThenStatementNode);
-			traverse(node.ElseStatementNode);
-			LeaveNode(node);
+			Visit((SimpleUnaryExpression)node);
+			return true;
 		}
 
-		public override void VisitInitSectionNode(InitSectionNode node)
+		public override bool Visit(LogicalNot node)
 		{
-			EnterNode(node);
-			traverse(node.InitializationStatementListNode);
-			traverse(node.FinalizationStatementListNode);
-			LeaveNode(node);
+			Visit((SimpleUnaryExpression)node);
+			return true;
 		}
 
-		public override void VisitInterfaceTypeNode(InterfaceTypeNode node)
+		public override bool Visit(AddressLvalue node)
 		{
-			EnterNode(node);
-			traverse(node.BaseInterfaceNode);
-			traverse(node.GuidNode);
-			traverse(node.MethodAndPropertyListNode);
-			LeaveNode(node);
+			Visit((SimpleUnaryExpression)node);
+			return true;
 		}
 
-		public override void VisitLabelDeclSectionNode(LabelDeclSectionNode node)
+		public override bool Visit(Set node)
 		{
-			EnterNode(node);
-			traverse(node.LabelListNode);
-			LeaveNode(node);
+			Visit((UnaryExpression)node);
+			traverse(node.setelems);
+			return true;
 		}
 
-		public override void VisitLabeledStatementNode(LabeledStatementNode node)
+		public override bool Visit(ConstantValue node)
 		{
-			EnterNode(node);
-			traverse(node.LabelIdNode);
-			traverse(node.StatementNode);
-			LeaveNode(node);
+			Visit((Node)node);
+			return true;
 		}
 
-		public override void VisitMethodHeadingNode(MethodHeadingNode node)
+		public override bool Visit(IntegralValue node)
 		{
-			EnterNode(node);
-			traverse(node.MethodTypeNode);
-			traverse(node.NameNode);
-			traverse(node.ParameterListNode);
-			traverse(node.ReturnTypeNode);
-			traverse(node.DirectiveListNode);
-			LeaveNode(node);
+			Visit((ConstantValue)node);
+			return true;
 		}
 
-		public override void VisitMethodImplementationNode(MethodImplementationNode node)
+		public override bool Visit(StringValue node)
 		{
-			EnterNode(node);
-			traverse(node.MethodHeadingNode);
-			traverse(node.FancyBlockNode);
-			LeaveNode(node);
+			Visit((ConstantValue)node);
+			return true;
 		}
 
-		public override void VisitMethodResolutionNode(MethodResolutionNode node)
+		public override bool Visit(RealValue node)
 		{
-			EnterNode(node);
-			traverse(node.MethodTypeNode);
-			traverse(node.InterfaceMethodNode);
-			traverse(node.EqualSignNode);
-			traverse(node.ImplementationMethodNode);
-			LeaveNode(node);
+			Visit((ConstantValue)node);
+			return true;
 		}
 
-		public override void VisitNumberFormatNode(NumberFormatNode node)
+		public override bool Visit(Literal node)
 		{
-			EnterNode(node);
-			traverse(node.ValueNode);
-			traverse(node.SizeNode);
-			traverse(node.PrecisionNode);
-			LeaveNode(node);
+			Visit((UnaryExpression)node);
+			return true;
 		}
 
-		public override void VisitOpenArrayNode(OpenArrayNode node)
+		public override bool Visit(OrdinalLiteral node)
 		{
-			EnterNode(node);
-			traverse(node.TypeNode);
-			LeaveNode(node);
+			Visit((Literal)node);
+			return true;
 		}
 
-		public override void VisitPackageNode(PackageNode node)
+		public override bool Visit(IntLiteral node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.RequiresClauseNode);
-			traverse(node.ContainsClauseNode);
-			traverse(node.AttributeListNode);
-			LeaveNode(node);
+			Visit((OrdinalLiteral)node);
+			return true;
 		}
 
-		public override void VisitPackedTypeNode(PackedTypeNode node)
+		public override bool Visit(CharLiteral node)
 		{
-			EnterNode(node);
-			traverse(node.TypeNode);
-			LeaveNode(node);
+			Visit((OrdinalLiteral)node);
+			return true;
 		}
 
-		public override void VisitParameterizedNode(ParameterizedNode node)
+		public override bool Visit(BoolLiteral node)
 		{
-			EnterNode(node);
-			traverse(node.ParameterListNode);
-			LeaveNode(node);
+			Visit((OrdinalLiteral)node);
+			return true;
 		}
 
-		public override void VisitParameterNode(ParameterNode node)
+		public override bool Visit(StringLiteral node)
 		{
-			EnterNode(node);
-			traverse(node.ModifierNode);
-			traverse(node.NameListNode);
-			traverse(node.TypeNode);
-			traverse(node.DefaultValueNode);
-			LeaveNode(node);
+			Visit((Literal)node);
+			return true;
 		}
 
-		public override void VisitParenthesizedExpressionNode(ParenthesizedExpressionNode node)
+		public override bool Visit(RealLiteral node)
 		{
-			EnterNode(node);
-			traverse(node.ExpressionNode);
-			LeaveNode(node);
+			Visit((Literal)node);
+			return true;
 		}
 
-		public override void VisitPointerDereferenceNode(PointerDereferenceNode node)
+		public override bool Visit(PointerLiteral node)
 		{
-			EnterNode(node);
-			traverse(node.OperandNode);
-			LeaveNode(node);
+			Visit((Literal)node);
+			return true;
 		}
 
-		public override void VisitPointerTypeNode(PointerTypeNode node)
+		public override bool Visit(LvalueExpression node)
 		{
-			EnterNode(node);
-			traverse(node.TypeNode);
-			LeaveNode(node);
+			Visit((UnaryExpression)node);
+			return true;
 		}
 
-		public override void VisitProcedureTypeNode(ProcedureTypeNode node)
+		public override bool Visit(ArrayAccess node)
 		{
-			EnterNode(node);
-			traverse(node.MethodTypeNode);
-			traverse(node.ParameterListNode);
-			traverse(node.ReturnTypeNode);
-			traverse(node.FirstDirectiveListNode);
-			traverse(node.SecondDirectiveListNode);
-			LeaveNode(node);
+			Visit((LvalueExpression)node);
+			traverse(node.lvalue);
+			traverse(node.acessors);
+			traverse(node.array);
+			return true;
 		}
 
-		public override void VisitProgramNode(ProgramNode node)
+		public override bool Visit(PointerDereference node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.UsesClauseNode);
-			traverse(node.DeclarationListNode);
-			traverse(node.InitSectionNode);
-			traverse(node.DotNode);
-			LeaveNode(node);
+			Visit((LvalueExpression)node);
+			traverse(node.expr);
+			return true;
 		}
 
-		public override void VisitPropertyNode(PropertyNode node)
+		public override bool Visit(InheritedCall node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.ParameterListNode);
-			traverse(node.TypeNode);
-			traverse(node.DirectiveListNode);
-			LeaveNode(node);
+			Visit((LvalueExpression)node);
+			traverse(node.call);
+			return true;
 		}
 
-		public override void VisitRaiseStatementNode(RaiseStatementNode node)
+		public override bool Visit(RoutineCall node)
 		{
-			EnterNode(node);
-			traverse(node.ExceptionNode);
-			traverse(node.AddressNode);
-			LeaveNode(node);
+			Visit((LvalueExpression)node);
+			traverse(node.func);
+			traverse(node.args);
+			traverse(node.basictype);
+			return true;
 		}
 
-		public override void VisitRecordFieldConstantNode(RecordFieldConstantNode node)
+		public override bool Visit(FieldAcess node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.ValueNode);
-			LeaveNode(node);
+			Visit((LvalueExpression)node);
+			traverse(node.obj);
+			return true;
 		}
 
-		public override void VisitRecordTypeNode(RecordTypeNode node)
+		public override bool Visit(Identifier node)
 		{
-			EnterNode(node);
-			traverse(node.ContentListNode);
-			traverse(node.VariantSectionNode);
-			LeaveNode(node);
+			Visit((LvalueExpression)node);
+			return true;
 		}
 
-		public override void VisitRepeatStatementNode(RepeatStatementNode node)
+		public override bool Visit(TypeNode node)
 		{
-			EnterNode(node);
-			traverse(node.StatementListNode);
-			traverse(node.ConditionNode);
-			LeaveNode(node);
+			Visit((Node)node);
+			return true;
 		}
 
-		public override void VisitRequiresClauseNode(RequiresClauseNode node)
+		public override bool Visit(UndefinedType node)
 		{
-			EnterNode(node);
-			traverse(node.PackageListNode);
-			LeaveNode(node);
+			Visit((TypeNode)node);
+			return true;
 		}
 
-		public override void VisitSetLiteralNode(SetLiteralNode node)
+		public override bool Visit(CompositeType node)
 		{
-			EnterNode(node);
-			traverse(node.OpenBracketNode);
-			traverse(node.ItemListNode);
-			traverse(node.CloseBracketNode);
-			LeaveNode(node);
+			Visit((TypeNode)node);
+			return true;
 		}
 
-		public override void VisitSetOfNode(SetOfNode node)
+		public override bool Visit(ClassType node)
 		{
-			EnterNode(node);
-			traverse(node.TypeNode);
-			LeaveNode(node);
+			Visit((CompositeType)node);
+			return true;
 		}
 
-		public override void VisitStringOfLengthNode(StringOfLengthNode node)
+		public override bool Visit(InterfaceType node)
 		{
-			EnterNode(node);
-			traverse(node.OpenBracketNode);
-			traverse(node.LengthNode);
-			traverse(node.CloseBracketNode);
-			LeaveNode(node);
+			Visit((CompositeType)node);
+			return true;
 		}
 
-		public override void VisitTryExceptNode(TryExceptNode node)
+		public override bool Visit(VariableType node)
 		{
-			EnterNode(node);
-			traverse(node.TryStatementListNode);
-			traverse(node.ExceptionItemListNode);
-			traverse(node.ElseStatementListNode);
-			LeaveNode(node);
+			Visit((TypeNode)node);
+			return true;
 		}
 
-		public override void VisitTryFinallyNode(TryFinallyNode node)
+		public override bool Visit(MetaclassType node)
 		{
-			EnterNode(node);
-			traverse(node.TryStatementListNode);
-			traverse(node.FinallyStatementListNode);
-			LeaveNode(node);
+			Visit((VariableType)node);
+			traverse(node.baseType);
+			return true;
 		}
 
-		public override void VisitTypeDeclNode(TypeDeclNode node)
+		public override bool Visit(TypeUnknown node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.EqualSignNode);
-			traverse(node.TypeNode);
-			traverse(node.PortabilityDirectiveListNode);
+			Visit((TypeNode)node);
+			return true;
+		}
+
+		public override bool Visit(EnumType node)
+		{
+			Visit((VariableType)node);
+			traverse(node.enumVals);
+			return true;
+		}
+
+		public override bool Visit(RangeType node)
+		{
+			Visit((VariableType)node);
+			traverse(node.min);
+			traverse(node.max);
+			return true;
+		}
+
+		public override bool Visit(ScalarType node)
+		{
+			Visit((VariableType)node);
+			return true;
+		}
+
+		public override bool Visit(ScalarTypeForward node)
+		{
+			Visit((ScalarType)node);
+			return true;
+		}
+
+		public override bool Visit(StringType node)
+		{
+			Visit((ScalarType)node);
+			return true;
+		}
+
+		public override bool Visit(FixedStringType node)
+		{
+			Visit((ScalarType)node);
+			traverse(node.expr);
+			return true;
+		}
+
+		public override bool Visit(VariantType node)
+		{
+			Visit((ScalarType)node);
+			traverse(node.actualtype);
+			return true;
+		}
 
+		public override bool Visit(PointerType node)
+		{
+			Visit((ScalarType)node);
+			traverse(node.pointedType);
+			return true;
+		}
+
+		public override bool Visit(IntegralType node)
+		{
+			Visit((ScalarType)node);
+			return true;
+		}
+
+		public override bool Visit(IntegerType node)
+		{
+			Visit((IntegralType)node);
+			return true;
+		}
+
+		public override bool Visit(SignedIntegerType node)
+		{
+			Visit((IntegerType)node);
+			return true;
+		}
+
+		public override bool Visit(UnsignedIntegerType node)
+		{
+			Visit((IntegerType)node);
+			return true;
+		}
+
+		public override bool Visit(UnsignedInt8Type node)
+		{
+			Visit((UnsignedIntegerType)node);
+			return true;
 		}
 
-		public override void VisitTypeForwardDeclarationNode(TypeForwardDeclarationNode node)
+		public override bool Visit(UnsignedInt16Type node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.EqualSignNode);
-			traverse(node.TypeNode);
+			Visit((UnsignedIntegerType)node);
+			return true;
+		}
 
+		public override bool Visit(UnsignedInt32Type node)
+		{
+			Visit((UnsignedIntegerType)node);
+			return true;
 		}
 
-		public override void VisitTypeHelperNode(TypeHelperNode node)
+		public override bool Visit(UnsignedInt64Type node)
 		{
-			EnterNode(node);
-			traverse(node.BaseHelperTypeNode);
-			traverse(node.TypeNode);
-			traverse(node.ContentListNode);
-			LeaveNode(node);
+			Visit((UnsignedIntegerType)node);
+			return true;
 		}
 
-		public override void VisitTypeSectionNode(TypeSectionNode node)
+		public override bool Visit(SignedInt8Type node)
 		{
-			EnterNode(node);
-			traverse(node.TypeListNode);
-			LeaveNode(node);
+			Visit((SignedIntegerType)node);
+			return true;
 		}
 
-		public override void VisitUnaryOperationNode(UnaryOperationNode node)
+		public override bool Visit(SignedInt16Type node)
 		{
-			EnterNode(node);
-			traverse(node.OperatorNode);
-			traverse(node.OperandNode);
-			LeaveNode(node);
+			Visit((SignedIntegerType)node);
+			return true;
 		}
 
-		public override void VisitUnitNode(UnitNode node)
+		public override bool Visit(SignedInt32Type node)
 		{
-			EnterNode(node);
-			traverse(node.UnitNameNode);
-			traverse(node.PortabilityDirectiveListNode);
-			traverse(node.InterfaceSectionNode);
-			traverse(node.ImplementationSectionNode);
-			traverse(node.InitSectionNode);
-			traverse(node.DotNode);
-			LeaveNode(node);
+			Visit((SignedIntegerType)node);
+			return true;
 		}
 
-		public override void VisitUnitSectionNode(UnitSectionNode node)
+		public override bool Visit(SignedInt64Type node)
 		{
-			EnterNode(node);
-			traverse(node.UsesClauseNode);
-			traverse(node.ContentListNode);
-			LeaveNode(node);
+			Visit((IntegerType)node);
+			return true;
 		}
 
-		public override void VisitUsedUnitNode(UsedUnitNode node)
+		public override bool Visit(BoolType node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
-			traverse(node.FileNameNode);
-			LeaveNode(node);
+			Visit((IntegralType)node);
+			return true;
 		}
 
-		public override void VisitUsesClauseNode(UsesClauseNode node)
+		public override bool Visit(CharType node)
 		{
-			EnterNode(node);
-			traverse(node.UnitListNode);
-			LeaveNode(node);
+			Visit((IntegralType)node);
+			return true;
 		}
 
-		public override void VisitVarDeclNode(VarDeclNode node)
+		public override bool Visit(RealType node)
 		{
-			EnterNode(node);
-			traverse(node.NameListNode);
-			traverse(node.TypeNode);
-			traverse(node.FirstPortabilityDirectiveListNode);
-			traverse(node.AbsoluteAddressNode);
-			traverse(node.ValueNode);
-			traverse(node.SecondPortabilityDirectiveListNode);
-			LeaveNode(node);
+			Visit((ScalarType)node);
+			return true;
 		}
 
-		public override void VisitVariantGroupNode(VariantGroupNode node)
+		public override bool Visit(FloatType node)
 		{
-			EnterNode(node);
-			traverse(node.ValueListNode);
-			traverse(node.FieldDeclListNode);
-			traverse(node.VariantSectionNode);
-			LeaveNode(node);
+			Visit((RealType)node);
+			return true;
 		}
 
-		public override void VisitVariantSectionNode(VariantSectionNode node)
+		public override bool Visit(DoubleType node)
 		{
-			EnterNode(node);
-			traverse(node.NameNode);
+			Visit((RealType)node);
+			return true;
+		}
 
-			traverse(node.TypeNode);
-			traverse(node.VariantGroupListNode);
-			LeaveNode(node);
+		public override bool Visit(ExtendedType node)
+		{
+			Visit((RealType)node);
+			return true;
 		}
 
-		public override void VisitVarSectionNode(VarSectionNode node)
+		public override bool Visit(CurrencyType node)
 		{
-			EnterNode(node);
-			traverse(node.VarListNode);
-			LeaveNode(node);
+			Visit((RealType)node);
+			return true;
 		}
 
-		public override void VisitVisibilityNode(VisibilityNode node)
+		public override bool Visit(StructuredType node)
 		{
-			EnterNode(node);
+			Visit((VariableType)node);
+			traverse(node.basetype);
+			return true;
+		}
 
+		public override bool Visit(ArrayType node)
+		{
+			Visit((StructuredType)node);
+			return true;
 		}
 
-		public override void VisitVisibilitySectionNode(VisibilitySectionNode node)
+		public override bool Visit(SetType node)
 		{
-			EnterNode(node);
-			traverse(node.VisibilityNode);
-			traverse(node.ContentListNode);
-			LeaveNode(node);
+			Visit((StructuredType)node);
+			return true;
 		}
 
-		public override void VisitWhileStatementNode(WhileStatementNode node)
+		public override bool Visit(FileType node)
 		{
-			EnterNode(node);
-			traverse(node.ConditionNode);
-			traverse(node.StatementNode);
-			LeaveNode(node);
+			Visit((StructuredType)node);
+			return true;
 		}
 
-		public override void VisitWithStatementNode(WithStatementNode node)
+		public override bool Visit(RecordType node)
 		{
-			EnterNode(node);
-			traverse(node.ExpressionListNode);
-			traverse(node.StatementNode);
+			Visit((StructuredType)node);
+			traverse(node.compTypes);
+			return true;
 		}
- */
-	}
+	*/
+
+}
 }

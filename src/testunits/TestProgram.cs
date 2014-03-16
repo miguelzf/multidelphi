@@ -60,7 +60,7 @@ namespace crosspascal.core
 			// Initialize object:
 			// new Traverser(arg) == (Traverser)  Activator.CreateInstance(type,proc);
 
-			switch (method)
+			/*switch (method)
 			{	// Possible methods to create a processor:
 
 				// use traverser type
@@ -92,9 +92,10 @@ namespace crosspascal.core
 				default:
 					return "";
 			}
-
+			*/
 		//	proc.Visit(tree);
-			return proc.ToString();
+			//return proc.ToString();
+			return "";
 		}
 
 	}
