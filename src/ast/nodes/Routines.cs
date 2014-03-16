@@ -330,7 +330,7 @@ namespace crosspascal.ast.nodes
 
 	#region Directives' Constants
 
-	public class ExternalDirective
+	public class ExternalDirective : Node
 	{
 		public ConstExpression File { get; set; }
 		public ConstExpression Name { get; set; }

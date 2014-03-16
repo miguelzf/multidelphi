@@ -5,19 +5,28 @@ using System.Text;
 using System.Threading.Tasks;
 using crosspascal.ast.nodes;
 
+
+//
+// Implements a general AST Processor, without requiring the implementation of a Visitor pattern. 
+// Uses a Delegate to a generic Tree Traversal method instead.
+// The Traversing order needs to be defined by each Processor in the Process/Visit methods 
+// since it is heavily depending on each Processor's logic.
+//
+
 namespace crosspascal.ast
 {
-	// Defines a general AST Processor, without requiring the implementation of a Visitor pattern. 
-	// Uses a Delegate to a generic Tree Traversal method instead
 
-	public delegate void TreeTraverse(Node n);
+	public delegate bool TreeTraverse(Node n);
 
 	public abstract partial class Processor
 	{
 		public TreeTraverse traverse { get; set; }
 
 		// dummy
-		protected void emptyTraverse(Node n) {	}
+		protected bool emptyTraverse(Node n)
+		{
+			return true;
+		}
 
 		// Instantiate Traverser class
 		public Processor(System.Type t)

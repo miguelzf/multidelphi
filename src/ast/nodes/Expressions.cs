@@ -137,10 +137,12 @@ namespace crosspascal.ast.nodes
 			return nodes.GetEnumerator();
 		}
 
-		public override void Accept(Processor visitor)
+		public override bool Accept(Processor visitor)
 		{
+			bool ret = true;
 			foreach (Expression node in nodes)
-				node.Accept(visitor);
+				ret &= node.Accept(visitor);
+			return ret;
 		}
 	}
 
@@ -299,8 +301,8 @@ namespace crosspascal.ast.nodes
 
 	public abstract class LogicalBinaryExpression : BinaryExpression
 	{
-		Expression left;
-		Expression right;
+		public Expression left;
+		public Expression right;
 
 		public LogicalBinaryExpression(Expression e1, Expression e2)
 		{
