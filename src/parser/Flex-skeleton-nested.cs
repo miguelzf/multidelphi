@@ -6,6 +6,9 @@
 	// Pre-action default user-defined general action. Empty by default;
 	Action PRE_ACTION_DEFAULT = () => { };
 
+	// Control Debug messages
+	public int yyLexDebugLevel = 0;
+
 	/** This character denotes the end of file */
 	public const int YYEOF = 0;
   
@@ -37,6 +40,34 @@
 		return YYEOF;
 	}
 
+
+	// **********************************************
+	// Message helpers
+		
+	void yyerror(String msg = "Unknown lexical error")
+	{
+	//	throw new ScannerException(yyline, msg);
+		Console.Error.WriteLine("[ERROR Flex] " + msg + " in line " + yyline);
+	}
+
+	void yyprint(String msg)
+	{
+		Console.Out.WriteLine("[Line " + yyline + "] " + msg);
+	}
+		
+	void yydebug(String msg)
+	{
+		if (this.yyLexDebugLevel >= 1)
+			Console.Out.WriteLine("[Line " + yyline + "] " + msg);
+	}
+
+	void yydebugall(String msg)
+	{
+		if (this.yyLexDebugLevel >= 2)
+			Console.Out.WriteLine("[Line " + yyline + "] " + msg);
+	}
+
+
 	// **********************************************
 	// Implementation of yacc's state stack
 
@@ -44,8 +75,7 @@
 	
 	void yypushstate(int state)
 	{
-		yydebug("PUSH STATE: from " + stateName(stateStack.Peek())
-				+ " to " +  stateName(state) );
+		yydebugall("PUSH STATE: from " + stateName(stateStack.Peek()) + " to " +  stateName(state) );
 		stateStack.Push(state);
 		yybegin(state);
 	}
@@ -53,7 +83,7 @@
 	void yypopstate()
 	{
 		int state = stateStack.Pop();
-		yydebug("POP STATE: from " + stateName(state)
+		yydebugall("POP STATE: from " + stateName(state)
 				+ " to " +  stateName(stateStack.Peek()));
 		yybegin(stateStack.Peek());
 	}

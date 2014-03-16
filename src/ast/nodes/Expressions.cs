@@ -97,7 +97,7 @@ namespace crosspascal.ast.nodes
 
 	public class ExpressionList : Expression, IListNode<Expression>
 	{
-		List<Expression> nodes = new List<Expression>();
+		public List<Expression> nodes = new List<Expression>();
 
 		public ExpressionList()
 		{

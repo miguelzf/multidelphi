@@ -79,26 +79,6 @@ namespace crosspascal.parser
 			return yyline;
 		}
 
-		// **********************************************
-		// Yacc's message functions
-		
-		void yyprint(String msg)
-		{
-			Console.Out.WriteLine("[Line " + yyline + "] " + msg);
-		}
-
-		void yydebug(String msg)
-		{
-			if (DelphiParser.DebugLevel > 0)
-				Console.Out.WriteLine("[Line " + yyline + "] " + msg);
-		}
-		
-		void yyerror(String msg = "Unknown lexical error")
-		{
-		//	throw new ScannerException(yyline, msg);
-			Console.Error.WriteLine("[ERROR lexical] " + msg + " in line " + yyline);
-		}
-
 		
 		// **********************************************
 		// Internal helper functions

@@ -110,14 +110,36 @@ def gen_concrete_visit(node,names)
 	if bname != '' and names.include? bname
 		arrcode << "\t" + "Visit((" + bname +") node);";
 	end
-	
+
+	# iterate over lists' nodes
+	if cname.end_with? "List"
+		arrcode << "\t" + "foreach (Node n in node.nodes)"
+		arrcode << "\t\t" + "traverse(n);"
+	end
+		
 	for field in cfields
 		type,name = field.split(' ')[0,2];
-		if names.include? type and !(/<|>/ =~ type) 	# do not visit generic types
+	#	if !(/<|>/ =~ type) 	# do not visit generic types
+		if names.include? type 
 			arrcode << "\t" + "traverse(node." + name + ");"
+		
+		elsif !cname.end_with? "List"
+		# iterate over enumerable generic arguments
+			if (ma = /\w*List<(\w+)>\s*/.match type) == nil
+				if (ma = /\w*Set<(\w+)>\s*/.match type) == nil
+					ma = /(\w+)\[\]\s*/.match type		# Array 
+				end
+			end
+			if ma != nil 
+				puts ma[1]
+			end
+			if ma != nil and names.include? ma[1]	# if generic type arg is a Node
+				arrcode << "\t" + "foreach (Node n in node." + name + ")"
+				arrcode << "\t\t" + "traverse(n);"
+			end
 		end
 	end
-
+	
 	gen_return_stmt(arrcode, "\t")
 	arrcode << "}"
 	arrcode 

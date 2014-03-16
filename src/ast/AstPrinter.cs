@@ -3,26 +3,110 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using crosspascal.ast;
 using crosspascal.ast.nodes;
+using System.Reflection;
+using System.Collections;
 
-namespace crosspascal.cpp
+namespace crosspascal.ast
 {
-	class CppCodegen : Processor
-	{
-		private int ident = 0;
 
-		public void outputCode(string s, bool hasident, bool newline)
+	// For debug, prints the whole tree
+
+	class AstPrinter : Processor
+	{
+		private int identLevel = 0;
+		private StringBuilder builder = new StringBuilder();
+
+
+		// =================================================
+		// Public interface
+
+		public AstPrinter(System.Type t) : base(t) { }
+
+		public AstPrinter(Traverser t) : base(t) { }
+
+		public AstPrinter(TreeTraverse t = null) : base(t) { }
+
+
+		public override string ToString()
 		{
-			if (hasident)
-				for(int i=0; i<ident; i++)
-					Console.Write("	");
-			Console.Write(s);
-			if (newline)
-				Console.WriteLine("");
+			return builder.ToString();
+		}
+
+		public string GetRepresenation()
+		{
+			return this.ToString();
+		}
+
+		public void Reset()
+		{
+			identLevel = 0;
+			builder.Clear();
+		}
+
+		// =================================================
+
+		private String GetNodeNames(Node n)
+		{
+			BindingFlags allbindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy;
+			StringComparison scase = StringComparison.OrdinalIgnoreCase;
+
+			Type ntype = n.GetType();
+			string names = "";
+
+			foreach (var f in ntype.GetFields(allbindings))
+			{
+				string fname = f.Name;
+				if (f.FieldType.Name.Equals("string", scase))
+				{
+					if (fname.EndsWith("name", scase) || fname.EndsWith("id", scase) || fname.StartsWith("id", scase))
+						names += " " + f.GetValue(n);
+				}
+				else if (f.FieldType.Name.Equals("ArrayList", scase))
+				{
+					if (fname.EndsWith("names", scase) || fname.EndsWith("ids", scase))
+					{
+						foreach (string s in ((ArrayList)f.GetValue(n)))
+							names += " " + s;
+					}
+				}
+			}
+
+			if (names != "")
+				names = ": " + names;
+			return names;
+		}
+
+
+		// Printing helper
+		private void EnterNode(Node n)
+		{
+			string name = n.GetType().Name + GetNodeNames(n);
+			builder.Append(' ', identLevel);
+			builder.AppendLine(name);
+			identLevel++;
+		}
+
+		private void LeaveNode(Node n)
+		{
+			identLevel--;
 		}
 
 		
+		private void TraversePrint(Node n)
+		{
+			if (n == null)
+				return;
+
+			EnterNode(n);
+			traverse(n);
+			LeaveNode(n);
+		}
+		
+		
+		//
+		// Processor interface
+		//
 
 		public override bool Visit(Node node)
 		{
@@ -49,46 +133,64 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(NodeList node)
 		{
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(StatementList node)
 		{
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(TypeList node)
 		{
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(IntegralTypeList node)
 		{
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(IdentifierList node)
 		{
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(DeclarationList node)
 		{
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(EnumValueList node)
 		{
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(ParameterList node)
 		{
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(FieldList node)
 		{
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
@@ -101,33 +203,33 @@ namespace crosspascal.cpp
 		public override bool Visit(ProgramNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.body);
-			traverse(node.uses);
+			TraversePrint(node.body);
+			TraversePrint(node.uses);
 			return true;
 		}
 		
 		public override bool Visit(LibraryNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.body);
-			traverse(node.uses);
+			TraversePrint(node.body);
+			TraversePrint(node.uses);
 			return true;
 		}
 		
 		public override bool Visit(UnitNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.interfce);
-			traverse(node.implementation);
-			traverse(node.init);
+			TraversePrint(node.interfce);
+			TraversePrint(node.implementation);
+			TraversePrint(node.init);
 			return true;
 		}
 		
 		public override bool Visit(PackageNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.requires);
-			traverse(node.contains);
+			TraversePrint(node.requires);
+			TraversePrint(node.contains);
 			return true;
 		}
 		
@@ -164,14 +266,14 @@ namespace crosspascal.cpp
 		public override bool Visit(Section node)
 		{
 			Visit((Node) node);
-			traverse(node.decls);
+			TraversePrint(node.decls);
 			return true;
 		}
 		
 		public override bool Visit(CodeSection node)
 		{
 			Visit((Section) node);
-			traverse(node.block);
+			TraversePrint(node.block);
 			return true;
 		}
 		
@@ -202,7 +304,7 @@ namespace crosspascal.cpp
 		public override bool Visit(DeclarationSection node)
 		{
 			Visit((Section) node);
-			traverse(node.uses);
+			TraversePrint(node.uses);
 			return true;
 		}
 		
@@ -227,7 +329,7 @@ namespace crosspascal.cpp
 		public override bool Visit(Declaration node)
 		{
 			Visit((Node) node);
-			traverse(node.type);
+			TraversePrint(node.type);
 			return true;
 		}
 		
@@ -246,14 +348,14 @@ namespace crosspascal.cpp
 		public override bool Visit(VarDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			traverse(node.init);
+			TraversePrint(node.init);
 			return true;
 		}
 		
 		public override bool Visit(ParameterDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			traverse(node.init);
+			TraversePrint(node.init);
 			return true;
 		}
 		
@@ -284,7 +386,7 @@ namespace crosspascal.cpp
 		public override bool Visit(ConstDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			traverse(node.init);
+			TraversePrint(node.init);
 			return true;
 		}
 		
@@ -303,8 +405,8 @@ namespace crosspascal.cpp
 		public override bool Visit(CallableDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
-			traverse(node.Type);
-			traverse(node.Directives);
+			TraversePrint(node.Type);
+			TraversePrint(node.Directives);
 			return true;
 		}
 		
@@ -353,8 +455,8 @@ namespace crosspascal.cpp
 		public override bool Visit(RoutineDefinition node)
 		{
 			Visit((Declaration) node);
-			traverse(node.header);
-			traverse(node.body);
+			TraversePrint(node.header);
+			TraversePrint(node.body);
 			return true;
 		}
 		
@@ -385,23 +487,23 @@ namespace crosspascal.cpp
 		public override bool Visit(ClassBody node)
 		{
 			Visit((Section) node);
-			traverse(node.fields);
-			traverse(node.content);
+			TraversePrint(node.fields);
+			TraversePrint(node.content);
 			return true;
 		}
 		
 		public override bool Visit(ClassDefinition node)
 		{
 			Visit((CompositeDeclaration) node);
-			traverse(node.ClassBody);
+			TraversePrint(node.ClassBody);
 			return true;
 		}
 		
 		public override bool Visit(InterfaceDefinition node)
 		{
 			Visit((CompositeDeclaration) node);
-			traverse(node.methods);
-			traverse(node.properties);
+			TraversePrint(node.methods);
+			TraversePrint(node.properties);
 			return true;
 		}
 		
@@ -414,17 +516,17 @@ namespace crosspascal.cpp
 		public override bool Visit(ClassMethod node)
 		{
 			Visit((ClassContent) node);
-			traverse(node.decl);
+			TraversePrint(node.decl);
 			return true;
 		}
 		
 		public override bool Visit(ClassProperty node)
 		{
 			Visit((ClassContent) node);
-			traverse(node.type);
-			traverse(node.index);
-			traverse(node.specs);
-			traverse(node.def);
+			TraversePrint(node.type);
+			TraversePrint(node.index);
+			TraversePrint(node.specs);
+			TraversePrint(node.def);
 			return true;
 		}
 		
@@ -443,12 +545,12 @@ namespace crosspascal.cpp
 		public override bool Visit(PropertySpecifiers node)
 		{
 			Visit((Node) node);
-			traverse(node.index);
-			traverse(node.read);
-			traverse(node.write);
-			traverse(node.stored);
-			traverse(node.def);
-			traverse(node.impl);
+			TraversePrint(node.index);
+			TraversePrint(node.read);
+			TraversePrint(node.write);
+			TraversePrint(node.stored);
+			TraversePrint(node.def);
+			TraversePrint(node.impl);
 			return true;
 		}
 		
@@ -461,7 +563,7 @@ namespace crosspascal.cpp
 		public override bool Visit(PropertyDefault node)
 		{
 			Visit((PropertySpecifier) node);
-			traverse(node.lit);
+			TraversePrint(node.lit);
 			return true;
 		}
 		
@@ -492,7 +594,7 @@ namespace crosspascal.cpp
 		public override bool Visit(LabelStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.stmt);
+			TraversePrint(node.stmt);
 			return true;
 		}
 		
@@ -517,8 +619,8 @@ namespace crosspascal.cpp
 		public override bool Visit(Assignement node)
 		{
 			Visit((Statement) node);
-			traverse(node.lvalue);
-			traverse(node.expr);
+			TraversePrint(node.lvalue);
+			TraversePrint(node.expr);
 			return true;
 		}
 		
@@ -531,41 +633,41 @@ namespace crosspascal.cpp
 		public override bool Visit(IfStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.condition);
-			traverse(node.thenblock);
-			traverse(node.elseblock);
+			TraversePrint(node.condition);
+			TraversePrint(node.thenblock);
+			TraversePrint(node.elseblock);
 			return true;
 		}
 		
 		public override bool Visit(ExpressionStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.expr);
+			TraversePrint(node.expr);
 			return true;
 		}
 		
 		public override bool Visit(CaseSelector node)
 		{
 			Visit((Statement) node);
-			traverse(node.list);
-			traverse(node.stmt);
+			TraversePrint(node.list);
+			TraversePrint(node.stmt);
 			return true;
 		}
 		
 		public override bool Visit(CaseStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.condition);
-			traverse(node.selectors);
-			traverse(node.caseelse);
+			TraversePrint(node.condition);
+			TraversePrint(node.selectors);
+			TraversePrint(node.caseelse);
 			return true;
 		}
 		
 		public override bool Visit(LoopStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.condition);
-			traverse(node.block);
+			TraversePrint(node.condition);
+			TraversePrint(node.block);
 			return true;
 		}
 		
@@ -584,63 +686,62 @@ namespace crosspascal.cpp
 		public override bool Visit(ForLoop node)
 		{
 			Visit((LoopStatement) node);
-			traverse(node.var);
-			traverse(node.start);
-			traverse(node.end);
+			TraversePrint(node.var);
+			TraversePrint(node.start);
+			TraversePrint(node.end);
 			return true;
 		}
 		
 		public override bool Visit(BlockStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.stmts);
-			outputCode("BLOCK STATEMENT", true, true);
+			TraversePrint(node.stmts);
 			return true;
 		}
 		
 		public override bool Visit(WithStatement node)
 		{
-			traverse(node.with);
-			traverse(node.body);
+			TraversePrint(node.with);
+			TraversePrint(node.body);
 			return true;
 		}
 		
 		public override bool Visit(TryFinallyStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.body);
-			traverse(node.final);
+			TraversePrint(node.body);
+			TraversePrint(node.final);
 			return true;
 		}
 		
 		public override bool Visit(TryExceptStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.body);
-			traverse(node.final);
+			TraversePrint(node.body);
+			TraversePrint(node.final);
 			return true;
 		}
 		
 		public override bool Visit(ExceptionBlock node)
 		{
 			Visit((Statement) node);
-			traverse(node.onList);
-			traverse(node.@default);
+			TraversePrint(node.onList);
+			TraversePrint(node.@default);
 			return true;
 		}
 		
 		public override bool Visit(RaiseStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.lvalue);
-			traverse(node.expr);
+			TraversePrint(node.lvalue);
+			TraversePrint(node.expr);
 			return true;
 		}
 		
 		public override bool Visit(OnStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.body);
+			TraversePrint(node.body);
 			return true;
 		}
 		
@@ -653,9 +754,9 @@ namespace crosspascal.cpp
 		public override bool Visit(Expression node)
 		{
 			Visit((Node) node);
-			traverse(node.Type);
-			traverse(node.Value);
-			traverse(node.ForcedType);
+			TraversePrint(node.Type);
+			TraversePrint(node.Value);
+			TraversePrint(node.ForcedType);
 			return true;
 		}
 		
@@ -668,13 +769,17 @@ namespace crosspascal.cpp
 		public override bool Visit(ExpressionList node)
 		{
 			Visit((Expression) node);
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(ConstExpression node)
 		{
 			Visit((Expression) node);
-			traverse(node.expr);
+			TraversePrint(node.expr);
 			return true;
 		}
 		
@@ -699,6 +804,8 @@ namespace crosspascal.cpp
 		public override bool Visit(FieldInitList node)
 		{
 			Visit((ExpressionList) node);
+			foreach (Node n in node.nodes)
+				TraversePrint(n);
 			return true;
 		}
 		
@@ -717,8 +824,8 @@ namespace crosspascal.cpp
 		public override bool Visit(SetIn node)
 		{
 			Visit((BinaryExpression) node);
-			traverse(node.expr);
-			traverse(node.set);
+			TraversePrint(node.expr);
+			TraversePrint(node.set);
 			return true;
 		}
 		
@@ -731,8 +838,8 @@ namespace crosspascal.cpp
 		public override bool Visit(ArithmethicBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			traverse(node.left);
-			traverse(node.right);
+			TraversePrint(node.left);
+			TraversePrint(node.right);
 			return true;
 		}
 		
@@ -787,8 +894,8 @@ namespace crosspascal.cpp
 		public override bool Visit(LogicalBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			traverse(node.left);
-			traverse(node.right);
+			TraversePrint(node.left);
+			TraversePrint(node.right);
 			return true;
 		}
 		
@@ -849,8 +956,8 @@ namespace crosspascal.cpp
 		public override bool Visit(TypeBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			traverse(node.expr);
-			traverse(node.types);
+			TraversePrint(node.expr);
+			TraversePrint(node.types);
 			return true;
 		}
 		
@@ -875,7 +982,7 @@ namespace crosspascal.cpp
 		public override bool Visit(SimpleUnaryExpression node)
 		{
 			Visit((Expression) node);
-			traverse(node.expr);
+			TraversePrint(node.expr);
 			return true;
 		}
 		
@@ -906,7 +1013,7 @@ namespace crosspascal.cpp
 		public override bool Visit(Set node)
 		{
 			Visit((UnaryExpression) node);
-			traverse(node.setelems);
+			TraversePrint(node.setelems);
 			return true;
 		}
 		
@@ -991,39 +1098,39 @@ namespace crosspascal.cpp
 		public override bool Visit(ArrayAccess node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.lvalue);
-			traverse(node.acessors);
-			traverse(node.array);
+			TraversePrint(node.lvalue);
+			TraversePrint(node.acessors);
+			TraversePrint(node.array);
 			return true;
 		}
 		
 		public override bool Visit(PointerDereference node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.expr);
+			TraversePrint(node.expr);
 			return true;
 		}
 		
 		public override bool Visit(InheritedCall node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.call);
+			TraversePrint(node.call);
 			return true;
 		}
 		
 		public override bool Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.func);
-			traverse(node.args);
-			traverse(node.basictype);
+			TraversePrint(node.func);
+			TraversePrint(node.args);
+			TraversePrint(node.basictype);
 			return true;
 		}
 		
 		public override bool Visit(FieldAcess node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.obj);
+			TraversePrint(node.obj);
 			return true;
 		}
 		
@@ -1072,7 +1179,7 @@ namespace crosspascal.cpp
 		public override bool Visit(MetaclassType node)
 		{
 			Visit((VariableType) node);
-			traverse(node.baseType);
+			TraversePrint(node.baseType);
 			return true;
 		}
 		
@@ -1085,15 +1192,15 @@ namespace crosspascal.cpp
 		public override bool Visit(EnumType node)
 		{
 			Visit((VariableType) node);
-			traverse(node.enumVals);
+			TraversePrint(node.enumVals);
 			return true;
 		}
 		
 		public override bool Visit(RangeType node)
 		{
 			Visit((VariableType) node);
-			traverse(node.min);
-			traverse(node.max);
+			TraversePrint(node.min);
+			TraversePrint(node.max);
 			return true;
 		}
 		
@@ -1118,21 +1225,21 @@ namespace crosspascal.cpp
 		public override bool Visit(FixedStringType node)
 		{
 			Visit((ScalarType) node);
-			traverse(node.expr);
+			TraversePrint(node.expr);
 			return true;
 		}
 		
 		public override bool Visit(VariantType node)
 		{
 			Visit((ScalarType) node);
-			traverse(node.actualtype);
+			TraversePrint(node.actualtype);
 			return true;
 		}
 		
 		public override bool Visit(PointerType node)
 		{
 			Visit((ScalarType) node);
-			traverse(node.pointedType);
+			TraversePrint(node.pointedType);
 			return true;
 		}
 		
@@ -1253,7 +1360,7 @@ namespace crosspascal.cpp
 		public override bool Visit(StructuredType node)
 		{
 			Visit((VariableType) node);
-			traverse(node.basetype);
+			TraversePrint(node.basetype);
 			return true;
 		}
 		
@@ -1278,7 +1385,7 @@ namespace crosspascal.cpp
 		public override bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			traverse(node.compTypes);
+			TraversePrint(node.compTypes);
 			return true;
 		}
 	}
