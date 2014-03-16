@@ -61,6 +61,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ast\AstPrinter.cs" />
     <Compile Include="ast\nodes\Composites.cs" />
     <Compile Include="ast\nodes\Declarations.cs" />
     <Compile Include="ast\nodes\Sections.cs" />
@@ -74,7 +75,6 @@
     <Compile Include="ast\VisitorTraverser.cs" />
     <Compile Include="ast\MapTraverser.cs" />
     <Compile Include="ast\Traverser.cs" />
-    <Compile Include="ast\PrintAST.cs" />
     <Compile Include="core\Compiler.cs" />
     <Compile Include="core\ErrorHandling.cs" />
     <Compile Include="CppProgram.cs" />

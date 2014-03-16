@@ -132,7 +132,7 @@ namespace crosspascal.ast.nodes
 
 	public abstract class ListNode<T> : Node, IListNode<T> where T : Node
 	{
-		List<T> nodes = new List<T>();
+		public List<T> nodes = new List<T>();
 
 		public ListNode()
 		{

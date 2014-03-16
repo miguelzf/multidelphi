@@ -40,46 +40,64 @@ namespace crosspascal.ast
 		
 		public virtual bool Visit(NodeList node)
 		{
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
 		public virtual bool Visit(StatementList node)
 		{
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
 		public virtual bool Visit(TypeList node)
 		{
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
 		public virtual bool Visit(IntegralTypeList node)
 		{
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
 		public virtual bool Visit(IdentifierList node)
 		{
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
 		public virtual bool Visit(DeclarationList node)
 		{
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
 		public virtual bool Visit(EnumValueList node)
 		{
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
 		public virtual bool Visit(ParameterList node)
 		{
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
 		public virtual bool Visit(FieldList node)
 		{
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
@@ -358,21 +376,12 @@ namespace crosspascal.ast
 		public virtual bool Visit(RoutineDirectives node)
 		{
 			Visit((CallableDirectives) node);
-			traverse(node.External);
 			return true;
 		}
 		
 		public virtual bool Visit(MethodDirectives node)
 		{
 			Visit((CallableDirectives) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ExternalDirective node)
-		{
-			Visit((Node) node);
-			traverse(node.File);
-			traverse(node.Name);
 			return true;
 		}
 		
@@ -667,6 +676,10 @@ namespace crosspascal.ast
 		public virtual bool Visit(ExpressionList node)
 		{
 			Visit((Expression) node);
+			foreach (Node n in node.nodes)
+				traverse(n);
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
@@ -698,6 +711,8 @@ namespace crosspascal.ast
 		public virtual bool Visit(FieldInitList node)
 		{
 			Visit((ExpressionList) node);
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		

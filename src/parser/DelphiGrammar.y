@@ -197,7 +197,7 @@ namespace crosspascal.parser
 %type<InterfaceSection> interfsec
 %type<InitializationSection> initsec
 %type<FinalizationSection> finalsec   
-%type<ProgramBody> main_block 
+%type<ProgramBody> mainblock 
 %type<VarDeclaration> vardecl 
 %type<FieldDeclaration> objfield
 %type<ConstDeclaration> constdecl rscstring
@@ -291,7 +291,7 @@ namespace crosspascal.parser
 %token KW_PROTECTED KW_PUBLIC KW_PUBLISHED KW_PRIVATE
 	// sec headers
 %token KW_CONST KW_VAR KW_THRVAR KW_TYPE KW_CONSTRUCTOR KW_DESTRUCTOR KW_ASM
-	//main_blocks
+	//mainblocks
 %token KW_BEGIN KW_END KW_WITH KW_DO
 	// control flow loops
 %token KW_FOR KW_TO KW_DOWNTO KW_REPEAT KW_UNTIL KW_WHILE
@@ -407,12 +407,12 @@ kwinterf
 	// ===================================================================================
 
 program
-	: KW_PROGRAM id SCOL	usesopt main_block	{ $$ = new ProgramNode($2, $4, $5); }
-	| 						usesopt main_block	{ $$ = new ProgramNode("untitled", $1, $2); }
+	: KW_PROGRAM id SCOL	usesopt mainblock	{ $$ = new ProgramNode($2, $4, $5); }
+	| 						usesopt mainblock	{ $$ = new ProgramNode("untitled", $1, $2); }
 	;
 
 library
-	: KW_LIBRARY id SCOL usesopt main_block		{ $$ = new LibraryNode($2, $4, $5); }
+	: KW_LIBRARY id SCOL usesopt mainblock		{ $$ = new LibraryNode($2, $4, $5); }
 	;
 	
 package
@@ -485,7 +485,7 @@ finalsec
 	: KW_FINALIZ blockstmt 		{ $$ = new FinalizationSection($2);}
 	;
 	
-main_block
+mainblock
 	: maindecllst block			{ $$ = new ProgramBody($1, $2);}
 	|			  block			{ $$ = new ProgramBody(null, $1);}
 	;

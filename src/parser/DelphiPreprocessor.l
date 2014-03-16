@@ -78,7 +78,12 @@ namespace crosspascal.parser
 			stateNames = new string[] {"INITIAL", "XCOMMENT1", "XCOMMENT2", "XNOTDEF" };
 			stateStack.Push(INITIAL);
 		}
-		
+				
+		void pperror(String msg = "Unknown preprocessing error")
+		{
+		//	throw new PreprocessorException(yyline, msg);
+			Console.Error.WriteLine("[ERROR preprocessor] " + msg + " in line " + yyline);
+		}
 
 		// **********************************************
 		// Directives processing
@@ -115,22 +120,6 @@ namespace crosspascal.parser
 			if (!yymoreStreams())
 				strbuilder.Append('\n');
 		} 
-		
-
-		// **********************************************
-		// Message functions
-	
-		void yydebug(String msg)
-		{
-			if (DelphiParser.DebugLevel > 0)
-				Console.Out.WriteLine("[Line " + yyline + "] " + msg);
-		}
-		
-		void pperror(String msg = "Unknown preprocessing error")
-		{
-		//	throw new PreprocessorException(yyline, msg);
-			Console.Error.WriteLine("[ERROR preprocessor] " + msg + " in line " + yyline);
-		}
 		
 %}
 

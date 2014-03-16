@@ -55,7 +55,7 @@ namespace crosspascal.core
 
 		static string printTree(Node tree, System.Type traverserType, int method)
 		{
-			PrintAST proc;
+			AstPrinter proc;
 
 			// Initialize object:
 			// new Traverser(arg) == (Traverser)  Activator.CreateInstance(type,proc);
@@ -65,25 +65,25 @@ namespace crosspascal.core
 
 				// use traverser type
 				case 1:
-					proc = new PrintAST(traverserType);
+					proc = new AstPrinter(traverserType);
 					break;
 
 				// use traverser object
 				case 2:
 					Traverser vtrav = (Traverser)Activator.CreateInstance(traverserType);
-					proc = new PrintAST(vtrav);
+					proc = new AstPrinter(vtrav);
 					vtrav.Processor = proc;
 					break;
 
 				// use 2 steps
 				case 3:
-					proc = new PrintAST();
+					proc = new AstPrinter();
 					Activator.CreateInstance(traverserType, proc);
 					break;
 
 				// explicitly set traverser
 				case 4:
-					proc = new PrintAST();
+					proc = new AstPrinter();
 					Traverser trav = (Traverser)Activator.CreateInstance(traverserType, proc);
 					trav.Processor = proc;
 					proc.traverse = trav.traverse;

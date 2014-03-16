@@ -272,7 +272,7 @@ namespace crosspascal.ast.nodes
 			if (!base.Equals(o))
 				return false;
 			var ot = (RoutineDirectives) o;
-			return Importdir == ot.Importdir && External  == ot.External;
+			return Importdir == ot.Importdir && External.Equals(ot.External);
 		}
 	}
 
@@ -330,19 +330,27 @@ namespace crosspascal.ast.nodes
 
 	#region Directives' Constants
 
-	public class ExternalDirective : Node
+	public struct ExternalDirective
 	{
 		public ConstExpression File { get; set; }
 		public ConstExpression Name { get; set; }
 
-		public ExternalDirective(ConstExpression file, ConstExpression name = null)
+		public ExternalDirective(ConstExpression file, ConstExpression name = null) : this()
 		{
 			File = file;
 			Name = name;
 			File.ForcedType = StringType.Single;
 			Name.ForcedType = StringType.Single;
 		}
-	}
+
+		public override bool Equals(object obj)
+		{
+			if (!(obj is ExternalDirective))
+				return false;
+
+			var ed = (ExternalDirective)obj;
+			return File == ed.File && Name == ed.Name;
+		}	}
 
 
 	/// <summary>
