@@ -92,7 +92,7 @@ def gen_warning_visit(node,names)
 	arrcode << "public virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
 	arrcode << "{"
 	arrcode << "\tConsole.Error.WriteLine(\"Visit("+cname + ") not yet implemented.\");"
-	gen_return_stmt(arrcode, '\t')
+	gen_return_stmt(arrcode, "\t")
 	arrcode << "}"
 	arrcode 
 end
@@ -103,7 +103,7 @@ def gen_concrete_visit(node,names)
 	bname = node.base
 	
 	arrcode = []
-	arrcode << "public virtual void Visit(" + cname  + " node)"
+	arrcode << "public virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
 	arrcode << "{"
 	
 	# call visit of the baseclass on the current node, if the baseclass is a node
@@ -118,7 +118,7 @@ def gen_concrete_visit(node,names)
 		end
 	end
 
-	gen_return_stmt(arrcode, '\t')
+	gen_return_stmt(arrcode, "\t")
 	arrcode << "}"
 	arrcode 
 end

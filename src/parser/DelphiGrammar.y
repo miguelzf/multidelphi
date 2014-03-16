@@ -50,7 +50,7 @@ namespace crosspascal.parser
 		public static int DebugLevel;
 
 		// to be fetched in the AST Declaration node
-		public static DeclarationRegistry DeclRegistry;
+		public static DeclarationsRegistry DeclRegistry;
 
 		/// <summary>
 		/// Resolves an id, disambiguating between RoutineCalls and Identifiers
@@ -101,7 +101,7 @@ namespace crosspascal.parser
 				DebugLevel = 1;
 			}
 
-			DeclRegistry = new DeclarationRegistry();
+			DeclRegistry = new DeclarationsRegistry();
 			DeclRegistry.LoadRuntimeNames();
 			
 			lexer = new DelphiScanner(tr);
