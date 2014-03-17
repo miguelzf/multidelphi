@@ -1,10 +1,8 @@
 %{
-
 using System;
 using System.Collections;
 using System.IO;
 using System.Text;
-using System.Diagnostics;
 using crosspascal.ast;
 using crosspascal.ast.nodes;
 using crosspascal.semantics;
@@ -13,7 +11,7 @@ namespace crosspascal.parser
 {
 
 	// Open main Parser class
-	public class DelphiParser
+	public partial class DelphiParser
 	{
 
 		// Emulate YACC
@@ -30,151 +28,6 @@ namespace crosspascal.parser
 		}
 			
 		
-		// Internal helper functions
-		
-		string GetErrorMessage(ParserException e)
-		{
-			StackTrace st = new StackTrace(e, true);
-			StackFrame frame = st.GetFrame(st.FrameCount-1); 
-			return "[ERROR] " + e.Message + " in " + Path.GetFileName(frame.GetFileName())
-					+ ": line " + frame.GetFileLineNumber();
-		}
-
-		
-		//Encoding.Default;	// typically Single-Bye char set
-		// TODO change charset to unicode, use %unicode in flex
-		public static readonly Encoding DefaultEncoding = Encoding.GetEncoding("iso-8859-1");
-
-		DelphiScanner lexer;
-		
-		public static int DebugLevel;
-
-		// to be fetched in the AST Declaration node
-		public static DeclarationsRegistry DeclRegistry;
-
-		/// <summary>
-		/// Resolves an id, disambiguating between RoutineCalls and Identifiers
-		/// </summary>
-		LvalueExpression ResolveId(Identifier id)
-		{
-			String name = id.name;
-			if (DeclRegistry.CheckType<ProceduralType>(name) != null)
-				return new RoutineCall(id);
-			else
-			if (DeclRegistry.CheckValue<ValueDeclaration>(name) != null)
-				return id;
-			else
-				throw new IdentifierUndeclared(name);
-		}
-		
-		
-		//
-		// Entry point and public interface
-		//
-		
-		public DelphiParser(ParserDebug dgb)
-		{
-			if (dgb != null) {
-				this.debug = (ParserDebug) dgb;
-			}
-			
-			eof_token = DelphiScanner.YYEOF;
-		}
-
-		public DelphiParser(int dgbLevel)
-			: this(new Func<ParserDebug>(
-					() => {	switch(dgbLevel)
-						{	case 1: return new DebugPrintFinal();
-							case 2: return new DebugPrintAll();
-							default: return null;
-						}
-					})())
-		{
-			DebugLevel = dgbLevel;
-		}
-		
-		// wrapper for yyparse
-		public CompilationUnit Parse(TextReader tr, ParserDebug dgb = null)
-		{
-			if (dgb != null) {
-				this.debug = (ParserDebug) dgb;
-				DebugLevel = 1;
-			}
-
-			DeclRegistry = new DeclarationsRegistry();
-			DeclRegistry.LoadRuntimeNames();
-			
-			lexer = new DelphiScanner(tr);
-			Object parserRet;
-			try {
-				parserRet = yyparse(lexer);
-			} 
-			catch (Exception yye) {
-				ErrorOutput.WriteLine(yye.Message + " in line " + lexer.yylineno());
-				ErrorOutput.WriteLine(yye.StackTrace);
-				// only clean way to signal error. null is the default yyVal
-				throw yye; // new InputRejected(GetErrorMessage(yye));
-			}
-			
-			if (!parserRet.GetType().IsSubclassOf(typeof(CompilationUnit)))
-				throw new ParserException();
-			
-			return (CompilationUnit) parserRet;
-		}
-		
-		
-		
-		// Internal helpers
-		
-		string lastObjectName = null;	// keeps track of current class/object/interface being parsed
-		
-		ListNode<Node>  ListAdd(ListNode<Node> bodylst, Node elem)
-		{
-			bodylst.Add(elem);
-			return bodylst;
-		}
-
-		ListNode<Node> ListAdd(ListNode<Node> bodylst, IListNode<Node> elems)
-		{
-			bodylst.Add(elems);
-			return bodylst;
-		}
-		
-		BinaryExpression CreateBinaryExpression(Expression e1, int token, Expression e2)
-		{
-			switch(token)
-			{
-				case Token.KW_MUL	:	return new Product    (e1, e2);
-				case Token.KW_DIV	:	return new Division   (e1, e2);
-				case Token.KW_QUOT	:	return new Quotient   (e1, e2);
-				case Token.KW_MOD	:	return new Modulus    (e1, e2);
-				case Token.KW_SHR	:	return new ShiftRight (e1, e2);
-				case Token.KW_SHL	:	return new ShiftLeft  (e1, e2);
-				case Token.KW_AND	:	return new LogicalAnd (e1, e2);
-				case Token.KW_SUB	:	return new Subtraction(e1, e2);
-				case Token.KW_SUM	:	return new Addition   (e1, e2);
-				case Token.KW_OR 	:	return new LogicalOr  (e1, e2);
-				case Token.KW_XOR	:	return new LogicalXor (e1, e2);
-				case Token.KW_EQ	:	return new Equal      (e1, e2);
-				case Token.KW_NE	:	return new NotEqual   (e1, e2);
-				case Token.KW_LT	:	return new LessThan   (e1, e2);
-				case Token.KW_LE	:	return new LessOrEqual(e1, e2);
-				case Token.KW_GT	:	return new GreaterThan(e1, e2);
-				case Token.KW_GE	:	return new GreaterOrEqual(e1, e2);
-				default: throw new ParserException("Invalid Binary Operation token: " + token);
-			}
-		}
-		
-		bool CheckDirectiveId(String expected, String idtoken)
-		{
-			if (String.Compare(expected, idtoken, true) != 0)
-			{	yyerror("Invalid directive '" + idtoken + "', expected: " + expected);
-				return false;
-			}
-			return true;
-		}
-
-
 %}
 
 
@@ -184,7 +37,6 @@ namespace crosspascal.parser
 
 %start goal
 %type<string> id labelid exportid stringconst conststr
-//%type<int> kwfunction kwprocedure kwconstructor kwdestructor kwrecord kwclass kwinterface
 %type<ArrayList> labelidlst idlst
 
 	// sections and declarations
@@ -216,7 +68,6 @@ namespace crosspascal.parser
 %type<ExternalDirective>  externarg
 
 	// statements
-	
 %type<BlockStatement> block funcblock assemblerstmt	blockstmt
 %type<ExceptionBlock> exceptionblock
 %type<Statement> stmt nonlbl_stmt assign goto_stmt ifstmt casestmt elsecase repeatstmt whilestmt forstmt withstmt caseselector ondef
@@ -238,9 +89,10 @@ namespace crosspascal.parser
 %type<ExpressionList> caselabellst exprlst exprlstopt setelemlst constinitexprlst 
 %type<TypeList> arrayszlst
 %type<FieldInitList> fieldconstlst 
+%type<FieldInit> fieldconst
 %type<EnumValueList> enumelemlst
 %type<EnumValue> enumelem
-%type<ConstExpression> paraminitopt constexpr functypeinit arrayconst recordconst fieldconst constinitexpr setelem
+%type<ConstExpression> paraminitopt constexpr functypeinit arrayconst recordconst constinitexpr setelem
 
 	// objects etc - TODO
 %type<Node> recvariant  recfield  recvar guid  recfieldlst propfield
@@ -426,7 +278,7 @@ requires
 	
 requireslst
 	: id								{ $$ = new NodeList(new RequiresItem($1)); }
-	| requireslst COMMA id				{ $$ = $1; $1.Add(new RequiresItem($3)); }
+	| requireslst COMMA id				{ $$ = ListAdd<NodeList,Node>($1, new RequiresItem($3)); }
 	;
 
 contains
@@ -435,7 +287,7 @@ contains
 
 containslst
 	: containsitem						{ $$ = new NodeList($1); }
-	| containslst COMMA containsitem	{ $$ = $1; $1.Add($3); }
+	| containslst COMMA containsitem	{ $$ = ListAdd<NodeList,Node>($1, $3); }
 	;
 
 containsitem
@@ -450,7 +302,7 @@ usesopt
 
 useslst
 	: usesitem					{ $$ = new NodeList($1); }
-	| useslst COMMA usesitem	{ $$ = $1; $1.Add($3); }
+	| useslst COMMA usesitem	{ $$ = ListAdd<NodeList,Node>($1, $3); }
 	;
 	
 usesitem
@@ -473,7 +325,7 @@ interfsec
 
 interfdecllst
 	:							{ $$ = new DeclarationList();}
-	| interfdecllst interfdecl	{ $$ = $1; $1.Add($2); }
+	| interfdecllst interfdecl	{ $$ = ListAddRange<DeclarationList,Declaration>($1, $2); }
 	;
 
 initsec
@@ -492,12 +344,12 @@ mainblock
 	
 maindecllst
 	: maindeclsec				{ $$ = $1; }
-	| maindecllst maindeclsec	{ $$ = $1; $1.Add($2); }
+	| maindecllst maindeclsec	{ $$ = ListAddRange<DeclarationList,Declaration>($1, $2); }
 	;
 
 declseclst
 	: funcdeclsec				{ $$ = $1;}
-	| declseclst funcdeclsec	{ $$ = $1; $1.Add($2); }
+	| declseclst funcdeclsec	{ $$ = ListAddRange<DeclarationList,Declaration>($1, $2); }
 	;
 
 	
@@ -537,7 +389,7 @@ basicdeclsec
 
 typesec
 	: KW_TYPE typedecl		{ $$ = new DeclarationList($2); }
-	| typesec typedecl		{ $$ = $1; $1.Add($2); }
+	| typesec typedecl		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 
 
@@ -545,12 +397,12 @@ typesec
 
 varsec
 	: KW_VAR vardecl		{ $$ = new DeclarationList($2); }
-	| varsec vardecl		{ $$ = $1; $1.Add($2); }
+	| varsec vardecl		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 	
 thrvarsec
 	: KW_THRVAR vardecl		{ $$ = new DeclarationList($2); $2.isThrVar = true; }
-	| thrvarsec vardecl		{ $$ = $1; $1.Add($2);   $2.isThrVar = true; }
+	| thrvarsec vardecl		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2);   $2.isThrVar = true; }
 	;
 
 vardecl
@@ -571,7 +423,7 @@ rscstringsec
 	
 rscstringlst
 	: rscstring						{ $$ = new DeclarationList($1); }
-	| rscstringlst rscstring		{ $$ = $1; $1.Add($2); }
+	| rscstringlst rscstring		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 	
 rscstring
@@ -608,7 +460,7 @@ exportsec
 
 expitemlst
 	: expitem						{ $$ = new NodeList($1); }
-	| expitemlst COMMA expitem		{ $$ = $1; $1.Add($3); }
+	| expitemlst COMMA expitem		{ $$ = ListAdd<NodeList,Node>($1, $3); }
 	;
 
 expitem
@@ -722,7 +574,7 @@ formalparams
 
 formalparamslst
 	: formalparm						{ $$ = new ParameterList($1); }
-	| formalparamslst SCOL formalparm	{ $$ = $1; $1.Add($3); }
+	| formalparamslst SCOL formalparm	{ $$ = ListAdd<ParameterList,ParameterDeclaration>($1, $3); }
 	;
 
 formalparm
@@ -853,7 +705,7 @@ blockstmt
 	
 stmtlist
 	: stmt					{ $$ = new StatementList($1); }
-	| stmt SCOL stmtlist	{ $$ = $3; $3.Add($1); }
+	| stmt SCOL stmtlist	{ $$ = ListAddReverse<StatementList,Statement>($3, $1); }
 	;
 
 stmt
@@ -907,7 +759,7 @@ elsecase
 
 caseselectorlst
 	: caseselector							{ $$ = new StatementList($1); }
-	| caseselectorlst SCOL caseselector		{ $$ = $1; $1.Add($3); }
+	| caseselectorlst SCOL caseselector		{ $$ = ListAdd<StatementList,Statement>($1, $3); }
 	;
 
 caseselector
@@ -917,7 +769,7 @@ caseselector
 	
 caselabellst
 	: setelem							{ $$ = new ExpressionList($1); }
-	| caselabellst COMMA setelem		{ $$ = $1; $1.Add($3); }
+	| caselabellst COMMA setelem		{ $$ = ListAdd<ExpressionList,Expression>($1, $3); }
 	;
 
 repeatstmt
@@ -950,7 +802,7 @@ exceptionblock
 
 onlst
 	: ondef										{ $$ = new StatementList($1); }
-	| onlst ondef								{ $$ = $1; $1.Add($2); }
+	| onlst ondef								{ $$ = ListAdd<StatementList,Statement>($1, $2); }
 	;
 
 ondef
@@ -1074,7 +926,7 @@ relop
 
 exprlst
 	: expr						{ $$ = new ExpressionList($1); }
-	| exprlst COMMA expr		{ $$ = $1; $1.Add($3); }
+	| exprlst COMMA expr		{ $$ = ListAdd<ExpressionList,Expression>($1, $3); }
 	;
 
 exprlstopt
@@ -1121,7 +973,7 @@ stringconst
 
 idlst
 	: id						{ var ar = new ArrayList(); ar.Add($1); $$ = ar; }
-	| idlst COMMA id			{ $1.Add($3); $$ = $1; }
+	| idlst COMMA id			{ $$ = $1; $1.Add($3); }
 	;
 
 	// Cast the output value from the Scanner
@@ -1170,7 +1022,7 @@ enumtype
 
 enumelemlst
 	: enumelem						{ $$ = new EnumValueList($1); }
-	| enumelemlst COMMA enumelem	{ $$ = $1; $1.Add($3); }
+	| enumelemlst COMMA enumelem	{ $$ = ListAdd<EnumValueList,EnumValue>($1, $3); }
 	;
 
 enumelem
@@ -1185,7 +1037,7 @@ set
 
 setelemlst
 	: setelem						{ $$ = new ExpressionList($1); }
-	| setelemlst COMMA setelem		{ $$ = $1; $1.Add($3); }
+	| setelemlst COMMA setelem		{ $$ = ListAdd<ExpressionList,Expression>($1, $3); }
 	;
 	
 setelem
@@ -1201,7 +1053,7 @@ setelem
 
 constsec
 	: KW_CONST constdecl	{ $$ = new DeclarationList($2); }
-	| constsec constdecl	{ $$ = $1; $1.Add($2); }
+	| constsec constdecl	{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 
 constdecl
@@ -1229,7 +1081,7 @@ arrayconst
 
 constinitexprlst
 	: constexpr								{ $$ = new ExpressionList($1); }
-	| constinitexprlst COMMA constexpr		{ $$ = $1; $1.Add($3); }
+	| constinitexprlst COMMA constexpr		{ $$ = ListAdd<ExpressionList,Expression>($1, $3); }
 	;
 
 recordconst
@@ -1237,8 +1089,8 @@ recordconst
 	;
 
 fieldconstlst
-	: fieldconst							{ var ll = new FieldInitList(); ll.Add($1); $$ = ll;}
-	| fieldconstlst SCOL fieldconst			{ $$ = $1; $1.Add($3); }
+	: fieldconst							{ $$ = new FieldInitList($1);}
+	| fieldconstlst SCOL fieldconst			{ $$ = ListAdd<FieldInitList,Expression>($1, $3); }
 	;
 
 fieldconst
@@ -1314,7 +1166,7 @@ classbody
 
 scopeseclst
 	:							{ $$ = new DeclarationList(); }
-	| scopeseclst scopesec		{ $$ = $1; $1.Add($2); }
+	| scopeseclst scopesec		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 
 scopesec
@@ -1331,12 +1183,12 @@ scope_decl
 
 fieldlst
 	: objfield					{ $$ = new DeclarationList($1); }
-	| fieldlst SCOL objfield	{ $$ = $1; $1.Add($3); }
+	| fieldlst SCOL objfield	{ $$ = ListAdd<DeclarationList,Declaration>($1, $3); }
 	;
 	
 complst
 	:							{ $$ = new DeclarationList(); }
-	| complst classcomp			{ $$ = $1; $1.Add($2); }
+	| complst classcomp			{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 
 objfield
@@ -1369,7 +1221,7 @@ classmethodlstopt
 
 methodlst
 	: methoddecl				{ $$ = new DeclarationList($1); }
-	| methodlst methoddecl		{ $$ = $1; $1.Add($2); }
+	| methodlst methoddecl		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 
 	
@@ -1385,7 +1237,7 @@ classproplstopt
 
 classproplst
 	: property					{ $$ = new NodeList($1); }
-	| classproplst property		{ $$ = $1; $1.Add($2); }
+	| classproplst property		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 
 property
@@ -1505,7 +1357,7 @@ structuredtype
 	
 arrayszlst
 	: rangetype					{ $$ = new TypeList($1); }
-	| arrayszlst COMMA rangetype{ $$ = $1; $1.Add($3); }
+	| arrayszlst COMMA rangetype{ $$ = ListAdd<TypeList,TypeNode>($1, $3); }
 	;
 
 arraytype

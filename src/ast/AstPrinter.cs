@@ -17,6 +17,7 @@ namespace crosspascal.ast
 		private int identLevel = 0;
 		private StringBuilder builder = new StringBuilder();
 
+		const string identText = "  ";
 
 		// =================================================
 		// Public interface
@@ -73,7 +74,7 @@ namespace crosspascal.ast
 			}
 
 			if (names != "")
-				names = ": " + names;
+				names = ":" + names;
 			return names;
 		}
 
@@ -82,7 +83,7 @@ namespace crosspascal.ast
 		private void EnterNode(Node n)
 		{
 			string name = n.GetType().Name + GetNodeNames(n);
-			builder.Append(' ', identLevel);
+			builder.Append(String.Concat(Enumerable.Repeat(identText, identLevel)));
 			builder.AppendLine(name);
 			identLevel++;
 		}
@@ -754,9 +755,9 @@ namespace crosspascal.ast
 		public override bool Visit(Expression node)
 		{
 			Visit((Node) node);
-			TraversePrint(node.Type);
-			TraversePrint(node.Value);
-			TraversePrint(node.ForcedType);
+		//	TraversePrint(node.Type);
+		//	TraversePrint(node.Value);
+		//	TraversePrint(node.ForcedType);
 			return true;
 		}
 		
@@ -768,9 +769,6 @@ namespace crosspascal.ast
 		
 		public override bool Visit(ExpressionList node)
 		{
-			Visit((Expression) node);
-			foreach (Node n in node.nodes)
-				TraversePrint(n);
 			foreach (Node n in node.nodes)
 				TraversePrint(n);
 			return true;

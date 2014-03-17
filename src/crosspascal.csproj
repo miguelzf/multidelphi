@@ -81,6 +81,7 @@
     <Compile Include="cpp\DelphiToCpp.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
     <Compile Include="parser\DelphiParser.cs" />
+    <Compile Include="parser\DelphiParserSupport.cs" />
     <Compile Include="parser\DelphiPreprocessor.cs" />
     <Compile Include="parser\DelphiProcessorSupport.cs" />
     <Compile Include="parser\DelphiScanner.cs" />

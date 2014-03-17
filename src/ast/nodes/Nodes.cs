@@ -160,6 +160,24 @@ namespace crosspascal.ast.nodes
 			return nodes.ElementAt(nodes.Count-1);
 		}
 
+		/// <summary>
+		/// Adds element to start of list
+		/// </summary>
+		public void AddStart(T t)
+		{
+			this.InsertAt(0, t);
+		}
+
+		/// <summary>
+		/// Adds elements to start of list
+		/// </summary>
+		public void AddStart(IEnumerable<T> col)
+		{
+			if (col != null && col.Count<T>() > 0)
+				foreach (T t in col.Reverse<T>())
+					this.InsertAt(0, t);
+		}
+
 		public void Add(T t)
 		{
 			if (t != null)

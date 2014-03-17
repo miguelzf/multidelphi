@@ -51,7 +51,7 @@ namespace crosspascal.parser
 %init{
 	// code injected in the constructor
 	// Inits the scanner
-	InitLexer(@in);
+	InitPreprocessor(@in);
 %init}
 
 %{
@@ -63,13 +63,13 @@ namespace crosspascal.parser
 			zzReader = null;
 		}
 		
-		public void InitLexer(string fname)
+		public void InitPreprocessor(string fname)
 		{
 			StreamReader sr = new StreamReader(fname, DelphiParser.DefaultEncoding);
-			InitLexer(sr);
+			InitPreprocessor(sr);
 		}
 
-		public void InitLexer(TextReader sr)
+		public void InitPreprocessor(TextReader sr)
 		{	
 			yyreset(sr);
 			InitPreprocessor();
@@ -114,12 +114,13 @@ namespace crosspascal.parser
 			return strbuilder.ToString().ToLowerInvariant();	// Delphi is case-insensitive
 		}
 
-		// Emit newline if it's in the original src file
+		// Emit newline if the current stream is the original src file
 		void CheckSourceNewline()
 		{
 			if (!yymoreStreams())
 				strbuilder.Append('\n');
-		} 
+		}
+		
 		
 %}
 

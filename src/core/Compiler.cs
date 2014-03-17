@@ -41,7 +41,7 @@ namespace crosspascal.core
 			{
 				Console.Write("####### Compile file " + Path.GetFileName(s) + ": ");
 
-				preprocessor.InitLexer(s);
+				preprocessor.InitPreprocessor(s);
 				preprocessor.AddDefine("WINDOWS");	// test
 
 				try

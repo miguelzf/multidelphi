@@ -48,15 +48,7 @@ namespace crosspascal.ast.nodes
 		{
 			names.Add(name);
 
-			// Console.WriteLine("DECLARE " + name + " with type: " + type);
-			// HACK!! FIXME TODO
-			// constructs with a declaring context (i.e. routines & composites)
-			// are wrongly being declared in their own sub context.
-			// Should be declared in the upper context
-			if (type.ISA(typeof(ProceduralType)) || type.ISA(typeof(CompositeType)))
-				DelphiParser.DeclRegistry.RegisterPreviousDeclaration(name, this);
-			else  // normal cases
-				DelphiParser.DeclRegistry.RegisterDeclaration(name, this);
+			DelphiParser.DeclRegistry.RegisterDeclaration(name, this);
 		}
 
 		protected Declaration() { }

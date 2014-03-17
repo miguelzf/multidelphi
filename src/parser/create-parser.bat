@@ -17,4 +17,3 @@ set debuflag=--debug
 
 ..\..\deps\cs-jay\jay.exe %jayemitlines% -tvc < Jay-CS-skeleton.cs DelphiGrammar.y > DelphiParser.cs
 
-

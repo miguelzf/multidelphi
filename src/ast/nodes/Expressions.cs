@@ -95,9 +95,10 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public class ExpressionList : Expression, IListNode<Expression>
+	public class ExpressionList : ListNode<Expression>
+		// Expression, IListNode<Expression>
 	{
-		public List<Expression> nodes = new List<Expression>();
+	//	public List<Expression> nodes = new List<Expression>();
 
 		public ExpressionList()
 		{
@@ -111,7 +112,7 @@ namespace crosspascal.ast.nodes
 			Add(t);
 		}
 
-		public virtual void Add(IEnumerable<Expression> t)
+/*		public virtual void Add(IEnumerable<Expression> t)
 		{
 			nodes.AddRange(t);
 		}
@@ -144,6 +145,7 @@ namespace crosspascal.ast.nodes
 				ret &= node.Accept(visitor);
 			return ret;
 		}
+ */
 	}
 
 
@@ -160,6 +162,10 @@ namespace crosspascal.ast.nodes
 	{
 		public Expression expr;
 
+		public ConstExpression()
+		{
+		}
+
 		public ConstExpression(Expression expr)
 		{
 			this.expr = expr;
@@ -170,7 +176,12 @@ namespace crosspascal.ast.nodes
 
 	public abstract class StructuredConstant : ConstExpression
 	{
-		public StructuredConstant(ExpressionList exprlist) : base(exprlist) { }
+		public ExpressionList exprlist;
+
+		public StructuredConstant(ExpressionList exprlist)
+		{
+			this.exprlist = exprlist;
+		}
 	}
 
 	public class ArrayConst : StructuredConstant
@@ -195,6 +206,11 @@ namespace crosspascal.ast.nodes
 		public void Add(FieldInit t)
 		{
 			base.Add(t);
+		}
+
+		public FieldInitList(FieldInit t)
+			: base(t)
+		{
 		}
 	}
 

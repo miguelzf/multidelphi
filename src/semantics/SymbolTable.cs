@@ -39,7 +39,7 @@ namespace crosspascal.semantics
 		}
 
 		/// <summary>
-		/// Add to previous context (internal)
+		/// Add to previous context
 		/// </summary>
 		public bool AddToPrevious(String key, T symb)
 		{
@@ -49,8 +49,19 @@ namespace crosspascal.semantics
 			if (LookupUnshadowable(key) != null)
 				return false;
 
-			return contexts.ElementAt(contexts.Count - 2).Add(key,symb);
+			// Stack.ElementAt starts counting from the most *recent* pushed
+			return contexts.ElementAt(1).Add(key,symb);
 		}
+
+		/// <summary>
+		/// Get last symbol from the ctxIndex-previous context.
+		/// The current context is ctxIndex = 0
+		/// </summary>
+		public T GetLastSymbolFromContext(int ctxIndex)
+		{
+			return contexts.ElementAt(ctxIndex).lastInserted;
+		}
+
 
 		bool CheckValidKey(String key)
 		{
@@ -113,9 +124,10 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Context of declared symbols
 		/// </summary>
-		struct SymbolContext<iT> where iT : class
+		class SymbolContext<iT> where iT : class
 		{
 			Dictionary<String, iT> symbols;
+			internal iT lastInserted;
 
 			internal bool allowShadowing;
 			internal string id;
@@ -124,6 +136,7 @@ namespace crosspascal.semantics
 			{
 				this.id = id;
 				this.allowShadowing = allowShadowing;
+				this.lastInserted = null;
 				symbols = new Dictionary<String, iT>();
 			}
 
@@ -137,6 +150,7 @@ namespace crosspascal.semantics
 				if (symbols.ContainsKey(key))
 					return false;
 
+				lastInserted = symbol;
 				symbols[key] = symbol;
 				return true;
 			}
@@ -150,10 +164,11 @@ namespace crosspascal.semantics
 				return true;
 			}
 
-			bool Remove(String key, iT symbol)
+			internal bool Remove(String key, iT symbol)
 			{
 				return symbols.Remove(key);
 			}
+
 		}
 		// end Symbol Context
 

@@ -74,10 +74,11 @@ namespace crosspascal.ast
 		 */
 			}
 
-			if (!methodsMapping.ContainsKey(nodeType))
-				return true;		// method not mapped. Nothing to do
 
-			MethodInfo mi = methodsMapping[nodeType];
+			MethodInfo mi;
+			if (!methodsMapping.TryGetValue(nodeType, out mi))
+				return true;		// method not mapped. Nothing to do
+			
 			Object oret = mi.Invoke(Processor, new object[] { n });
 
 			if (oret == null)

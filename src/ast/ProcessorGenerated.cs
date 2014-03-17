@@ -675,9 +675,6 @@ namespace crosspascal.ast
 		
 		public virtual bool Visit(ExpressionList node)
 		{
-			Visit((Expression) node);
-			foreach (Node n in node.nodes)
-				traverse(n);
 			foreach (Node n in node.nodes)
 				traverse(n);
 			return true;

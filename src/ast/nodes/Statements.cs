@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using crosspascal.parser;
+using crosspascal.semantics;
 
 namespace crosspascal.ast.nodes
 {
@@ -70,8 +72,10 @@ namespace crosspascal.ast.nodes
 
 		public Assignement(LvalueExpression lvalue, Expression expr)
 		{
-			this.lvalue = lvalue;
 			this.expr = expr;
+
+			this.lvalue = DelphiParser.DeclRegistry.CheckSameFunctionAssignment(lvalue);
+
 		}
 	}
 
@@ -196,10 +200,10 @@ namespace crosspascal.ast.nodes
 
 	public class WithStatement
 	{
-		public Expression with;
+		public ExpressionList with;
 		public Statement body;
 
-		public WithStatement(Expression with, Statement body)
+		public WithStatement(ExpressionList with, Statement body)
 		{
 			this.with = with;
 			this.body = body;

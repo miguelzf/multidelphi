@@ -667,7 +667,8 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(ExpressionList node)
 		{
-			Visit((Expression) node);
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		

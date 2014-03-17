@@ -27,23 +27,58 @@ namespace crosspascal.semantics
 			LoadBuiltinTypesBasic();
 			LoadBuiltinTypesPointer();
 			LoadBuiltinTypesWindows();	// test
+			symtab.Push("global");
 		}
+
 
 		/// <summary>
-		/// FIXME!!
+		/// Checks if a declaration is a context-creation declaration (routine or object).
+		/// If it is, then it has already opened a new context, and now the
+		/// declaration must be registered in the previous context
 		/// </summary>
-		public void RegisterPreviousDeclaration(String name, Declaration decl)
+		bool CheckContextCreation(String name, Declaration decl)
 		{
-			if (!symtab.AddToPrevious(name, decl))
-				throw new IdentifierRedeclared(name);
+			TypeNode tdecl = decl.type;
+			
+			if (tdecl is ProceduralType || tdecl is CompositeType || tdecl is RecordType)
+			{
+				if (!symtab.AddToPrevious(name, decl))
+					throw new IdentifierRedeclared(name);
+				return true;
+			}
+			return false;
 		}
 
+		
+		/// <summary>
+		/// Checks if an assignment's lvalue is a call to its declaring function,
+		/// in which case, it is actually a reference to the function's return var.
+		/// Create the aproppriate node
+		/// </summary>
+		public LvalueExpression CheckSameFunctionAssignment(LvalueExpression lval)
+		{
+			// check that the expr is a funcall with a single id
+			if (lval is RoutineCall && ((RoutineCall)lval).func is Identifier)
+			{
+				string name = ((Identifier)((RoutineCall)lval).func).name;
+				// check that the id refers to the declaring function
+				Declaration decl = symtab.GetLastSymbolFromContext(1);
+				if (decl is CallableDeclaration && ((CallableDeclaration) decl).Type.funcret != null)
+					if ((string) decl.names[0] == name)
+						return new Identifier("result");	// standard name for func ret
+			}
+
+			return lval;
+		}
 
 		/// <summary>
 		/// Register new declaration, of any kind
 		/// </summary>
 		public void RegisterDeclaration(String name, Declaration decl)
 		{
+			if (CheckContextCreation(name, decl))
+				return;
+
 			if (!symtab.Add(name, decl))
 				throw new IdentifierRedeclared(name);
 		}

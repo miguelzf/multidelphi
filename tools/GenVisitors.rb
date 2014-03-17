@@ -123,7 +123,7 @@ def gen_concrete_visit(node,names)
 		if names.include? type 
 			arrcode << "\t" + "traverse(node." + name + ");"
 		
-		elsif !cname.end_with? "List"
+		elsif ! (cname.end_with? "List")
 		# iterate over enumerable generic arguments
 			if (ma = /\w*List<(\w+)>\s*/.match type) == nil
 				if (ma = /\w*Set<(\w+)>\s*/.match type) == nil

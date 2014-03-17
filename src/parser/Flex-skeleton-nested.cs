@@ -283,6 +283,7 @@
 
     if (zzReader != null)
       zzReader.Close();
+	if (zzAtBOL) { }
   }
 
 

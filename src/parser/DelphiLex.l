@@ -70,7 +70,7 @@ namespace crosspascal.parser
 		}
 
 		// public int token ();	// created by CSFlex
-				
+		
 		public Object value () {
 			return yylval;
 		}
@@ -366,42 +366,42 @@ package		{ yypushstate(SPACKAGES); yylval = yytext(); return IDENTIFIER; }
 
  	/**************************************************************/
 	/* Built-in types: emitted as identifiers */
-/*
-		// types: integers
-	byte		{ return TYPE_BYTE; }
-	shortint	{ return TYPE_SHORTINT; }
-	word		{ return TYPE_WORD; }
-	smallint	{ return TYPE_SMALLINT; }
-	cardinal	{ return TYPE_CARDINAL; }
-	integer		{ return TYPE_INT; }
-	longword	{ return TYPE_LONGWORD; }
-	longint		{ return TYPE_LONGINT; }
-	int64		{ return TYPE_INT64; }
-	uint64		{ return TYPE_UINT64; }
-	comp		{ return TYPE_COMP; }
+	/*
+			// types: integers
+		byte		{ return TYPE_BYTE; }
+		shortint	{ return TYPE_SHORTINT; }
+		word		{ return TYPE_WORD; }
+		smallint	{ return TYPE_SMALLINT; }
+		cardinal	{ return TYPE_CARDINAL; }
+		integer		{ return TYPE_INT; }
+		longword	{ return TYPE_LONGWORD; }
+		longint		{ return TYPE_LONGINT; }
+		int64		{ return TYPE_INT64; }
+		uint64		{ return TYPE_UINT64; }
+		comp		{ return TYPE_COMP; }
 
-		// types: floats
-	single		{ return TYPE_FLOAT; }
-	real48		{ return TYPE_REAL48; }
-	extended	{ return TYPE_EXTENDED; }
-	double		{ return TYPE_DOUBLE; }
-	real		{ return TYPE_DOUBLE; }
-	currency	{ return TYPE_CURR; }
+			// types: floats
+		single		{ return TYPE_FLOAT; }
+		real48		{ return TYPE_REAL48; }
+		extended	{ return TYPE_EXTENDED; }
+		double		{ return TYPE_DOUBLE; }
+		real		{ return TYPE_DOUBLE; }
+		currency	{ return TYPE_CURR; }
 
-		// types: chars 
-	char		{ return TYPE_CHAR; }
-	pchar		{ return TYPE_PCHAR; }
-	ansichar	{ return TYPE_PCHAR; }
-	widechar	{ return TYPE_WIDECHAR; }
-	shortstring	{ return TYPE_SHORTSTR; }
-	widestring	{ return TYPE_WIDESTR; }
-	ansistring	{ return TYPE_STR; }
-	 
-		// types others
-	boolean		{ return TYPE_BOOL; }
-	olevariant	{ return TYPE_OLEVAR; }
-	variant		{ return TYPE_VAR; }
-*/
+			// types: chars 
+		char		{ return TYPE_CHAR; }
+		pchar		{ return TYPE_PCHAR; }
+		ansichar	{ return TYPE_PCHAR; }
+		widechar	{ return TYPE_WIDECHAR; }
+		shortstring	{ return TYPE_SHORTSTR; }
+		widestring	{ return TYPE_WIDESTR; }
+		ansistring	{ return TYPE_STR; }
+		 
+			// types others
+		boolean		{ return TYPE_BOOL; }
+		olevariant	{ return TYPE_OLEVAR; }
+		variant		{ return TYPE_VAR; }
+	*/
 
 string		{ return TYPE_STR; }
 array		{ return TYPE_ARRAY; }
