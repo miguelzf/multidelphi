@@ -34,7 +34,7 @@ namespace crosspascal.testunits
 			{
 				Console.Write("####### PARSE file " + Path.GetFileName(s) + ": ");
 
-				preproc.InitLexer(s);
+				preproc.InitPreprocessor(s);
 				preproc.AddDefine("LINUX");	// test
 				try
 				{
