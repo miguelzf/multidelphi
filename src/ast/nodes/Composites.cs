@@ -7,11 +7,6 @@ using System.Threading.Tasks;
 
 namespace crosspascal.ast.nodes
 {
-	public abstract partial class CompositeDeclaration : TypeDeclaration
-	{
-		public bool IsPacked;
-
-	}
 
 	public enum Scope
 	{
@@ -21,72 +16,140 @@ namespace crosspascal.ast.nodes
 		Published
 	}
 
-	public enum ClassKind
+	//
+	// Composite Types
+	//
+
+	public abstract partial class CompositeType : TypeNode
 	{
-		Class,
-		Object
+		ArrayList heritage;
+
+		public CompositeType(ArrayList heritage)
+		{
+			this.heritage = heritage;
+		}
 	}
 
-	public class ClassBody : Section
+	public class ClassType : CompositeType
 	{
-		// TODO rever
-
-		public Scope scope;
-		public NodeList fields;
-		public NodeList content;
-
-		public ClassBody(Scope scope, NodeList fields, NodeList content)
+		public ClassType(ArrayList heritage)
+			: base(heritage)
 		{
-			this.scope = scope;
+		}
+	}
+
+	public class InterfaceType : CompositeType
+	{
+		public InterfaceType(ArrayList heritage) 
+			: base(heritage)
+		{
+		}
+	}
+
+
+	//
+	// Composite Declarations
+	//
+
+	public abstract partial class CompositeDeclaration : TypeDeclaration
+	{
+		public bool IsPacked { get; set; }
+
+		/// <summary>
+		/// Class/interface body, with scoped sections of declarations.
+		/// This is null in the case of forward class/interface declarations.
+		/// </summary>
+		public CompositeBody Body { get; set; }
+
+		public CompositeDeclaration(String name, CompositeType ctype, CompositeBody body = null)
+			: base(name, ctype)
+		{
+			this.Body = body;
+		}
+	}
+	
+	public class ClassDeclaration : CompositeDeclaration
+	{
+		public ClassDeclaration(String name, ArrayList heritage, ClassBody body)
+			: base(name, new ClassType(heritage), body = null)
+		{
+		}
+	}
+
+	public class InterfaceDeclaration : CompositeDeclaration
+	{
+		String guid;
+
+		public InterfaceDeclaration(String name, ArrayList heritage, 
+									String guid = null, InterfaceBody body = null)
+			: base(name, new ClassType(heritage), body)
+		{
+			this.guid = guid;
+		}
+	}
+
+
+	#region Composite Sections
+	//
+	// Composite sections
+	//
+
+	public class ScopedSection : Section
+	{
+		Scope scope;
+
+		DeclarationList fields;
+
+		ScopedSection(Scope scope, DeclarationList fields, DeclarationList components)
+			: base(components)
+ 		{
+			this.scope	= scope;
 			this.fields = fields;
-			this.content = content;
 		}
-		public ClassBody(NodeList decls) { }
+	}
+
+	public class ScopedSectionList : ListNode<ScopedSection>
+	{
+		public ScopedSectionList() : base() { }
+
+		public ScopedSectionList(ScopedSection s) : base(s) { }
 	}
 
 
-	public class ClassDefinition : CompositeDeclaration
+	public abstract class CompositeBody : Section
 	{
-		public ClassKind classType;
-		public ArrayList heritage;
-		public ClassBody ClassBody;
+		ScopedSectionList sections;
 
-		public ClassDefinition(ClassKind classType, ArrayList heritage, ClassBody ClassBody)
+		public CompositeBody(ScopedSectionList sections)
 		{
-			this.classType = classType;
-			this.heritage = heritage;
-			this.ClassBody = ClassBody;
+			this.sections = sections;
 		}
 	}
 
-	public class InterfaceDefinition : CompositeDeclaration
+	public class ClassBody : CompositeBody
 	{
-		public ArrayList heritage;
-		public NodeList methods;
-		public NodeList properties;
 
-		public InterfaceDefinition(ArrayList heritage, NodeList methods, NodeList properties)
+		public ClassBody(ScopedSectionList sslist)
+			: base(sslist)
 		{
-			this.heritage = heritage;
-			this.methods = methods;
-			this.properties = properties;
+
 		}
 	}
 
-	public abstract class ClassContent : Node
+	public class InterfaceBody : CompositeBody
 	{
-
-	}
-
-	public class ClassMethod : ClassContent
-	{
-		public RoutineDeclaration decl;
-
-		public ClassMethod(RoutineDeclaration decl)
+		public InterfaceBody(ScopedSectionList sslist)
+			: base(sslist)
 		{
-			this.decl = decl;
+		}
+
+		public InterfaceBody(ScopedSection ss)
+			: base(new ScopedSectionList(ss))
+		{
 		}
 	}
+
+	#endregion
 
 
 	#region Properties
