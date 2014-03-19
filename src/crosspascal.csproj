@@ -92,6 +92,7 @@
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
     <Compile Include="testunits\CppProgram.cs" />
+    <Compile Include="testunits\TestDriver.cs" />
     <Compile Include="testunits\TestProgram.cs" />
     <Compile Include="utils\Logger.cs" />
     <Compile Include="core\AssemblyInfo.cs" />
