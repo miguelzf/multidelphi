@@ -74,7 +74,7 @@ namespace crosspascal.ast.nodes
 		{
 			this.expr = expr;
 
-			this.lvalue = DelphiParser.DeclRegistry.CheckSameFunctionAssignment(lvalue);
+			this.lvalue = DelphiParser.DeclReg.CheckSameFunctionAssignment(lvalue);
 
 		}
 	}

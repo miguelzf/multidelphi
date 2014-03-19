@@ -71,15 +71,15 @@ namespace crosspascal.ast.nodes
 		/// Downcast the ConstantValue to an IntegralType, and return the content
 		/// The type of the expression must be checked first to ensure
 		/// </summary>
-		public ulong GetIntegralValue()
+		public ulong ValueIntegral()
 		{
-			if (!Type.ISA(typeof(IntegralType)))
+			if (!(Type is IntegralType))
 			{
 				ErrorInternal("Attempt to downcast ConstantValue to Integral Value, real type is " + Type);
 				return 0;
 			}
 
-			return ((IntegralValue) Value).val;
+			return (Value as IntegralValue).val;
 		}
 
 
@@ -96,10 +96,7 @@ namespace crosspascal.ast.nodes
 
 
 	public class ExpressionList : ListNode<Expression>
-		// Expression, IListNode<Expression>
 	{
-	//	public List<Expression> nodes = new List<Expression>();
-
 		public ExpressionList()
 		{
 		}
@@ -111,41 +108,6 @@ namespace crosspascal.ast.nodes
 		{
 			Add(t);
 		}
-
-/*		public virtual void Add(IEnumerable<Expression> t)
-		{
-			nodes.AddRange(t);
-		}
-		public virtual void Add(Expression t)
-		{
-			if (t != null)
-				nodes.Add(t);
-		}
-
-		public virtual void InsertAt(int idx, Expression t)
-		{
-			if (t != null)
-				nodes.Insert(idx, t);
-		}
-
-		IEnumerator<Expression> IEnumerable<Expression>.GetEnumerator()
-		{
-			return nodes.GetEnumerator();
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return nodes.GetEnumerator();
-		}
-
-		public override bool Accept(Processor visitor)
-		{
-			bool ret = true;
-			foreach (Expression node in nodes)
-				ret &= node.Accept(visitor);
-			return ret;
-		}
- */
 	}
 
 
@@ -469,6 +431,7 @@ namespace crosspascal.ast.nodes
 
 	public abstract class ConstantValue : Node
 	{
+
 	}
 
 	// For ints, chars and bools
@@ -485,12 +448,19 @@ namespace crosspascal.ast.nodes
 			return val == ((IntegralValue)obj).val;
 		}
 
-/*		public override ulong range(OrdinalLiteral l2)
+		// Assumes the values belong same-type constants
+		// this < other
+		public ulong range(IntegralValue l2)
 		{
-			if (base.range(l2) == 0)
-				return 0;
+			ulong range = l2.val - this.val;
 
-			long val1 = (long)Value;
+			if (range > l2.val)
+				ErrorInternal("IntegralValue negative range: " + l2.val + " - " + this.val);
+
+			return range;
+		}
+
+/*			long val1 = (long)Value;
 			if (l2.GetType() == typeof(SIntLiteral))
 			{
 				long val2 = (long) l2.Value;
@@ -590,6 +560,8 @@ namespace crosspascal.ast.nodes
 			this.Value = val;
 			this.IsConst = this.EnforceConst = true;
 		}
+
+		public abstract ConstantValue Default();
 	}
 
 	public abstract class OrdinalLiteral : Literal
@@ -597,6 +569,11 @@ namespace crosspascal.ast.nodes
 		public OrdinalLiteral() { }
 
 		public OrdinalLiteral(ulong v, IntegralType t) : base(new IntegralValue(v),t) { }
+
+		public override ConstantValue Default()
+		{
+			return new IntegralValue(0);
+		}
 	}
 
 	public class IntLiteral : OrdinalLiteral
@@ -624,11 +601,21 @@ namespace crosspascal.ast.nodes
 			if (value.Length == 1)
 				isChar = true;
 		}
+
+		public override ConstantValue Default()
+		{
+			return new StringValue("");
+		}
 	}
 
 	public class RealLiteral : Literal
 	{
 		public RealLiteral(double value) : base(new RealValue(value),RealType.Single) { }
+
+		public override ConstantValue Default()
+		{
+			return new RealValue(0.0);
+		}
 	}
 
 	public class PointerLiteral : Literal
@@ -638,6 +625,11 @@ namespace crosspascal.ast.nodes
 		{
 			if (value != 0x0)	// Const_NIl
 				Error("Pointer constant can only be nil");
+		}
+
+		public override ConstantValue Default()
+		{
+			return new IntegralValue(0);
 		}
 	}
 

@@ -158,6 +158,10 @@ namespace crosspascal.ast.nodes
 		{
 			Add(t);
 		}
+		public ListNode(IEnumerable<T> ts)
+		{
+			Add(ts);
+		}
 
 		public T Get(int idx)
 		{
@@ -273,6 +277,18 @@ namespace crosspascal.ast.nodes
 		public DeclarationList() : base() { }
 
 		public DeclarationList(Declaration t) : base(t) { }
+
+		public DeclarationList(IEnumerable<Declaration> ts) : base(ts) { }
+
+		public Declaration GetDeclaration(String name)
+		{
+			return GetDeclarations(name).ElementAt(0);
+		}
+
+		public IEnumerable<Declaration> GetDeclarations(String name)
+		{
+			return nodes.Where(x => x.name == name);
+		}
 	}
 
 	public class EnumValueList : ListNode<EnumValue>
@@ -280,18 +296,6 @@ namespace crosspascal.ast.nodes
 		public EnumValueList() { }
 
 		public EnumValueList(EnumValue t) : base(t) { }
-	}
-
-	public class ParameterList : ListNode<ParameterDeclaration>
-	{
-		public ParameterList() { }
-
-		public ParameterList(ParameterDeclaration t) : base(t) { }
-	}
-
-	public class FieldList : ListNode<FieldDeclaration>
-	{
-		public FieldList() { }
 	}
 
 	#endregion

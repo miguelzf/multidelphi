@@ -38,6 +38,11 @@ namespace crosspascal.ast
 			return true;
 		}
 		
+		public virtual bool Visit(ListString node)
+		{
+			return true;
+		}
+		
 		public virtual bool Visit(NodeList node)
 		{
 			foreach (Node n in node.nodes)
@@ -81,20 +86,6 @@ namespace crosspascal.ast
 		}
 		
 		public virtual bool Visit(EnumValueList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
-			return true;
-		}
-		
-		public virtual bool Visit(ParameterList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
-			return true;
-		}
-		
-		public virtual bool Visit(FieldList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
@@ -167,6 +158,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(ExportItem node)
 		{
 			Visit((UnitItem) node);
+			traverse(node.formalparams);
 			return true;
 		}
 		
@@ -259,34 +251,28 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(ParameterDeclaration node)
+		public virtual bool Visit(ParamDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
 			traverse(node.init);
 			return true;
 		}
 		
-		public virtual bool Visit(VarParameterDeclaration node)
+		public virtual bool Visit(VarParamDeclaration node)
 		{
-			Visit((ParameterDeclaration) node);
+			Visit((ParamDeclaration) node);
 			return true;
 		}
 		
-		public virtual bool Visit(ConstParameterDeclaration node)
+		public virtual bool Visit(ConstParamDeclaration node)
 		{
-			Visit((ParameterDeclaration) node);
+			Visit((ParamDeclaration) node);
 			return true;
 		}
 		
-		public virtual bool Visit(OutParameterDeclaration node)
+		public virtual bool Visit(OutParamDeclaration node)
 		{
-			Visit((ParameterDeclaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(FieldDeclaration node)
-		{
-			Visit((ValueDeclaration) node);
+			Visit((ParamDeclaration) node);
 			return true;
 		}
 		
@@ -294,12 +280,6 @@ namespace crosspascal.ast
 		{
 			Visit((ValueDeclaration) node);
 			traverse(node.init);
-			return true;
-		}
-		
-		public virtual bool Visit(EnumValue node)
-		{
-			Visit((ConstDeclaration) node);
 			return true;
 		}
 		
@@ -388,64 +368,87 @@ namespace crosspascal.ast
 		public virtual bool Visit(CompositeDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
+			traverse(node.Type);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassBody node)
+		public virtual bool Visit(ClassDeclaration node)
+		{
+			Visit((CompositeDeclaration) node);
+			return true;
+		}
+		
+		public virtual bool Visit(InterfaceDeclaration node)
+		{
+			Visit((CompositeDeclaration) node);
+			return true;
+		}
+		
+		public virtual bool Visit(CompositeType node)
+		{
+			Visit((TypeNode) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ClassType node)
+		{
+			Visit((CompositeType) node);
+			return true;
+		}
+		
+		public virtual bool Visit(InterfaceType node)
+		{
+			Visit((CompositeType) node);
+			traverse(node.guid);
+			return true;
+		}
+		
+		public virtual bool Visit(ScopedSection node)
 		{
 			Visit((Section) node);
 			traverse(node.fields);
-			traverse(node.content);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassDefinition node)
+		public virtual bool Visit(ScopedSectionList node)
 		{
-			Visit((CompositeDeclaration) node);
-			traverse(node.ClassBody);
+			foreach (Node n in node.nodes)
+				traverse(n);
 			return true;
 		}
 		
-		public virtual bool Visit(InterfaceDefinition node)
+		public virtual bool Visit(FieldDeclaration node)
 		{
-			Visit((CompositeDeclaration) node);
-			traverse(node.methods);
-			traverse(node.properties);
+			Visit((ValueDeclaration) node);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassContent node)
+		public virtual bool Visit(VariantDeclaration node)
 		{
-			Visit((Node) node);
+			Visit((FieldDeclaration) node);
+			traverse(node.varfields);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassMethod node)
+		public virtual bool Visit(VarEntryDeclaration node)
 		{
-			Visit((ClassContent) node);
-			traverse(node.decl);
+			Visit((FieldDeclaration) node);
+			traverse(node.tagvalue);
+			traverse(node.fields);
 			return true;
 		}
 		
-		public virtual bool Visit(ClassProperty node)
+		public virtual bool Visit(PropertyDeclaration node)
 		{
-			Visit((ClassContent) node);
-			traverse(node.type);
-			traverse(node.index);
-			traverse(node.specs);
-			traverse(node.def);
+			Visit((FieldDeclaration) node);
+			traverse(node.specifiers);
 			return true;
 		}
 		
-		public virtual bool Visit(PropertyReadNode node)
+		public virtual bool Visit(ArrayProperty node)
 		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertyWriteNode node)
-		{
-			Visit((Node) node);
+			Visit((PropertyDeclaration) node);
+			traverse(node.indexes);
 			return true;
 		}
 		
@@ -453,42 +456,8 @@ namespace crosspascal.ast
 		{
 			Visit((Node) node);
 			traverse(node.index);
-			traverse(node.read);
-			traverse(node.write);
 			traverse(node.stored);
-			traverse(node.def);
-			traverse(node.impl);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertySpecifier node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertyDefault node)
-		{
-			Visit((PropertySpecifier) node);
-			traverse(node.lit);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertyImplements node)
-		{
-			Visit((PropertySpecifier) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertyStored node)
-		{
-			Visit((PropertySpecifier) node);
-			return true;
-		}
-		
-		public virtual bool Visit(PropertyIndex node)
-		{
-			Visit((PropertySpecifier) node);
+			traverse(node.@default);
 			return true;
 		}
 		
@@ -690,6 +659,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(StructuredConstant node)
 		{
 			Visit((ConstExpression) node);
+			traverse(node.exprlist);
 			return true;
 		}
 		
@@ -1056,24 +1026,6 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(CompositeType node)
-		{
-			Visit((TypeNode) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ClassType node)
-		{
-			Visit((CompositeType) node);
-			return true;
-		}
-		
-		public virtual bool Visit(InterfaceType node)
-		{
-			Visit((CompositeType) node);
-			return true;
-		}
-		
 		public virtual bool Visit(VariableType node)
 		{
 			Visit((TypeNode) node);
@@ -1097,6 +1049,12 @@ namespace crosspascal.ast
 		{
 			Visit((VariableType) node);
 			traverse(node.enumVals);
+			return true;
+		}
+		
+		public virtual bool Visit(EnumValue node)
+		{
+			Visit((ConstDeclaration) node);
 			return true;
 		}
 		

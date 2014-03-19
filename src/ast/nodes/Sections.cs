@@ -126,16 +126,21 @@ namespace crosspascal.ast.nodes
 
 	public class ExportItem : UnitItem
 	{
+		public DeclarationList formalparams;
 		public String exportname;
 		public int index;
 
-		public ExportItem(String name, String exportname = null) : base(name)
+		public ExportItem(String name, DeclarationList pars, String exportname = null)
+			: base(name)
 		{
+			this.formalparams = pars;
 			this.exportname = exportname;
 		}
 
-		public ExportItem(String name, int index) :base(name)
+		public ExportItem(String name, DeclarationList pars, int index)
+			: base(name)
 		{
+			this.formalparams = pars;
 			this.index = index;
 		}
 	}

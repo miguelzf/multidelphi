@@ -141,12 +141,13 @@ namespace crosspascal.ast.nodes
 	{
 		public EnumValueList enumVals;
 
-		public Int64 MinValue() { return (long) enumVals.GetFirst().init.GetIntegralValue(); }
+		public Int64 MinValue() { return (long) enumVals.GetFirst().init.ValueIntegral(); }
 
-		public Int64 MaxValue() { return (long) enumVals.GetLast().init.GetIntegralValue(); }
+		public Int64 MaxValue() { return (long) enumVals.GetLast ().init.ValueIntegral(); }
 
 		public UInt64 ValueRange() {
-			return enumVals.GetLast().init.GetIntegralValue() - enumVals.GetFirst().init.GetIntegralValue();
+			return (enumVals.GetLast().init.Value as IntegralValue).range(
+					enumVals.GetFirst().init.Value as IntegralValue);
 		}
 
 		public override bool Equals(Object o)
@@ -186,8 +187,8 @@ namespace crosspascal.ast.nodes
 					al.init = new IntLiteral((ulong) val);
 				else
 				{
-					if (al.init.Type.ISA(typeof(IntegerType)))
-						val = (long) al.init.GetIntegralValue();
+					if (al.init.Type is IntegerType)
+						val = (long) al.init.ValueIntegral();
 					else
 						Error("Enum initializer must be an integer");
 				}
@@ -195,6 +196,19 @@ namespace crosspascal.ast.nodes
 			}
 		}
 	}
+
+	public class EnumValue : ConstDeclaration
+	{
+		// Init value to be computed a posteriori
+		public EnumValue(string val) : base(val, null) { }
+
+		public EnumValue(string val, Expression init)
+			: base(val, init)
+		{
+			init.ForcedType = IntegerType.Single;
+		}
+	}
+
 
 	public class RangeType : VariableType, IOrdinalType
 	{
@@ -218,20 +232,20 @@ namespace crosspascal.ast.nodes
 
 		public Int64 MinValue()
 		{
-			return (long) min.GetIntegralValue();
+			return (long) min.ValueIntegral();
 		}
 
 		public Int64 MaxValue()
 		{
-			return (long) max.GetIntegralValue();
+			return (long) max.ValueIntegral();
 		}
 
 		public UInt64 ValueRange()
 		{
-			ulong ret = max.GetIntegralValue() - min.GetIntegralValue();
+			ulong ret = (max.Value as IntegralValue).range(min.Value as IntegralValue);
 
 			// TODO move this elsehwere
-			if (ret > ((IntegralType)max.Type).ValueRange())
+			if (ret > (max.Type as IntegralType).ValueRange())
 				ErrorInternal("RangeType value range exceeds the base type value range");
 			return ret;
 		}
@@ -241,8 +255,7 @@ namespace crosspascal.ast.nodes
 			if (o == null || this.GetType() != o.GetType())
 				return false;
 
-			return	min.Equals(((RangeType)o).min)
-			&&		max.Equals(((RangeType)o).max);
+			return	min.Equals(((RangeType)o).min) && max.Equals(((RangeType)o).max);
 		}
 	}
 
@@ -335,7 +348,6 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			// TODO
 			return true;
 		}
 	}
@@ -416,7 +428,7 @@ namespace crosspascal.ast.nodes
 		public override UInt64 ValueRange() { return 0; }
 	}
 
-	public class UnsignedInt8Type : UnsignedIntegerType // byte
+	public class UnsignedInt8Type : UnsignedIntegerType		// byte
 	{
 		public static new readonly UnsignedInt8Type Single = new UnsignedInt8Type();
 
@@ -427,7 +439,7 @@ namespace crosspascal.ast.nodes
 		public override UInt64 ValueRange() { return Byte.MaxValue - Byte.MinValue; }
 	}
 
-	public class UnsignedInt16Type : UnsignedIntegerType // word
+	public class UnsignedInt16Type : UnsignedIntegerType	// word
 	{
 		public static new readonly UnsignedInt16Type Single = new UnsignedInt16Type();
 
@@ -438,7 +450,7 @@ namespace crosspascal.ast.nodes
 		public override UInt64 ValueRange() { return UInt16.MaxValue - UInt16.MinValue; }
 	}
 
-	public class UnsignedInt32Type : UnsignedIntegerType		// cardinal
+	public class UnsignedInt32Type : UnsignedIntegerType	// cardinal
 	{
 		public new static readonly UnsignedInt32Type Single = new UnsignedInt32Type();
 
@@ -449,7 +461,7 @@ namespace crosspascal.ast.nodes
 		public override UInt64 ValueRange() { return UInt32.MaxValue - UInt32.MinValue; }
 	}
 
-	public class UnsignedInt64Type : UnsignedIntegerType	 // uint64
+	public class UnsignedInt64Type : UnsignedIntegerType	// uint64
 	{
 		public static new readonly UnsignedInt64Type Single = new UnsignedInt64Type();
 
@@ -460,7 +472,7 @@ namespace crosspascal.ast.nodes
 		public override UInt64 ValueRange() { return UInt64.MaxValue - UInt64.MinValue; }
 	}
 
-	public class SignedInt8Type : SignedIntegerType		// smallint
+	public class SignedInt8Type : SignedIntegerType			// smallint
 	{
 		public static new readonly SignedInt8Type Single = new SignedInt8Type();
 
@@ -471,7 +483,7 @@ namespace crosspascal.ast.nodes
 		public override UInt64 ValueRange() { return sbyte.MaxValue - (int)sbyte.MinValue; }
 	}
 
-	public class SignedInt16Type : SignedIntegerType	 // smallint
+	public class SignedInt16Type : SignedIntegerType		// smallint
 	{
 		public static new readonly SignedInt16Type Single = new SignedInt16Type();
 
@@ -482,7 +494,7 @@ namespace crosspascal.ast.nodes
 		public override UInt64 ValueRange() { return short.MaxValue - (int)short.MinValue; }
 	}
 
-	public class SignedInt32Type : SignedIntegerType	// integer
+	public class SignedInt32Type : SignedIntegerType		// integer
 	{
 		public static new readonly SignedInt32Type Single = new SignedInt32Type();
 
@@ -493,7 +505,7 @@ namespace crosspascal.ast.nodes
 		public override UInt64 ValueRange() { return int.MaxValue - (long) int.MinValue; }
 	}
 
-	public class SignedInt64Type : IntegerType // int64
+	public class SignedInt64Type : IntegerType				// int64
 	{
 		public static new readonly SignedInt64Type Single = new SignedInt64Type();
 
@@ -664,7 +676,11 @@ namespace crosspascal.ast.nodes
 
 	public class SetType : StructuredType
 	{
-		public SetType(VariableType type) : base(type) { }
+		public SetType(VariableType type) : base(type)
+		{
+			if (!(type is IOrdinalType))
+				Error("Base type of Set must be ordinal");
+		}
 	}
 
 	public class FileType : StructuredType
@@ -681,9 +697,9 @@ namespace crosspascal.ast.nodes
 	/// </remarks>
 	public class RecordType : StructuredType
 	{
-		public FieldList compTypes;
+		public DeclarationList compTypes;
 
-		public RecordType(FieldList compTypes)
+		public RecordType(DeclarationList compTypes)
 		{
 			this.compTypes = compTypes;
 		}

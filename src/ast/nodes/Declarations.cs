@@ -41,14 +41,15 @@ namespace crosspascal.ast.nodes
 
 	public abstract class Declaration : Node
 	{
-		public ArrayList names = new ArrayList();
+		public String name;
 		public TypeNode type;
 
 		public void AddName(String name)
 		{
-			names.Add(name);
-
-			DelphiParser.DeclRegistry.RegisterDeclaration(name, this);
+			this.name = name;
+			
+			if (name != null)
+				DelphiParser.DeclReg.RegisterDeclaration(name, this);
 		}
 
 		protected Declaration() { }
@@ -57,12 +58,6 @@ namespace crosspascal.ast.nodes
 		{
 			if (t != null)	type = t;
 			else	type = UndefinedType.Single;
-		}
-
-		public Declaration(ArrayList names, TypeNode t = null) : this(t)
-		{
-			foreach (String name in names)
-				AddName(name);
 		}
 
 		public Declaration(String name, TypeNode t = null) : this(t)
@@ -74,15 +69,11 @@ namespace crosspascal.ast.nodes
 	public class LabelDeclaration : Declaration
 	{
 		public LabelDeclaration(String name) : base(name, null) { }
-
-		public LabelDeclaration(ArrayList names) : base(names, null) { }
 	}
 
 
 	public abstract class ValueDeclaration : Declaration
 	{
-		public ValueDeclaration(ArrayList names, TypeNode t = null) : base(names, t) { }
-
 		public ValueDeclaration(String name, TypeNode t = null) : base(name, t) { }
 	}
 
@@ -93,14 +84,14 @@ namespace crosspascal.ast.nodes
 		public String shareVal;
 		public bool isThrVar;
 
-		public VarDeclaration(ArrayList ids, TypeNode t, Expression init = null)
-			: base(ids, t)
+		public VarDeclaration(String id, TypeNode t, Expression init = null)
+			: base(id, t)
 		{
 			this.init = init;
 		}
 
-		public VarDeclaration(ArrayList ids, TypeNode t, String shareVal) 
-			: base(ids, t)
+		public VarDeclaration(String id, TypeNode t, String shareVal) 
+			: base(id, t)
 		{
 			this.shareVal = shareVal;
 		}
@@ -112,45 +103,33 @@ namespace crosspascal.ast.nodes
 	/// Routine parameters
 	/// </summary>
 
-	public class ParameterDeclaration : ValueDeclaration
+	public class ParamDeclaration : ValueDeclaration
 	{
 		public Expression init;
 
-		public ParameterDeclaration(ArrayList ids, ScalarType t, Expression init = null)
-			: base(ids, t)
+		public ParamDeclaration(String id, VariableType t, Expression init = null)
+			: base(id, t)
 		{
 			this.init = init;
 		}
 	}
 
-	public class VarParameterDeclaration : ParameterDeclaration
+	public class VarParamDeclaration : ParamDeclaration
 	{
-		public VarParameterDeclaration(ArrayList ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
+		public VarParamDeclaration(String id, VariableType t, Expression init = null) : base(id, t, init) { }
 	}
 
-	public class ConstParameterDeclaration : ParameterDeclaration
+	public class ConstParamDeclaration : ParamDeclaration
 	{
-		public ConstParameterDeclaration(ArrayList ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
+		public ConstParamDeclaration(String id, VariableType t, Expression init = null) : base(id, t, init) { }
 	}
 
-	public class OutParameterDeclaration : ParameterDeclaration
+	public class OutParamDeclaration : ParamDeclaration
 	{
-		public OutParameterDeclaration(ArrayList ids, ScalarType t, Expression init = null) : base(ids, t, init) { }
+		public OutParamDeclaration(String id, VariableType t, Expression init = null) : base(id, t, init) { }
 	}
 
 	#endregion
-
-
-	/// <summary>
-	/// Composite object field declaration
-	/// </summary>
-	public class FieldDeclaration : ValueDeclaration
-	{
-		public FieldDeclaration(ArrayList ids, TypeNode t = null)
-			: base(ids, t)
-		{
-		}
-	}
 
 	/// <summary>
 	/// TODO!! Must Derive type
@@ -171,21 +150,6 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	// TODO move this to types. 
-	// Create initilization node
-
-	public class EnumValue : ConstDeclaration
-	{
-		// Init value to be computed a posteriori
-		public EnumValue(string val) : base(val, null) { }
-
-		public EnumValue(string val, Expression init) : base(val, init)
-		{
-			init.ForcedType = IntegerType.Single;
-		}
-	}
-
-
 	/// <summary>
 	/// Creates a custom, user-defined name for some Type
 	/// </summary>
@@ -200,4 +164,5 @@ namespace crosspascal.ast.nodes
 	{
 		// In file Routines.cs
 	}
+
 }

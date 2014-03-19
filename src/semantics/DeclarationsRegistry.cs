@@ -62,10 +62,9 @@ namespace crosspascal.semantics
 			{
 				string name = ((Identifier)((RoutineCall)lval).func).name;
 				// check that the id refers to the declaring function
-				Declaration decl = symtab.GetLastSymbolFromContext(1);
-				if (decl is CallableDeclaration && ((CallableDeclaration) decl).Type.funcret != null)
-					if ((string) decl.names[0] == name)
-						return new Identifier("result");	// standard name for func ret
+				CallableDeclaration decl = GetDeclaratingRoutine();
+				if (decl.IsFunction && decl.name == name)
+					return new Identifier("result");	// standard name for func ret
 			}
 
 			return lval;
@@ -92,13 +91,108 @@ namespace crosspascal.semantics
 			return symtab.Lookup(name);
 		}
 
-		public void EnterContext()
+		public void EnterContext(string id = null)
 		{
-			symtab.Push();
+			symtab.Push(id);
 		}
-		public void LeaveContext()
+		public String LeaveContext()
 		{
-			symtab.Pop();
+			return symtab.Pop();
+		}
+
+
+
+		#region Loading of Class/Interface Contexts
+
+		/// <summary>
+		/// Searches for the encloding declaring context function, if any.
+		/// </summary>
+		private CallableDeclaration GetDeclaratingRoutine()
+		{
+			Declaration decl = symtab.GetLastSymbolFromContext(1);
+			if (decl is CallableDeclaration)
+				return decl as CallableDeclaration;
+			return null;
+		}
+
+		/// <summary>
+		/// Searches for a declared name, in a composite-defined declaring context 
+		/// (class or interface) that has declared the current method
+		/// </summary>
+		/// <returns></returns>
+		private Declaration GetEnclosedDeclaration(String name)
+		{
+			var decl = GetDeclaratingRoutine() as MethodDeclaration;
+			if (decl == null)
+				return null;
+
+			var cldecl = GetDeclaration(decl.objname) as CompositeDeclaration;
+			if (cldecl == null)
+				return null;
+
+			return cldecl.Type.GetInheritableMembers().GetDeclaration(decl.name);
+		}
+
+		public void LoadCompositeContext(CompositeDeclaration cdecl)
+		{
+			EnterContext(cdecl.name);
+			foreach (var decl in cdecl.Type.GetInheritableMembers())
+				RegisterDeclaration(decl.name, decl);
+			LeaveContext();
+		}
+
+		public int LoadHeritageContext(String cname)
+		{
+			int nstates = 0;
+			var decl = GetDeclaration(cname) as CompositeDeclaration;
+			if (decl == null)
+				throw new CompositeNotFound(cname);
+
+			foreach (String s in decl.Type.heritage)
+			{
+				var cdecl = GetDeclaration(s) as CompositeDeclaration;
+				if (cdecl == null)
+					throw new CompositeNotFound(" inherited " + s);
+
+				LoadCompositeContext(cdecl);
+				nstates++;
+			}
+
+			LoadCompositeContext(decl);
+			return nstates;
+		}
+
+		public void EnterMethodContext(String cname)
+		{
+			int nstatesLoaded = LoadHeritageContext(cname);
+			EnterContext("" + nstatesLoaded);
+		}
+
+		public void LeaveMethodContext()
+		{
+			string id = LeaveContext();
+			int nInherited = Int32.Parse(id);
+			for (int i = 0; i < nInherited; i++)
+				LeaveContext();
+		}
+
+		#endregion
+
+
+		Declaration FetchMethodOrField(String name)
+		{
+			var decl = GetDeclaration(name);
+			if (decl is FieldDeclaration || decl is MethodDeclaration)
+				return decl;
+			throw new MethordOrFieldNotFound(name);
+		}
+
+		Declaration FetchField(String name)
+		{
+			var decl = GetDeclaration(name);
+			if (decl is FieldDeclaration)
+				return decl;
+			throw new FieldNotFound(name);
 		}
 
 
@@ -109,14 +203,11 @@ namespace crosspascal.semantics
 		/// </summary>
 		public T CheckType<T>(String name) where T : TypeNode
 		{
-			Declaration decl = GetDeclaration(name);
-			if (decl == null || !decl.ISA(typeof(TypeDeclaration)))
+			TypeDeclaration decl = GetDeclaration(name) as TypeDeclaration;
+			if (decl == null || !(decl.type is T))
 				return null;
 
-			TypeNode tdecl = ((TypeDeclaration)decl).type;
-			if (!tdecl.ISA( typeof(T)))
-				return null;
-			return (T) tdecl;
+			return (T)decl.type;
 		}
 
 		/// <summary>
@@ -126,15 +217,13 @@ namespace crosspascal.semantics
 		public TypeNode FetchType(String name)
 		{
 			Declaration decl = GetDeclaration(name);
-
 			if (decl == null)
-				throw new IdentifierUndeclared(name);
+				throw new DeclarationNotFound(name);
 
-			if (!decl.ISA(typeof(TypeDeclaration)))
+			if (!(decl is TypeDeclaration))
 				throw new InvalidIdentifier("Identifier '" + name + "' does not refer to a type");
 
-			TypeDeclaration tdecl = (TypeDeclaration)decl;
-			return tdecl.type;
+			return (decl as TypeDeclaration).type;
 		}
 
 		/// <summary>
@@ -182,18 +271,14 @@ namespace crosspascal.semantics
 		/// </summary>
 		public T CheckValue<T>(String name) where T : ValueDeclaration
 		{
-			Declaration decl = GetDeclaration(name);
-			if (decl == null || !decl.ISA(typeof(ValueDeclaration)))
+			ValueDeclaration decl = GetDeclaration(name) as ValueDeclaration;
+			if (decl == null || !(decl is T))
 				return null;
-
-			ValueDeclaration vdecl = ((ValueDeclaration)decl);
-			if (!vdecl.ISA(typeof(T)))
-				return null;
-			return (T) vdecl;
+			return (T)decl;
 		}
 
 		/// <summary>
-		/// Fetch Type Declaration. 
+		/// Fetch Value Declaration. 
 		/// Fails if declaration is not of a Type
 		/// </summary>
 		public ValueDeclaration FetchValue(String name)
@@ -201,9 +286,9 @@ namespace crosspascal.semantics
 			Declaration decl = GetDeclaration(name);
 
 			if (decl == null)
-				throw new IdentifierUndeclared(name);
+				throw new DeclarationNotFound(name);
 
-			if (!decl.ISA(typeof(ValueDeclaration)))
+			if (!(decl is ValueDeclaration))
 				throw new InvalidIdentifier("Identifier '" + name + "' does not refer to a value decla");
 
 			ValueDeclaration tdecl = (ValueDeclaration)decl;
@@ -242,9 +327,9 @@ namespace crosspascal.semantics
 			return (ConstDeclaration)FetchValue(name, typeof(ConstDeclaration));
 		}
 
-		public ParameterDeclaration FetchParameter(String name)
+		public ParamDeclaration FetchParameter(String name)
 		{
-			return (ParameterDeclaration)FetchValue(name, typeof(ParameterDeclaration));
+			return (ParamDeclaration)FetchValue(name, typeof(ParamDeclaration));
 		}
 
 		#endregion

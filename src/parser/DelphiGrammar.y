@@ -1,5 +1,6 @@
 %{
 using System;
+using System.Linq;
 using System.Collections;
 using System.IO;
 using System.Text;
@@ -36,7 +37,7 @@ namespace crosspascal.parser
 	// =========================================================================
 
 %start goal
-%type<string> id labelid exportid stringconst conststr
+%type<string> id labelid stringconst conststr expid
 %type<ArrayList> labelidlst idlst
 
 	// sections and declarations
@@ -44,28 +45,26 @@ namespace crosspascal.parser
 %type<UnitItem> containsitem usesitem expitem 
 %type<NodeList> usesopt useslst requires requireslst containslst contains expitemlst
 %type<DeclarationList> interfdecllst maindecllst declseclst interfdecl maindeclsec funcdeclsec basicdeclsec
-%type<DeclarationList> thrvarsec rscstringsec exportsec labeldeclsec constsec typesec varsec rscstringlst
+%type<DeclarationList> thrvarsec rscstringsec exportsec labeldeclsec constsec typesec varsec rscstringlst vardecl objfield
 %type<ImplementationSection> implsec
 %type<InterfaceSection> interfsec
 %type<InitializationSection> initsec
-%type<FinalizationSection> finalsec   
-%type<ProgramBody> mainblock 
-%type<VarDeclaration> vardecl 
-%type<FieldDeclaration> objfield
+%type<FinalizationSection> finalsec
+%type<ProgramBody> mainblock
 %type<ConstDeclaration> constdecl rscstring
 %type<TypeDeclaration> typedecl
 
 	// functions
 %type<RoutineDefinition> routinedef methodroutinedef routinedefunqualif
 %type<RoutineDeclaration> routineproto routinedeclext routinedecl 
-%type<MethodDeclaration> methodproto methoddecl methoddeclin
-%type<RoutineDirectives>  funcdirectlst funcdir_noterm_opt funcdirectopt importdiropt importdirforced 
+%type<MethodDeclaration> metdefproto methoddecl methoddeclin
+%type<RoutineDirectives>  funcdirectlst funcdir_noterm_opt funcdiropt importdiropt importdirforced 
 %type<MethodDirectives> metdirectopt metdirectlst
 %type<int> funcdirective  funcqualif funcdeprecated metdirective metqualif routinecallconv
 %type<RoutineBody> funcdefine
-%type<ParameterList> formalparams formalparamslst
-%type<ParameterDeclaration> formalparm
+%type<DeclarationList> formalparams formalparamslst formalparm formalparm
 %type<ExternalDirective>  externarg
+%type<string> kwmetfunction kwmetprocedure kwconstructor kwdestructor kwfunction kwprocedure kwmetconstruct kwmetdestruct
 
 	// statements
 %type<BlockStatement> block funcblock assemblerstmt	blockstmt
@@ -86,7 +85,7 @@ namespace crosspascal.parser
 %type<RoutineCall> inheritedcall
 %type<Identifier> identifier
 %type<Expression> unaryexpr expr rangestart set inheritedexpr
-%type<ExpressionList> caselabellst exprlst exprlstopt setelemlst arrayexprlst 
+%type<ExpressionList> caselabellst exprlst constexprlst exprlstopt setelemlst arrayexprlst 
 %type<TypeList> arrayszlst
 %type<FieldInitList> fieldconstlst 
 %type<FieldInit> fieldconst
@@ -94,32 +93,34 @@ namespace crosspascal.parser
 %type<EnumValue> enumelem
 %type<ConstExpression> paraminitopt constexpr functypeinit arrayconst recordconst constinit setelem arrayexpr
 
-	// objects etc - TODO
-%type<Node> recvariant  recfield  recvar guid  recfieldlst propfield
-%type<DeclarationList> scopeseclst classcomplstopt fieldlst classcomplst interfcomplst 
-%type<NodeList> recvarlst propfieldlst
+	// Composites
+%type<DeclarationList> recvariant recfield recvarfield recfieldlst propfield recvarlst
+%type<DeclarationList> classcomplstopt fieldlst cfieldlst classcomplst interfcomplst arrayprops
 %type<ArrayList> heritage 
-%type<Declaration> classcomp classtype property interftype interfcomp
+%type<Declaration> classcomp property interfcomp
+%type<InterfaceType> packinterftype interftype
+%type<ClassType> classtype packclasstype
+%type<UnaryExpression> guid
 %type<Scope> scopedecl
-%type<CompositeBody> classbody interfbody
-
-	
+%type<bool> staticopt defaultdiropt
 %type<ScopedSection> scopesec class1stsec
-%type<PropertySpecifier> propinterfopt defaultdiropt indexopt storedopt defaultopt implopt readopt writeopt
-%type<PropertySpecifiers> propspecifiers
+%type<ScopedSectionList> scopeseclst classbody interfbody
+%type<String> implopt readopt writeopt
+%type<IntLiteral> indexopt 
+%type<Literal> defaultopt 
+%type<ConstExpression> storeopt
+%type<PropertySpecifiers> spropspecsnormal spropspecsoverride spropspecsarray
 
 	// Types
-%type<ScalarType> scalartype pointertype casttype pointedtype
+%type<ScalarType> scalartype pointertype casttype pointedtype funcrettype funcret
 	// realtype inttype chartype stringtype varianttype scalartype  
-%type<ScalarType> funcrettype funcret paramtypeopt paramtypespec 
+%type<VariableType> paramtypeopt paramtypespec funcparamtype
 %type<StructuredType> structuredtype
-%type<VariableType> funcparamtype arraytype settype filetype packstructtype
-%type<VariableType> vartype enumtype rangetype metaclasstype 
+%type<VariableType> arraytype settype filetype packstructtype
+%type<VariableType> vartype enumtype rangetype metaclasstype ordinaltype
 	// %type<IntegralType> arraytypedef integraltype
-%type<CompositeDeclaration> packcomptype compositetype
-%type<RecordType> recordtype recordtypebasic
-%type<TypeNode> ordinaltype
-%type<ProceduralType> proceduraltype proctypefield proceduralsign
+%type<RecordType> recordtype
+%type<ProceduralType> proceduraltype proceduralsign
 
 
 	
@@ -231,32 +232,6 @@ scolopt
 	;
 	
 
-	// Context-opening keywords
-	
-kwfunction
-	: KW_FUNCTION		{ DeclRegistry.EnterContext(); }
-	;
-kwprocedure
-	: KW_PROCEDURE		{ DeclRegistry.EnterContext(); }
-	;
-kwconstructor
-	: KW_CONSTRUCTOR	{ DeclRegistry.EnterContext(); }
-	;
-kwdestructor
-	: KW_DESTRUCTOR		{ DeclRegistry.EnterContext(); }
-	;
-kwrecord
-	: KW_RECORD			{ DeclRegistry.EnterContext(); }
-	;
-kwclass
-	: KW_CLASS			{ DeclRegistry.EnterContext(); }
-	| KW_OBJECT			{ DeclRegistry.EnterContext(); }
-	;
-kwinterf
-	: KW_INTERF			{ DeclRegistry.EnterContext(); }
-	;
-
-
 	
 	// ===================================================================================
 	// Top-level Sections
@@ -324,7 +299,7 @@ implsec
 	;
 
 interfsec
-	: kwinterf usesopt interfdecllst	{ $$ = new InterfaceSection($2, $3);}
+	: KW_INTERF usesopt interfdecllst	{ $$ = new InterfaceSection($2, $3);}
 	;
 
 interfdecllst
@@ -400,22 +375,25 @@ typesec
 	// Variables
 
 varsec
-	: KW_VAR vardecl		{ $$ = new DeclarationList($2); }
+	: KW_VAR vardecl		{ $$ = $2; }
 	| varsec vardecl		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 	
 thrvarsec
-	: KW_THRVAR vardecl		{ $$ = new DeclarationList($2); $2.isThrVar = true; }
-	| thrvarsec vardecl		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2);   $2.isThrVar = true; }
+	: KW_THRVAR vardecl		{ $$ = $2;	foreach (VarDeclaration d in $2) d.isThrVar = true; }
+	| thrvarsec vardecl		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); 
+										foreach (VarDeclaration d in $2) d.isThrVar = true; }
 	;
 
 vardecl
-	: idlst COLON vartype SCOL							{ $$ = new VarDeclaration($1, $3); }
-	| idlst COLON vartype KW_EQ constinit SCOL			{ $$ = new VarDeclaration($1, $3, $5); }
-	| idlst COLON vartype KW_ABSOLUTE id SCOL			{ $$ = new VarDeclaration($1, $3, $5); }
-	| idlst COLON proceduraltype SCOL funcdirectopt		{ $$ = new VarDeclaration($1, $3); $3.Directives = $5; }
+	: idlst COLON vartype SCOL							{ $$ = CreateDecls($1, new CreateDecl((s) => new VarDeclaration(s, $3))); }
+	| idlst COLON vartype KW_EQ constinit SCOL			{ $$ = CreateDecls($1, new CreateDecl((s) => new VarDeclaration(s, $3, $5))); }
+	| idlst COLON vartype KW_ABSOLUTE id SCOL			{ $$ = CreateDecls($1, new CreateDecl((s) => new VarDeclaration(s, $3, $5))); }
+	| idlst COLON proceduraltype SCOL funcdiropt		{ $$ = CreateDecls($1, new CreateDecl((s) => new VarDeclaration(s, $3)));
+															$3.Directives = $5; }
 	| idlst COLON proceduraltype SCOL
-			funcdir_noterm_opt functypeinit SCOL		{ $$ = new VarDeclaration($1, $3, $6); $3.Directives = $5; }
+			funcdir_noterm_opt functypeinit SCOL		{ $$ = CreateDecls($1, new CreateDecl((s) => new VarDeclaration(s, $3, $6)));
+															$3.Directives = $5; }
 	;
 
 
@@ -438,7 +416,7 @@ rscstring
 	// labels
 	
 labeldeclsec
-	: KW_LABEL labelidlst SCOL		{$$ = new DeclarationList(new LabelDeclaration($2)); }
+	: KW_LABEL labelidlst SCOL		{$$ = CreateDecls($2, new CreateDecl((s) => new LabelDeclaration(s))); }
 	;
 	
 labelidlst 
@@ -468,13 +446,73 @@ expitemlst
 	;
 
 expitem
-	: exportid						{ $$ = new ExportItem($1); }
-	| exportid KW_NAME stringconst	{ $$ = new ExportItem($1, $3); }
-	| exportid KW_INDEX constint	{ $$ = new ExportItem($1, (int) $3); }
+	: expid formalparams 						{ $$ = new ExportItem($1, $2); }
+	| expid formalparams KW_NAME stringconst	{ $$ = new ExportItem($1, $2, $4); }
+	| expid formalparams KW_INDEX constint		{ $$ = new ExportItem($1, $2, (int) $4); }
 	;
 	
-exportid	// TODO formalparams
-	: id formalparams 				{ $$ = $1; }
+expid
+	: id				{ $$ = $1; }
+	| id KW_DOT id		{ $$ = $1+"."+$3; }
+	;
+
+
+
+	
+	// ===================================================================================
+	// Context-opening keywords
+	// ===================================================================================
+	
+	// Types/Routine-pointers
+	
+kwfunctionptr
+	: KW_FUNCTION  		{ DeclReg.EnterContext();}
+	;
+kwprocedureptr
+	: KW_PROCEDURE 		{ DeclReg.EnterContext(); }
+	;	
+	
+	// Declaration/interface contexts
+	
+kwfunction
+	: KW_FUNCTION  id	{ DeclReg.EnterContext(); return $2; }
+	;
+kwprocedure
+	: KW_PROCEDURE id	{ DeclReg.EnterContext(); return $2; }
+	;
+kwconstructor
+	: KW_CONSTRUCTOR id	{ DeclReg.EnterContext($2); return $2; }
+	;
+kwdestructor
+	: KW_DESTRUCTOR  id { DeclReg.EnterContext($2); return $2; }
+	;
+
+	// Definition/implementation contexts
+	
+kwmetfunction
+	: KW_FUNCTION    id KW_DOT	{ DeclReg.EnterMethodContext($2); return $2; }
+	;
+kwmetprocedure
+	: KW_PROCEDURE   id KW_DOT	{ DeclReg.EnterMethodContext($2); return $2; }
+	;
+kwmetconstruct
+	: KW_CONSTRUCTOR id KW_DOT	{ DeclReg.EnterMethodContext($2); return $2; }
+	;
+kwmetdestruct
+	: KW_DESTRUCTOR  id KW_DOT	{ DeclReg.EnterMethodContext($2); return $2; }
+	;	
+
+	// Object contexts
+	
+kwrecord
+	: KW_RECORD			{ DeclReg.EnterContext(); }
+	;
+kwclass
+	: KW_CLASS			{ DeclReg.EnterContext(); }
+	| KW_OBJECT			{ DeclReg.EnterContext(); }
+	;
+kwinterf
+	: KW_INTERF			{ DeclReg.EnterContext(); }
 	;
 
 
@@ -488,68 +526,62 @@ exportid	// TODO formalparams
 	// check that funcrecopt is null for every kind except FUNCTION
 
 routinedef
-	: routinedefunqualif								{ $$ = $1; }
-	| methodroutinedef	funcdefine SCOL 				{ $$ = $1; DeclRegistry.LeaveContext(); }
+	: routinedefunqualif						{ $$ = $1; }
+	| methodroutinedef	funcdefine SCOL 		{ $$ = $1; DeclReg.LeaveMethodContext(); }
 	;
 	
 methodroutinedef
-	: methodproto SCOL metdirectopt 					{ $$ = $1; $1.Directives = $3; }
-	| kwclass methodproto SCOL metdirectopt 			{ $$ = $2; $2.Directives = $4; $2.isStatic = true; }
-	| kwconstructor id KW_DOT id formalparams SCOL		{ $$ = new ConstructorDeclaration($2, $4, $5); }
-	| kwdestructor  id KW_DOT id formalparams SCOL		{ $$ = new DestructorDeclaration ($2, $4, $5); }
+	:			metdefproto SCOL metdirectopt 	{ $$ = $1; $1.Directives = $3; }
+	| KW_CLASS	metdefproto SCOL metdirectopt 	{ $$ = $2; $2.Directives = $4; $2.isStatic = true; }
+	| kwmetconstruct id formalparams SCOL		{ $$ = new ConstructorDeclaration($1, $2, $3); }
+	| kwmetdestruct  id formalparams SCOL		{ $$ = new DestructorDeclaration ($1, $2, $3); }
 	;
 	
-methodproto
-	: kwfunction  id KW_DOT id formalparams funcret 	{ $$ = new MethodDeclaration($2, $4, $5, $6); }
-	| kwprocedure id KW_DOT id formalparams 			{ $$ = new MethodDeclaration($2, $4, $5); }
+metdefproto
+	: kwmetfunction  id formalparams funcret 	{ $$ = new MethodDeclaration($1, $2, $3, $4); }
+	| kwmetprocedure id formalparams 			{ $$ = new MethodDeclaration($1, $2, $3); }
 	;
 	
 	// global routine definition
 routinedefunqualif
-	: routineproto funcdirectopt funcdefine SCOL		{  $1.Directives = $2; $$ = new RoutineDefinition($1, $3); DeclRegistry.LeaveContext(); }
+	: routineproto funcdiropt funcdefine SCOL	{ $1.Directives = $2; $$ = new RoutineDefinition($1, $3); DeclReg.LeaveContext(); }
 	;
 	
 	// routine decl for interface sections
 routinedecl
-	: routineproto importdiropt			{ $$ = $1; $1.Directives = $2; DeclRegistry.LeaveContext(); }
+	: routineproto importdiropt			{ $$ = $1; $1.Directives = $2; DeclReg.LeaveContext(); }
 	;
 
 	// routine decl for implementation sections, needs an external/forward
 routinedeclext
-	: routineproto importdirforced		{ $$ = $1; $1.Directives = $2; DeclRegistry.LeaveContext(); }
+	: routineproto importdirforced		{ $$ = $1; $1.Directives = $2; DeclReg.LeaveContext(); }
 	;
 
 methoddecl
-	: methoddeclin						{ $$ = $1; DeclRegistry.LeaveContext(); }
+	: methoddeclin						{ $$ = $1; DeclReg.LeaveContext(); }
 	;
 	
 methoddeclin
-	: kwfunction    id formalparams funcret SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $2, $3, $4, $6); }
-	| kwprocedure   id formalparams         SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $2, $3, null, $5); }
-	| kwconstructor id formalparams SCOL						{ $$ = new DestructorDeclaration(lastObjectName, $2, $3); }
-	| kwdestructor  id formalparams SCOL						{ $$ = new DestructorDeclaration(lastObjectName, $2, $3); }
+	: kwfunction    formalparams funcret SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $1, $2, $3, $5); }
+	| kwprocedure   formalparams         SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $1, $2, null, $4); }
+	| kwconstructor formalparams SCOL						{ $$ = new DestructorDeclaration(lastObjectName, $1, $2); }
+	| kwdestructor  formalparams SCOL						{ $$ = new DestructorDeclaration(lastObjectName, $1, $2); }
 	;
 
 routineproto
-	: kwfunction  id formalparams funcret	SCOL	{ $$ = new RoutineDeclaration($2, $3, $4); }
-	| kwprocedure id formalparams 			SCOL	{ $$ = new RoutineDeclaration($2, $3); }
+	: kwfunction  formalparams funcret	SCOL	{ $$ = new RoutineDeclaration($1, $2, $3); }
+	| kwprocedure formalparams 			SCOL	{ $$ = new RoutineDeclaration($1, $2); }
 	;	
-	
 
 proceduraltype
-	: proceduralsign						{ $$ = $1; DeclRegistry.LeaveContext(); }
+	: proceduralsign							{ $$ = $1; DeclReg.LeaveContext(); }
 	;
 	
 proceduralsign
-	: kwprocedure formalparams 							{ $$ = new ProceduralType($2); } 
-	| kwfunction  formalparams funcret					{ $$ = new ProceduralType($2, $3); } 
-	| kwprocedure formalparams KW_OF KW_OBJECT			{ $$ = new MethodType($2); } 
-	| kwfunction  formalparams funcret KW_OF KW_OBJECT	{ $$ = new MethodType($2, $3); } 
-	;
-
-proctypefield
-	: proceduraltype					{ $$ = $1; }
-	| proceduraltype routinecallconv	{ $$ = $1; $1.Directives.Callconv = (CallConvention) $2; }
+	: kwprocedureptr formalparams 							{ $$ = new ProceduralType($2); }
+	| kwfunctionptr  formalparams funcret					{ $$ = new ProceduralType($2, $3); } 
+	| kwprocedureptr formalparams KW_OF KW_OBJECT			{ $$ = new MethodType($2); } 
+	| kwfunctionptr  formalparams funcret KW_OF KW_OBJECT	{ $$ = new MethodType($2, $3); } 
 	;
 
 funcret
@@ -571,21 +603,22 @@ funcblock
 	;
 
 formalparams
-	:									{ $$ = new ParameterList(); }
-	| LPAR RPAR						{ $$ = new ParameterList(); }
-	| LPAR formalparamslst RPAR		{ $$ = $2; }
+	:									{ $$ = new DeclarationList(); }
+	| LPAR RPAR							{ $$ = new DeclarationList(); }
+	| LPAR formalparamslst RPAR			{ $$ = $2; }
 	;
 
 formalparamslst
-	: formalparm						{ $$ = new ParameterList($1); }
-	| formalparamslst SCOL formalparm	{ $$ = ListAdd<ParameterList,ParameterDeclaration>($1, $3); }
+	: formalparm						{ $$ = $1; }
+	| formalparamslst SCOL formalparm	{ $$ = ListAdd<DeclarationList,Declaration>($1, $3); }
 	;
 
+
 formalparm
-	: KW_VAR	idlst paramtypeopt					{ $$ = new VarParameterDeclaration($2, $3); } 
-	| KW_OUT	idlst paramtypeopt					{ $$ = new OutParameterDeclaration($2, $3); } 
-	| 			idlst paramtypespec paraminitopt	{ $$ = new ParameterDeclaration($1, $2, $3); }
-	| KW_CONST	idlst paramtypeopt  paraminitopt	{ $$ = new ConstParameterDeclaration($2, $3, $4); }
+	: KW_VAR	idlst paramtypeopt					{ $$ = CreateDecls($2, new CreateDecl((s) => new VarParamDeclaration(s, $3))); } 
+	| KW_OUT	idlst paramtypeopt					{ $$ = CreateDecls($2, new CreateDecl((s) => new OutParamDeclaration(s, $3))); } 
+	| 			idlst paramtypespec paraminitopt	{ $$ = CreateDecls($1, new CreateDecl((s) => new ParamDeclaration(s, $2, $3))); }
+	| KW_CONST	idlst paramtypeopt  paraminitopt	{ $$ = CreateDecls($2, new CreateDecl((s) => new ConstParamDeclaration(s, $3, $4))); }
 	;
 
 paramtypeopt
@@ -611,13 +644,13 @@ functypeinit
 	// Function directives
 
 importdiropt
-	: funcdirectopt						{ $$ = $1; }
+	: funcdiropt						{ $$ = $1; }
 	| importdirforced					{ $$ = $1; }
 	;
 
 importdirforced
-	: funcdirectopt KW_EXTERNAL externarg  funcdirectopt	{ $$ = $1; $1.Add($4); $1.Importdir = ImportDirective.External; $1.External = $3; }
-	| funcdirectopt KW_FORWARD  funcdirectopt				{ $$ = $1; $1.Add($3); $1.Importdir = ImportDirective.Forward; }
+	: funcdiropt KW_EXTERNAL externarg  funcdiropt	{ $$ = $1; $1.Add($4); $1.Importdir = ImportDirective.External; $1.External = $3; }
+	| funcdiropt KW_FORWARD  funcdiropt				{ $$ = $1; $1.Add($3); $1.Importdir = ImportDirective.Forward; }
 	;
 
 externarg
@@ -631,7 +664,7 @@ funcdir_noterm_opt
 	| funcdirectlst						{ $$ = $1	; }
 	;
 
-funcdirectopt
+funcdiropt
 	:									{ $$ = null	; }
 	| funcdirectlst SCOL				{ $$ = $1	; }
 	;
@@ -738,7 +771,7 @@ nonlbl_stmt
 	| KW_CONTINUE			{ $$ = new ContinueStatement(); }
 	;
 
-assign		// TODO reuse this rule for initializations
+assign
 	: lvalue KW_ASSIGN expr					{ $$ = new Assignement($1, $3); }
 	;
 
@@ -1077,6 +1110,11 @@ constexpr
 	: expr					{ $$ = new ConstExpression($1); }
 	;
 
+constexprlst
+	: constexpr						{ $$ = new ExpressionList($1); }
+	| constexprlst COMMA constexpr	{ $$ = ListAdd<ExpressionList,Expression>($1, $3); }
+	;
+
 arrayexpr
 	: constexpr				{ $$ = $1; }
 	| arrayconst			{ $$ = $1; }
@@ -1111,42 +1149,41 @@ fieldconst
 	// Records
 	// ===================================================================================
 	
-	// Only supports 'simple' structs, without class-like components
+	// Records in Delphi7 only have fields and variants, no methods or properties
 
-recordtypebasic
-	: kwrecord  KW_END						{ $$ = null; /* TODO */ }
-	| kwrecord  fieldlst scolopt KW_END		{ $$ = null; /* TODO */ }
-	;
-	
 recordtype
-	: recordtypebasic									{ $$ = null; /* TODO */ }
-	| kwrecord  fieldlst SCOL recvariant scolopt KW_END	{ $$ = null; /* TODO */ }
-	| kwrecord  recvariant scolopt KW_END				{ $$ = null; /* TODO */ }
+	: kwrecord  KW_END									{ $$ = new RecordType(new DeclarationList()); }
+	| kwrecord  fieldlst scolopt KW_END					{ $$ = new RecordType($2); }
+	| kwrecord  fieldlst SCOL recvariant scolopt KW_END	{ $$ = new RecordType($2); }
+	| kwrecord  recvariant scolopt KW_END				{ $$ = new RecordType($2); }
 	;
 	
 recvariant
-	: KW_CASE id COLON ordinaltype KW_OF recfieldlst	{ $$ = null; /* TODO */ }
-	| KW_CASE ordinaltype KW_OF recfieldlst				{ $$ = null; /* TODO */ }
+	: KW_CASE id COLON ordinaltype KW_OF recfieldlst	{ $$ = new VariantDeclaration(  $2, $4, $6); }
+	| KW_CASE          ordinaltype KW_OF recfieldlst	{ $$ = new VariantDeclaration(null, $2, $4); }
 	;
 
 recfieldlst
-	: recfield %prec LOWESTPREC	{ $$ = null; /* TODO */ }
-	| recfield SCOL				{ $$ = null; /* TODO */ }
-	| recfield SCOL recfieldlst	{ $$ = null; /* TODO */ }
+	: recfield %prec LOWESTPREC							{ $$ = $1; }
+	| recfield SCOL										{ $$ = $1; }
+	| recfield SCOL recfieldlst							{ $1.AddStart($1); $$ = $1; }
 	;
 
 recfield
-	: constexpr COLON LPAR recvarlst scolopt RPAR	{ $$ = null; /* TODO */ }
+	: constexprlst COLON LPAR recvarlst scolopt RPAR	{ var list = $1.Select(x => new VarEntryDeclaration(
+																					x as ConstExpression, $4));
+														  $$ = new DeclarationList(list);
+														}
 	;
 	
 recvarlst
-	: recvar					{ $$ = null; /* TODO */ }
-	| recvarlst SCOL recvar		{ $$ = null; /* TODO */ }
+	: recvarfield					{ $$ = $1; }
+	| recvarlst SCOL recvarfield	{ $$ = ListAdd<DeclarationList,Declaration>($1, $3); }
 	;
 
-recvar
-	: objfield					{ $$ = null; /* TODO */ }
-	| recvariant				{ $$ = null; /* TODO */ }
+recvarfield
+	: objfield					{ $$ = $1; }
+	| recvariant				{ $$ = $1; }
 	;
 	
 
@@ -1158,32 +1195,32 @@ recvar
 
 	// Objects are treated as classes
 classtype
-	: kwclass heritage classbody KW_END	{ $$ = new ClassDeclaration($2, $3);  }
-	| kwclass heritage					{ $$ = new ClassDeclaration($2); } // forward decl
+	: kwclass heritage classbody KW_END	{ $$ = new ClassType($2, $3); }
+	| kwclass heritage					{ $$ = new ClassType($2); } // forward decl
 	;
 
 heritage
-	:							{ $$ = new ArrayList(); }
-	| LPAR idlst RPAR			{ $$ = $2; }		// inheritance from class and interf(s)			
+	:									{ $$ = new ArrayList(); }
+	| LPAR idlst RPAR					{ $$ = $2; }		// inheritance from class and interf(s)			
 	;
 
 classbody
-	: class1stsec scopeseclst			{ $$ = new ClassBody(ListAdd<ScopedSectionList,ScopedSection>($2, $1));  }
+	: class1stsec scopeseclst			{ $$ = ListAdd<ScopedSectionList,ScopedSection>($2, $1);  }
 	;
 
 class1stsec
-	: fieldlst SCOL	classcomplstopt 	{ $$ = new ScopedSection(Scope.Published,   $1, $3); }
-	|				classcomplstopt 	{ $$ = ($1 == null)? null : new ScopedSection(Scope.Published, null, $1); }
+	: cfieldlst classcomplstopt 		{ $$ = new ScopedSection(Scope.Published, $1, $2); }
+	|			classcomplstopt 		{ $$ = ($1 == null)? null : new ScopedSection(Scope.Published, null, $1); }
 	;
 	
 scopeseclst
-	:							{ $$ = new ScopedSectionList(); }
-	| scopeseclst scopesec		{ $$ = ListAdd<ScopedSectionList,ScopedSection>($1, $2); }
+	:									{ $$ = new ScopedSectionList(); }
+	| scopeseclst scopesec				{ $$ = ListAdd<ScopedSectionList,ScopedSection>($1, $2); }
 	;
 
 scopesec
-	: scopedecl fieldlst SCOL classcomplstopt	{ $$ = new ScopedSection($1, $2, $4); }
-	| scopedecl               classcomplstopt	{ $$ = new ScopedSection($1, null, $2); }
+	: scopedecl cfieldlst classcomplstopt	{ $$ = new ScopedSection($1, $2, $3); }
+	| scopedecl			  classcomplstopt	{ $$ = new ScopedSection($1, null, $2); }
 	;
 	
 scopedecl
@@ -1192,18 +1229,24 @@ scopedecl
 	| KW_PROTECTED				{ $$ = Scope.Protected; }
 	| KW_PRIVATE				{ $$ = Scope.Private; }
 	;
-
+	
+cfieldlst
+	: fieldlst SCOL					{ $$ = $1; }
+	| KW_CLASS KW_VAR fieldlst SCOL { $$ = $3; foreach (Declaration d in $3) ((FieldDeclaration)d).isStatic = true; }
+	;
+	
 fieldlst
-	: objfield					{ $$ = new FieldList($1); }
-	| fieldlst SCOL objfield	{ $$ = ListAdd<FieldList,FieldDeclaration>($1, $3); }
+	: objfield						{ $$ = $1; }
+	| fieldlst SCOL objfield		{ $$ = ListAdd<DeclarationList,Declaration>($1, $3); }
 	;
 	
 objfield
-	: idlst COLON vartype		{ $$ = new FieldDeclaration($1, $3); }
-	| idlst COLON proctypefield	{ $$ = new FieldDeclaration($1, $3);  }
-//	| idlst COLON proceduraltype funcdir_noterm_opt	{ $$ = null; }
+	: idlst COLON vartype			{ $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); }
+	| idlst COLON proceduraltype 	{ $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); }
+	| idlst COLON proceduraltype SCOL funcdirectlst	{ $3.Directives = $5; 
+													  $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); }
 	;
-
+	
 classcomplstopt
 	:							{ $$ = new DeclarationList(); }
 	| classcomplst				{ $$ = $1; }
@@ -1215,18 +1258,22 @@ classcomplst
 	;
 	
 classcomp
-	: methoddecl				{ $$ = $1; }
-	| KW_CLASS methoddecl		{ $2.isStatic = true; $$ = $2; }
+	: staticopt methoddecl		{ $$ = $2; $2.isStatic = $1; }
 	| property					{ $$ = $1; }
 	;
 
+staticopt
+	: 							{ $$ = false; }
+	| KW_CLASS					{ $$ = true	; }
+	;
+
 interftype
-	: kwinterf heritage guid interfbody KW_END	{ $$ = new InterfaceDeclaration($2, $3, $4); }
-	| kwinterf heritage 						{ $$ = new InterfaceDeclaration($2); }
+	: kwinterf heritage guid interfbody KW_END	{ $$ = new InterfaceType($2, $4, $3); }
+	| kwinterf heritage 						{ $$ = new InterfaceType($2); }
 	;
 
 interfbody
-	: interfcomplst				{ $$ = new InterfaceBody(new ScopedSection(Scope.Public, null, $1)); }
+	: interfcomplst				{ $$ = new ScopedSectionList(new ScopedSection(Scope.Public, null, $1)); }
 	;
 	
 interfcomplst
@@ -1242,7 +1289,7 @@ interfcomp
 guid
 	:							{ $$ = null; }
 	| LBRAC stringlit RBRAC		{ $$ = $2; }
-	| LBRAC lvalue RBRAC		{ $$ = $2 }
+	| LBRAC lvalue RBRAC		{ $$ = $2; }
 	;
 
 	
@@ -1253,66 +1300,76 @@ guid
 	// ===================================================================================
 	
 property
-	: KW_PROPERTY id SCOL		{ $$ = null; }
-	| KW_PROPERTY id propinterfopt COLON funcrettype propspecifiers SCOL defaultdiropt { $$ = null; } // new ClassProperty($2, $5, $6, $3, $8); }
+	// Normal case
+	: KW_PROPERTY id COLON funcrettype spropspecsnormal SCOL	{ $$ = new PropertyDeclaration($2, $4, $5); }
+	// Array properties
+	| KW_PROPERTY id arrayprops COLON funcrettype spropspecsarray SCOL defaultdiropt { $$ = new ArrayProperty($2, $5, $3, $6, $8); }
+	// Property overrides
+	| KW_PROPERTY id spropspecsoverride SCOL 					{ $$ = new PropertyDeclaration($2, null, $3); }
+	// Class properties: not supported in Delphi 7
 	;
 
 defaultdiropt
-	:							{ $$ = null;}
-	| id SCOL					{ $$ = null; CheckDirectiveId("default", $1); /* TODO */ }	// qualifier default != specifier default
+	:									{ $$ = false;}
+	| id								{ $$ = CheckDirectiveId("default", $1); }
 	;
 
-propinterfopt
-	:							{ $$ = null; }
-	| LBRAC propfieldlst RBRAC	{ $$ = null; /* TODO */ }
-	;
-	
-propfieldlst
-	: propfield							{ $$ = null; /* TODO */ }
-	| propfieldlst SCOL propfield		{ $$ = null; /* TODO */ }
+arrayprops
+	: LBRAC propfield RBRAC				{ $$ = $2; }
 	;
 
 propfield
-	: idlst COLON funcparamtype				{ $$ = null; /* TODO */ }
-	| KW_CONST idlst COLON funcparamtype	{ $$ = null; /* TODO */ }
+	:			idlst COLON scalartype	{ $$ = CreateDecls($1, new CreateDecl((s) => new VarParamDeclaration(s, $3))); }
+	| KW_CONST  idlst COLON scalartype	{ $$ = CreateDecls($2, new CreateDecl((s) => new ConstParamDeclaration(s, $4))); }
 	;
 
 
-	// Properties directive: emitted as keywords caught from within a lexical scope
-
-propspecifiers
-	: indexopt readopt writeopt storedopt defaultopt implopt	{ $$ = null; } // new PropertySpecifiers($1, $2, $3, $4, $5, $6); }
+	// Properties Specifiers
+	
+	// must have at least 1 read or write
+spropspecsnormal
+	: indexopt readopt writeopt storeopt defaultopt			{ $$ = new PropertySpecifiers($1, $2, $3, $4, $5); }
 	;
 
+	// must have at least 1 read or write
+spropspecsarray
+	: readopt writeopt 										{ $$ = new PropertySpecifiers($1, $2); }
+	;
+
+spropspecsoverride
+	: indexopt readopt writeopt storeopt defaultopt implopt	{ $$ = new PropertySpecifiers($1, $2, $3, $4, $5, $6); }
+	;
+	
 indexopt
 	:							{ $$ = null; }
-	| KW_INDEX constint			{ $$ = new PropertyIndex((uint) $2);  }
-	;
-
-storedopt
-	:							{ $$ = null;  }
-	| KW_STORED id				{ $$ = new PropertyStored($2); }
-	;
-
-defaultopt
-	:							{ $$ = null;  }
-	| KW_DEFAULT literal		{ $$ = new PropertyDefault($2); }
-	| KW_NODEFAULT				{ $$ = null;  }
-	;
-
-implopt
-	:							{ $$ = null;  }
-	| KW_IMPLEMENTS id			{ $$ = new PropertyImplements($2); }
+	| KW_INDEX constint			{ $$ = new IntLiteral($2);  }
 	;
 
 readopt
-	:							{ $$ = null;  }
-	| KW_READ	id				{ $$ = new PropertyReadNode($2); }
+	:							{ $$ = null; }
+	| KW_READ	id				{ $$ = $2; }
 	;
 
 writeopt
 	:							{ $$ = null; }
-	| KW_WRITE	id				{ $$ = new PropertyWriteNode($2); }
+	| KW_WRITE	id				{ $$ = $2; }
+	;
+
+storeopt
+	:							{ $$ = new BoolLiteral(true);  }
+	| KW_STORED id				{ $$ = new ConstExpression(new Identifier($2)); } 
+	| KW_STORED constbool		{ $$ = new BoolLiteral($2);  }
+	;
+	
+defaultopt
+	:							{ $$ = new IntLiteral(Int32.MaxValue);  }
+	| KW_NODEFAULT				{ $$ = new IntLiteral(Int32.MaxValue);  }
+	| KW_DEFAULT constexpr		{ $$ = $2; }
+	;
+	
+implopt
+	:							{ $$ = null;  }
+	| KW_IMPLEMENTS id			{ $$ = $2; }
 	;
 
 
@@ -1323,9 +1380,10 @@ writeopt
 	// ===================================================================================
 
 typedecl
-	: id KW_EQ typeopt vartype  SCOL						{ $$ = new TypeDeclaration($1, $4); }
-	| id KW_EQ typeopt proceduraltype SCOL funcdirectopt	{ $$ = new TypeDeclaration($1, $4); $4.Directives = $6; }
-	| id KW_EQ typeopt packcomptype SCOL					{ lastObjectName = $1; $$ = $4; }
+	: id KW_EQ typeopt vartype  SCOL					{ $$ = new TypeDeclaration($1, $4); }
+	| id KW_EQ typeopt proceduraltype SCOL funcdiropt	{ $$ = new TypeDeclaration($1, $4); $4.Directives = $6; }
+	| id KW_EQ typeopt packclasstype SCOL				{ $$ = new ClassDeclaration($1, $4); DeclReg.LeaveContext(); }
+	| id KW_EQ typeopt packinterftype SCOL				{ $$ = new InterfaceDeclaration($1, $4); DeclReg.LeaveContext(); }
 	;
 
 typeopt		// ignored for now
@@ -1341,18 +1399,8 @@ vartype
 	| packstructtype			{ $$ = $1; }
 	;
 
-packcomptype
-	: KW_PACKED compositetype	{ $$ = $2; $2.IsPacked = true; }
-	| compositetype				{ $$ = $1; }
-	;
-
-compositetype
-	: classtype					{ $$ = $1; DeclRegistry.LeaveContext(); }
-	| interftype				{ $$ = $1; DeclRegistry.LeaveContext(); }
-	;
-
 metaclasstype
-	: KW_CLASS KW_OF id			{ $$ = new MetaclassType(DeclRegistry.FetchType($3)); }
+	: KW_CLASS KW_OF id			{ $$ = new MetaclassType(DeclReg.FetchType($3)); }
 	;
 
 packstructtype
@@ -1360,11 +1408,21 @@ packstructtype
 	| KW_PACKED structuredtype	{ $$ = $2; $2.IsPacked = true; }
 	;
 
+packclasstype
+	: classtype					{ $$ = $1; }
+	| KW_PACKED classtype		{ $$ = $2; $2.IsPacked = true; }
+	;
+
+packinterftype
+	: interftype				{ $$ = $1; }
+	| KW_PACKED interftype		{ $$ = $2; $2.IsPacked = true; }
+	;
+
 structuredtype
 	: arraytype					{ $$ = $1; }
 	| settype					{ $$ = $1; }
 	| filetype					{ $$ = $1; }
-	| recordtype				{ $$ = $1; DeclRegistry.LeaveContext();}
+	| recordtype				{ $$ = $1; DeclReg.LeaveContext();}
 	;
 	
 arrayszlst
@@ -1374,12 +1432,12 @@ arrayszlst
 
 arraytype
 	: TYPE_ARRAY LBRAC arrayszlst   RBRAC KW_OF vartype 	{ $$ = new ArrayType($6, $3); }
-	| TYPE_ARRAY LBRAC id 			RBRAC KW_OF vartype		{ $$ = new ArrayType($6, DeclRegistry.FetchTypeIntegral($3)); }
+	| TYPE_ARRAY LBRAC id 			RBRAC KW_OF vartype		{ $$ = new ArrayType($6, DeclReg.FetchTypeIntegral($3)); }
 	| TYPE_ARRAY KW_OF vartype 	{ $$ = new ArrayType($3); }
 	;
 
 settype
-	: TYPE_SET KW_OF ordinaltype { /* TODO!! $$ = new SetType($3);*/ }
+	: TYPE_SET KW_OF ordinaltype { $$ = new SetType($3);}
 	;
 
 filetype
@@ -1388,7 +1446,7 @@ filetype
 	;
 
 scalartype
-	: id						{ $$ = DeclRegistry.FetchTypeScalar($1); }
+	: id						{ $$ = DeclReg.FetchTypeScalar($1); }
 	| TYPE_STR /*dynamic size*/	{ $$ = StringType.Single; }
 	| TYPE_STR LBRAC constexpr RBRAC { $$ = new FixedStringType($3); }
 	| pointertype				{ $$ = $1; }
@@ -1397,11 +1455,11 @@ scalartype
 ordinaltype
 	: rangetype					{ $$ = $1; }
 	| enumtype					{ $$ = $1; }
-	| id						{ $$ = DeclRegistry.FetchTypeIntegral($1); }
+	| id						{ $$ = DeclReg.FetchTypeIntegral($1); }
 	;
 	
 casttype
-	: id						{ $$ = DeclRegistry.FetchTypeScalar($1); }
+	: id						{ $$ = DeclReg.FetchTypeScalar($1); }
 	;
 
 pointertype

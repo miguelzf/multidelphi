@@ -19,13 +19,13 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public partial class ProceduralType : TypeNode
 	{
-		public ParameterList @params;
+		public DeclarationList @params;
 
 		/// <summary>
 		/// Function's return type. Must be null for every non-function routine.
 		/// </summary>
 		public ScalarType funcret { get; set; }
-		public OutParameterDeclaration returnVar;
+		public OutParamDeclaration returnVar;
 
 		CallableDirectives _directives;
 		public CallableDirectives Directives
@@ -39,7 +39,7 @@ namespace crosspascal.ast.nodes
 			}
 		}
 
-		public ProceduralType(ParameterList @params, ScalarType ret = null, CallableDirectives dirs = null)
+		public ProceduralType(DeclarationList @params, ScalarType ret = null, CallableDirectives dirs = null)
 		{
 			this.@params = @params;
 			this.funcret = ret;
@@ -47,7 +47,7 @@ namespace crosspascal.ast.nodes
 				Directives = dirs;
 			if (ret != null)
 				// TODO check and emit error if any parameter is named 'Result'
-				returnVar = new OutParameterDeclaration(new ArrayList() { "result" }, ret);
+				returnVar = new OutParamDeclaration("result", ret);
 		}
 
 		public override bool Equals(Object o)
@@ -70,7 +70,7 @@ namespace crosspascal.ast.nodes
 
 	public class MethodType : ProceduralType
 	{
-		public MethodType(ParameterList @params, ScalarType ret = null, CallableDirectives dirs = null)
+		public MethodType(DeclarationList @params, ScalarType ret = null, CallableDirectives dirs = null)
 			: base(@params, ret, dirs)
 		{ 
 		}
@@ -103,7 +103,9 @@ namespace crosspascal.ast.nodes
 			set { Type.Directives = value;}
 		}
 
-		public CallableDeclaration(string name, ParameterList @params, ScalarType ret = null, CallableDirectives dirs = null)
+		public bool IsFunction { get { return Type.funcret != null; } }
+
+		public CallableDeclaration(string name, DeclarationList @params, ScalarType ret = null, CallableDirectives dirs = null)
 			: base(name, new ProceduralType(@params, ret, dirs))
 		{
 		}
@@ -114,7 +116,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class RoutineDeclaration : CallableDeclaration
 	{
-		public RoutineDeclaration(string name, ParameterList @params, ScalarType ret = null, RoutineDirectives dirs = null)
+		public RoutineDeclaration(string name, DeclarationList @params, ScalarType ret = null, RoutineDirectives dirs = null)
 			: base(name, @params, ret, dirs) { }
 	}
 
@@ -127,7 +129,7 @@ namespace crosspascal.ast.nodes
 		public String objname;
 		public String metname;
 
-		public MethodDeclaration(string name, string objname, ParameterList @params, ScalarType ret = null, MethodDirectives dirs = null)
+		public MethodDeclaration(string name, string objname, DeclarationList @params, ScalarType ret = null, MethodDirectives dirs = null)
 			: base(objname+"."+name, @params, ret, dirs)
 		{
 			this.metname = name;
@@ -138,19 +140,19 @@ namespace crosspascal.ast.nodes
 
 	public class SpecialMethodDeclaration : MethodDeclaration
 	{
-		public SpecialMethodDeclaration(string name, string objname, ParameterList @params)
+		public SpecialMethodDeclaration(string name, string objname, DeclarationList @params)
 			: base(name, objname, @params)	{	}
 	}
 
 	public class ConstructorDeclaration : SpecialMethodDeclaration
 	{
-		public ConstructorDeclaration(string name, string objname, ParameterList @params)
+		public ConstructorDeclaration(string name, string objname, DeclarationList @params)
 			: base(name, objname, @params)	{	}
 	}
 
 	public class DestructorDeclaration : SpecialMethodDeclaration
 	{
-		public DestructorDeclaration(string name, string objname, ParameterList @params)
+		public DestructorDeclaration(string name, string objname, DeclarationList @params)
 			: base(name, objname, @params) { }
 	}
 

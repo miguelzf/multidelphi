@@ -130,9 +130,6 @@ def gen_concrete_visit(node,names)
 					ma = /(\w+)\[\]\s*/.match type		# Array 
 				end
 			end
-			if ma != nil 
-				puts ma[1]
-			end
 			if ma != nil and names.include? ma[1]	# if generic type arg is a Node
 				arrcode << "\t" + "foreach (Node n in node." + name + ")"
 				arrcode << "\t\t" + "traverse(n);"

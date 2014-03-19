@@ -32,10 +32,12 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Destroy the current Symbol context and pop it from the stack
 		/// </summary>
-		public void Pop()
+		public String Pop()
 		{
+			string ret = contexts.Peek().id;
 			contexts.Pop();
 			current = contexts.Peek();
+			return ret;
 		}
 
 		/// <summary>

@@ -5,8 +5,117 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using crosspascal.semantics;
+
 namespace crosspascal.ast.nodes
 {
+
+	//
+	// Composite declarations
+	//
+
+	public abstract partial class CompositeDeclaration : TypeDeclaration
+	{
+		public CompositeType Type { get { return type as CompositeType; } }
+
+		public CompositeDeclaration(String name, CompositeType ctype)
+			: base(name, ctype)
+		{
+		}
+	}
+
+	public class ClassDeclaration : CompositeDeclaration
+	{
+		public new ClassType Type { get { return type as ClassType; } }
+
+		public ClassDeclaration(String name, ClassType ctype)
+			: base(name, ctype)
+		{
+		}
+	}
+
+	public class InterfaceDeclaration : CompositeDeclaration
+	{
+		public new InterfaceType Type { get { return type as InterfaceType; } }
+
+		public InterfaceDeclaration(String name, InterfaceType ctype)
+			: base(name, ctype)
+		{
+		}
+	}
+
+
+
+	#region Composite Types
+
+	//
+	// Composite Types
+	//
+
+	public partial class CompositeType : TypeNode
+	{
+		public List<String> heritage;
+
+		public ScopedSectionList sections;
+
+		public bool IsPacked { get; set; }
+
+		/// <summary>
+		/// Returns public and published methods
+		/// </summary>
+		public IEnumerable<Declaration> GetPublicMembers()
+		{
+			var list = sections.Where(x => x.scope == Scope.Public || x.scope == Scope.Published);
+			return list.SelectMany(x => x.decls);
+		}
+
+		/// <summary>
+		/// Returns public, protected and published methods
+		/// </summary>
+		public DeclarationList GetInheritableMembers()
+		{
+			var list = sections.Where(x => x.scope != Scope.Private);
+			return new DeclarationList(list.SelectMany(x => x.decls));
+		}
+
+		public CompositeType(ArrayList heritage, ScopedSectionList seclist)
+		{
+			this.heritage = new List<String>();
+			foreach (String s in heritage)
+				this.heritage.Add(s);
+
+			sections = seclist;
+		}
+	}
+
+	public class ClassType : CompositeType
+	{
+		public ClassType(ArrayList heritage, ScopedSectionList seclist = null)
+			: base(heritage, seclist)
+		{
+		}
+	}
+
+	public class InterfaceType : CompositeType
+	{
+		public UnaryExpression guid;
+
+		public InterfaceType(ArrayList heritage, ScopedSectionList ssec = null, UnaryExpression guid = null)
+			: base(heritage, ssec)
+		{
+			this.guid = guid;
+		}
+	}
+
+	#endregion
+
+
+
+	#region Composite Sections
+
+	//
+	// Composite sections
+	//
 
 	public enum Scope
 	{
@@ -16,91 +125,13 @@ namespace crosspascal.ast.nodes
 		Published
 	}
 
-	//
-	// Composite Types
-	//
-
-	public abstract partial class CompositeType : TypeNode
-	{
-		ArrayList heritage;
-
-		public CompositeType(ArrayList heritage)
-		{
-			this.heritage = heritage;
-		}
-	}
-
-	public class ClassType : CompositeType
-	{
-		public ClassType(ArrayList heritage)
-			: base(heritage)
-		{
-		}
-	}
-
-	public class InterfaceType : CompositeType
-	{
-		public InterfaceType(ArrayList heritage) 
-			: base(heritage)
-		{
-		}
-	}
-
-
-	//
-	// Composite Declarations
-	//
-
-	public abstract partial class CompositeDeclaration : TypeDeclaration
-	{
-		public bool IsPacked { get; set; }
-
-		/// <summary>
-		/// Class/interface body, with scoped sections of declarations.
-		/// This is null in the case of forward class/interface declarations.
-		/// </summary>
-		public CompositeBody Body { get; set; }
-
-		public CompositeDeclaration(String name, CompositeType ctype, CompositeBody body = null)
-			: base(name, ctype)
-		{
-			this.Body = body;
-		}
-	}
-	
-	public class ClassDeclaration : CompositeDeclaration
-	{
-		public ClassDeclaration(String name, ArrayList heritage, ClassBody body)
-			: base(name, new ClassType(heritage), body = null)
-		{
-		}
-	}
-
-	public class InterfaceDeclaration : CompositeDeclaration
-	{
-		String guid;
-
-		public InterfaceDeclaration(String name, ArrayList heritage, 
-									String guid = null, InterfaceBody body = null)
-			: base(name, new ClassType(heritage), body)
-		{
-			this.guid = guid;
-		}
-	}
-
-
-	#region Composite Sections
-	//
-	// Composite sections
-	//
-
 	public class ScopedSection : Section
 	{
-		Scope scope;
+		public Scope scope;
 
-		DeclarationList fields;
+		public DeclarationList fields;
 
-		ScopedSection(Scope scope, DeclarationList fields, DeclarationList components)
+		public ScopedSection(Scope scope, DeclarationList fields, DeclarationList components)
 			: base(components)
  		{
 			this.scope	= scope;
@@ -115,37 +146,67 @@ namespace crosspascal.ast.nodes
 		public ScopedSectionList(ScopedSection s) : base(s) { }
 	}
 
+	#endregion
 
-	public abstract class CompositeBody : Section
+
+	#region Object Fields
+
+	//
+	// Object fields (in classes and records)
+	//
+
+	/// <summary>
+	/// Composite or record field declaration
+	/// </summary>
+	public class FieldDeclaration : ValueDeclaration
 	{
-		ScopedSectionList sections;
+		public bool isStatic;
 
-		public CompositeBody(ScopedSectionList sections)
+		public FieldDeclaration(String id, TypeNode t = null, bool isStatic =false)
+			: base(id, t)
 		{
-			this.sections = sections;
+			this.isStatic = false;
 		}
 	}
 
-	public class ClassBody : CompositeBody
+	/// <summary>
+	/// Variant record field declaration
+	/// </summary>
+	public class VariantDeclaration : FieldDeclaration
 	{
+		public DeclarationList varfields;
 
-		public ClassBody(ScopedSectionList sslist)
-			: base(sslist)
+		public VariantDeclaration(String id, VariableType t, DeclarationList varfields)
+			: base(id, t)
 		{
-
+			if (!(t is IOrdinalType))
+				throw new TypeRequiredException("Ordinal");
+			this.varfields = varfields;
 		}
+
+		public VariantDeclaration(String id, IntegralType t, DeclarationList varfields)
+			: this(id, (VariableType)t, varfields) { }
+
+		public VariantDeclaration(String id, EnumType t, DeclarationList varfields)
+			: this(id, (VariableType)t, varfields) { }
+
+		public VariantDeclaration(String id, RangeType t, DeclarationList varfields)
+			: this(id, (VariableType)t, varfields) { }
 	}
 
-	public class InterfaceBody : CompositeBody
+	/// <summary>
+	/// Variant case entry declaration
+	/// </summary>
+	public class VarEntryDeclaration : FieldDeclaration
 	{
-		public InterfaceBody(ScopedSectionList sslist)
-			: base(sslist)
-		{
-		}
+		public ConstExpression tagvalue;
+		public RecordType fields;
 
-		public InterfaceBody(ScopedSection ss)
-			: base(new ScopedSectionList(ss))
+		public VarEntryDeclaration(ConstExpression tagvalue, DeclarationList fields)
+			: base(null, null)	// type must be later set to the variant type
 		{
+			this.tagvalue = tagvalue;
+			this.fields = new RecordType(fields);
 		}
 	}
 
@@ -154,107 +215,67 @@ namespace crosspascal.ast.nodes
 
 	#region Properties
 
-	public class ClassProperty : ClassContent
+	public class PropertyDeclaration : FieldDeclaration
 	{
-		public String ident;
-		public TypeNode type;
-		public PropertyIndex index;
-		public PropertySpecifiers specs;
-		public PropertyDefault def;
+		public PropertySpecifiers specifiers;
 
-		public ClassProperty(String ident, TypeNode type, PropertyIndex index, PropertySpecifiers specs, PropertyDefault def)
+		public bool IsStatic;
+
+		public PropertyDeclaration(String ident, ScalarType type, PropertySpecifiers specs = null)
+			: base(ident, type)
 		{
-			this.ident = ident;
-			this.type = type;
-			this.index = index;
-			this.specs = specs;
-			this.def = def;
+			this.specifiers = specs;
+
+			if (type != null) // no override
+				if (specs.read == null && specs.write == null)
+					Error("Class property must have at least a Read of Write specified");
 		}
 	}
 
-	public class PropertyReadNode : Node
+	public class ArrayProperty : PropertyDeclaration
 	{
-		public String ident;
+		public DeclarationList indexes;
+		public bool isDefault;
 
-		public PropertyReadNode(String ident)
+		public ArrayProperty(String ident, ScalarType type, DeclarationList indexes, 
+									PropertySpecifiers specs, bool def)
+			: base(ident, type, specs)
 		{
-			this.ident = ident;
-		}
-	}
-
-	public class PropertyWriteNode : Node
-	{
-		public String ident;
-
-		public PropertyWriteNode(String ident)
-		{
-			this.ident = ident;
+			this.indexes = indexes;
+			this.specifiers = specs;
+			this.isDefault = def;
 		}
 	}
 
 	public class PropertySpecifiers : Node
 	{
-		public PropertySpecifier index;
-		public PropertySpecifier read;
-		public PropertySpecifier write;
-		public PropertySpecifier stored;
-		public PropertySpecifier def;
-		public PropertySpecifier impl;
+		public IntLiteral index;
+		public String read;
+		public String write;
+		public ConstExpression stored;
+		public Literal @default;	// nodefault == Int32.MaxValue 
+		public String impl;
 
-		public PropertySpecifiers(PropertySpecifier index, PropertySpecifier read, PropertySpecifier write,
-			PropertySpecifier stored, PropertySpecifier def, PropertySpecifier impl)
+		public PropertySpecifiers(String read, String write)
 		{
-			this.index = index;
 			this.read = read;
 			this.write = write;
+		}
+
+		public PropertySpecifiers(IntLiteral index, String read, String write, 
+									ConstExpression stored, Literal @default)
+			: this(read, write)
+		{
+			this.index = index;
 			this.stored = stored;
-			this.def = def;
+			this.@default = @default;
+		}
+
+		public PropertySpecifiers(IntLiteral index, String read, String write, 
+									ConstExpression stored, Literal @default, String impl)
+			: this(index, read, write, stored, @default)
+		{
 			this.impl = impl;
-		}
-	}
-
-	public abstract class PropertySpecifier : Node
-	{
-
-	}
-
-	public class PropertyDefault : PropertySpecifier
-	{
-		public Literal lit;
-
-		public PropertyDefault(Literal lit)
-		{
-			this.lit = lit;
-		}
-	}
-
-	public class PropertyImplements : PropertySpecifier
-	{
-		public String ident;
-
-		public PropertyImplements(String ident)
-		{
-			this.ident = ident;
-		}
-	}
-
-	public class PropertyStored : PropertySpecifier
-	{
-		public String ident;
-
-		public PropertyStored(String ident)
-		{
-			this.ident = ident;
-		}
-	}
-
-	public class PropertyIndex : PropertySpecifier
-	{
-		public uint value;
-
-		public PropertyIndex(uint value)
-		{
-			this.value = value;
 		}
 	}
 

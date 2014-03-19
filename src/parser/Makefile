@@ -2,7 +2,7 @@
 
 DEPSDIR=../../deps
 #add -l to disable #line emissions
-JAYFLAGS=-tvc
+JAYFLAGS=-tvc -l
 CSFLEXFLAGS=-q --nobak --skel Flex-skeleton-nested.cs
 #-debug
 FLEXDEBUG=
