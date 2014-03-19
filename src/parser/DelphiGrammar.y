@@ -86,21 +86,25 @@ namespace crosspascal.parser
 %type<RoutineCall> inheritedcall
 %type<Identifier> identifier
 %type<Expression> unaryexpr expr rangestart set inheritedexpr
-%type<ExpressionList> caselabellst exprlst exprlstopt setelemlst constinitexprlst 
+%type<ExpressionList> caselabellst exprlst exprlstopt setelemlst arrayexprlst 
 %type<TypeList> arrayszlst
 %type<FieldInitList> fieldconstlst 
 %type<FieldInit> fieldconst
 %type<EnumValueList> enumelemlst
 %type<EnumValue> enumelem
-%type<ConstExpression> paraminitopt constexpr functypeinit arrayconst recordconst constinitexpr setelem
+%type<ConstExpression> paraminitopt constexpr functypeinit arrayconst recordconst constinit setelem arrayexpr
 
 	// objects etc - TODO
 %type<Node> recvariant  recfield  recvar guid  recfieldlst propfield
-%type<DeclarationList> scopeseclst complst classmethodlstopt methodlst classproplstopt classproplst fieldlst 
+%type<DeclarationList> scopeseclst classcomplstopt fieldlst classcomplst interfcomplst 
 %type<NodeList> recvarlst propfieldlst
 %type<ArrayList> heritage 
-%type<Declaration> scopesec classbody classcomp classtype property interftype
-%type<Scope> scope_decl
+%type<Declaration> classcomp classtype property interftype interfcomp
+%type<Scope> scopedecl
+%type<CompositeBody> classbody interfbody
+
+	
+%type<ScopedSection> scopesec class1stsec
 %type<PropertySpecifier> propinterfopt defaultdiropt indexopt storedopt defaultopt implopt readopt writeopt
 %type<PropertySpecifiers> propspecifiers
 
@@ -194,7 +198,7 @@ namespace crosspascal.parser
 
 %left UNARY KW_NOT KW_ADDR
 
-%nonassoc LBRAC RBRAC LPAREN RPAREN
+%nonassoc LBRAC RBRAC LPAR RPAR
 
 %nonassoc MAXPREC
 
@@ -407,7 +411,7 @@ thrvarsec
 
 vardecl
 	: idlst COLON vartype SCOL							{ $$ = new VarDeclaration($1, $3); }
-	| idlst COLON vartype KW_EQ constinitexpr SCOL		{ $$ = new VarDeclaration($1, $3, $5); }
+	| idlst COLON vartype KW_EQ constinit SCOL			{ $$ = new VarDeclaration($1, $3, $5); }
 	| idlst COLON vartype KW_ABSOLUTE id SCOL			{ $$ = new VarDeclaration($1, $3, $5); }
 	| idlst COLON proceduraltype SCOL funcdirectopt		{ $$ = new VarDeclaration($1, $3); $3.Directives = $5; }
 	| idlst COLON proceduraltype SCOL
@@ -427,7 +431,7 @@ rscstringlst
 	;
 	
 rscstring
-	:  id KW_EQ stringconst SCOL	{ $$ = new ConstDeclaration($1, new StringLiteral($3)); }
+	:  id KW_EQ stringlit SCOL	{ $$ = new ConstDeclaration($1, $3); }
 	;
 
 	
@@ -568,8 +572,8 @@ funcblock
 
 formalparams
 	:									{ $$ = new ParameterList(); }
-	| LPAREN RPAREN						{ $$ = new ParameterList(); }
-	| LPAREN formalparamslst RPAREN		{ $$ = $2; }
+	| LPAR RPAR						{ $$ = new ParameterList(); }
+	| LPAR formalparamslst RPAR		{ $$ = $2; }
 	;
 
 formalparamslst
@@ -845,7 +849,7 @@ inheritedexpr
 inheritedcall
 	: 										{ $$ = null; }
 	| identifier							{ $$ = new RoutineCall($1); }
-	| identifier LPAREN exprlstopt RPAREN	{ $$ = new RoutineCall($1,$3); }
+	| identifier LPAR exprlstopt RPAR		{ $$ = new RoutineCall($1,$3); }
 	;
 	
 identifier
@@ -855,13 +859,13 @@ identifier
 	// routine call to be used as a statement
 routinecall
 	: identifier							{ $$ = new RoutineCall($1); }
-	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCall($1, $3); }
+	| lvalue LPAR exprlstopt RPAR			{ $$ = new RoutineCall($1, $3); }
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	;
 	
 lvalue	// lvalue
 	: identifier							{ $$ = ResolveId($1); }
-	| lvalue LPAREN exprlstopt RPAREN		{ $$ = new RoutineCall($1, $3); }
+	| lvalue LPAR exprlstopt RPAR			{ $$ = new RoutineCall($1, $3); }
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
@@ -870,7 +874,7 @@ lvalue	// lvalue
 											 else
 												$$ = new ArrayAccess(new ArrayConst($1), new ExpressionList($3));
 											}
-	| LPAREN expr RPAREN					{ $$ = $2; }
+	| LPAR expr RPAR						{ $$ = $2; }
 	;
 
 //	Log.Instance().Write(logWarning,'AL',Proc+' not avaliable.');
@@ -1017,7 +1021,7 @@ rangestart
 	;
 
 enumtype
-	: LPAREN enumelemlst RPAREN		{ $$ = new EnumType($2); }
+	: LPAR enumelemlst RPAR		{ $$ = new EnumType($2); }
 	;
 
 enumelemlst
@@ -1057,13 +1061,13 @@ constsec
 	;
 
 constdecl
-	: id KW_EQ constinitexpr  SCOL				{ $$ = new ConstDeclaration($1, $3); }	// true const
-	| id COLON vartype KW_EQ constinitexpr SCOL	{ $$ = new ConstDeclaration($1, $5, $3); }		// typed const
-	| id COLON proceduraltype funcdir_noterm_opt
-							functypeinit SCOL	{ $$ = new ConstDeclaration($1, $5, $3); $3.Directives = $4; }
+	: id KW_EQ constexpr SCOL					{ $$ = new ConstDeclaration($1, $3); }	// true const
+	| id COLON vartype KW_EQ constinit SCOL		{ $$ = new ConstDeclaration($1, $5, $3); }		// typed const
+	| id COLON proceduraltype 
+		funcdir_noterm_opt functypeinit SCOL	{ $$ = new ConstDeclaration($1, $5, $3); $3.Directives = $4; }
 	;
 	
-constinitexpr
+constinit
 	: constexpr				{ $$ = $1; }
 	| arrayconst			{ $$ = $1; }
 	| recordconst			{ $$ = $1; }
@@ -1072,20 +1076,24 @@ constinitexpr
 constexpr
 	: expr					{ $$ = new ConstExpression($1); }
 	;
-	
+
+arrayexpr
+	: constexpr				{ $$ = $1; }
+	| arrayconst			{ $$ = $1; }
+	;
 
 	// 1 or more exprs
 arrayconst
-	: LPAREN constexpr COMMA constinitexprlst RPAREN	{ $4.InsertAt(0, $2); $$ = new ArrayConst($4); }
+	: LPAR arrayexpr COMMA arrayexprlst RPAR	{ $4.InsertAt(0, $2); $$ = new ArrayConst($4); }
 	;
 
-constinitexprlst
-	: constexpr								{ $$ = new ExpressionList($1); }
-	| constinitexprlst COMMA constexpr		{ $$ = ListAdd<ExpressionList,Expression>($1, $3); }
+arrayexprlst
+	: arrayexpr								{ $$ = new ExpressionList($1); }
+	| arrayexprlst COMMA arrayexpr			{ $$ = ListAdd<ExpressionList,Expression>($1, $3); }
 	;
 
 recordconst
-	: LPAREN fieldconstlst scolopt RPAREN	{$$ = new RecordConst($2); }
+	: LPAR fieldconstlst scolopt RPAR		{$$ = new RecordConst($2); }
 	;
 
 fieldconstlst
@@ -1094,7 +1102,7 @@ fieldconstlst
 	;
 
 fieldconst
-	: id COLON constinitexpr				{ $$ = new FieldInit($1, $3); }
+	: id COLON constinit					{ $$ = new FieldInit($1, $3); }
 	;
 
 
@@ -1128,7 +1136,7 @@ recfieldlst
 	;
 
 recfield
-	: constexpr COLON LPAREN recvarlst scolopt RPAREN	{ $$ = null; /* TODO */ }
+	: constexpr COLON LPAR recvarlst scolopt RPAR	{ $$ = null; /* TODO */ }
 	;
 	
 recvarlst
@@ -1150,31 +1158,35 @@ recvar
 
 	// Objects are treated as classes
 classtype
-	: kwclass heritage classbody KW_END	{ $$ = null; } // new ClassDefinition(0, $2, $3);  }
-	| kwclass heritage					{ $$ = null; } // new ClassDefinition(0, $2, null);} // forward decl
+	: kwclass heritage classbody KW_END	{ $$ = new ClassDeclaration($2, $3);  }
+	| kwclass heritage					{ $$ = new ClassDeclaration($2); } // forward decl
 	;
 
 heritage
 	:							{ $$ = new ArrayList(); }
-	| LPAREN idlst RPAREN		{ $$ = $2; }		// inheritance from class and interf(s)			
+	| LPAR idlst RPAR			{ $$ = $2; }		// inheritance from class and interf(s)			
 	;
 
 classbody
-	: fieldlst SCOL	complst scopeseclst		{ $$ = null; } // new ClassBody(Scope.Public, $3, $4);  }
-	|				complst scopeseclst		{ $$ = null; } // new ClassBody(Scope.Public, $1, $2);  }
+	: class1stsec scopeseclst			{ $$ = new ClassBody(ListAdd<ScopedSectionList,ScopedSection>($2, $1));  }
 	;
 
+class1stsec
+	: fieldlst SCOL	classcomplstopt 	{ $$ = new ScopedSection(Scope.Published,   $1, $3); }
+	|				classcomplstopt 	{ $$ = ($1 == null)? null : new ScopedSection(Scope.Published, null, $1); }
+	;
+	
 scopeseclst
-	:							{ $$ = new DeclarationList(); }
-	| scopeseclst scopesec		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
+	:							{ $$ = new ScopedSectionList(); }
+	| scopeseclst scopesec		{ $$ = ListAdd<ScopedSectionList,ScopedSection>($1, $2); }
 	;
 
 scopesec
-	: scope_decl fieldlst SCOL complst	{ $$ = null; } // new ClassBody($1, $2, $4);  }
-	| scope_decl			   complst	{ $$ = null; } // new ClassBody($1, null, $2);  }
+	: scopedecl fieldlst SCOL classcomplstopt	{ $$ = new ScopedSection($1, $2, $4); }
+	| scopedecl               classcomplstopt	{ $$ = new ScopedSection($1, null, $2); }
 	;
 	
-scope_decl
+scopedecl
 	: KW_PUBLISHED				{ $$ = Scope.Published; }
 	| KW_PUBLIC					{ $$ = Scope.Public; }
 	| KW_PROTECTED				{ $$ = Scope.Protected; }
@@ -1182,19 +1194,24 @@ scope_decl
 	;
 
 fieldlst
-	: objfield					{ $$ = new DeclarationList($1); }
-	| fieldlst SCOL objfield	{ $$ = ListAdd<DeclarationList,Declaration>($1, $3); }
+	: objfield					{ $$ = new FieldList($1); }
+	| fieldlst SCOL objfield	{ $$ = ListAdd<FieldList,FieldDeclaration>($1, $3); }
 	;
 	
-complst
-	:							{ $$ = new DeclarationList(); }
-	| complst classcomp			{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
-	;
-
 objfield
 	: idlst COLON vartype		{ $$ = new FieldDeclaration($1, $3); }
 	| idlst COLON proctypefield	{ $$ = new FieldDeclaration($1, $3);  }
 //	| idlst COLON proceduraltype funcdir_noterm_opt	{ $$ = null; }
+	;
+
+classcomplstopt
+	:							{ $$ = new DeclarationList(); }
+	| classcomplst				{ $$ = $1; }
+	;
+	
+classcomplst
+	: classcomp					{ $$ = new DeclarationList($1); }
+	| classcomplst classcomp	{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 	
 classcomp
@@ -1204,42 +1221,37 @@ classcomp
 	;
 
 interftype
-	: kwinterf heritage guid classmethodlstopt classproplstopt KW_END	{ $$ = null; } // new InterfaceDefinition($2, $4, $5); }
-	| kwinterf heritage classmethodlstopt classproplstopt KW_END		{ $$ = null; } // new InterfaceDefinition($2, $3, $4); }
-	| kwinterf heritage %prec LOWESTPREC								{ $$ = null; /* TODO */ }
+	: kwinterf heritage guid interfbody KW_END	{ $$ = new InterfaceDeclaration($2, $3, $4); }
+	| kwinterf heritage 						{ $$ = new InterfaceDeclaration($2); }
 	;
 
+interfbody
+	: interfcomplst				{ $$ = new InterfaceBody(new ScopedSection(Scope.Public, null, $1)); }
+	;
+	
+interfcomplst
+	: interfcomp				{ $$ = new DeclarationList(); }
+	| interfcomplst interfcomp	{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
+	;
+	
+interfcomp
+	: methoddecl				{ $$ = $1; }
+	| property					{ $$ = $1; }
+	;
+	
 guid
-	: LBRAC stringconst RBRAC	{ /* ignored */ }
-	| LBRAC lvalue RBRAC		{ /* ignored */ }
+	:							{ $$ = null; }
+	| LBRAC stringlit RBRAC		{ $$ = $2; }
+	| LBRAC lvalue RBRAC		{ $$ = $2 }
 	;
 
-classmethodlstopt
-	: methodlst					{ $$ = $1; }
-	|							{ $$ = null; }
-	;
-
-methodlst
-	: methoddecl				{ $$ = new DeclarationList($1); }
-	| methodlst methoddecl		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
-	;
-
+	
 	
 	
 	// ===================================================================================
 	// Properties
 	// ===================================================================================
 	
-classproplstopt
-	: classproplst				{ $$ = $1; }
-	|							{ $$ = null; }
-	;
-
-classproplst
-	: property					{ $$ = new NodeList($1); }
-	| classproplst property		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
-	;
-
 property
 	: KW_PROPERTY id SCOL		{ $$ = null; }
 	| KW_PROPERTY id propinterfopt COLON funcrettype propspecifiers SCOL defaultdiropt { $$ = null; } // new ClassProperty($2, $5, $6, $3, $8); }

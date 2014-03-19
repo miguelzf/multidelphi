@@ -88,22 +88,6 @@ namespace crosspascal.ast.nodes
 		// In file Composites.cs
 	}
 
-	/// <summary>
-	/// Type of a Class
-	/// </summary>
-	public partial class ClassType : CompositeType
-	{
-		// In file Composites.cs
-	}
-
-	/// <summary>
-	/// Type of an Interface
-	/// </summary>
-	public partial class InterfaceType : CompositeType
-	{
-		// In file Composites.cs
-	}
-
 
 	/// <summary>
 	/// Variable types: types can be used in simple variable declarations

@@ -235,7 +235,7 @@ on			{ return KW_ON; }
 	
 	"("			{	switchstate(XFUNCW_RET);
 					yypushstate(INITIAL);
-					return LPAREN;
+					return LPAR;
 				}
 	";"			{	switchstate(XFUNCDIRECTS);
 					yybegin(XFUNCDIRECTS);
@@ -457,13 +457,13 @@ false				{ yylval = false; return CONST_BOOL; }
 ":"			{ return COLON; }
 ","			{ return COMMA; }
 "["			{ return LBRAC; }
-"("			{ return LPAREN; }
+"("			{ return LPAR; }
 "]"			{ return RBRAC;	}
 
 ";"			{	if (yylaststate() == XFUNCDIRECTS) yypopstate(); return SCOL;
 			}
 
-")"			{	if (yylaststate() == XFUNCW_RET) yypopstate(); return RPAREN;
+")"			{	if (yylaststate() == XFUNCW_RET) yypopstate(); return RPAR;
 			}
 
 	/* expr: general */

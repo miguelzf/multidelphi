@@ -124,3 +124,4 @@ UpgradeLog*.XML
 /src/parser/yacc.*
 /src/parser/DelphiPreprocessor.cs
 /src/CppProgram.cs
+/src/testunits/TestDriver.cs

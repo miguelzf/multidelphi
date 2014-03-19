@@ -125,10 +125,12 @@ namespace crosspascal.ast.nodes
 	{
 		public bool isStatic { get; set; }
 		public String objname;
+		public String metname;
 
 		public MethodDeclaration(string name, string objname, ParameterList @params, ScalarType ret = null, MethodDirectives dirs = null)
-			: base(name, @params, ret, dirs)
+			: base(objname+"."+name, @params, ret, dirs)
 		{
+			this.metname = name;
 			this.objname = objname;
 			isStatic = false;
 		}
