@@ -350,7 +350,8 @@ namespace crosspascal.ast.nodes
 
 			var ed = (ExternalDirective)obj;
 			return File == ed.File && Name == ed.Name;
-		}	}
+		}
+	}
 
 
 	/// <summary>

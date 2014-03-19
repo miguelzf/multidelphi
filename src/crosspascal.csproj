@@ -49,8 +49,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>
-    </StartupObject>
+    <StartupObject>crosspascal.testunits.CppProgram</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -93,7 +92,6 @@
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
     <Compile Include="testunits\CppProgram.cs" />
-    <Compile Include="testunits\TestDriver.cs" />
     <Compile Include="testunits\TestProgram.cs" />
     <Compile Include="utils\Logger.cs" />
     <Compile Include="core\AssemblyInfo.cs" />

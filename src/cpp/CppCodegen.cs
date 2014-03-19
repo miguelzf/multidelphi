@@ -22,7 +22,16 @@ namespace crosspascal.cpp
 				Console.WriteLine("");
 		}
 
-		
+
+        public void PushIdent()
+        {
+            ident++;
+        }
+
+        public void PopIdent()
+        {
+            ident--;
+        }
 
 		public override bool Visit(Node node)
 		{
@@ -49,47 +58,66 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(NodeList node)
 		{
+            foreach (Node n in node)
+                traverse(n); 
+
 			return true;
 		}
 		
 		public override bool Visit(StatementList node)
 		{
-			return true;
+            foreach (Node n in node)
+                traverse(n); 
+            return true;
 		}
 		
 		public override bool Visit(TypeList node)
 		{
-			return true;
+            foreach (Node n in node)
+                traverse(n);
+            return true;
 		}
 		
 		public override bool Visit(IntegralTypeList node)
 		{
-			return true;
+            foreach (Node n in node)
+                traverse(n);
+            return true;
 		}
 		
 		public override bool Visit(IdentifierList node)
 		{
-			return true;
+            foreach (Node n in node)
+                traverse(n);
+            return true;
 		}
 		
 		public override bool Visit(DeclarationList node)
 		{
-			return true;
+            foreach (Node n in node)
+                traverse(n);
+            return true;
 		}
 		
 		public override bool Visit(EnumValueList node)
 		{
-			return true;
+            foreach (Node n in node)
+                traverse(n);
+            return true;
 		}
 		
 		public override bool Visit(ParameterList node)
 		{
-			return true;
+            foreach (Node n in node)
+                traverse(n);
+            return true;
 		}
 		
 		public override bool Visit(FieldList node)
 		{
-			return true;
+            foreach (Node n in node)
+                traverse(n);
+            return true;
 		}
 		
 		public override bool Visit(CompilationUnit node)
@@ -245,10 +273,19 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(VarDeclaration node)
 		{
-			Visit((ValueDeclaration) node);
-			traverse(node.init);
-			return true;
-		}
+            traverse(node.type);
+            int i = 0;
+            foreach (string name in node.names)
+            {
+                outputCode(name, false, false);
+                i++;
+                if (i < node.names.Count)
+                    outputCode(",", false, false);
+            }
+            traverse(node.init);
+            outputCode(";", false, true);
+            return true;
+        }
 		
 		public override bool Visit(ParameterDeclaration node)
 		{
@@ -283,8 +320,10 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(ConstDeclaration node)
 		{
-			Visit((ValueDeclaration) node);
+            string name = node.names[0] as string;
+            outputCode("#define "+name+" ", false, false);			
 			traverse(node.init);
+            outputCode("", false, true);			
 			return true;
 		}
 		
@@ -304,6 +343,16 @@ namespace crosspascal.cpp
 		{
 			Visit((TypeDeclaration) node);
 			traverse(node.Type);
+            string name = node.names[0] as string;
+            outputCode(name, false, false);
+            outputCode("(", false, false);
+            ProceduralType pp = node.type as ProceduralType;
+            ParameterList p = pp.@params;
+            foreach (ParameterDeclaration pd in p)
+            {
+                traverse(pd);
+            }
+            outputCode(")", false, false);
 			traverse(node.Directives);
 			return true;
 		}
@@ -592,11 +641,14 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(BlockStatement node)
 		{
-			Visit((Statement) node);
-			traverse(node.stmts);
-			outputCode("BLOCK STATEMENT", true, true);
-			return true;
-		}
+            outputCode("{", true, true);
+            PushIdent();
+            Visit((Statement)node);
+            traverse(node.stmts);
+            PopIdent();
+            outputCode("}", true, true);
+            return true;
+        }
 		
 		public override bool Visit(WithStatement node)
 		{
@@ -1112,6 +1164,7 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(StringType node)
 		{
+            outputCode("std::string ", false, false);
 			Visit((ScalarType) node);
 			return true;
 		}

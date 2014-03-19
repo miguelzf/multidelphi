@@ -19,7 +19,7 @@ namespace crosspascal.testunits
 
 			Console.WriteLine("CrossPascal Delphi compiler");
 
-			DelphiParser parser = new DelphiParser(2);
+			DelphiParser parser = new DelphiParser(0);
 			DelphiPreprocessor preproc = new DelphiPreprocessor();
 			preproc.LoadIncludePaths("include-paths.txt");
 
