@@ -86,8 +86,8 @@ namespace crosspascal.parser
 				throw yye; // new InputRejected(GetErrorMessage(yye));
 			}
 
-			if (!parserRet.GetType().IsSubclassOf(typeof(CompilationUnit)))
-				throw new ParserException();
+			if (!(parserRet is CompilationUnit))
+				throw new ParserException("Non-final node derived from parsing:"  + parserRet.GetType());
 
 			return (CompilationUnit)parserRet;
 		}

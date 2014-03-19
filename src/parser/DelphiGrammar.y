@@ -475,31 +475,31 @@ kwprocedureptr
 	// Declaration/interface contexts
 	
 kwfunction
-	: KW_FUNCTION  id	{ DeclReg.EnterContext(); return $2; }
+	: KW_FUNCTION  id	{ DeclReg.EnterContext(); $$ = $2; }
 	;
 kwprocedure
-	: KW_PROCEDURE id	{ DeclReg.EnterContext(); return $2; }
+	: KW_PROCEDURE id	{ DeclReg.EnterContext(); $$ = $2; }
 	;
 kwconstructor
-	: KW_CONSTRUCTOR id	{ DeclReg.EnterContext($2); return $2; }
+	: KW_CONSTRUCTOR id	{ DeclReg.EnterContext($2); $$ = $2; }
 	;
 kwdestructor
-	: KW_DESTRUCTOR  id { DeclReg.EnterContext($2); return $2; }
+	: KW_DESTRUCTOR  id { DeclReg.EnterContext($2); $$ = $2; }
 	;
 
 	// Definition/implementation contexts
 	
 kwmetfunction
-	: KW_FUNCTION    id KW_DOT	{ DeclReg.EnterMethodContext($2); return $2; }
+	: KW_FUNCTION    id KW_DOT	{ DeclReg.EnterMethodContext($2); $$ = $2; }
 	;
 kwmetprocedure
-	: KW_PROCEDURE   id KW_DOT	{ DeclReg.EnterMethodContext($2); return $2; }
+	: KW_PROCEDURE   id KW_DOT	{ DeclReg.EnterMethodContext($2); $$ = $2; }
 	;
 kwmetconstruct
-	: KW_CONSTRUCTOR id KW_DOT	{ DeclReg.EnterMethodContext($2); return $2; }
+	: KW_CONSTRUCTOR id KW_DOT	{ DeclReg.EnterMethodContext($2); $$ = $2; }
 	;
 kwmetdestruct
-	: KW_DESTRUCTOR  id KW_DOT	{ DeclReg.EnterMethodContext($2); return $2; }
+	: KW_DESTRUCTOR  id KW_DOT	{ DeclReg.EnterMethodContext($2); $$ = $2; }
 	;	
 
 	// Object contexts

@@ -22,13 +22,18 @@ namespace crosspascal.parser
 		public void LoadIncludePaths(string fname)
 		{
 			string line;
-			using (StreamReader file = new StreamReader(fname, DelphiParser.DefaultEncoding))
-				while((line = file.ReadLine()) != null)
-				{
-					string path = line.Trim();
-					if (path.Length > 0 && Directory.Exists(path))
-						AddIncludePath(path);
-				}
+			try 
+			{	using (StreamReader file = new StreamReader(fname, DelphiParser.DefaultEncoding))
+					while((line = file.ReadLine()) != null)
+					{
+						string path = line.Trim();
+						if (path.Length > 0 && Directory.Exists(path))
+							AddIncludePath(path);
+					}
+			}
+			catch (FileNotFoundException)
+			{	pperror("File " + fname + " not found");
+			}
 		}
 
 		public void AddIncludePath(string path)
