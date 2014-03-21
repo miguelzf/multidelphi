@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using crosspascal.core;
 
 namespace crosspascal.ast.nodes
 {
@@ -55,10 +56,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null)
-				return false;
-
-			return (this.GetType() == o.GetType());
+			throw new InvalidAbstractException("Base class TypeNode Equals");
 		}
 	}
 
@@ -269,8 +267,8 @@ namespace crosspascal.ast.nodes
 	///	==========================================================================
 	/// <remarks>
 	///	ScalarType
-	///		ScalarTypeForward	- temporary, to be resolved when the pointed type is declalred
-	///		DiscreteType		: IOrdinalType
+	///		ScalarTypeForward	- temporary, to be resolved when the pointed type is declared
+	///		IntegralType		: IOrdinalType
 	///			IntegerType
 	///				UnsignedInt	...
 	///				SignedInt	...
@@ -294,10 +292,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override bool Equals(Object o)
 		{
-			if (o == null)
-				return false;
-
-			return (this.GetType() == o.GetType());
+			throw new InvalidAbstractException("ScalarType Equals");
 		}
 	}
 
@@ -318,6 +313,14 @@ namespace crosspascal.ast.nodes
 	public class StringType : ScalarType
 	{
 		public static readonly StringType Single = new StringType();
+
+		public override bool Equals(Object o)
+		{
+			if (o == null)
+				return false;
+
+			return ReferenceEquals(this, o);
+		}
 	}
 
 	public class FixedStringType : ScalarType
@@ -348,6 +351,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
+			// TODO
 			return true;
 		}
 	}
@@ -385,7 +389,7 @@ namespace crosspascal.ast.nodes
 			if (o == null)
 				return false;
 
-			return (this.GetType() == o.GetType());
+			return ReferenceEquals(this, o);
 		}
 
 		// Should not be used
@@ -556,7 +560,7 @@ namespace crosspascal.ast.nodes
 			if (o == null)
 				return false;
 
-			return (this.GetType() == o.GetType());
+			return ReferenceEquals(this, o);
 		}
 	}
 
