@@ -82,7 +82,7 @@
     <Compile Include="parser\DelphiParser.cs" />
     <Compile Include="parser\DelphiParserSupport.cs" />
     <Compile Include="parser\DelphiPreprocessor.cs" />
-    <Compile Include="parser\DelphiProcessorSupport.cs" />
+    <Compile Include="parser\DelphiPreprocessorSupport.cs" />
     <Compile Include="parser\DelphiScanner.cs" />
     <Compile Include="parser\IScanner.cs" />
     <Compile Include="parser\ParserDebug.cs" />
