@@ -63,12 +63,18 @@ namespace crosspascal.testunits
 			sw.Stop();
 			Console.WriteLine("READING from StringStream all files took " + (sw.ElapsedMilliseconds / 1000.0) + " secs");
 
-			//Processor myProcessor = new PrintAST();			
-			 Processor myProcessor = new CppCodegen();
-			
+           /*
+            AstPrinter astPrinter = new AstPrinter();
+            MapTraverser mt = new MapTraverser(astPrinter);
+            mt.traverse(tree);
+            Console.WriteLine(astPrinter);
+            */
+            
+            Processor myProcessor = new CppCodegen();			
 			Console.WriteLine("Now compiling...");
 			MapTraverser mt = new MapTraverser(myProcessor);
 			mt.traverse(tree);
+            
 
 			Console.WriteLine("Done!");
 			Console.ReadLine();

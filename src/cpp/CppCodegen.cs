@@ -600,11 +600,15 @@ namespace crosspascal.cpp
 		}
 
 		public override bool Visit(BlockStatement node)
-		{
-			Visit((Statement) node);
-			traverse(node.stmts);
-			return true;
-		}
+        {
+            outputCode("{", true, true);
+            PushIdent();
+            Visit((Statement)node);
+            traverse(node.stmts);
+            PopIdent();
+            outputCode("}", true, true);
+            return true;
+        }
 
 		public override bool Visit(WithStatement node)
 		{
@@ -978,7 +982,7 @@ namespace crosspascal.cpp
 
 		public override bool Visit(StringLiteral node)
 		{
-			Visit((Literal) node);
+            outputCode('"'+(node.Value as StringValue).val + '"', false, false);
 			return true;
 		}
 
@@ -1111,6 +1115,7 @@ namespace crosspascal.cpp
 
 		public override bool Visit(StringType node)
 		{
+            outputCode("std::string ", true, false);
 			Visit((ScalarType) node);
 			return true;
 		}

@@ -14,9 +14,7 @@ Const
 
 Function Str1():String;
 Begin
-  Result := X + Str1;
-  
-  str1 := Result - Str1;
+  Result := X;
 End;
 
 Var

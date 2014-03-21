@@ -16,7 +16,7 @@ namespace crosspascal.core
 		DelphiParser parser;
 		DelphiPreprocessor preprocessor;
 
-		const int DefaultDebugLevel = 1;
+		public const int DefaultDebugLevel = 1;
 
 		public int DebugLevel;
 
