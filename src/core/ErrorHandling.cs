@@ -46,6 +46,10 @@ namespace crosspascal.core
 		public InvalidAbstractException(int lineno, string message) : base(lineno, message + DefaultMsg) { }
 
 		public InvalidAbstractException(string message) : base(message + DefaultMsg) { }
+
+		public InvalidAbstractException(int lineno, Object thrower, string met) : this(lineno, thrower + " " + met) { }
+
+		public InvalidAbstractException(Object thrower, string met) : this(thrower + " " + met) { }
 	}
 
 
