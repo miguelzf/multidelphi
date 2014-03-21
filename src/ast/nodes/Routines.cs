@@ -52,19 +52,13 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null || this.GetType() != o.GetType())
+			if (o == null || !(o is ProceduralType))
 				return false;
 
-			ProceduralType rtype = (ProceduralType)o;
-			var types = @params.Zip(rtype.@params,
-				(x, y) => {
-					return new KeyValuePair<TypeNode, TypeNode>(x.type, y.type);
-				});
+			ProceduralType ft = (ProceduralType)o;
 
-			foreach (var x in types)
-				if (!x.Key.Equals(x.Value))
-					return false;
-			return true;
+			return funcret.Equals(ft.funcret) && Directives.Equals(ft.Directives)
+				&& @params.SequenceEqual(ft.@params);
 		}
 	}
 
@@ -235,10 +229,10 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(object o)
 		{
-			if (o == null || !o.GetType().IsSubclassOf(this.GetType()))
+			if (o == null || !(o is CallableDirectives))
 				return false;
 			CallableDirectives rtype = (CallableDirectives) o;
-			return Callconv == rtype.Callconv && generaldirs == rtype.generaldirs;
+			return Callconv == rtype.Callconv && generaldirs.SequenceEqual(rtype.generaldirs);
 		}
 	}
 
@@ -325,7 +319,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(object o)
 		{
-			return base.Equals(o) && methoddirs == ((MethodDirectives) o).methoddirs;
+			return base.Equals(o) && methoddirs.SequenceEqual(((MethodDirectives) o).methoddirs);
 		}
 	}
 
@@ -347,13 +341,17 @@ namespace crosspascal.ast.nodes
 			Name.ForcedType = StringType.Single;
 		}
 
+		/// <summary>
+		/// Compares strings File and Name
+		/// Previous constant folding required.
+		/// </summary>
 		public override bool Equals(object obj)
 		{
 			if (!(obj is ExternalDirective))
 				return false;
 
 			var ed = (ExternalDirective)obj;
-			return File == ed.File && Name == ed.Name;
+			return File.Equals(ed.File) && Name.Equals(ed.Name);
 		}
 	}
 

@@ -46,7 +46,7 @@ namespace crosspascal.ast.nodes
 	/// 			Array > VariableType 
 	/// 			Set	  > VariableType 
 	/// 			File  > VariableType
-	///		 		Record !??
+	///		 		Record > variabletype...
 	/// </remarks>
 	#endregion
 
@@ -56,7 +56,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			throw new InvalidAbstractException("Base class TypeNode Equals");
+			throw new InvalidAbstractException(this, "Equals");
 		}
 	}
 
@@ -68,6 +68,11 @@ namespace crosspascal.ast.nodes
 	{
 		public static readonly UndefinedType Single = new UndefinedType();
 
+		public override bool Equals(Object o)
+		{
+			// An Undefined is never equal to anything
+			return false;
+		}
 	}
 
 	/// <summary>
@@ -84,6 +89,14 @@ namespace crosspascal.ast.nodes
 	public partial class CompositeType : TypeNode
 	{
 		// In file Composites.cs
+
+		/// <summary>
+		/// Classes and interfaces are always references, use reference comparison.
+		/// </summary>
+		public override bool Equals(Object o)
+		{
+			return this == o;
+		}
 	}
 
 
@@ -94,6 +107,11 @@ namespace crosspascal.ast.nodes
 	{
 		// TODO each derive should set the typesize
 		public int typeSize;
+
+		public override bool Equals(Object o)
+		{
+			throw new InvalidAbstractException(this, "Equals");
+		}
 	}
 
 	public class MetaclassType : VariableType
@@ -107,11 +125,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null || this.GetType() != o.GetType())
-				return false;
-
-			MetaclassType rtype = (MetaclassType) o;
-			return (this.Equals(rtype));
+			return (o is MetaclassType) && baseType.Equals((o as MetaclassType).baseType);
 		}
 	}
 
@@ -120,6 +134,12 @@ namespace crosspascal.ast.nodes
 	{
 		public static readonly UndefinedType Single = new UndefinedType();
 
+
+		public override bool Equals(Object o)
+		{
+			// An Unknown is never equal
+			return false;
+		}
 	}
 
 
@@ -150,20 +170,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null || this.GetType() != o.GetType())
-				return false;
-
-			EnumType rtype = (EnumType)o;
-			var types = enumVals.Zip(rtype.enumVals,
-				(x, y) => {
-					return new KeyValuePair<TypeNode, TypeNode>(x.type, y.type);
-				});
-
-			foreach (var x in types)
-				if (!x.Key.Equals(x.Value))
-					return false;
-
-			return true;
+			return (o is EnumType) && enumVals.SequenceEqual((o as EnumType).enumVals);
 		}
 
 		public EnumType(EnumValueList enumVals)
@@ -248,12 +255,17 @@ namespace crosspascal.ast.nodes
 			return ret;
 		}
 
+		/// <summary>
+		/// Compares the Range's limits. 
+		/// Limits must have been determined by constant folding prior to this
+		/// </summary>
 		public override bool Equals(Object o)
 		{
-			if (o == null || this.GetType() != o.GetType())
+			if (!(o is RangeType))
 				return false;
 
-			return	min.Equals(((RangeType)o).min) && max.Equals(((RangeType)o).max);
+			var or = (RangeType)o;
+			return	MinValue() == or.MinValue() && MaxValue() == or.MaxValue();
 		}
 	}
 
@@ -292,7 +304,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override bool Equals(Object o)
 		{
-			throw new InvalidAbstractException("ScalarType Equals");
+			throw new InvalidAbstractException(this, "Equals");
 		}
 	}
 
@@ -316,14 +328,11 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null)
-				return false;
-
-			return ReferenceEquals(this, o);
+			return this == o;
 		}
 	}
 
-	public class FixedStringType : ScalarType
+	public class FixedStringType : StringType
 	{
 		public ConstExpression expr;
 		public int Len { get; set; }
@@ -337,6 +346,15 @@ namespace crosspascal.ast.nodes
 				Error("String too long. Maximum alloweed is 255");
 			Len = (int)len;
 		 */
+		}
+
+		/// <summary>
+		/// Compares string length.
+		/// Length must have been determined previously by constant folding the expr
+		/// </summary>
+		public override bool Equals(Object o)
+		{
+			return (o is FixedStringType) && Len == (o as FixedStringType).Len;
 		}
 	}
 
@@ -369,11 +387,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null || this.GetType() != o.GetType())
-				return false;
-
-			PointerType otype = (PointerType) o;
-			return pointedType.Equals(otype.pointedType);
+			return (o is PointerType) && pointedType.Equals((o as PointerType).pointedType);
 		}
 	}
 
@@ -386,10 +400,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null)
-				return false;
-
-			return ReferenceEquals(this, o);
+			return (this == o);
 		}
 
 		// Should not be used
@@ -557,10 +568,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null)
-				return false;
-
-			return ReferenceEquals(this, o);
+			return (this == o);
 		}
 	}
 
@@ -617,10 +625,13 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null || this.GetType() != o.GetType())
+			if (!(o is StructuredType))
 				return false;
 
-			StructuredType otype = (StructuredType)o;
+			StructuredType otype = (StructuredType) o;
+			if (IsPacked != otype.IsPacked)
+				return false;
+
 			return basetype.Equals(otype.basetype);
 		}
 	}
@@ -667,14 +678,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null || this.GetType() != o.GetType())
-				return false;
-
-			ArrayType otype = (ArrayType) o;
-			if (!dimensions.Equals(otype.dimensions))
-				return false;
-
-			return basetype.Equals(otype.basetype);
+			return (o is ArrayType) && dimensions.SequenceEqual((o as ArrayType).dimensions);
 		}
 	}
 
@@ -685,11 +689,21 @@ namespace crosspascal.ast.nodes
 			if (!(type is IOrdinalType))
 				Error("Base type of Set must be ordinal");
 		}
+
+		public override bool Equals(Object o)
+		{
+			return base.Equals(o) && (o is SetType);
+		}
 	}
 
 	public class FileType : StructuredType
 	{
 		public FileType(VariableType type = null) : base(type) { }
+
+		public override bool Equals(Object o)
+		{
+			return base.Equals(o) && (o is FileType);
+		}
 	}
 
 	/// <summary>
@@ -710,22 +724,8 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(Object o)
 		{
-			if (o == null || this.GetType() != o.GetType())
-				return false;
-
-			RecordType rtype = (RecordType)o;
-			var types = compTypes.Zip(rtype.compTypes,
-				(x, y) =>
-				{
-					return new KeyValuePair<TypeNode, TypeNode>(x.type, y.type);
-				});
-
-			foreach (var x in types)
-				if (!x.Key.Equals(x.Value))
-					return false;
-
-			// types.ForEach( (x) => {	if (!x.Key.Equals(x.Value.Equals)) return false; });
-			return true;
+			return base.Equals(o) && (o is RecordType)
+				&& compTypes.SequenceEqual((o as RecordType).compTypes);
 		}
 	}
 

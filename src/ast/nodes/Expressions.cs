@@ -68,7 +68,7 @@ namespace crosspascal.ast.nodes
 
 
 		/// <summary>
-		/// Downcast the ConstantValue to an IntegralType, and return the content
+		/// Downcast the ConstantValue to an IntegralType, and return the content.
 		/// The type of the expression must be checked first to ensure
 		/// </summary>
 		public ulong ValueIntegral()
@@ -80,12 +80,6 @@ namespace crosspascal.ast.nodes
 			}
 
 			return (Value as IntegralValue).val;
-		}
-
-
-		public bool Equals(Expression obj)
-		{
-			return obj != null && Value.Equals(obj) && Type.Equals(obj);
 		}
 	}
 
@@ -133,6 +127,21 @@ namespace crosspascal.ast.nodes
 			this.expr = expr;
 			this.EnforceConst = true;
 			expr.EnforceConst = true;
+		}
+
+		/// <summary>
+		/// Compare constants
+		/// </summary>
+		public override bool Equals(object obj)
+		{
+			if (!(obj is ConstExpression))
+				return false;
+
+			var ot  = (obj as ConstExpression);
+			if (!expr.Type.Equals(ot.Type))
+				return false;
+
+			return expr.Value.Equals(ot.Value);
 		}
 	}
 
@@ -442,10 +451,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(object obj)
 		{
-			if (obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return val == ((IntegralValue)obj).val;
+			return (obj is IntegralValue) && val == ((IntegralValue)obj).val;
 		}
 
 		// Assumes the values belong same-type constants
@@ -520,10 +526,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(object obj)
 		{
-			if (obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return val == ((StringValue)obj).val;
+			return (obj is StringValue) && val == ((StringValue)obj).val;
 		}
 	}
 
@@ -534,10 +537,7 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(object obj)
 		{
-			if (obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return val == ((RealValue)obj).val;
+			return (obj is RealValue) && val == ((RealValue)obj).val;
 		}
 	}
 

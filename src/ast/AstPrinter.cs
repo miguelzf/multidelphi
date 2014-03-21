@@ -61,7 +61,9 @@ namespace crosspascal.ast
 				string fname = f.Name;
 				if (f.FieldType.Name.Equals("string", scase))
 				{
-					if (fname.EndsWith("name", scase) || fname.EndsWith("id", scase) || fname.StartsWith("id", scase))
+					if (fname.EndsWith("name", scase)
+					|| fname.EndsWith("id", scase)
+					|| fname.StartsWith("id", scase))
 						names += " " + f.GetValue(n);
 				}
 			}
