@@ -339,7 +339,7 @@ namespace crosspascal.cpp
             {
                 traverse(pd);
             }
-            outputCode(")", false, false);
+            outputCode(")", false, true);
 			traverse(node.Directives);
 			return true;
 		}
@@ -535,9 +535,12 @@ namespace crosspascal.cpp
 
 		public override bool Visit(Assignement node)
 		{
-			Visit((Statement) node);
+			//Visit((Statement) node);
+            outputCode("", true, false);
 			traverse(node.lvalue);
+            outputCode(" = ", false, false);
 			traverse(node.expr);
+            outputCode(";", false, true);
 			return true;
 		}
 
@@ -558,8 +561,10 @@ namespace crosspascal.cpp
 
 		public override bool Visit(ExpressionStatement node)
 		{
-			Visit((Statement) node);
+            outputCode("", true, false);
+			//Visit((Statement) node);
 			traverse(node.expr);
+            outputCode(";", false, true);
 			return true;
 		}
 
@@ -974,7 +979,8 @@ namespace crosspascal.cpp
 
 		public override bool Visit(IntLiteral node)
 		{
-			Visit((OrdinalLiteral) node);
+			//Visit((OrdinalLiteral) node);
+            outputCode((node.Value as IntegralValue).val.ToString()+" ", false, false);
 			return true;
 		}
 
@@ -986,6 +992,10 @@ namespace crosspascal.cpp
 
 		public override bool Visit(BoolLiteral node)
 		{
+            if ((node.Value as IntegralValue).val != 0)
+                outputCode("true ", false, false);
+            else
+                outputCode("false ", false, false);
 			Visit((OrdinalLiteral) node);
 			return true;
 		}
@@ -998,12 +1008,14 @@ namespace crosspascal.cpp
 
 		public override bool Visit(RealLiteral node)
 		{
-			Visit((Literal) node);
+            outputCode((node.Value as RealValue).val.ToString()+ " ", false, false);
+			//Visit((Literal) node);
 			return true;
 		}
 
 		public override bool Visit(PointerLiteral node)
 		{
+            outputCode("null ", false, false);
 			Visit((Literal) node);
 			return true;
 		}
@@ -1039,10 +1051,12 @@ namespace crosspascal.cpp
 
 		public override bool Visit(RoutineCall node)
 		{
-			Visit((LvalueExpression) node);
+			//Visit((LvalueExpression) node);
 			traverse(node.func);
+            outputCode("(", false, false); 
 			traverse(node.args);
-			traverse(node.basictype);
+            outputCode(")", false, false);
+			//traverse(node.basictype);
 			return true;
 		}
 
@@ -1055,7 +1069,8 @@ namespace crosspascal.cpp
 
 		public override bool Visit(Identifier node)
 		{
-			Visit((LvalueExpression) node);
+			//Visit((LvalueExpression) node);
+            outputCode(node.name, false, false);
 			return true;
 		}
 
@@ -1177,61 +1192,71 @@ namespace crosspascal.cpp
 
 		public override bool Visit(UnsignedInt8Type node)
 		{
-			Visit((UnsignedIntegerType) node);
+			//Visit((UnsignedIntegerType) node);
+            outputCode("unsigned char ", false, false);
 			return true;
 		}
 
 		public override bool Visit(UnsignedInt16Type node)
 		{
-			Visit((UnsignedIntegerType) node);
+			//Visit((UnsignedIntegerType) node);
+            outputCode("unsigned short ", false, false);
 			return true;
 		}
 
 		public override bool Visit(UnsignedInt32Type node)
 		{
-			Visit((UnsignedIntegerType) node);
+            outputCode("unsigned int ", false, false);
+			//Visit((UnsignedIntegerType) node);
 			return true;
 		}
 
 		public override bool Visit(UnsignedInt64Type node)
 		{
-			Visit((UnsignedIntegerType) node);
+            outputCode("unsigned long long ", false, false);
+			//Visit((UnsignedIntegerType) node);
 			return true;
 		}
 
 		public override bool Visit(SignedInt8Type node)
 		{
-			Visit((SignedIntegerType) node);
+            outputCode("char ", false, false);
+			//Visit((SignedIntegerType) node);
 			return true;
 		}
 
 		public override bool Visit(SignedInt16Type node)
 		{
-			Visit((SignedIntegerType) node);
+            outputCode("short ", false, false);
+			//Visit((SignedIntegerType) node);
 			return true;
 		}
 
 		public override bool Visit(SignedInt32Type node)
 		{
-			Visit((SignedIntegerType) node);
+            outputCode("int ", false, false);
+			//Visit((SignedIntegerType) node);
 			return true;
 		}
 
 		public override bool Visit(SignedInt64Type node)
 		{
-			Visit((IntegerType) node);
+            outputCode("long long ", false, false);
+			//Visit((IntegerType) node);
 			return true;
 		}
 
 		public override bool Visit(BoolType node)
 		{
-			Visit((IntegralType) node);
+            outputCode("bool ", false, false);
+			//Visit((IntegralType) node);
 			return true;
 		}
 
 		public override bool Visit(CharType node)
 		{
-			Visit((IntegralType) node);
+            outputCode("char ", false, false);
+			//Visit((IntegralType) node);
 			return true;
 		}
 
@@ -1243,25 +1268,29 @@ namespace crosspascal.cpp
 
 		public override bool Visit(FloatType node)
 		{
-			Visit((RealType) node);
+            outputCode("float ", false, false);
+			//Visit((RealType) node);
 			return true;
 		}
 
 		public override bool Visit(DoubleType node)
 		{
-			Visit((RealType) node);
+            outputCode("double ", false, false);
+			//Visit((RealType) node);
 			return true;
 		}
 
 		public override bool Visit(ExtendedType node)
 		{
-			Visit((RealType) node);
+            outputCode("double ", false, false);
+			//Visit((RealType) node);
 			return true;
 		}
 
 		public override bool Visit(CurrencyType node)
 		{
-			Visit((RealType) node);
+            outputCode("double ", false, false);
+			//Visit((RealType) node);
 			return true;
 		}
 

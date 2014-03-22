@@ -1,4 +1,5 @@
 Program test2;
+// structs and function calls with arguments
 
 Type
   Value = Integer;

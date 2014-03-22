@@ -913,13 +913,13 @@ identifier
 	// routine call to be used as a statement
 routinecall
 	: identifier							{ $$ = new RoutineCall($1); }
-	| lvalue LPAR exprlstopt RPAR			{ $$ = new RoutineCall($1, $3); }
+	| lvalue LPAR exprlstopt RPAR			{ $$ = $1; $1.params = $3; }
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	;
 	
 lvalue	// lvalue
 	: identifier							{ $$ = ResolveId($1); }
-	| lvalue LPAR exprlstopt RPAR			{ $$ = new RoutineCall($1, $3); }
+	| lvalue LPAR exprlstopt RPAR			{ $$ = $1; $1.params = $3; }
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }

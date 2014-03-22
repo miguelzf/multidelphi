@@ -26,7 +26,7 @@ namespace crosspascal.testunits
 			CompilationUnit tree = null;
 
 			args = new string[1];
-			args[0] = "d:\\code\\crosspascal\\tests\\test1.dpr";
+            args[0] = "d:\\code\\crosspascal\\tests\\test_control_structures.dpr";
 
 
 			// TestReadAll(args);
@@ -63,16 +63,16 @@ namespace crosspascal.testunits
 			sw.Stop();
 			Console.WriteLine("READING from StringStream all files took " + (sw.ElapsedMilliseconds / 1000.0) + " secs");
 
-           /*
+           
             AstPrinter astPrinter = new AstPrinter();
             MapTraverser mt = new MapTraverser(astPrinter);
             mt.traverse(tree);
             Console.WriteLine(astPrinter);
-            */
+            
             
             Processor myProcessor = new CppCodegen();			
 			Console.WriteLine("Now compiling...");
-			MapTraverser mt = new MapTraverser(myProcessor);
+			mt = new MapTraverser(myProcessor);
 			mt.traverse(tree);
             
 
