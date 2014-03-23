@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Linq;
+using System.Globalization;
 
 namespace crosspascal.parser
 {
@@ -98,7 +99,7 @@ namespace crosspascal.parser
 		Double GetReal(string str)
 		{
 			try {
-				return Convert.ToDouble(str);
+				return Double.Parse(str, CultureInfo.InvariantCulture);
 			}
 			catch (OverflowException)
 			{	yyerror("Value exceeds the maximum range for an floating-point constant");
@@ -435,7 +436,7 @@ asm						{	yypushstate(XASMCODESEC);
 {DEC}+				{ yylval = GetInt(yytext(),10); return CONST_INT; }
 \${HEXA}+			{ yylval = GetInt(yytext().Substring(1), 16); return CONST_INT; }
 nil					{ return CONST_NIL; }
-{DEC}+\.{DEC}+		{ yylval = GetReal(yytext()); return CONST_REAL; }
+{DEC}+\.{DEC}+		{ yylval = GetReal(yytext()); Console.WriteLine("REAL LEX: " + (Double) yylval); return CONST_REAL; }
 {DEC}+e[+-]?{DEC}+	{ yylval = GetReal(yytext()); return CONST_REAL; }
 {DEC}+\.{DEC}+e[+-]?{DEC}+	{ yylval = GetReal(yytext()); return CONST_REAL; }
 	
