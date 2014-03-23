@@ -117,7 +117,7 @@ namespace crosspascal.parser
 		{
 			stateNames = new string[] {
 				"XASMCODESEC", "XFUNCW_PARAMS", "XFUNCW_RET", "XFUNCDIRECTS", "XFUNCEXTERN",
-				"SFUNCDECL", "SPROPSPECS", "SPACKAGES" };
+				"SFUNCDECL", "SPROPSPECS", "SPACKAGES", "SCLASS" };
 
 			yyreset(sr);
 			// set yylval and text to null before each executing each rule's action
@@ -131,7 +131,7 @@ namespace crosspascal.parser
 	// exclusive states
 %x XASMCODESEC XFUNCW_PARAMS XFUNCW_RET XFUNCDIRECTS XFUNCEXTERN
 	// inclusive states. shared with INITIAL
-%s SFUNCDECL SPROPSPECS SPACKAGES
+%s SFUNCDECL SPROPSPECS SPACKAGES SCLASS
 
 DEC     = [0-9]
 HEXA    = [0-9a-f]
@@ -162,8 +162,8 @@ finalization	{ return KW_FINALIZ; }
 initialization	{ return KW_INIT; }
 
 	/* objects */
-object		{ return KW_OBJECT; }
-record		{ return KW_RECORD; }
+object		{ yypushstate(SCLASS); return KW_OBJECT; }
+record		{ yypushstate(SCLASS); return KW_RECORD; }
 class		{ return KW_CLASS; }
 packed		{ return KW_PACKED; }		// packed struct
 of			{ return KW_OF; }			// decl of types
@@ -187,7 +187,6 @@ resourcestring	{ return TYPE_RSCSTR; }
 
 	/* blocks */
 begin		{ return KW_BEGIN; }
-end			{ return KW_END; }
 with		{ return KW_WITH; }		// with x do ..
 do			{ return KW_DO; }
 
@@ -349,16 +348,25 @@ on			{ return KW_ON; }
  	/**************************************************************/
 	// Lexical Scope for Visibility/Scope qualifiers - TODO
 
-protected	{ return KW_PROTECTED;	}
-public		{ return KW_PUBLIC;		}
-published	{ return KW_PUBLISHED;	}
-private		{ return KW_PRIVATE;	}
+<SCLASS> {
+	protected	{ return KW_PROTECTED;	}
+	public		{ return KW_PUBLIC;		}
+	published	{ return KW_PUBLISHED;	}
+	private		{ return KW_PRIVATE;	}
+
+		//signal to leave this state
+	end			{	yypopstate();
+					return KW_END;
+				}
+}
+
+end				{ return KW_END; }
 
 	
  	/**************************************************************/
 	// Lexical Scope for Packages
 	
-package		{ yypushstate(SPACKAGES); yylval = yytext(); return IDENTIFIER; }
+package			{ yypushstate(SPACKAGES); yylval = yytext(); return IDENTIFIER; }
 <SPACKAGES> {
 	requires	{ return KW_REQUIRES; }
 	contains	{ return KW_CONTAINS; }
@@ -414,18 +422,18 @@ set			{ return TYPE_SET; }
 	/**************************************************************/
 	/* ASM x86 */
 
-asm						{	yypushstate(XASMCODESEC);
-							return KW_ASM;
-						}
+asm					{	yypushstate(XASMCODESEC);
+						return KW_ASM;
+					}
 <XASMCODESEC> {
- [ \t\r]+				{ }
- end					{	yypopstate();
-							return KW_END;
-						}
+ [ \t\r]+			{ }
+ end				{	yypopstate();
+						return KW_END;
+					}
 	// ignore IDs that start with 'end'
  {ID1}{ID}*			{ }
 
- .|{NL}					{ }	// return ASM_OP; }
+ .|{NL}				{ }	// return ASM_OP; }
 }
 
 
@@ -508,15 +516,15 @@ in			{ return KW_IN; }	// is in set
 
 	/**************************************************************/
 
-{ID1}{ID}*			{ yylval = yytext(); return IDENTIFIER; }
+{ID1}{ID}*	{ yylval = yytext(); return IDENTIFIER; }
 
-[ \t]+				{ }     /* ignore whitespace */
+[ \t]+		{ }     /* ignore whitespace */
 
-{NL}				{ }
+{NL}		{ }
 
-<<EOF>>				{	return Accept(); }
+<<EOF>>		{	return Accept(); }
 
-.					{ yyerror("Unknown char: " + text + " (ASCII " + ((int) text[0]) +")"); }
+.			{ yyerror("Unknown char: " + text + " (ASCII " + ((int) text[0]) +")"); }
 
 
 
