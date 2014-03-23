@@ -20,14 +20,16 @@ namespace crosspascal.ast
 			methodsMapping = new Dictionary<System.Type, MethodInfo>();
 
 			Type procType = proc.GetType();
+			Type baseProcType = Processor.GetType();
 
 			// Add most methods - 1 argument, derived from AstNode
 			foreach (MethodInfo mi in procType.GetMethods(BindingFlags.FlattenHierarchy))
-				if (mi.DeclaringType == procType && mi.Name == "Visit" && mi.GetParameters().Length == 1)
-				{
-					System.Type paramType = mi.GetParameters()[0].ParameterType;
-					methodsMapping.Add(paramType, mi);
-				}
+				if (mi.DeclaringType == baseProcType || mi.DeclaringType.IsSubclassOf(baseProcType))
+					if (mi.Name == "Visit" && mi.GetParameters().Length == 1)
+					{
+						System.Type paramType = mi.GetParameters()[0].ParameterType;
+						methodsMapping.Add(paramType, mi);
+					}
 		}
 
 		public override Processor Processor
