@@ -125,16 +125,16 @@ namespace crosspascal.cpp
 		public override bool Visit(ProgramNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.body);
-			traverse(node.uses);
+            traverse(node.uses);
+			traverse(node.body);			
 			return true;
 		}
 		
 		public override bool Visit(LibraryNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.body);
-			traverse(node.uses);
+            traverse(node.uses);
+			traverse(node.body);			
 			return true;
 		}
 		
@@ -568,7 +568,16 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(CaseSelector node)
+        public override bool Visit(ParenthesizedLvalue node)
+        {
+            outputCode("(", false, false);
+            //Visit((Statement) node);
+            traverse(node.expr);
+            outputCode(")", false, false);
+            return true;
+        }
+        
+        public override bool Visit(CaseSelector node)
 		{
 			Visit((Statement) node);
 			traverse(node.list);
@@ -595,22 +604,50 @@ namespace crosspascal.cpp
 
 		public override bool Visit(RepeatLoop node)
 		{
-			Visit((LoopStatement) node);
+			//Visit((LoopStatement) node);
+            outputCode("do ", true, true);
+            traverse(node.block);
+            outputCode("while (!", true, false);
+            traverse(node.condition);
+            outputCode(");", false, true);
 			return true;
 		}
 
 		public override bool Visit(WhileLoop node)
 		{
-			Visit((LoopStatement) node);
+            outputCode("while ", true, false);
+            traverse(node.condition);
+            outputCode(" do", false, true);
+			//Visit((LoopStatement) node);
+            traverse(node.block);
 			return true;
 		}
 
 		public override bool Visit(ForLoop node)
 		{
-			Visit((LoopStatement) node);
+			//Visit((LoopStatement) node);
+            outputCode("for (", true, false);
 			traverse(node.var);
+            outputCode(" = ", false, false);
 			traverse(node.start);
+            outputCode("; ", false, false);
+            traverse(node.var);
+            if (node.direction<0)
+                outputCode(" >= ", false, false);
+            else
+                outputCode(" <= ", false, false);
 			traverse(node.end);
+            outputCode("; ", false, false);
+            traverse(node.var);
+
+            if (node.direction < 0)
+                outputCode("--)", false, true);
+            else
+                outputCode("++)", false, true);
+
+            
+            traverse(node.block);
+            
 			return true;
 		}
 
@@ -762,118 +799,169 @@ namespace crosspascal.cpp
 		public override bool Visit(ArithmethicBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			traverse(node.left);
-			traverse(node.right);
+			//traverse(node.left);
+			//traverse(node.right);
 			return true;
 		}
 
 		public override bool Visit(Subtraction node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" - ", false, false);
+            traverse(node.right);
+			//Visit((ArithmethicBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(Addition node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" + ", false, false);
+            traverse(node.right);
+			//Visit((ArithmethicBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(Product node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" * ", false, false);
+            traverse(node.right);
+			//Visit((ArithmethicBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(Division node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" / ", false, false);
+            traverse(node.right);
+			//Visit((ArithmethicBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(Quotient node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+            outputCode("(int)(", false, false);
+            traverse(node.left);
+            outputCode(" / ", false, false);
+            traverse(node.right);
+            outputCode(" )", false, false);
+			//Visit((ArithmethicBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(Modulus node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" % ", false, false);
+            traverse(node.right);
+			//Visit((ArithmethicBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(ShiftRight node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" >> ", false, false);
+            traverse(node.right);
+			//Visit((ArithmethicBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(ShiftLeft node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" << ", false, false);
+            traverse(node.right);
+			//Visit((ArithmethicBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(LogicalBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			traverse(node.left);
-			traverse(node.right);
 			return true;
 		}
 
 		public override bool Visit(LogicalAnd node)
 		{
-			Visit((LogicalBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" & ", false, false);
+            traverse(node.right);
+			//Visit((LogicalBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(LogicalOr node)
 		{
-			Visit((LogicalBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" | ", false, false);
+            traverse(node.right);
+			//Visit((LogicalBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(LogicalXor node)
 		{
-			Visit((LogicalBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" ^ ", false, false);
+            traverse(node.right);
+			//Visit((LogicalBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(Equal node)
 		{
-			Visit((LogicalBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" = ", false, false);
+            traverse(node.right);
+			//Visit((LogicalBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(NotEqual node)
 		{
-			Visit((LogicalBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" != ", false, false);
+            traverse(node.right);
+			//Visit((LogicalBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(LessThan node)
 		{
-			Visit((LogicalBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" < ", false, false);
+            traverse(node.right);
+			//Visit((LogicalBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(LessOrEqual node)
 		{
-			Visit((LogicalBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" <= ", false, false);
+            traverse(node.right);
+			//Visit((LogicalBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(GreaterThan node)
 		{
-			Visit((LogicalBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" > ", false, false);
+            traverse(node.right);
+			//Visit((LogicalBinaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(GreaterOrEqual node)
 		{
-			Visit((LogicalBinaryExpression) node);
+            traverse(node.left);
+            outputCode(" >= ", false, false);
+            traverse(node.right);
+			//Visit((LogicalBinaryExpression) node);
 			return true;
 		}
 
@@ -996,7 +1084,7 @@ namespace crosspascal.cpp
                 outputCode("true ", false, false);
             else
                 outputCode("false ", false, false);
-			Visit((OrdinalLiteral) node);
+			//Visit((OrdinalLiteral) node);
 			return true;
 		}
 

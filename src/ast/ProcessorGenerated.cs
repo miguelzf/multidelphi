@@ -642,6 +642,13 @@ namespace crosspascal.ast
 			return true;
 		}
 		
+		public virtual bool Visit(ParenthesizedLvalue node)
+		{
+			Visit((LvalueExpression) node);
+			traverse(node.expr);
+			return true;
+		}
+		
 		public virtual bool Visit(ExpressionList node)
 		{
 			foreach (Node n in node.nodes)
@@ -1086,7 +1093,7 @@ namespace crosspascal.ast
 		
 		public virtual bool Visit(FixedStringType node)
 		{
-			Visit((ScalarType) node);
+			Visit((StringType) node);
 			traverse(node.expr);
 			return true;
 		}

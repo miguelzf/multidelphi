@@ -26,7 +26,8 @@ namespace crosspascal.testunits
 			CompilationUnit tree = null;
 
 			args = new string[1];
-            args[0] = "d:\\code\\crosspascal\\tests\\test_control_structures.dpr";
+            args[0] = "d:\\code\\crosspascal\\tests\\test_constant_folding.dpr";
+            //args[0] = "d:\\code\\crosspascal\\tests\\test_control_structures.dpr";
 
 
 			// TestReadAll(args);

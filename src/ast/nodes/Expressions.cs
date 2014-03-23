@@ -88,6 +88,16 @@ namespace crosspascal.ast.nodes
 		// Do nothing
 	}
 
+    public class ParenthesizedLvalue : LvalueExpression
+    {
+        public Expression expr;
+
+        public ParenthesizedLvalue(Expression expr)
+        {
+            this.expr = expr;
+        }
+    }
+
 
 	public class ExpressionList : ListNode<Expression>
 	{
@@ -705,7 +715,7 @@ namespace crosspascal.ast.nodes
 		public RoutineCall(LvalueExpression func)
 		{
 			this.func = func;
-			args = new ExpressionList();
+			args = null;
 		}
 
 		public RoutineCall(LvalueExpression fname, ExpressionList args)

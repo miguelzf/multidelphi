@@ -90,12 +90,12 @@
     <Compile Include="parser\IScanner.cs" />
     <Compile Include="parser\ParserDebug.cs" />
     <Compile Include="parser\SyntacticErrors.cs" />
+    <Compile Include="semantics\ConstantFolding.cs" />
     <Compile Include="semantics\DeclarationsRegistry.cs" />
     <Compile Include="semantics\SemanticErrors.cs" />
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
     <Compile Include="testunits\CppProgram.cs" />
-    <Compile Include="testunits\TestDriver.cs" />
     <Compile Include="testunits\TestProgram.cs" />
     <Compile Include="utils\Logger.cs" />
     <Compile Include="core\AssemblyInfo.cs" />

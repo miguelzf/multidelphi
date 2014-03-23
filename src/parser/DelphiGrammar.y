@@ -913,13 +913,13 @@ identifier
 	// routine call to be used as a statement
 routinecall
 	: identifier							{ $$ = new RoutineCall($1); }
-	| lvalue LPAR exprlstopt RPAR			{ $$ = $1; $1.params = $3; }
+	| lvalue LPAR exprlstopt RPAR			{ if ($1 is RoutineCall && ((RoutineCall)$1).args == null) { $$ = $1; ((RoutineCall)($1)).args= $3; } else { $$ = new RoutineCall($1, $3); } }
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	;
 	
 lvalue	// lvalue
 	: identifier							{ $$ = ResolveId($1); }
-	| lvalue LPAR exprlstopt RPAR			{ $$ = $1; $1.params = $3; }
+	| lvalue LPAR exprlstopt RPAR			{ if ($1 is RoutineCall && ((RoutineCall)$1).args == null) { $$ = $1; ((RoutineCall)($1)).args= $3; } else { $$ = new RoutineCall($1, $3); } }
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
@@ -929,7 +929,7 @@ lvalue	// lvalue
 											 else
 												$$ = new ArrayAccess(new ArrayConst($1), new ExpressionList($3));
 											}
-	| LPAR expr RPAR						{ $$ = $2; }
+	| LPAR expr RPAR						{ $$ = new ParenthesizedLvalue($2); }
 	;
 
 //	Log.Instance().Write(logWarning,'AL',Proc+' not avaliable.');
