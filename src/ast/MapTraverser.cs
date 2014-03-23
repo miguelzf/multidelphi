@@ -22,7 +22,7 @@ namespace crosspascal.ast
 			Type procType = proc.GetType();
 
 			// Add most methods - 1 argument, derived from AstNode
-			foreach (MethodInfo mi in procType.GetMethods())
+			foreach (MethodInfo mi in procType.GetMethods(BindingFlags.FlattenHierarchy))
 				if (mi.DeclaringType == procType && mi.Name == "Visit" && mi.GetParameters().Length == 1)
 				{
 					System.Type paramType = mi.GetParameters()[0].ParameterType;
