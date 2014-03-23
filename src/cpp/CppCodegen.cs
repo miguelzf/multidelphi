@@ -1000,18 +1000,21 @@ namespace crosspascal.cpp
 
 		public override bool Visit(UnaryPlus node)
 		{
+			outputCode("+", false, false);
 			Visit((SimpleUnaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(UnaryMinus node)
 		{
+			outputCode("-", false, false);
 			Visit((SimpleUnaryExpression) node);
 			return true;
 		}
 
 		public override bool Visit(LogicalNot node)
 		{
+			outputCode("!", false, false);
 			Visit((SimpleUnaryExpression) node);
 			return true;
 		}

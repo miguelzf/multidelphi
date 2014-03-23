@@ -7,6 +7,7 @@ using crosspascal.ast;
 using crosspascal.ast.nodes;
 using crosspascal.parser;
 using crosspascal.cpp;
+using crosspascal.semantics;
 
 namespace crosspascal.testunits
 {
@@ -69,13 +70,15 @@ namespace crosspascal.testunits
             MapTraverser mt = new MapTraverser(astPrinter);
             mt.traverse(tree);
             Console.WriteLine(astPrinter);
-            
-            
+
+            Processor constfolder = new ConstantFolder();
+            mt = new MapTraverser(constfolder);
+            mt.traverse(tree);            
+                        
             Processor myProcessor = new CppCodegen();			
 			Console.WriteLine("Now compiling...");
 			mt = new MapTraverser(myProcessor);
-			mt.traverse(tree);
-            
+			mt.traverse(tree);            
 
 			Console.WriteLine("Done!");
 			Console.ReadLine();
