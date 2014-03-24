@@ -29,6 +29,8 @@ namespace crosspascal.ast.nodes
 	///					CastExpr
 	///					FieldAccess
 	///					ArrayAcess
+	///					UnresolvedCastorCall
+	///					UnresolvedIdOrCall
 	///			BinaryExpr
 	///				Arithmetic
 	///				Type
@@ -666,6 +668,34 @@ namespace crosspascal.ast.nodes
 	{
 	}
 
+	/// <summary>
+	/// To be resolver after parsing
+	/// </summary>
+	public class UnresolvedIdOrCall : LvalueExpression
+	{
+		public LvalueExpression id;
+
+		public UnresolvedIdOrCall(LvalueExpression val)
+		{
+			id = val;
+		}
+	}
+
+	/// <summary>
+	/// To be resolver after parsing
+	/// </summary>
+	public class UnresolvedCastorCall : LvalueExpression
+	{
+		public LvalueExpression func;
+		public ExpressionList args;
+
+		public UnresolvedCastorCall(LvalueExpression lval, ExpressionList args)
+		{
+			this.func = lval;
+			this.args = args;
+		}
+	}
+
 	public class ArrayAccess : LvalueExpression
 	{
 		public LvalueExpression lvalue;
@@ -718,12 +748,15 @@ namespace crosspascal.ast.nodes
 			args = null;
 		}
 
-		public RoutineCall(LvalueExpression fname, ExpressionList args)
-			: this(fname)
+		public RoutineCall(LvalueExpression func, ExpressionList args)
+			: this(func)
 		{
 			this.args = args;
 		}
 
+		/// <summary>
+		/// For built-in ordinal functions (High, Low, Pred, Ord)
+		/// </summary>
 		public RoutineCall(LvalueExpression fname, ScalarType t)
 			: this(fname)
 		{

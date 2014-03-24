@@ -1026,13 +1026,7 @@ namespace crosspascal.ast
 			Visit((Node) node);
 			return true;
 		}
-		
-		public virtual bool Visit(UndefinedType node)
-		{
-			Visit((TypeNode) node);
-			return true;
-		}
-		
+				
 		public virtual bool Visit(VariableType node)
 		{
 			Visit((TypeNode) node);
@@ -1043,12 +1037,6 @@ namespace crosspascal.ast
 		{
 			Visit((VariableType) node);
 			traverse(node.baseType);
-			return true;
-		}
-		
-		public virtual bool Visit(TypeUnknown node)
-		{
-			Visit((TypeNode) node);
 			return true;
 		}
 		
@@ -1078,13 +1066,7 @@ namespace crosspascal.ast
 			Visit((VariableType) node);
 			return true;
 		}
-		
-		public virtual bool Visit(ScalarTypeForward node)
-		{
-			Visit((ScalarType) node);
-			return true;
-		}
-		
+				
 		public virtual bool Visit(StringType node)
 		{
 			Visit((ScalarType) node);
@@ -1100,7 +1082,7 @@ namespace crosspascal.ast
 		
 		public virtual bool Visit(VariantType node)
 		{
-			Visit((ScalarType) node);
+			Visit((VariableType) node);
 			traverse(node.actualtype);
 			return true;
 		}

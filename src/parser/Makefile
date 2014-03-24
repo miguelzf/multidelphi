@@ -2,8 +2,8 @@
 
 DEPSDIR=../../deps
 #add -l to disable #line emissions
-JAYFLAGS=-tvc -l
-CSFLEXFLAGS=-q --nobak --skel Flex-skeleton-nested.cs --partial
+JAYFLAGS=-tvc
+CSFLEXFLAGS=-q --nobak --skel Flex-skeleton-nested.cs
 #-debug
 FLEXDEBUG=
 DEBUGFLAG=$(shell grep "int +DefaultDebugLevel += +2"  ../core/Compiler.cs)
@@ -22,7 +22,7 @@ FLEXDEBUG=-debug
 endif
 
 DelphiPreprocessor.cs: DelphiPreprocessor.l ../core/Compiler.cs
-	$(LEXEXEC) $(CSFLEXFLAGS) $<
+	$(LEXEXEC) $(CSFLEXFLAGS) --partial $<
 
 DelphiScanner.cs: DelphiLex.l ../core/Compiler.cs
 	$(LEXEXEC) $(FLEXDEBUG) $(CSFLEXFLAGS)  $<

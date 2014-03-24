@@ -132,8 +132,9 @@ namespace crosspascal.parser
 
 		public void AddDefines(IEnumerable<String> defines)
 		{
-			foreach (String s in defines)
-				definedValues.Add(s.ToLower());
+			if (defines != null)
+				foreach (String s in defines)
+					definedValues.Add(s.ToLower());
 		}
 
 		public void RemoveDefine(string define)

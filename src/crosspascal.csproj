@@ -87,7 +87,6 @@
     <Compile Include="parser\DelphiPreprocessor.cs" />
     <Compile Include="parser\DelphiPreprocessorSupport.cs" />
     <Compile Include="parser\DelphiScanner.cs" />
-    <Compile Include="parser\DelphiScannerSupport.cs" />
     <Compile Include="parser\IScanner.cs" />
     <Compile Include="parser\ParserDebug.cs" />
     <Compile Include="parser\SyntacticErrors.cs" />

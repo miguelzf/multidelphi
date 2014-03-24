@@ -321,7 +321,7 @@ FILE *f;
 	if (line == 0)
 	    unterminated_text(t_lineno, t_line, t_cptr);
     }
-   fprintf(f, line_format, lineno, input_file_name);
+   if (!lflag) fprintf(f, line_format, lineno, input_file_name);
 
 loop:
     c = *cptr++;
@@ -1047,7 +1047,7 @@ copy_action()
     last_was_action = 1;
 
     fprintf(f, "case %d:\n", nrules - 2);
-    fprintf(f, line_format, lineno, input_file_name);
+    if (!lflag) fprintf(f, line_format, lineno, input_file_name);
     putc(' ', f); putc(' ', f);
     if (*cptr == '=') ++cptr;
 

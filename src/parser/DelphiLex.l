@@ -113,6 +113,8 @@ namespace crosspascal.parser
 			return yytext().Substring(ignlen, yylength()-1-ignlen).Trim();
 		}	
 		
+		Object InitialLval = typeof(DelphiScanner);	// non-conflicting value
+		
 		void InitLexer(TextReader sr)
 		{
 			stateNames = new string[] {
@@ -125,7 +127,13 @@ namespace crosspascal.parser
 	
 			stateStack.Push(INITIAL);
 			
-			InitIdResolver();
+			yylval = InitialLval;	// signal that the strat state, no match done yet
+		}
+		
+		int ProcessIdentifier(string id)
+		{
+			yylval = id;
+			return IDENTIFIER;
 		}
 	
 %}
@@ -364,7 +372,14 @@ end				{ return KW_END; }
  	/**************************************************************/
 	// Lexical Scope for Packages
 	
-package			{ yypushstate(SPACKAGES); return ProcessIdentifier(yytext()); }
+package			{	// if it's the first token in the src file, it's a package keywod:
+					if (yylval == InitialLval) 
+					{	yypushstate(SPACKAGES); 
+						return KW_PACKAGE;
+					}
+					// else, just an identifier
+					return ProcessIdentifier(yytext());
+				}
 <SPACKAGES> {
 	requires	{ return KW_REQUIRES; }
 	contains	{ return KW_CONTAINS; }

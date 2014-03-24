@@ -18,6 +18,9 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// Type of a Routine (function, procedure, method, etc)
 	/// </summary>
+	/// <remarks>
+	/// The function return type must be an id.
+	/// </remarks>
 	public partial class ProceduralType : TypeNode
 	{
 		public DeclarationList @params;
@@ -124,7 +127,7 @@ namespace crosspascal.ast.nodes
 		public String objname;
 		public String metname;
 
-		public MethodDeclaration(string objname, string name, DeclarationList @params, ScalarType ret = null,
+		public MethodDeclaration(string objname, string name, DeclarationList @params, TypeNode ret = null,
 								MethodDirectives dirs = null)
 			: base(objname+"."+name, @params, ret, dirs)
 		{

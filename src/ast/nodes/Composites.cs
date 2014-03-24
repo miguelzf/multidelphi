@@ -84,8 +84,10 @@ namespace crosspascal.ast.nodes
 		public CompositeType(ArrayList heritage, ScopedSectionList seclist)
 		{
 			this.heritage = new List<String>();
-			foreach (String s in heritage)
-				this.heritage.Add(s);
+
+			if (heritage != null)
+				foreach (String s in heritage)
+					this.heritage.Add(s);
 
 			sections = seclist;
 			if (sections == null)
@@ -202,8 +204,9 @@ namespace crosspascal.ast.nodes
 		public VariantDeclaration(String id, VariableType t, DeclarationList varfields)
 			: base(id, t)
 		{
-			if (!(t is IOrdinalType))
-				throw new TypeRequiredException("Ordinal");
+			// TODO
+		///	if (!(t is IOrdinalType))
+		//		throw new TypeRequiredException("Ordinal");
 			this.varfields = varfields;
 		}
 

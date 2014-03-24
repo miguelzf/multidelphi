@@ -1206,12 +1206,6 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(UndefinedType node)
-		{
-			Visit((TypeNode) node);
-			return true;
-		}
-
 		public override bool Visit(VariableType node)
 		{
 			Visit((TypeNode) node);
@@ -1222,12 +1216,6 @@ namespace crosspascal.cpp
 		{
 			Visit((VariableType) node);
 			traverse(node.baseType);
-			return true;
-		}
-
-		public override bool Visit(TypeUnknown node)
-		{
-			Visit((TypeNode) node);
 			return true;
 		}
 
@@ -1258,12 +1246,6 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(ScalarTypeForward node)
-		{
-			Visit((ScalarType) node);
-			return true;
-		}
-
 		public override bool Visit(StringType node)
 		{
             outputCode("std::string ", true, false);
@@ -1280,7 +1262,7 @@ namespace crosspascal.cpp
 
 		public override bool Visit(VariantType node)
 		{
-			Visit((ScalarType) node);
+			Visit((VariableType) node);
 			traverse(node.actualtype);
 			return true;
 		}

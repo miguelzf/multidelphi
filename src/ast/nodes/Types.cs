@@ -15,10 +15,10 @@ namespace crosspascal.ast.nodes
 	// Types' base classes
 	//==========================================================================
 
+
 	#region Type hierarchy
 	/// <remarks>
-	/// Types
-	/// 	UndefinedType	> for untyped parameters. incompatible with any type >
+	/// Types Hierarchy:
 	/// 	ProceduralType
 	/// 	CompositeType
 	///			ClassType
@@ -27,26 +27,28 @@ namespace crosspascal.ast.nodes
 	/// 		ScalarType
 	/// 			IntegralType		: IOrdinalType
 	/// 				IntegerType
-	/// 					UnsignedInt	...
-	/// 					SignedInt	...
+	/// 					UnsignedInt
+	/// 						...
+	/// 					SignedInt
+	/// 						...
 	/// 				Bool
 	/// 				Char
 	/// 			RealType
-	/// 				FloatType
-	/// 				DoubleType
-	/// 				ExtendedType
-	/// 				CurrencyType
+	/// 				....
 	/// 			StringType
-	/// 			VariantType
 	/// 			PointerType > ScalarType
+	///		 		MetaclassType > id
 	/// 		EnumType			: IOrdinalType
 	/// 		RangeType			: IOrdinalType
-	/// 		MetaclassType > id
-	/// 		StructuredType
-	/// 			Array > VariableType 
-	/// 			Set	  > VariableType 
-	/// 			File  > VariableType
-	///		 		Record > variabletype...
+	///			StructuredType > Type
+	///				Array > Type
+	///				Set	  > OrdinalType 
+	///				File  > VariableType
+	///		 		Record > TypeNode ...
+	///			VariantType > VariableType
+	///		 		
+	/// UnresolvedTypes extend each type, so that they may be used in their place
+	/// Most type descriptions were taken from the Embarcadero wiki
 	/// </remarks>
 	#endregion
 
@@ -60,20 +62,79 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	/// <summary>
-	/// Undefined, incompatible type. For untyped parameters
-	/// An expression with this type must be cast to some defined type before using
-	/// </summary>
-	public class UndefinedType: TypeNode
-	{
-		public static readonly UndefinedType Single = new UndefinedType();
 
-		public override bool Equals(Object o)
+	#region Unresolved Type Nodes
+
+	//
+	// Types unresolved during parsing, to be resolved by the TypeProcesor/Resolver
+	//
+
+	public interface IUnresolvedType
+	{
+
+	}
+
+	public class UnresolvedType : TypeNode, IUnresolvedType
+	{
+		public String id;
+
+		public UnresolvedType(String id)
 		{
-			// An Undefined is never equal to anything
-			return false;
+			this.id = id;
 		}
 	}
+
+
+	public class UnresolvedClassType : ClassType, IUnresolvedType
+	{
+		public String id;
+
+		public UnresolvedClassType(String id) : base(null)
+		{
+			this.id = id;
+		}
+	}
+
+	public class UnresolvedVariableType : VariableType, IUnresolvedType
+	{
+		public String id;
+
+		public UnresolvedVariableType(String id)
+		{
+			this.id = id;
+		}
+	}
+
+	public class UnresolvedIntegralType : IntegralType, IUnresolvedType
+	{
+		public String id;
+
+		public UnresolvedIntegralType(String id)
+		{
+			this.id = id;
+		}
+	}
+
+
+	public class UnresolvedOrdinalType : VariableType, IOrdinalType, IUnresolvedType
+	{
+		public Int64 MinValue() { return 0; }
+
+		public Int64 MaxValue() { return 0; }
+
+		public UInt64 ValueRange() { return 0; }
+		
+		public String id;
+
+		public UnresolvedOrdinalType(String id)
+		{
+			this.id = id;
+		}
+	}
+
+	#endregion
+
+
 
 	/// <summary>
 	/// Type of a Routine (function, procedure, method, etc)
@@ -130,18 +191,6 @@ namespace crosspascal.ast.nodes
 	}
 
 
-	public class TypeUnknown : TypeNode
-	{
-		public static readonly UndefinedType Single = new UndefinedType();
-
-
-		public override bool Equals(Object o)
-		{
-			// An Unknown is never equal
-			return false;
-		}
-	}
-
 
 	#region Ordinal Types
 
@@ -155,6 +204,12 @@ namespace crosspascal.ast.nodes
 	}
 
 
+	/// <summary>
+	/// RangeType = (id,id,id...)
+	/// </summary>
+	/// <remarks>
+	/// An enumerated type defines an ordered set of values by simply listing identifiers that denote these values
+	/// </remarks>
 	public class EnumType : VariableType, IOrdinalType
 	{
 		public EnumValueList enumVals;
@@ -202,6 +257,13 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
+	/// <summary>
+	/// RangeType = (OrdinalValue .. OrdinalValue)
+	/// </summary>
+	/// <remarks>
+	/// Subrange type represents a subset of the values in another ordinal type (called the base type)
+	/// </remarks>
 	public class RangeType : VariableType, IOrdinalType
 	{
 		public ConstExpression min;
@@ -266,7 +328,6 @@ namespace crosspascal.ast.nodes
 	///	==========================================================================
 	/// <remarks>
 	///	ScalarType
-	///		ScalarTypeForward	- temporary, to be resolved when the pointed type is declared
 	///		IntegralType		: IOrdinalType
 	///			IntegerType
 	///				UnsignedInt	...
@@ -285,96 +346,12 @@ namespace crosspascal.ast.nodes
 
 	public abstract class ScalarType : VariableType
 	{
-
 		/// <summary>
 		/// Default Scalar Type comparison: directly compare references to singleton objects
 		/// </summary>
 		public override bool Equals(Object o)
 		{
 			throw new InvalidAbstractException(this, "Equals");
-		}
-	}
-
-	/// <summary>
-	/// Temporary scalar type to support forward declarations.
-	/// This type has to be converted to its actual type by resolving the declared name.
-	/// </summary>
-	public class ScalarTypeForward : ScalarType
-	{
-		public String forwardname;
-
-		public ScalarTypeForward(String name)
-		{
-			forwardname = name;
-		}
-	}
-
-	public class StringType : ScalarType
-	{
-		public static readonly StringType Single = new StringType();
-
-		public override bool Equals(Object o)
-		{
-			return this == o;
-		}
-	}
-
-	public class FixedStringType : StringType
-	{
-		public ConstExpression expr;
-		public int Len { get; set; }
-
-		public FixedStringType(ConstExpression expr)
-		{
-			this.expr = expr;
-
-			// TODO in constant-checking
-		/*	if (len > 255)
-				Error("String too long. Maximum alloweed is 255");
-			Len = (int)len;
-		 */
-		}
-
-		/// <summary>
-		/// Compares string length.
-		/// Length must have been determined previously by constant folding the expr
-		/// </summary>
-		public override bool Equals(Object o)
-		{
-			return (o is FixedStringType) && Len == (o as FixedStringType).Len;
-		}
-	}
-
-	public class VariantType : ScalarType
-	{
-		public ScalarType actualtype;
-
-		/// <summary>
-		/// Actual type cannot be initially known.
-		/// </summary>
-		public VariantType() { }
-
-		public override bool Equals(Object o)
-		{
-			// TODO
-			return true;
-		}
-	}
-
-	public class PointerType : ScalarType
-	{
-		public ScalarType pointedType;
-
-		public static readonly PointerType Single = new PointerType(null);
-
-		public PointerType(ScalarType pointedType)
-		{
-			this.pointedType = pointedType;
-		}
-
-		public override bool Equals(Object o)
-		{
-			return (o is PointerType) && pointedType.Equals((o as PointerType).pointedType);
 		}
 	}
 
@@ -581,6 +558,92 @@ namespace crosspascal.ast.nodes
 
 	#endregion
 
+	public class StringType : ScalarType
+	{
+		public static readonly StringType Single = new StringType();
+
+		public override bool Equals(Object o)
+		{
+			return this == o;
+		}
+	}
+
+	public class FixedStringType : StringType
+	{
+		public ConstExpression expr;
+		public int Len { get; set; }
+
+		public FixedStringType(ConstExpression expr)
+		{
+			this.expr = expr;
+
+			// TODO in constant-checking
+			/*	if (len > 255)
+					Error("String too long. Maximum alloweed is 255");
+				Len = (int)len;
+			 */
+		}
+
+		/// <summary>
+		/// Compares string length.
+		/// Length must have been determined previously by constant folding the expr
+		/// </summary>
+		public override bool Equals(Object o)
+		{
+			return (o is FixedStringType) && Len == (o as FixedStringType).Len;
+		}
+	}
+
+
+	/// <summary>
+	/// Variant data types
+	/// </summary>
+	/// <remarks>
+	/// Variants can hold values of any type except records, sets, static arrays, files, classes, class references, and pointers.
+	/// I.e. can hold anything but structured types and pointers.
+	/// They can hold interfaces, dynamic arrays, variant arrays
+	/// </remarks>
+	public class VariantType : VariableType
+	{
+		public VariableType actualtype;
+
+		/// <summary>
+		/// Actual type cannot be initially known.
+		/// </summary>
+		public VariantType() { }
+
+		public override bool Equals(Object o)
+		{
+			// TODO
+			return true;
+		}
+	}
+
+
+	/// <summary>
+	/// Pointer types > PointedType
+	/// </summary>
+	/// <remarks>
+	/// PointedType may be any type.
+	/// It may be a not yet declared type (forward declaration)
+	/// </remarks>
+	public class PointerType : ScalarType
+	{
+		public TypeNode pointedType;
+
+		public static readonly PointerType Single = new PointerType(null);
+
+		public PointerType(TypeNode pointedType)
+		{
+			this.pointedType = pointedType;
+		}
+
+		public override bool Equals(Object o)
+		{
+			return (o is PointerType) && pointedType.Equals((o as PointerType).pointedType);
+		}
+	}
+
 	/// ==========================================================================
 	/// ==========================================================================
 
@@ -591,10 +654,11 @@ namespace crosspascal.ast.nodes
 	///	==========================================================================
 	/// Structured Types
 	///	==========================================================================
-	///		StructuredType
-	///			Array < VariableType> 
-	///			Set	  < VariableType> 
-	///			File  < VariableType> 
+	///			StructuredType > Type
+	///				Array > Type
+	///				Set	  > OrdinalType 
+	///				File  > VariableType
+	///		 		Record > TypeNode ...
 
 	public abstract class StructuredType : VariableType
 	{
@@ -623,6 +687,14 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
+
+	/// <summary>
+	/// Array [size] of (BaseType)
+	/// </summary>
+	/// <remarks>
+	/// BaseType is any type excepts explicit/declared enums
+	/// </remarks>
 	public class ArrayType : StructuredType
 	{
 		public List<int> dimensions = new List<int>();
@@ -636,12 +708,14 @@ namespace crosspascal.ast.nodes
 			dimensions.Add((int)size);
 		}
 
-		public ArrayType(VariableType type) : base(type)
+		public ArrayType(TypeNode type) : base(type)
 		{
 			// dynamic array
 		}
 
-		public ArrayType(VariableType type, TypeList dims) : base(type)
+		// dims is a list of ranges
+		public ArrayType(TypeNode type, TypeList dims)
+			: base(type)
 		{
 			// TODO Check constant and compute value
 			foreach (Node n in dims)
@@ -652,11 +726,12 @@ namespace crosspascal.ast.nodes
 			}
 		}
 
-		public ArrayType(VariableType type, IntegralType sizeType): base(type)
+		public ArrayType(TypeNode type, IntegralType sizeType)
+			: base(type)
 		{
 			UInt64 size = sizeType.ValueRange();
 			if (size > Int32.MaxValue) size = Int32.MaxValue;
-			AddDimension((uint) size);
+			AddDimension((uint)size);
 		}
 
 		public override bool Equals(Object o)
@@ -665,12 +740,24 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
+	/// <summary>
+	/// Set of (BaseType : IOrdinalType)
+	/// </summary>
+	/// <remarks>
+	/// BaseType is an ordinal type.
+	/// A set is a collection of values of the same ordinal type. The values have no inherent order,
+	/// nor is it meaningful for a value to be included twice in a set.
+	/// The	range of a set type is the power set of a specific ordinal type, called the base type; 
+	/// that is, the possible values of the set type are all the subsets of the base type, including the empty set.
+	/// </remarks>
 	public class SetType : StructuredType
 	{
 		public SetType(VariableType type) : base(type)
 		{
-			if (!(type is IOrdinalType))
-				Error("Base type of Set must be ordinal");
+			// TODO
+		//	if (!(type is IOrdinalType))
+		//		Error("Base type of Set must be ordinal");
 		}
 
 		public override bool Equals(Object o)
@@ -679,9 +766,18 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
+	/// <summary>
+	/// File of (BaseType : VariableType)
+	/// </summary>
+	/// <remarks>
+	/// BaseType is a fixed-size type.
+	/// Cannot be: Pointer types (implicit or explicit), dynamic arrays, long strings, 
+	/// classes, objects, pointers, variants, other files, or structured types that contain any of these. 
+	/// </remarks>
 	public class FileType : StructuredType
 	{
-		public FileType(TypeNode type = null) : base(type) { }
+		public FileType(VariableType type = null) : base(type) { }
 
 		public override bool Equals(Object o)
 		{
@@ -690,12 +786,9 @@ namespace crosspascal.ast.nodes
 	}
 
 	/// <summary>
-	/// RecordType. Records can only have fields, not methods
+	/// RecordType, structure with a list of declared fields.
+	/// Records can only have fields, not methods
 	/// </summary>
-	/// <remarks>
-	/// Although their structure is more alike to Composite types, their use is closer to StructuredTypes:
-	///		they can be defined and used anonymously, with Record-type consts
-	/// </remarks>
 	public class RecordType : StructuredType
 	{
 		public DeclarationList compTypes;

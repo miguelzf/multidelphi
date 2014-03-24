@@ -47,17 +47,11 @@ namespace crosspascal.ast.nodes
 		public void AddName(String name)
 		{
 			this.name = name;
-			
-			if (name != null)
-				DelphiParser.DeclReg.RegisterDeclaration(name, this);
 		}
-
-		protected Declaration() { }
 
 		protected Declaration(TypeNode t = null)
 		{
-			if (t != null)	type = t;
-			else	type = UndefinedType.Single;
+			type = t;
 		}
 
 		public Declaration(String name, TypeNode t = null) : this(t)
@@ -104,8 +98,10 @@ namespace crosspascal.ast.nodes
 
 
 	#region Parameters' Declarations
+
 	/// <summary>
-	/// Routine parameters
+	/// Routine parameters. May be value (default), variable, constant, or out.
+	/// Param types must be an id, string or open array (array of paramtype)
 	/// </summary>
 
 	public class ParamDeclaration : ValueDeclaration

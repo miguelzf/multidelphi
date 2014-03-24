@@ -86,6 +86,7 @@ namespace crosspascal.parser
 			lexer.yyLexDebugLevel = DebugLevel;
 
 			Object parserRet;
+			parserRet = yyparse(lexer);
 			try
 			{
 				parserRet = yyparse(lexer);
