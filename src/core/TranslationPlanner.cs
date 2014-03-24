@@ -26,6 +26,8 @@ namespace crosspascal.core
 
 			preprocessor = new DelphiPreprocessor();
 			defaultDefines = defines;
+			if (defines == null)
+				defaultDefines = new string[0];
 		}
 
 		public bool LoadIncludePaths(string fpath)
