@@ -81,6 +81,7 @@
     <Compile Include="core\ErrorHandling.cs" />
     <Compile Include="cpp\DelphiToCpp.cs" />
     <Compile Include="cpp\CppCodegen.cs" />
+    <Compile Include="cpp\OutputStream.cs" />
     <Compile Include="parser\DelphiParser.cs" />
     <Compile Include="parser\DelphiParserSupport.cs" />
     <Compile Include="parser\DelphiPreprocessor.cs" />

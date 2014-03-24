@@ -21,6 +21,9 @@ namespace crosspascal.core
 
 		public TranslationPlanner(string[] defines = null)
 		{
+			if (defines == null)
+				defines = new string[0];
+
 			preprocessor = new DelphiPreprocessor();
 			defaultDefines = defines;
 		}

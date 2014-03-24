@@ -346,7 +346,10 @@ namespace crosspascal.cpp
 
 		public override bool Visit(ProceduralType node)
 		{
-			Visit((TypeNode) node);
+			traverse(node.funcret);
+			outputCode("(*", false, false);
+			traverse(node.@params);
+			outputCode(")", false, false);
 			return true;
 		}
 

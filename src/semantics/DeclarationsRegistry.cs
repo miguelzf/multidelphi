@@ -17,6 +17,7 @@ namespace crosspascal.semantics
 
 		// probably won't be needed
 		Dictionary<String, TypeDeclaration> builtinTypes = new Dictionary<String, TypeDeclaration>();
+		Dictionary<String, RoutineDeclaration> builtinFunctions = new Dictionary<String, RoutineDeclaration>();
 
 		public DeclarationsRegistry()
 		{
@@ -28,6 +29,7 @@ namespace crosspascal.semantics
 			LoadBuiltinTypesBasic();
 			LoadBuiltinTypesPointer();
 			LoadBuiltinTypesWindows();	// test
+			LoadBuiltinFunctions();
 			symtab.Push("global");
 		}
 
@@ -104,7 +106,7 @@ namespace crosspascal.semantics
 			else if (!symtab.Add(name, decl))
 				throw new IdentifierRedeclared(name);
 
-			Console.WriteLine("Register Decl " + name + Environment.NewLine + symtab.ListTable(3));
+			//Console.WriteLine("Register Decl " + name + Environment.NewLine + symtab.ListTable(3));
 		}
 
 		/// <summary>
@@ -119,7 +121,7 @@ namespace crosspascal.semantics
 		public void EnterContext(string id = null)
 		{
 			symtab.Push(id);
-			Console.WriteLine("CREATE CONTEXT " + id);
+			//Console.WriteLine("CREATE CONTEXT " + id);
 		}
 		public String LeaveContext()
 		{
@@ -362,6 +364,11 @@ namespace crosspascal.semantics
 			builtinTypes.Add(name, new TypeDeclaration(name, type));
 		}
 
+		void CreateBuiltinFunction(RoutineDeclaration routine)
+		{
+			builtinFunctions.Add(routine.name, routine);
+		}
+
 		/// <summary>
 		/// Load the built-in basic types.
 		/// </summary>
@@ -435,6 +442,18 @@ namespace crosspascal.semantics
 		public void LoadBuiltinTypesWindows()
 		{
 			CreateBuiltinType("thandle", IntegerType.Single);
+		}
+
+		public void LoadBuiltinFunctions()
+		{
+			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("cos", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
+			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("sin", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
+			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("trunc", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
+			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("round", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
+			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("frac", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
+			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("exp", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
+			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("writeln", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
+			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("readln", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
 		}
 
 		#endregion
