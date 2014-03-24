@@ -1,6 +1,7 @@
 Program test1;
 
 Var
+  public : Real;
   A,B:String;
   A1,B1:String;
   A2,B2:String;
@@ -27,4 +28,5 @@ Begin
   A := 'A';
   B := Str1();
   C := A+B;
+  x1 := 2.5;
 End.

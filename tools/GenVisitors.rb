@@ -59,9 +59,9 @@ def gen_code(nodes, gen_method, isbase)
 	arrcode << "namespace crosspascal.ast"
 	arrcode << "{"
 	if isbase
-		arrcode << "\t" + "public abstract partial class " + $genclassname
+		arrcode << "\t" + "protected abstract partial class " + $genclassname
 	elsif
-		arrcode << "\t" + "public class " + $genclassname + " : Processor"
+		arrcode << "\t" + "protected class " + $genclassname + " : Processor"
 	end
 	arrcode << "\t{"
 	arrcode << "\t\t//	Complete interface to be implemented by any specific AST processor	"
@@ -81,7 +81,7 @@ def gen_abstract_visit(node,names)
 	cname = node.name
 	cfields = node.fields
 	arrcode = []
-	arrcode << "public abstract "+ $visitreturntype +" Visit(" + cname  + " node);"
+	arrcode << "protected abstract "+ $visitreturntype +" Visit(" + cname  + " node);"
 	arrcode 
 end
 
@@ -89,7 +89,7 @@ def gen_warning_visit(node,names)
 	cname = node.name
 	cfields = node.fields
 	arrcode = []
-	arrcode << "public virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
+	arrcode << "protected virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
 	arrcode << "{"
 	arrcode << "\tConsole.Error.WriteLine(\"Visit("+cname + ") not yet implemented.\");"
 	gen_return_stmt(arrcode, "\t")
@@ -103,7 +103,7 @@ def gen_concrete_visit(node,names)
 	bname = node.base
 	
 	arrcode = []
-	arrcode << "public virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
+	arrcode << "protected virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
 	arrcode << "{"
 	
 	# call visit of the baseclass on the current node, if the baseclass is a node
@@ -166,7 +166,7 @@ def process_class(name,body)
 	fields.each do |x| staticqualifs.each do |y| x.gsub! Regexp.new(y+'\s+.*'), ''  end end 
 	
 	# cleanup spurious qualifiers
-	qualifs = ['public', 'private', 'protected', 'internal', 'virtual', 'abstract',
+	qualifs = ['protected', 'private', 'protected', 'internal', 'virtual', 'abstract',
 				'internal', 'partial', 'sealed', 'override', 'unsafe']
 	fields.each do |x| qualifs.each do |y| x.gsub! Regexp.new(y+'\s*'), ''  end end 
 	fields.reject!(&:empty?)

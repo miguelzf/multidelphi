@@ -22,7 +22,8 @@ namespace crosspascal.ast
 			Type nodeType = typeof(Node);
 			Type procType = typeof(Processor);
 			Type baseProcType = Processor.GetType();
-			BindingFlags bflags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
+			BindingFlags bflags = BindingFlags.Public	| BindingFlags.NonPublic
+								| BindingFlags.Instance | BindingFlags.FlattenHierarchy;
 
 			// Add most methods - 1 argument, derived from AstNode
 			foreach (MethodInfo mi in procType.GetMethods(bflags))

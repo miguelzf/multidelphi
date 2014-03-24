@@ -123,7 +123,7 @@ namespace crosspascal.ast.nodes
 		public String objname;
 		public String metname;
 
-		public MethodDeclaration(string name, string objname, DeclarationList @params, ScalarType ret = null, MethodDirectives dirs = null)
+		public MethodDeclaration(string objname, string name, DeclarationList @params, ScalarType ret = null, MethodDirectives dirs = null)
 			: base(objname+"."+name, @params, ret, dirs)
 		{
 			this.metname = name;
@@ -134,19 +134,19 @@ namespace crosspascal.ast.nodes
 
 	public class SpecialMethodDeclaration : MethodDeclaration
 	{
-		public SpecialMethodDeclaration(string name, string objname, DeclarationList @params)
+		public SpecialMethodDeclaration(string objname, string name, DeclarationList @params)
 			: base(name, objname, @params)	{	}
 	}
 
 	public class ConstructorDeclaration : SpecialMethodDeclaration
 	{
-		public ConstructorDeclaration(string name, string objname, DeclarationList @params)
+		public ConstructorDeclaration(string objname, string name, DeclarationList @params)
 			: base(name, objname, @params)	{	}
 	}
 
 	public class DestructorDeclaration : SpecialMethodDeclaration
 	{
-		public DestructorDeclaration(string name, string objname, DeclarationList @params)
+		public DestructorDeclaration(string objname, string name, DeclarationList @params)
 			: base(name, objname, @params) { }
 	}
 

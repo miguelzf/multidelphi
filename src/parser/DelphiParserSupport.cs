@@ -8,6 +8,7 @@ using crosspascal.semantics;
 using System.IO;
 using System.Diagnostics;
 using System.Collections;
+using crosspascal.core;
 
 namespace crosspascal.parser
 {
@@ -20,16 +21,15 @@ namespace crosspascal.parser
 	public partial class DelphiParser
 	{
 
-		//Encoding.Default;	// typically Single-Bye char set
-		// TODO change charset to unicode, use %unicode in flex
-		public static readonly Encoding DefaultEncoding = Encoding.GetEncoding("iso-8859-1");
+		//
+		// Immutable Parser state 
+		//
 
 		public static int DebugLevel;
 
 		// to be fetched in the AST Declaration node
 		public static DeclarationsRegistry DeclReg;
 
-		DelphiScanner lexer;
 
 		//
 		// Entry point and public interface
@@ -47,11 +47,9 @@ namespace crosspascal.parser
 
 		public DelphiParser(int dgbLevel)
 			: this(new Func<ParserDebug>(
-					() =>
-					{
+					() => {
 						switch (dgbLevel)
-						{
-							case 1: return new DebugPrintFinal();
+						{	case 1: return new DebugPrintFinal();
 							case 2: return new DebugPrintAll();
 							default: return null;
 						}
@@ -60,8 +58,18 @@ namespace crosspascal.parser
 			DebugLevel = dgbLevel;
 		}
 
+
+
+		//
+		// Per-file mutable parsing state
+		//
+
+		SourceFile source;
+
+		DelphiScanner lexer;
+
 		// wrapper for yyparse
-		public CompilationUnit Parse(TextReader tr, ParserDebug dgb = null)
+		public CompilationUnit Parse(TextReader tr, SourceFile sf, ParserDebug dgb = null)
 		{
 			if (dgb != null)
 			{
@@ -69,6 +77,7 @@ namespace crosspascal.parser
 				DebugLevel = 1;
 			}
 
+			source = sf;
 			DeclReg = new DeclarationsRegistry();
 			DeclReg.LoadRuntimeNames();
 
@@ -93,9 +102,30 @@ namespace crosspascal.parser
 		}
 
 
+
 		//
 		// AST cleaning/shaping up
 		// 
+
+		/// <summary>
+		/// Finalize processing of an Unit's interface section, by saving its symbol context
+		/// </summary>
+		void FinishInterfaceSection()
+		{
+			source.interfContext = DeclReg.ExportContext();
+		}
+
+		/// <summary>
+		/// Import dependency from a Unit SourceFile already parsed,
+		/// by loading its interface context
+		/// </summary>
+		void ImportDependency(string id)
+		{
+			var ctx = source.GetDependency(id).interfContext;
+			ctx.id = id;
+			DeclReg.ImportContext(ctx);
+		}
+
 
 		/// <summary>
 		/// Resolves an id, disambiguating between RoutineCalls and Identifiers
@@ -114,8 +144,6 @@ namespace crosspascal.parser
 
 
 		// Internal helpers
-
-		string lastObjectName = null;	// keeps track of current class/object/interface being parsed
 
 		T ListAdd<T,N>(T bodylst, N elem)
 			where N : Node

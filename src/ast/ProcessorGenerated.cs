@@ -101,23 +101,23 @@ namespace crosspascal.ast
 		public virtual bool Visit(ProgramNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.body);
 			traverse(node.uses);
+			traverse(node.body);
 			return true;
 		}
 		
 		public virtual bool Visit(LibraryNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.body);
 			traverse(node.uses);
+			traverse(node.body);
 			return true;
 		}
 		
 		public virtual bool Visit(UnitNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.interfce);
+			traverse(node.@interface);
 			traverse(node.implementation);
 			traverse(node.init);
 			return true;

@@ -125,6 +125,14 @@ namespace crosspascal.parser
 	
 			stateStack.Push(INITIAL);
 		}
+		
+		
+		int ProcessIdentifier()
+		{
+			yylval = yytext();
+			return IDENTIFIER;
+		}
+		
 %}
 
 
@@ -156,15 +164,15 @@ uses		{ return KW_USES; }
 exports		{ return KW_EXPORTS; }
 
 	/* units keywords */
-interface	{ return KW_INTERF; }
+interface		{ return KW_INTERF; }
 implementation	{ return KW_IMPL; }
 finalization	{ return KW_FINALIZ; }
 initialization	{ return KW_INIT; }
 
 	/* objects */
+class		{ yypushstate(SCLASS); return KW_CLASS; }
 object		{ yypushstate(SCLASS); return KW_OBJECT; }
-record		{ yypushstate(SCLASS); return KW_RECORD; }
-class		{ return KW_CLASS; }
+record		{ return KW_RECORD; }
 packed		{ return KW_PACKED; }		// packed struct
 of			{ return KW_OF; }			// decl of types
 out			{ return KW_OUT; }			// modifier of func params
@@ -230,7 +238,7 @@ on			{ return KW_ON; }
 	// wait for function params or return (when function has no params)
 <XFUNCW_PARAMS> {
 	// function name
-	{ID1}{ID}*	{ yylval = yytext(); return IDENTIFIER; }
+	{ID1}{ID}*	{ return ProcessIdentifier(); }
 	"."			{ return KW_DOT; }
 	
 	"("			{	switchstate(XFUNCW_RET);
@@ -316,7 +324,7 @@ on			{ return KW_ON; }
 	name 		{ return KW_NAME; }
 	'[^']*'		{ yylval = yytext().Substring(1, yylength()-2); return CONST_STR; }
 	"."			{ return KW_DOT; }
-	{ID1}{ID}*	{ yylval = yytext(); return IDENTIFIER; }
+	{ID1}{ID}*	{ return ProcessIdentifier(); }
 	
 	";"			{ yypopstate(); return SCOL; }
 	[ \t\n\r]+	{ }
@@ -366,7 +374,7 @@ end				{ return KW_END; }
  	/**************************************************************/
 	// Lexical Scope for Packages
 	
-package			{ yypushstate(SPACKAGES); yylval = yytext(); return IDENTIFIER; }
+package			{ yypushstate(SPACKAGES); return ProcessIdentifier(); }
 <SPACKAGES> {
 	requires	{ return KW_REQUIRES; }
 	contains	{ return KW_CONTAINS; }
@@ -516,7 +524,7 @@ in			{ return KW_IN; }	// is in set
 
 	/**************************************************************/
 
-{ID1}{ID}*	{ yylval = yytext(); return IDENTIFIER; }
+{ID1}{ID}*	{ return ProcessIdentifier(); }
 
 [ \t]+		{ }     /* ignore whitespace */
 

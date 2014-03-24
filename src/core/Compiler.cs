@@ -13,23 +13,22 @@ namespace crosspascal.core
 {
 	public class Compiler
 	{
+
+		TranslationPlanner planner;
 		DelphiParser parser;
-		DelphiPreprocessor preprocessor;
 
 		public const int DefaultDebugLevel = 1;
 
 		public int DebugLevel;
 
-		public Compiler(int debuglevel = DefaultDebugLevel)
+		public Compiler(int debuglevel = DefaultDebugLevel, string[] globalDefines = null)
 		{
 			DebugLevel = debuglevel;
-			preprocessor = new DelphiPreprocessor();
 			parser = new DelphiParser(DebugLevel);
+			planner = new TranslationPlanner(globalDefines);
 
-			preprocessor.LoadIncludePaths("include-paths.txt");
+			planner.LoadIncludePaths("include-paths.txt");
 		}
-
-		List<String> Files = new List<String>();
 
 
 		public bool Compile(string[] filenames)
@@ -37,31 +36,27 @@ namespace crosspascal.core
 			bool success = true;
 			Console.WriteLine("CrossPascal Delphi compiler");
 
-			foreach (string s in filenames)
+			// Load, preprocess and order them
+			planner.LoadFiles(filenames);
+
+			AstPrinter astPrinter = new AstPrinter();
+			MapTraverser mt = new MapTraverser(astPrinter);
+
+			foreach (SourceFile sf in planner.GetSourceFiles())
 			{
-				Console.Write("####### Compile file " + Path.GetFileName(s) + ": ");
+				Console.Write("####### Compile file " + Path.GetFileName(sf.name) + ": ");
 
-				preprocessor.InitPreprocessor(s);
-				preprocessor.AddDefine("WINDOWS");	// test
-
-				try
-				{
-					preprocessor.Preprocess();
-				}
-				catch (PreprocessorException e)
-				{
-					Console.Error.WriteLine("Preprocessing failed");
-					success = false;
-					continue;
+				if (sf.preprocText == null)		// preprocessing failed
+				{	success = false;
+					break;
 				}
 
-				string preprocfiletext = preprocessor.GetOutput();
-				StringReader sr = new StringReader(preprocfiletext);
+				StringReader sr = new StringReader(sf.preprocText);
 
 				CompilationUnit ast;
 
 				try {
-					ast = parser.Parse(sr);
+					ast = parser.Parse(sr, sf);
 					Console.WriteLine("Parsed OK: " + ast.name + " " + ast.ToString());
 				}
 				catch (ParserException e)
@@ -69,11 +64,11 @@ namespace crosspascal.core
 					Console.Error.WriteLine(e);
 					Console.Error.WriteLine("Parsing failed");
 					success = false; 
+					break;
 				}
 
-
-				// TODO Process AST
-
+				astPrinter.StartProcessing(ast);
+				Console.WriteLine(astPrinter);
 			}
 
 			return success;

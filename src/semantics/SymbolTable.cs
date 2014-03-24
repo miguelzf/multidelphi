@@ -11,7 +11,6 @@ namespace crosspascal.semantics
 	/// </summary>
 	public class SymbolTable<T> where T : class
 	{
-
 		Stack<SymbolContext<T>> contexts = new Stack<SymbolContext<T>>();
 		SymbolContext<T> current;
 
@@ -121,60 +120,83 @@ namespace crosspascal.semantics
 			return current.Add(key, symbol);
 		}
 
-
+		/// <summary>
+		/// Import external context
+		/// </summary>
+		internal void ImportCurrentContext(SymbolContext<T> ctx)
+		{
+			contexts.Push(ctx);
+			current = ctx;
+		}
 
 		/// <summary>
-		/// Context of declared symbols
+		/// Export current context
 		/// </summary>
-		class SymbolContext<iT> where iT : class
+		internal SymbolContext<T> ExportCurrentContext()
 		{
-			Dictionary<String, iT> symbols;
-			internal iT lastInserted;
-
-			internal bool allowShadowing;
-			internal string id;
-
-			internal SymbolContext(String id = null, bool allowShadowing = true)
-			{
-				this.id = id;
-				this.allowShadowing = allowShadowing;
-				this.lastInserted = null;
-				symbols = new Dictionary<String, iT>();
-			}
-
-			internal iT Lookup(String key)
-			{
-				return (symbols.ContainsKey(key) ? symbols[key] : null);
-			}
-
-			internal bool Add(String key, iT symbol)
-			{
-				if (symbols.ContainsKey(key))
-					return false;
-
-				lastInserted = symbol;
-				symbols[key] = symbol;
-				return true;
-			}
-
-			internal bool Replace(String key, iT symbol)
-			{
-				if (!symbols.ContainsKey(key))
-					return false;
-
-				symbols[key] = symbol;
-				return true;
-			}
-
-			internal bool Remove(String key, iT symbol)
-			{
-				return symbols.Remove(key);
-			}
-
+			return current.Clone();
 		}
-		// end Symbol Context
+	}
+
+	/// <summary>
+	/// Context of declared symbols
+	/// </summary>
+	class SymbolContext<iT>
+		where iT : class
+	{
+		Dictionary<String, iT> symbols;
+		internal iT lastInserted;
+
+		internal bool allowShadowing;
+		internal string id;
+
+		internal SymbolContext(String id = null, bool allowShadowing = true)
+		{
+			this.id = id;
+			this.allowShadowing = allowShadowing;
+			this.lastInserted = null;
+			symbols = new Dictionary<String, iT>();
+		}
+
+		internal SymbolContext<iT> Clone()
+		{
+			var ctx = new SymbolContext<iT>(id, allowShadowing);
+			ctx.lastInserted = lastInserted;
+			ctx.symbols = new Dictionary<String, iT>(symbols);
+			return ctx;
+		}
+
+		internal iT Lookup(String key)
+		{
+			return (symbols.ContainsKey(key) ? symbols[key] : null);
+		}
+
+		internal bool Add(String key, iT symbol)
+		{
+			if (symbols.ContainsKey(key))
+				return false;
+
+			lastInserted = symbol;
+			symbols[key] = symbol;
+			return true;
+		}
+
+		internal bool Replace(String key, iT symbol)
+		{
+			if (!symbols.ContainsKey(key))
+				return false;
+
+			symbols[key] = symbol;
+			return true;
+		}
+
+		internal bool Remove(String key, iT symbol)
+		{
+			return symbols.Remove(key);
+		}
 
 	}
+	// end Symbol Context
 
 }
 

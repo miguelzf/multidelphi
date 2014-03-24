@@ -23,15 +23,25 @@ namespace crosspascal.cpp
 		}
 
 
-        public void PushIdent()
+        void PushIdent()
         {
             ident++;
         }
 
-        public void PopIdent()
+        void PopIdent()
         {
             ident--;
         }
+
+
+		//
+		// Processor interface
+		//
+
+		public override bool StartProcessing(Node n)
+		{
+			return traverse(n);
+		}
 
 		public override bool Visit(Node node)
 		{
@@ -131,7 +141,7 @@ namespace crosspascal.cpp
 		public override bool Visit(UnitNode node)
 		{
 			Visit((CompilationUnit) node);
-			traverse(node.interfce);
+			traverse(node.@interface);
 			traverse(node.implementation);
 			traverse(node.init);
 			return true;

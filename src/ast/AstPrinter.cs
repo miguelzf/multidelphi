@@ -104,6 +104,12 @@ namespace crosspascal.ast
 		// Processor interface
 		//
 
+		public override bool StartProcessing(Node n)
+		{
+			TraversePrint(n);
+			return true;
+		}
+
 		public override bool Visit(Node node)
 		{
 			return true;
@@ -134,50 +140,52 @@ namespace crosspascal.ast
 		
 		public override bool Visit(NodeList node)
 		{
+			Console.WriteLine("NODELIST");
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
+			Console.WriteLine("NODELIST END");
 			return true;
 		}
 		
 		public override bool Visit(StatementList node)
 		{
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(TypeList node)
 		{
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(IntegralTypeList node)
 		{
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(IdentifierList node)
 		{
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(DeclarationList node)
 		{
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
 			return true;
 		}
 		
 		public override bool Visit(EnumValueList node)
 		{
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
 			return true;
 		}
 		
@@ -190,23 +198,23 @@ namespace crosspascal.ast
 		public override bool Visit(ProgramNode node)
 		{
 			Visit((CompilationUnit) node);
-			TraversePrint(node.body);
 			TraversePrint(node.uses);
+			TraversePrint(node.body);
 			return true;
 		}
 		
 		public override bool Visit(LibraryNode node)
 		{
 			Visit((CompilationUnit) node);
-			TraversePrint(node.body);
 			TraversePrint(node.uses);
+			TraversePrint(node.body);
 			return true;
 		}
 		
 		public override bool Visit(UnitNode node)
 		{
 			Visit((CompilationUnit) node);
-			TraversePrint(node.interfce);
+			TraversePrint(node.@interface);
 			TraversePrint(node.implementation);
 			TraversePrint(node.init);
 			return true;
@@ -502,7 +510,7 @@ namespace crosspascal.ast
 		public override bool Visit(ScopedSectionList node)
 		{
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
 			return true;
 		}
 		
@@ -734,7 +742,7 @@ namespace crosspascal.ast
 		public override bool Visit(ExpressionList node)
 		{
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
 			return true;
 		}
 		
@@ -768,7 +776,7 @@ namespace crosspascal.ast
 		{
 			Visit((ExpressionList) node);
 			foreach (Node n in node.nodes)
-				traverse(n);
+				TraversePrint(n);
 			return true;
 		}
 		

@@ -18,56 +18,10 @@ namespace crosspascal.testunits
 		public static void Main(string[] args)
 		{
 			var sw = new Stopwatch();
-
-		//	Compiler compiler = new Compiler();
-		//	compiler.Compile(args);
+			sw.Start();
 		
-			Console.WriteLine("CrossPascal Delphi compiler");
-
-			DelphiParser parser = new DelphiParser(Compiler.DefaultDebugLevel);
-			DelphiPreprocessor preproc = new DelphiPreprocessor();
-			preproc.LoadIncludePaths("include-paths.txt");
-
-			CompilationUnit tree = null;
-
-			// TestReadAll(args);
-			foreach (string s in args)
-			{
-				Console.Write("####### PARSE file " + Path.GetFileName(s) + ": ");
-
-				preproc.InitPreprocessor(s);
-				preproc.AddDefine("WINDOWS");	// test
-				try
-				{
-					preproc.Preprocess();
-				}
-				catch (PreprocessorException)
-				{
-					Console.Error.WriteLine("Preprocessing failed");
-					continue;
-				}
-
-				string preprocfiletext = preproc.GetOutput();	// Delphi is case-insensitive
-				StringReader sr = new StringReader(preprocfiletext);
-				try
-				{
-					tree = (CompilationUnit)parser.Parse(sr);
-					Console.WriteLine("Parsed OK: " + tree.name + " " + tree.ToString());
-				}
-				catch (ParserException e)
-				{
-					Console.Error.WriteLine(e);
-					Console.Error.WriteLine("Parsing failed");
-					continue;
-				}
-
-				AstPrinter astPrinter = new AstPrinter();
-
-				Console.WriteLine("Now compiling...");
-				MapTraverser mt = new MapTraverser(astPrinter);
-				mt.traverse(tree);
-				Console.WriteLine(astPrinter);
-			}
+			Compiler compiler = new Compiler(2, new string[] { "WINDOWS" });
+			compiler.Compile(args);
 			
 			sw.Stop();
 
@@ -87,7 +41,7 @@ namespace crosspascal.testunits
 			{
 				string s = args[i];
 				Console.Write("####### PARSE file " + Path.GetFileName(s) + "\n");
-				var sr = new StreamReader(s, DelphiParser.DefaultEncoding);
+				var sr = new StreamReader(s, DelphiPreprocessor.DefaultEncoding);
 				fstrings[i] = sr.ReadToEnd();
 			}
 

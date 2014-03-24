@@ -217,12 +217,12 @@ namespace crosspascal.ast.nodes
 				nodes.Insert(idx, t);
 		}
 
-		IEnumerator<T> IEnumerable<T>.GetEnumerator()
+		public IEnumerator<T> GetEnumerator()
 		{
 			return nodes.GetEnumerator();
 		}
 
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return nodes.GetEnumerator();
 		}
@@ -253,6 +253,8 @@ namespace crosspascal.ast.nodes
 		public StatementList() : base() { }
 
 		public StatementList(Statement t) : base(t) { }
+
+		public StatementList(IEnumerable<Statement> ts) : base(ts) { }
 	}
 
 	public class TypeList : ListNode<TypeNode>

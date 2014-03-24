@@ -53,23 +53,14 @@ namespace crosspascal.ast
 				traverse = t;
 		}
 
-/*
-		// =========================================================================
-		//	Complete interface to be implemented by any specific AST processor
-		// =========================================================================
-
-		public override void VisitListNode(Node node, IEnumerable<Node> items)
+		
+		/// <summary>
+		/// Entry point
+		/// </summary>
+		public virtual bool StartProcessing(Node n)
 		{
-			foreach (Node item in items)
-				traverse(item);
+			return traverse(n);
 		}
 
-		// Only called from Visit(CodeBase codeBase)
-		public override void VisitSourceFile(string fileName, Node node)
-		{
-			traverse(node);
-		}
-
-*/
 	}
 }

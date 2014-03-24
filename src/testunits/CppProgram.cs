@@ -34,7 +34,7 @@ namespace crosspascal.testunits
 			{
 				Console.Write("####### PARSE file " + Path.GetFileName(s) + ": ");
 
-				preproc.InitPreprocessor(s);
+			//	preproc.ResetPreprocessor(s);
 				preproc.AddDefine("LINUX");	// test
 				try
 				{
@@ -50,7 +50,7 @@ namespace crosspascal.testunits
 				StringReader sr = new StringReader(preprocfiletext);
 				try
 				{
-					tree = (CompilationUnit)parser.Parse(sr);
+			//		tree = (CompilationUnit)parser.Parse(sr);
 					Console.WriteLine("Parsed OK: " + tree.name + " " + tree.ToString());
 				}
 				catch (ParserException e)

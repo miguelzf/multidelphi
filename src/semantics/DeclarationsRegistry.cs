@@ -13,7 +13,8 @@ namespace crosspascal.semantics
 	/// </summary>
 	public class DeclarationsRegistry
 	{
-		SymbolTable<Declaration> symtab = new SymbolTable<Declaration>();
+		public SymbolTable<Declaration> symtab = new SymbolTable<Declaration>();
+
 		// probably won't be needed
 		Dictionary<String, TypeDeclaration> builtinTypes = new Dictionary<String, TypeDeclaration>();
 
@@ -29,6 +30,25 @@ namespace crosspascal.semantics
 			LoadBuiltinTypesWindows();	// test
 			symtab.Push("global");
 		}
+
+
+		/// <summary>
+		/// Import external context. To load used/imported units
+		/// </summary>
+		internal void ImportContext(SymbolContext<Declaration> ctx)
+		{
+			symtab.ImportCurrentContext(ctx);
+		}
+
+		/// <summary>
+		/// Export current context, should be a unit interface context,
+		/// to later be able to load used/import this unit
+		/// </summary>
+		internal SymbolContext<Declaration> ExportContext()
+		{
+			return symtab.ExportCurrentContext();
+		}
+
 
 
 		/// <summary>
@@ -99,7 +119,6 @@ namespace crosspascal.semantics
 		{
 			return symtab.Pop();
 		}
-
 
 
 		#region Loading of Class/Interface Contexts
@@ -356,6 +375,7 @@ namespace crosspascal.semantics
 			CreateBuiltinType("widestr", StringType.Single);
 			CreateBuiltinType("real48", DoubleType.Single);
 			CreateBuiltinType("single", FloatType .Single);
+			CreateBuiltinType("real", DoubleType.Single);
 			CreateBuiltinType("double", DoubleType.Single);
 			CreateBuiltinType("extended", ExtendedType.Single);
 			CreateBuiltinType("currency", CurrencyType.Single);

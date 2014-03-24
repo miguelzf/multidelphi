@@ -36,7 +36,7 @@ namespace crosspascal.semantics
 
 	public class DeclarationNotFound : SemanticException
 	{
-		const string DefaultMsg = "Undeclared Identifier";
+		const string DefaultMsg = "Undeclared Identifier: ";
 
 		public DeclarationNotFound(int lineno, string idname) : base(lineno, DefaultMsg + idname) { }
 

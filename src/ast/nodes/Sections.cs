@@ -27,8 +27,8 @@ namespace crosspascal.ast.nodes
 
 	public class ProgramNode : CompilationUnit
 	{
-		public ProgramBody body;
 		public NodeList uses;
+		public ProgramBody body;
 
 		public ProgramNode(String name, NodeList uses, ProgramBody body) : base(name)
 		{
@@ -51,13 +51,13 @@ namespace crosspascal.ast.nodes
 
 	public class UnitNode : CompilationUnit
 	{
-		public InterfaceSection interfce;
+		public InterfaceSection @interface;
 		public ImplementationSection implementation;
 		public Node init;
 
 		public UnitNode(String name, InterfaceSection interfce, ImplementationSection impl, Node init) : base(name)
 		{
-			this.interfce = interfce;
+			this.@interface = interfce;
 			this.implementation = impl;
 			this.init = init;
 		}

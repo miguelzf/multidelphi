@@ -28,6 +28,7 @@ namespace crosspascal.parser
 			throw new InputRejected(lexer.yylineno(), msg);
 		}
 			
+		string lastObjectName = null;	// keeps track of current class/object/interface being parsed
 		
 %}
 
@@ -37,7 +38,7 @@ namespace crosspascal.parser
 	// =========================================================================
 
 %start goal
-%type<string> id labelid stringconst conststr expid
+%type<string> id typeid labelid stringconst conststr expid
 %type<ArrayList> labelidlst idlst
 
 	// sections and declarations
@@ -285,7 +286,8 @@ useslst
 	;
 	
 usesitem
-	: id						{ $$ = new UsesItem($1);}
+	: id						{ $$ = new UsesItem($1); ImportDependency($1); }
+	// TODO
 	| id KW_IN stringconst		{ $$ = new UsesItem($1, $3);}
 	;
 
@@ -299,7 +301,7 @@ implsec
 	;
 
 interfsec
-	: KW_INTERF usesopt interfdecllst	{ $$ = new InterfaceSection($2, $3);}
+	: KW_INTERF usesopt interfdecllst	{ $$ = new InterfaceSection($2, $3); FinishInterfaceSection(); }
 	;
 
 interfdecllst
@@ -382,7 +384,7 @@ varsec
 thrvarsec
 	: KW_THRVAR vardecl		{ $$ = $2;	foreach (VarDeclaration d in $2) d.isThrVar = true; }
 	| thrvarsec vardecl		{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); 
-										foreach (VarDeclaration d in $2) d.isThrVar = true; }
+									foreach (VarDeclaration d in $2) d.isThrVar = true; }
 	;
 
 vardecl
@@ -409,18 +411,18 @@ rscstringlst
 	;
 	
 rscstring
-	:  id KW_EQ stringlit SCOL	{ $$ = new ConstDeclaration($1, $3); }
+	:  id KW_EQ stringlit SCOL		{ $$ = new ConstDeclaration($1, $3); }
 	;
 
 	
 	// labels
 	
 labeldeclsec
-	: KW_LABEL labelidlst SCOL		{$$ = CreateDecls($2, new CreateDecl((s) => new LabelDeclaration(s))); }
+	: KW_LABEL labelidlst SCOL		{ $$ = CreateDecls($2, new CreateDecl((s) => new LabelDeclaration(s))); }
 	;
 	
 labelidlst 
-	: labelid						{ var ar = new ArrayList(); ar.Add($1); $$ = ar; }
+	: labelid						{ $$ = new ArrayList(); ($$ as ArrayList).Add($1); }
 	| labelidlst COMMA labelid		{ $$ = $1; $1.Add($3); }
 	;
 
@@ -475,31 +477,31 @@ kwprocedureptr
 	// Declaration/interface contexts
 	
 kwfunction
-	: KW_FUNCTION  id	{ DeclReg.EnterContext(); $$ = $2; }
+	: KW_FUNCTION  id	{ $$ = $2; DeclReg.EnterContext($2); }
 	;
 kwprocedure
-	: KW_PROCEDURE id	{ DeclReg.EnterContext(); $$ = $2; }
+	: KW_PROCEDURE id	{ $$ = $2; DeclReg.EnterContext($2); }
 	;
 kwconstructor
-	: KW_CONSTRUCTOR id	{ DeclReg.EnterContext($2); $$ = $2; }
+	: KW_CONSTRUCTOR id	{ $$ = $2; DeclReg.EnterContext($2); }
 	;
 kwdestructor
-	: KW_DESTRUCTOR  id { DeclReg.EnterContext($2); $$ = $2; }
+	: KW_DESTRUCTOR  id { $$ = $2; DeclReg.EnterContext($2); }
 	;
 
 	// Definition/implementation contexts
 	
 kwmetfunction
-	: KW_FUNCTION    id KW_DOT	{ DeclReg.EnterMethodContext($2); $$ = $2; }
+	: KW_FUNCTION    id KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
 	;
 kwmetprocedure
-	: KW_PROCEDURE   id KW_DOT	{ DeclReg.EnterMethodContext($2); $$ = $2; }
+	: KW_PROCEDURE   id KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
 	;
 kwmetconstruct
-	: KW_CONSTRUCTOR id KW_DOT	{ DeclReg.EnterMethodContext($2); $$ = $2; }
+	: KW_CONSTRUCTOR id KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
 	;
 kwmetdestruct
-	: KW_DESTRUCTOR  id KW_DOT	{ DeclReg.EnterMethodContext($2); $$ = $2; }
+	: KW_DESTRUCTOR  id KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
 	;	
 
 	// Object contexts
@@ -544,7 +546,7 @@ metdefproto
 	
 	// global routine definition
 routinedefunqualif
-	: routineproto funcdiropt funcdefine SCOL	{ $1.Directives = $2; $$ = new RoutineDefinition($1, $3); DeclReg.LeaveContext(); }
+	: routineproto funcdiropt funcdefine SCOL	{ $$ = new RoutineDefinition($1, $3); $1.Directives = $2; DeclReg.LeaveContext(); }
 	;
 	
 	// routine decl for interface sections
@@ -564,7 +566,7 @@ methoddecl
 methoddeclin
 	: kwfunction    formalparams funcret SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $1, $2, $3, $5); }
 	| kwprocedure   formalparams         SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $1, $2, null, $4); }
-	| kwconstructor formalparams SCOL						{ $$ = new DestructorDeclaration(lastObjectName, $1, $2); }
+	| kwconstructor formalparams SCOL						{ $$ = new ConstructorDeclaration(lastObjectName, $1, $2); }
 	| kwdestructor  formalparams SCOL						{ $$ = new DestructorDeclaration(lastObjectName, $1, $2); }
 	;
 
@@ -676,12 +678,12 @@ metdirectopt
 
 funcdirectlst
 	: funcdirective						{ $$ = new RoutineDirectives(); }
-	| funcdirectlst SCOL funcdirective	{ $1.Add($3); $$ = $1; }
+	| funcdirectlst SCOL funcdirective	{ $$ = $1; $1.Add($3); }
 	;
 
 metdirectlst
 	: metdirective						{ $$ = new MethodDirectives(); }
-	| metdirectlst SCOL metdirective	{ $1.Add($3); $$ = $1; }
+	| metdirectlst SCOL metdirective	{ $$ = $1; $1.Add($3); }
 	;
 
 metdirective
@@ -737,12 +739,14 @@ block
 
 	// encapsulate the StatementList in a Statement itself
 blockstmt
-	: stmtlist				{ $$ = new BlockStatement($1); }
+	: stmtlist				{ $$ = new BlockStatement(new StatementList($1.Reverse())); }
 	;
 	
+	// Warning! the stmts are added in reverse order. The list must be reversed in the end.
+	// Faster than doing List.Insertions, O(n) since List is build on an array
 stmtlist
 	: stmt					{ $$ = new StatementList($1); }
-	| stmt SCOL stmtlist	{ $$ = ListAddReverse<StatementList,Statement>($3, $1); }
+	| stmt SCOL stmtlist	{ $$ = ListAdd<StatementList,Statement>($3, $1); }
 	;
 
 stmt
@@ -996,9 +1000,7 @@ discrete
 	;
 
 stringlit
-	: stringconst	{ if ($1.Length==1)	$$ = new CharLiteral($1[0]);
-					  else				$$ = new StringLiteral($1);
-					}
+	: stringconst	{ $$ =  (($1.Length==1)? (Literal) new CharLiteral($1[0]) : (Literal) new StringLiteral($1)); }
 	;
 
 stringconst
@@ -1009,7 +1011,7 @@ stringconst
 	;
 
 idlst
-	: id						{ var ar = new ArrayList(); ar.Add($1); $$ = ar; }
+	: id						{ $$ = new ArrayList(); ($$ as ArrayList).Add($1); }
 	| idlst COMMA id			{ $$ = $1; $1.Add($3); }
 	;
 
@@ -1043,7 +1045,7 @@ conststr
 	// ===================================================================================
 
 rangetype			// must be const
-	: rangestart KW_RANGE expr		{ $3.EnforceConst = true; $$ = new RangeType($1, new ConstExpression($3)); }
+	: rangestart KW_RANGE expr		{ $$ = new RangeType($1, new ConstExpression($3)); $3.EnforceConst = true; }
 	;
 	
 	// best effort to support constant exprs. TODO improve
@@ -1054,7 +1056,7 @@ rangestart
 	;
 
 enumtype
-	: LPAR enumelemlst RPAR		{ $$ = new EnumType($2); }
+	: LPAR enumelemlst RPAR			{ $$ = new EnumType($2); }
 	;
 
 enumelemlst
@@ -1122,7 +1124,7 @@ arrayexpr
 
 	// 1 or more exprs
 arrayconst
-	: LPAR arrayexpr COMMA arrayexprlst RPAR	{ $4.InsertAt(0, $2); $$ = new ArrayConst($4); }
+	: LPAR arrayexpr COMMA arrayexprlst RPAR	{ $$ = new ArrayConst($4); $4.InsertAt(0, $2); }
 	;
 
 arrayexprlst
@@ -1131,7 +1133,7 @@ arrayexprlst
 	;
 
 recordconst
-	: LPAR fieldconstlst scolopt RPAR		{$$ = new RecordConst($2); }
+	: LPAR fieldconstlst scolopt RPAR		{ $$ = new RecordConst($2); }
 	;
 
 fieldconstlst
@@ -1166,14 +1168,12 @@ recvariant
 recfieldlst
 	: recfield %prec LOWESTPREC							{ $$ = $1; }
 	| recfield SCOL										{ $$ = $1; }
-	| recfield SCOL recfieldlst							{ $1.AddStart($1); $$ = $1; }
+	| recfield SCOL recfieldlst							{ $$ = $1; $1.AddStart($1); }
 	;
 
 recfield
-	: constexprlst COLON LPAR recvarlst scolopt RPAR	{ var list = $1.Select(x => new VarEntryDeclaration(
-																					x as ConstExpression, $4));
-														  $$ = new DeclarationList(list);
-														}
+	: constexprlst COLON LPAR recvarlst scolopt RPAR	{ $$ = new DeclarationList($1.Select(x => 
+																new VarEntryDeclaration(x as ConstExpression, $4))); }
 	;
 	
 recvarlst
@@ -1243,8 +1243,7 @@ fieldlst
 objfield
 	: idlst COLON vartype			{ $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); }
 	| idlst COLON proceduraltype 	{ $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); }
-	| idlst COLON proceduraltype SCOL funcdirectlst	{ $3.Directives = $5; 
-													  $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); }
+	| idlst COLON proceduraltype SCOL funcdirectlst	{ $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); $3.Directives = $5;  }
 	;
 	
 classcomplstopt
@@ -1380,14 +1379,18 @@ implopt
 	// ===================================================================================
 
 typedecl
-	: id KW_EQ typeopt vartype  SCOL					{ $$ = new TypeDeclaration($1, $4); }
-	| id KW_EQ typeopt proceduraltype SCOL funcdiropt	{ $$ = new TypeDeclaration($1, $4); $4.Directives = $6; }
-	| id KW_EQ typeopt packclasstype SCOL				{ $$ = new ClassDeclaration($1, $4); DeclReg.LeaveContext(); }
-	| id KW_EQ typeopt packinterftype SCOL				{ $$ = new InterfaceDeclaration($1, $4); DeclReg.LeaveContext(); }
+	: typeid vartype  SCOL					{ $$ = new TypeDeclaration($1, $2); }
+	| typeid proceduraltype SCOL funcdiropt	{ $$ = new TypeDeclaration($1, $2); $2.Directives = $4; }
+	| typeid packclasstype SCOL				{ $$ = new ClassDeclaration($1,$2); DeclReg.LeaveContext(); }
+	| typeid packinterftype SCOL			{ $$ = new InterfaceDeclaration($1, $2); DeclReg.LeaveContext(); }
+	;
+
+typeid
+	: id KW_EQ 	typeopt			{ $$ = lastObjectName = $1; }
 	;
 
 typeopt		// ignored for now
-	:	
+	:
 	| KW_TYPE
 	;
 
