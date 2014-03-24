@@ -59,8 +59,10 @@ namespace crosspascal.semantics
 		bool CheckContextCreation(String name, Declaration decl)
 		{
 			TypeNode tdecl = decl.type;
-			
-			if (tdecl is ProceduralType || tdecl is CompositeType || tdecl is RecordType)
+
+			if (decl is CallableDeclaration || decl is CompositeDeclaration
+				// re-used record types have been already declared, so they never come here
+			|| (decl is VariantDeclaration && tdecl is RecordType))
 			{
 				if (!symtab.AddToPrevious(name, decl))
 					throw new IdentifierRedeclared(name);
@@ -95,11 +97,14 @@ namespace crosspascal.semantics
 		/// </summary>
 		public void RegisterDeclaration(String name, Declaration decl)
 		{
+			// check if the declaration creates a context (classes, functions, records)
 			if (CheckContextCreation(name, decl))
-				return;
-
-			if (!symtab.Add(name, decl))
+			{	// return
+			}
+			else if (!symtab.Add(name, decl))
 				throw new IdentifierRedeclared(name);
+
+			Console.WriteLine("Register Decl " + name + Environment.NewLine + symtab.ListTable(3));
 		}
 
 		/// <summary>
@@ -114,6 +119,7 @@ namespace crosspascal.semantics
 		public void EnterContext(string id = null)
 		{
 			symtab.Push(id);
+			Console.WriteLine("CREATE CONTEXT " + id);
 		}
 		public String LeaveContext()
 		{
@@ -156,39 +162,34 @@ namespace crosspascal.semantics
 		{
 			EnterContext(cdecl.name);
 			foreach (var decl in cdecl.Type.GetInheritableMembers())
-				RegisterDeclaration(decl.name, decl);
-			LeaveContext();
+				symtab.Add(decl.name, decl);
 		}
 
 		public int LoadHeritageContext(String cname)
 		{
 			int nstates = 0;
-			var decl = GetDeclaration(cname) as CompositeDeclaration;
+			var decl = GetDeclaration(cname) as ClassDeclaration;
 			if (decl == null)
 				throw new CompositeNotFound(cname);
 
-			foreach (String s in decl.Type.heritage)
-			{
-				var cdecl = GetDeclaration(s) as CompositeDeclaration;
-				if (cdecl == null)
-					throw new CompositeNotFound(" inherited " + s);
-
-				LoadCompositeContext(cdecl);
-				nstates++;
-			}
+			// No real multiple inheritance in Delphi. Load only the 1st inherit, the class
+			if (decl.Type.heritage.Count > 0)
+				nstates += LoadHeritageContext(decl.Type.heritage[0]);
 
 			LoadCompositeContext(decl);
-			return nstates;
+			return nstates+1;
 		}
-
+		
 		public void EnterMethodContext(String cname)
 		{
-			int nstatesLoaded = LoadHeritageContext(cname);
-			EnterContext("" + nstatesLoaded);
+			int nstatesLoaded = LoadHeritageContext(cname);		// class+heritage
+			EnterContext(""+nstatesLoaded);	// top-level contetx
+			EnterContext("method-params");	// method params context
 		}
 
 		public void LeaveMethodContext()
 		{
+			LeaveContext();	// method
 			string id = LeaveContext();
 			int nInherited = Int32.Parse(id);
 			for (int i = 0; i < nInherited; i++)

@@ -321,15 +321,15 @@ sealed public class Emitter {
         if (scanner.columnCount) { print(" col:{"+@base+"}"); @base++; }
         println(" --{" + (@base) + "}--{" + (@base + 1) + "}--\",");
         println("      ");
-        if (scanner.lineCount) print("yyline+1, ");
-        if (scanner.columnCount) print("yycolumn+1, ");
+        if (scanner.lineCount) print("yyline, ");
+        if (scanner.columnCount) print("yycolumn, ");
         println("yytext(), getTokenName(s.sym));");
       }
       else
       {
         print("    Console.Out.WriteLine( ");
-        if (scanner.lineCount) print("\"line:\" + (yyline+1) + ");
-        if (scanner.columnCount) print("\" col:\" + (yycolumn+1) + ");
+        if (scanner.lineCount) print("\"line:\" + (yyline) + ");
+        if (scanner.columnCount) print("\" col:\" + (yycolumn) + ");
         println("\" --\"+ yytext() + \"--\" + getTokenName(s.sym) + \"--\");");
       }
       println("    return s;");
@@ -1532,14 +1532,13 @@ sealed public class Emitter {
           if ( scanner.columnCount ) { print("col: {"+@base+"} "); @base++; }
           println("match: --{"+@base+"}--\",");
           print("              ");
-          if ( scanner.lineCount ) print("yyline+1, ");
-          if ( scanner.columnCount ) print("yycolumn+1, ");
+          if ( scanner.lineCount ) print("yyline, ");
+          if ( scanner.columnCount ) print("yycolumn, ");
           println("yytext());");
 
-		// Miguel: do not print actions
-		//  print("            Console.WriteLine(\"action ["+action.priority+"] { ");
-        // print(escapify(action.content));
-        //  println(" }\");");
+		  print("            Console.WriteLine(\"action ["+action.priority+"] { ");
+          print(escapify(action.content));
+          println(" }\");");
         }
 
 		if (Options.emitlines) println("#line " + action.priority + " \"" + escapify(scanner.file) + "\"");
@@ -1554,9 +1553,9 @@ sealed public class Emitter {
         {
           print("          System.out.println(");
           if ( scanner.lineCount )
-            print("\"line: \"+(yyline+1)+\" \"+");
+            print("\"line: \"+(yyline)+\" \"+");
           if ( scanner.columnCount )
-            print("\"col: \"+(yycolumn+1)+\" \"+");
+            print("\"col: \"+(yycolumn)+\" \"+");
           println("\"match: --\"+yytext()+\"--\");");        
           print("          System.out.println(\"action ["+action.priority+"] { ");
           print(escapify(action.content));

@@ -359,17 +359,28 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	/// <summary>
+	/// 'Expr IS CompositeType'
+	/// </summary>
 	public class TypeIs : TypeBinaryExpression
 	{
-		public TypeIs(Expression e1, TypeNode e2) : base(e1, e2) { }
+		public TypeIs(Expression e1, CompositeType e2) : base(e1, e2) { }
 	}
 
 	/// <summary>
-	/// 'Expr AS Type'
+	/// 'Expr AS CompositeType'
 	/// </summary>
 	public class TypeCast : TypeBinaryExpression
 	{
-		public TypeCast(TypeNode t,  Expression e) : base(e, t) { }
+		public TypeCast(Expression e, CompositeType t) : base(e, t) { }
+	}
+
+	/// <summary>
+	/// VarType(expr)
+	/// </summary>
+	public class ValueCast : TypeBinaryExpression
+	{
+		public ValueCast(Expression e, VariableType t) : base(e, t) { }
 	}
 
 	#endregion

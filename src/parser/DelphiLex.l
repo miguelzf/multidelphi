@@ -116,30 +116,25 @@ namespace crosspascal.parser
 		void InitLexer(TextReader sr)
 		{
 			stateNames = new string[] {
-				"XASMCODESEC", "XFUNCW_PARAMS", "XFUNCW_RET", "XFUNCDIRECTS", "XFUNCEXTERN",
-				"SFUNCDECL", "SPROPSPECS", "SPACKAGES", "SCLASS" };
+				"INITIAL", "XASMCODESEC", "XFUNCDECL", "XFUNCPARAMS", "XFUNCDIRECTS",
+				"XFUNCEXTERN", "SPROPSPECS", "SPACKAGES", "SCLASS" };
 
 			yyreset(sr);
 			// set yylval and text to null before each executing each rule's action
 			PRE_ACTION_DEFAULT = () => { yylval = null; text = null; };
 	
 			stateStack.Push(INITIAL);
+			
+			InitIdResolver();
 		}
-		
-		
-		int ProcessIdentifier()
-		{
-			yylval = yytext();
-			return IDENTIFIER;
-		}
-		
+	
 %}
 
 
 	// exclusive states
-%x XASMCODESEC XFUNCW_PARAMS XFUNCW_RET XFUNCDIRECTS XFUNCEXTERN
+%x XASMCODESEC XFUNCDECL XFUNCPARAMS XFUNCDIRECTS XFUNCEXTERN
 	// inclusive states. shared with INITIAL
-%s SFUNCDECL SPROPSPECS SPACKAGES SCLASS
+%s SPROPSPECS SPACKAGES SCLASS
 
 DEC     = [0-9]
 HEXA    = [0-9a-f]
@@ -181,10 +176,10 @@ property	{ yypushstate(SPROPSPECS); return KW_PROPERTY; }
 inherited	{ return KW_INHERITED; }	// call of base construcotr/methods
 
 	/* functions */
-function	{ yypushstate(XFUNCW_PARAMS); return KW_FUNCTION; }
-procedure	{ yypushstate(XFUNCW_PARAMS); return KW_PROCEDURE; }
-constructor	{ yypushstate(XFUNCW_PARAMS); return KW_CONSTRUCTOR; }
-destructor	{ yypushstate(XFUNCW_PARAMS); return KW_DESTRUCTOR; }
+function	{ yypushstate(XFUNCDECL); return KW_FUNCTION; }
+procedure	{ yypushstate(XFUNCDECL); return KW_PROCEDURE; }
+constructor	{ yypushstate(XFUNCDECL); return KW_CONSTRUCTOR; }
+destructor	{ yypushstate(XFUNCDECL); return KW_DESTRUCTOR; }
 
 	/* section headers */
 const		{ return KW_CONST; }
@@ -195,7 +190,7 @@ resourcestring	{ return TYPE_RSCSTR; }
 
 	/* blocks */
 begin		{ return KW_BEGIN; }
-with		{ return KW_WITH; }		// with x do ..
+with		{ return KW_WITH; } 	// with x do stmt
 do			{ return KW_DO; }
 
 	/* control flow: loops */
@@ -212,7 +207,7 @@ continue	{ return KW_CONTINUE; }
 if			{ return KW_IF; }
 then		{ return KW_THEN; }
 else		{ return KW_ELSE; }
-case		{ return KW_CASE; }		/* switch */
+case		{ return KW_CASE; }
 goto		{ return KW_GOTO; }
 label		{ return KW_LABEL; }
 
@@ -236,21 +231,18 @@ on			{ return KW_ON; }
 	// Lexical Scope for function directives
 
 	// wait for function params or return (when function has no params)
-<XFUNCW_PARAMS> {
+<XFUNCDECL> {
 	// function name
-	{ID1}{ID}*	{ return ProcessIdentifier(); }
+	{ID1}{ID}*	{ return ProcessIdentifier(yytext()); }
 	"."			{ return KW_DOT; }
 	
-	"("			{	switchstate(XFUNCW_RET);
-					yypushstate(INITIAL);
+	"("			{	switchcallback(XFUNCPARAMS, INITIAL);
 					return LPAR;
 				}
 	";"			{	switchstate(XFUNCDIRECTS);
-					yybegin(XFUNCDIRECTS);
 					return SCOL;
 				}
-	":"			{	switchstate(XFUNCDIRECTS);
-					yypushstate(INITIAL);
+	":"			{	switchcallback(XFUNCDIRECTS, INITIAL);
 					return COLON;
 				}
 	[ \t\n\r]+	{ }
@@ -260,15 +252,13 @@ on			{ return KW_ON; }
 				}
 }
 
-	// wait for function return
-<XFUNCW_RET> {
-	":"			{	switchstate(XFUNCDIRECTS);
-					yypushstate(INITIAL);
+	// after scanning func params, wait for function return
+<XFUNCPARAMS> {
+	":"			{	switchcallback(XFUNCDIRECTS, INITIAL);
 					return COLON;
 				}
 	
 	";"			{	switchstate(XFUNCDIRECTS);
-					yybegin(XFUNCDIRECTS);
 					return SCOL;
 				}
 				
@@ -324,7 +314,7 @@ on			{ return KW_ON; }
 	name 		{ return KW_NAME; }
 	'[^']*'		{ yylval = yytext().Substring(1, yylength()-2); return CONST_STR; }
 	"."			{ return KW_DOT; }
-	{ID1}{ID}*	{ return ProcessIdentifier(); }
+	{ID1}{ID}*	{ return ProcessIdentifier(yytext()); }
 	
 	";"			{ yypopstate(); return SCOL; }
 	[ \t\n\r]+	{ }
@@ -374,7 +364,7 @@ end				{ return KW_END; }
  	/**************************************************************/
 	// Lexical Scope for Packages
 	
-package			{ yypushstate(SPACKAGES); return ProcessIdentifier(); }
+package			{ yypushstate(SPACKAGES); return ProcessIdentifier(yytext()); }
 <SPACKAGES> {
 	requires	{ return KW_REQUIRES; }
 	contains	{ return KW_CONTAINS; }
@@ -477,11 +467,9 @@ false				{ yylval = false; return CONST_BOOL; }
 "("			{ return LPAR; }
 "]"			{ return RBRAC;	}
 
-";"			{	if (yylaststate() == XFUNCDIRECTS) yypopstate(); return SCOL;
-			}
+";"			{ if (yylaststate() == XFUNCDIRECTS) yypopstate(); return SCOL; }
 
-")"			{	if (yylaststate() == XFUNCW_RET) yypopstate(); return RPAR;
-			}
+")"			{ if (yylaststate() == XFUNCPARAMS) yypopstate(); return RPAR; }
 
 	/* expr: general */
 ":="		{ return KW_ASSIGN; }
@@ -524,7 +512,7 @@ in			{ return KW_IN; }	// is in set
 
 	/**************************************************************/
 
-{ID1}{ID}*	{ return ProcessIdentifier(); }
+{ID1}{ID}*	{ return ProcessIdentifier(yytext()); }
 
 [ \t]+		{ }     /* ignore whitespace */
 

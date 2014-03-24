@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,8 +13,9 @@ namespace crosspascal.semantics
 	public class SymbolTable<T> where T : class
 	{
 		Stack<SymbolContext<T>> contexts = new Stack<SymbolContext<T>>();
-		SymbolContext<T> current;
-
+		internal SymbolContext<T> current;
+		bool allAllowShadowing = true;	// optimization: typically all contexts allow shadowing
+										// no test to test them all then
 		public SymbolTable()
 		{
 			Push("initial: empty default context");
@@ -26,6 +28,8 @@ namespace crosspascal.semantics
 		{
 			current = new SymbolContext<T>(id, shadowing);
 			contexts.Push(current);
+			if (!shadowing)
+				allAllowShadowing = false;
 		}
 
 		/// <summary>
@@ -47,7 +51,7 @@ namespace crosspascal.semantics
 			if (!CheckValidKey(key))
 				return false;
 
-			if (LookupUnshadowable(key) != null)
+			if (!CanAddSymbol(key))
 				return false;
 
 			// Stack.ElementAt starts counting from the most *recent* pushed
@@ -77,7 +81,7 @@ namespace crosspascal.semantics
 				return null;
 
 			T t;
-			foreach (var c in contexts.Reverse())
+			foreach (var c in contexts)
 				if ((t = c.Lookup(key)) != null)
 					return t;
 			return null;
@@ -93,16 +97,20 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Looks up symbol in contexts that allow shadowing, i.e. check that symbol can be safely defined
 		/// </summary>
-		public T LookupUnshadowable(String key)
+		public bool CanAddSymbol(String key)
 		{
 			if (!CheckValidKey(key))
-				return null;
+				return false;
 
-			T t;
-			foreach (var c in contexts.Reverse())
-				if ((t = c.Lookup(key)) != null && c.allowShadowing)
-					return t;
-			return null;
+			if (current.Lookup(key) != null)
+				return false;
+
+			if (!allAllowShadowing)
+				foreach (var c in contexts)
+					if (!c.allowShadowing && c.Lookup(key) != null)
+						return false;
+
+			return true;
 		}
 
 		/// <summary>
@@ -114,7 +122,7 @@ namespace crosspascal.semantics
 			if (!CheckValidKey(key))
 				return false;
 
-			if (LookupUnshadowable(key) != null)
+			if (!CanAddSymbol(key))
 				return false;
 
 			return current.Add(key, symbol);
@@ -127,6 +135,8 @@ namespace crosspascal.semantics
 		{
 			contexts.Push(ctx);
 			current = ctx;
+			if (!ctx.allowShadowing)
+				allAllowShadowing = false;
 		}
 
 		/// <summary>
@@ -136,7 +146,29 @@ namespace crosspascal.semantics
 		{
 			return current.Clone();
 		}
+
+		public override string ToString()
+		{
+			return "SymTab with " + contexts.Count + " contexts";
+		}
+
+		internal String ListTable(int nctxs = Int32.MaxValue)
+		{
+			string sep = Environment.NewLine;
+			string outp = ToString() + sep;
+
+			int i = 0;
+			foreach (var c in contexts)
+			{
+				if (i++ == nctxs || c.id == "runtime")
+					break;
+				outp += c.ListContext() + sep;
+			}
+			return outp;
+		}
 	}
+
+
 
 	/// <summary>
 	/// Context of declared symbols
@@ -195,6 +227,20 @@ namespace crosspascal.semantics
 			return symbols.Remove(key);
 		}
 
+		public override string ToString()
+		{
+			return "Context " + id + " with " + symbols.Count + " symbols";
+		}
+
+		internal String ListContext()
+		{
+			string sep = Environment.NewLine;
+			string output = ToString() + ":" +sep;
+
+			foreach (var k in symbols)
+				output += "\t" + k.Key + " - " + k.Value.ToString() + sep;
+			return output;
+		}
 	}
 	// end Symbol Context
 

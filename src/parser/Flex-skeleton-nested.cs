@@ -75,6 +75,7 @@
 	
 	void yypushstate(int state)
 	{
+		PrintStack();
 		yydebugall("PUSH STATE: from " + stateName(stateStack.Peek()) + " to " +  stateName(state) );
 		stateStack.Push(state);
 		yybegin(state);
@@ -82,27 +83,58 @@
 
 	void yypopstate()
 	{
+		PrintStack();
 		int state = stateStack.Pop();
 		yydebugall("POP STATE: from " + stateName(state)
 				+ " to " +  stateName(stateStack.Peek()));
 		yybegin(stateStack.Peek());
 	}
 
+	void switchcallback(int cbstate, int gotostate)
+	{
+	PrintStack();
+		yydebugall("SWITCH Callback: from " + stateName(stateStack.Peek())
+					+ ", on ret back to " + stateName(cbstate)
+					+ ", go to " + stateName(gotostate));
+		stateStack.Pop();
+		stateStack.Push(cbstate);
+		stateStack.Push(gotostate);
+		yybegin(gotostate);
+	}
+
 	void switchstate(int state)
 	{
+	PrintStack();
+		yydebugall("SWITCH state from " + stateName(stateStack.Peek()) 
+					+ " to " + stateName(state));
 		stateStack.Pop();
 		stateStack.Push(state);
+		yybegin(state);
 	}
 
 	int yylaststate()
 	{
 		if (stateStack.Count > 1)
-			return stateStack.ElementAt<int>(stateStack.Count-2);
+			return stateStack.ElementAt<int>(1);
 		else
 			return -1;
 	}
 	
-	string[] stateNames;
+	void PrintStack()
+	{
+		if (yyLexDebugLevel < 2)
+			return;
+		Console.WriteLine("State Stack size " + stateStack.Count);
+		
+		int i=0;
+		foreach (int s in stateStack)
+		{
+		//	int s = stateStack.ElementAt<int>(i);
+			Console.WriteLine("[" + (i++) + "] State " + s + ": " + stateName(s));
+		}
+	}
+	
+	string[] stateNames =  new string[0];
 	string stateName(int state)
 	{
 		if (state < stateNames.Count())

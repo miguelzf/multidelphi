@@ -125,3 +125,5 @@ UpgradeLog*.XML
 /src/parser/DelphiPreprocessor.cs
 /src/TestDriver.cs
 /src/CppProgram.cs
+/deps/cs-jflex/csflex.vshost.exe
+/deps/cs-jflex/csflex.vshost.exe.manifest

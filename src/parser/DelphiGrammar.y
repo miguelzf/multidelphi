@@ -38,7 +38,7 @@ namespace crosspascal.parser
 	// =========================================================================
 
 %start goal
-%type<string> id typeid labelid stringconst conststr expid
+%type<string> id typeid labelid stringconst conststr expid idclass
 %type<ArrayList> labelidlst idlst
 
 	// sections and declarations
@@ -56,11 +56,11 @@ namespace crosspascal.parser
 %type<TypeDeclaration> typedecl
 
 	// functions
-%type<RoutineDefinition> routinedef methodroutinedef routinedefunqualif
+%type<RoutineDefinition> routinedef routinedefunqualif
 %type<RoutineDeclaration> routineproto routinedeclext routinedecl 
-%type<MethodDeclaration> metdefproto methoddecl methoddeclin
+%type<MethodDeclaration> metdefproto methoddecl methoddeclin methodroutinedef
 %type<RoutineDirectives>  funcdirectlst funcdir_noterm_opt funcdiropt importdiropt importdirforced 
-%type<MethodDirectives> metdirectopt metdirectlst
+%type<MethodDirectives> metdirectopt metdirectlst smetdirs smetdirslst
 %type<int> funcdirective  funcqualif funcdeprecated metdirective metqualif routinecallconv
 %type<RoutineBody> funcdefine
 %type<DeclarationList> formalparams formalparamslst formalparm formalparm
@@ -113,17 +113,14 @@ namespace crosspascal.parser
 %type<PropertySpecifiers> spropspecsnormal spropspecsoverride spropspecsarray
 
 	// Types
-%type<ScalarType> scalartype pointertype casttype pointedtype funcrettype funcret
-	// realtype inttype chartype stringtype varianttype scalartype  
-%type<VariableType> paramtypeopt paramtypespec funcparamtype
-%type<StructuredType> structuredtype
-%type<VariableType> arraytype settype filetype packstructtype
-%type<VariableType> vartype enumtype rangetype metaclasstype ordinaltype
-	// %type<IntegralType> arraytypedef integraltype
-%type<RecordType> recordtype
+%type<ScalarType> scalartype pointertype casttype pointedtype funcret ID_SCALAR  funcrettype
+%type<VariableType> paramtypeopt paramtypespec funcparamtype	// scalar or array
+%type<VariableType> enumtype rangetype metaclasstype ordinaltype nonscalarordtype
+%type<VariableType> ID_METACLASS ID_ORDINAL ID_VARIANT  vartype
+%type<StructuredType> structuredtype packstructtype recordtype  arraytype settype filetype ID_STRUCTURED
 %type<ProceduralType> proceduraltype proceduralsign
-
-
+%type<CompositeType> ID_COMPOSITE
+%type<IntegralType>  ID_INTEGRAL
 	
 	
 	// =========================================================================
@@ -154,7 +151,7 @@ namespace crosspascal.parser
 	// control flow loops
 %token KW_FOR KW_TO KW_DOWNTO KW_REPEAT KW_UNTIL KW_WHILE
 	// control flow others
-%token KW_IF KW_THEN KW_ELSE KW_CASE KW_GOTO KW_LABEL
+%token KW_IF KW_THEN KW_ELSE KW_CASE KW_GOTO KW_LABEL KW_BREAK KW_CONTINUE
 	// control flow exceptions
 %token KW_RAISE KW_AT KW_TRY KW_EXCEPT KW_FINALLY KW_ON
 	// function qualifiers
@@ -170,7 +167,10 @@ namespace crosspascal.parser
 %token TYPE_BOOL TYPE_COMP TYPE_CURRENCY TYPE_OLEVAR TYPE_VAR TYPE_ARRAY TYPE_CURR TYPE_FILE TYPE_PTR TYPE_SET
 
 	// pseudo, hints, windows-specific, deprecated, obscure, etc
-%token ASM_OP WINDOWS_GUID KW_BREAK KW_CONTINUE KW_FAR KW_NEAR KW_RESIDENT 
+%token ASM_OP WINDOWS_GUID  KW_FAR KW_NEAR KW_RESIDENT 
+	// ids resolved to types by the lexer
+%token ID_INTEGRAL ID_COMPOSITE ID_METACLASS ID_ORDINAL ID_VARIANT ID_SCALAR ID_STRUCTURED
+
 
 
 	// =========================================================================
@@ -296,8 +296,8 @@ unit
 	;
 
 implsec
-	: KW_IMPL usesopt	maindecllst		{ $$ = new ImplementationSection($2, $3);}
-	| KW_IMPL usesopt					{ $$ = new ImplementationSection($2, null);}
+	: kwimpl usesopt	maindecllst		{ $$ = new ImplementationSection($2, $3);}
+	| kwimpl usesopt					{ $$ = new ImplementationSection($2, null);}
 	;
 
 interfsec
@@ -465,6 +465,7 @@ expid
 	// Context-opening keywords
 	// ===================================================================================
 	
+
 	// Types/Routine-pointers
 	
 kwfunctionptr
@@ -486,24 +487,24 @@ kwconstructor
 	: KW_CONSTRUCTOR id	{ $$ = $2; DeclReg.EnterContext($2); }
 	;
 kwdestructor
-	: KW_DESTRUCTOR  id { $$ = $2; DeclReg.EnterContext($2); }
+	: KW_DESTRUCTOR  id	{ $$ = $2; DeclReg.EnterContext($2); }
 	;
 
 	// Definition/implementation contexts
 	
 kwmetfunction
-	: KW_FUNCTION    id KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
+	: KW_FUNCTION    idclass KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
 	;
 kwmetprocedure
-	: KW_PROCEDURE   id KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
+	: KW_PROCEDURE   idclass KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
 	;
 kwmetconstruct
-	: KW_CONSTRUCTOR id KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
+	: KW_CONSTRUCTOR idclass KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
 	;
 kwmetdestruct
-	: KW_DESTRUCTOR  id KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
+	: KW_DESTRUCTOR  idclass KW_DOT	{ $$ = $2; DeclReg.EnterMethodContext($2); }
 	;	
-
+	
 	// Object contexts
 	
 kwrecord
@@ -517,6 +518,12 @@ kwinterf
 	: KW_INTERF			{ DeclReg.EnterContext(); }
 	;
 
+	// Section contexts
+kwimpl
+	: KW_IMPL			{ DeclReg.EnterContext("implementation"); }
+	;
+	
+
 
 
 	// ===================================================================================
@@ -529,14 +536,14 @@ kwinterf
 
 routinedef
 	: routinedefunqualif						{ $$ = $1; }
-	| methodroutinedef	funcdefine SCOL 		{ $$ = $1; DeclReg.LeaveMethodContext(); }
+	| methodroutinedef funcdefine SCOL 			{ $$ = new RoutineDefinition($1, $2); DeclReg.LeaveMethodContext(); }
 	;
 	
 methodroutinedef
 	:			metdefproto SCOL metdirectopt 	{ $$ = $1; $1.Directives = $3; }
 	| KW_CLASS	metdefproto SCOL metdirectopt 	{ $$ = $2; $2.Directives = $4; $2.isStatic = true; }
-	| kwmetconstruct id formalparams SCOL		{ $$ = new ConstructorDeclaration($1, $2, $3); }
-	| kwmetdestruct  id formalparams SCOL		{ $$ = new DestructorDeclaration ($1, $2, $3); }
+	| kwmetconstruct id formalparams SCOL smetdirs	{ $$ = new ConstructorDeclaration($1, $2, $3, $5); }
+	| kwmetdestruct  id formalparams SCOL smetdirs	{ $$ = new DestructorDeclaration ($1, $2, $3, $5); }
 	;
 	
 metdefproto
@@ -566,8 +573,8 @@ methoddecl
 methoddeclin
 	: kwfunction    formalparams funcret SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $1, $2, $3, $5); }
 	| kwprocedure   formalparams         SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $1, $2, null, $4); }
-	| kwconstructor formalparams SCOL						{ $$ = new ConstructorDeclaration(lastObjectName, $1, $2); }
-	| kwdestructor  formalparams SCOL						{ $$ = new DestructorDeclaration(lastObjectName, $1, $2); }
+	| kwconstructor formalparams SCOL smetdirs				{ $$ = new ConstructorDeclaration(lastObjectName, $1, $2, $4); }
+	| kwdestructor  formalparams SCOL smetdirs				{ $$ = new DestructorDeclaration(lastObjectName, $1, $2, $4); }
 	;
 
 routineproto
@@ -676,13 +683,23 @@ metdirectopt
 	| metdirectlst SCOL					{ $$ = $1	; }
 	;
 
+smetdirs
+	:									{ $$ = null	; }
+	| smetdirslst SCOL					{ $$ = $1	; }
+	;
+
 funcdirectlst
-	: funcdirective						{ $$ = new RoutineDirectives(); }
+	: funcdirective						{ $$ = new RoutineDirectives($1); }
 	| funcdirectlst SCOL funcdirective	{ $$ = $1; $1.Add($3); }
 	;
 
+smetdirslst
+	: metqualif							{ $$ = new MethodDirectives($1); }
+	| smetdirslst SCOL metqualif		{ $$ = $1; $1.Add($3); }
+	;
+
 metdirectlst
-	: metdirective						{ $$ = new MethodDirectives(); }
+	: metdirective						{ $$ = new MethodDirectives($1); }
 	| metdirectlst SCOL metdirective	{ $$ = $1; $1.Add($3); }
 	;
 
@@ -906,6 +923,7 @@ lvalue	// lvalue
 	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
+	| casttype LBRAC expr RBRAC				{ $$ = new ValueCast($3, $1); }
 	| stringconst LBRAC expr RBRAC			{ if ($1.Length < 2)
 												yyerror("Cannot access character or empty string as an array");
 											 else
@@ -929,8 +947,8 @@ unaryexpr
 
 expr
 	: unaryexpr								{ $$ = $1; }
-	| expr KW_AS casttype					{ $$ = new TypeCast($3, $1); }
-	| expr KW_IS casttype					{ $$ = new TypeIs($1, $3); }
+	| expr KW_AS ID_COMPOSITE				{ $$ = new TypeCast($1, $3); }
+	| expr KW_IS ID_COMPOSITE				{ $$ = new TypeIs($1, $3); }
 	| expr KW_IN expr						{ $$ = new SetIn($1, $3); }
 	| expr relop expr %prec KW_EQ			{ $$ = CreateBinaryExpression($1, $2, $3); }
 	| expr addop expr %prec KW_SUB			{ $$ = CreateBinaryExpression($1, $2, $3); }
@@ -1016,7 +1034,11 @@ idlst
 	;
 
 	// Cast the output value from the Scanner
+	
 id	: IDENTIFIER	{ $$ = (string) yyVal; }
+	;
+idclass
+	: ID_COMPOSITE	{ $$ = $1.Name; }	// CompositeType to name
 	;
 constnil
 	: CONST_NIL		{ $$ = 0; }
@@ -1243,7 +1265,9 @@ fieldlst
 objfield
 	: idlst COLON vartype			{ $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); }
 	| idlst COLON proceduraltype 	{ $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); }
-	| idlst COLON proceduraltype SCOL funcdirectlst	{ $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); $3.Directives = $5;  }
+	| idlst COLON proceduraltype SCOL funcdirectlst	
+									{ $$ = CreateDecls($1, new CreateDecl((s) => new FieldDeclaration(s, $3))); 
+										$3.Directives = $5; }
 	;
 	
 classcomplstopt
@@ -1381,8 +1405,8 @@ implopt
 typedecl
 	: typeid vartype  SCOL					{ $$ = new TypeDeclaration($1, $2); }
 	| typeid proceduraltype SCOL funcdiropt	{ $$ = new TypeDeclaration($1, $2); $2.Directives = $4; }
-	| typeid packclasstype SCOL				{ $$ = new ClassDeclaration($1,$2); DeclReg.LeaveContext(); }
-	| typeid packinterftype SCOL			{ $$ = new InterfaceDeclaration($1, $2); DeclReg.LeaveContext(); }
+	| typeid packclasstype SCOL				{ $$ = new ClassDeclaration($1,$2); $2.Name = $1; DeclReg.LeaveContext(); }
+	| typeid packinterftype SCOL			{ $$ = new InterfaceDeclaration($1, $2); $2.Name = $1; DeclReg.LeaveContext(); }
 	;
 
 typeid
@@ -1396,14 +1420,18 @@ typeopt		// ignored for now
 
 vartype
 	: scalartype				{ $$ = $1; }
-	| enumtype					{ $$ = $1; }
-	| rangetype					{ $$ = $1; }
+	| nonscalarordtype			{ $$ = $1; }
 	| metaclasstype				{ $$ = $1; }
 	| packstructtype			{ $$ = $1; }
+	| ID_METACLASS 				{ $$ = $1; }
+	| ID_VARIANT 				{ $$ = $1; }
+	| ID_STRUCTURED				{ $$ = $1; }
+	// reference already defined composite
+	| ID_COMPOSITE				{ $$ = $1; }
 	;
 
 metaclasstype
-	: KW_CLASS KW_OF id			{ $$ = new MetaclassType(DeclReg.FetchType($3)); }
+	: KW_CLASS KW_OF ID_COMPOSITE	{ $$ = new MetaclassType($3); }
 	;
 
 packstructtype
@@ -1434,8 +1462,8 @@ arrayszlst
 	;
 
 arraytype
-	: TYPE_ARRAY LBRAC arrayszlst   RBRAC KW_OF vartype 	{ $$ = new ArrayType($6, $3); }
-	| TYPE_ARRAY LBRAC id 			RBRAC KW_OF vartype		{ $$ = new ArrayType($6, DeclReg.FetchTypeIntegral($3)); }
+	: TYPE_ARRAY LBRAC arrayszlst  RBRAC KW_OF vartype 	{ $$ = new ArrayType($6, $3); }
+	| TYPE_ARRAY LBRAC ID_INTEGRAL RBRAC KW_OF vartype	{ $$ = new ArrayType($6, $3); }
 	| TYPE_ARRAY KW_OF vartype 	{ $$ = new ArrayType($3); }
 	;
 
@@ -1449,20 +1477,28 @@ filetype
 	;
 
 scalartype
-	: id						{ $$ = DeclReg.FetchTypeScalar($1); }
+	: ID_INTEGRAL			{ $$ = $1; }
+	| ID_SCALAR			{ $$ = $1; }
 	| TYPE_STR /*dynamic size*/	{ $$ = StringType.Single; }
 	| TYPE_STR LBRAC constexpr RBRAC { $$ = new FixedStringType($3); }
 	| pointertype				{ $$ = $1; }
 	;
 	
 ordinaltype
+	: ID_INTEGRAL			{ $$ = $1; }
+	| nonscalarordtype			{ $$ = $1; }
+	;
+
+nonscalarordtype
 	: rangetype					{ $$ = $1; }
 	| enumtype					{ $$ = $1; }
-	| id						{ $$ = DeclReg.FetchTypeIntegral($1); }
+	| ID_ORDINAL			{ $$ = $1; }
 	;
 	
 casttype
-	: id						{ $$ = DeclReg.FetchTypeScalar($1); }
+	: ID_INTEGRAL			{ $$ = $1; }
+	| ID_ORDINAL			{ $$ = $1; }
+	| ID_SCALAR			{ $$ = $1; }
 	;
 
 pointertype
@@ -1484,6 +1520,11 @@ funcparamtype
 
 funcrettype
 	: scalartype				{ $$ = $1; }
+	| ID_METACLASS 				{ $$ = $1; }
+	| ID_VARIANT 				{ $$ = $1; }
+	| ID_STRUCTURED				{ $$ = $1; }
+	| ID_COMPOSITE				{ $$ = $1; }
+	| ID_ORDINAL				{ $$ = $1; }
 	;
 
 

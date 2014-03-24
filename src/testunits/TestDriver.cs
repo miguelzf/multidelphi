@@ -20,7 +20,7 @@ namespace crosspascal.testunits
 			var sw = new Stopwatch();
 			sw.Start();
 		
-			Compiler compiler = new Compiler(2, new string[] { "WINDOWS" });
+			Compiler compiler = new Compiler(new string[] { "WINDOWS" });
 			compiler.Compile(args);
 			
 			sw.Stop();

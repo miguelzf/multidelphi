@@ -60,6 +60,9 @@ namespace crosspascal.ast.nodes
 
 		public bool IsPacked { get; set; }
 
+		// optional
+		public String Name { get; set; }
+
 		/// <summary>
 		/// Returns public and published methods
 		/// </summary>
@@ -90,9 +93,12 @@ namespace crosspascal.ast.nodes
 
 	public class ClassType : CompositeType
 	{
+		public FieldDeclaration self;
+
 		public ClassType(ArrayList heritage, ScopedSectionList seclist = null)
 			: base(heritage, seclist)
 		{
+			self = new FieldDeclaration("self", this);
 		}
 	}
 
@@ -221,7 +227,7 @@ namespace crosspascal.ast.nodes
 
 		public bool IsStatic;
 
-		public PropertyDeclaration(String ident, ScalarType type, PropertySpecifiers specs = null)
+		public PropertyDeclaration(String ident, TypeNode type, PropertySpecifiers specs = null)
 			: base(ident, type)
 		{
 			this.specifiers = specs;
@@ -237,7 +243,7 @@ namespace crosspascal.ast.nodes
 		public DeclarationList indexes;
 		public bool isDefault;
 
-		public ArrayProperty(String ident, ScalarType type, DeclarationList indexes, 
+		public ArrayProperty(String ident, TypeNode type, DeclarationList indexes, 
 									PropertySpecifiers specs, bool def)
 			: base(ident, type, specs)
 		{

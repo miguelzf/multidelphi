@@ -68,6 +68,7 @@ namespace crosspascal.parser
 
 		DelphiScanner lexer;
 
+
 		// wrapper for yyparse
 		public CompilationUnit Parse(TextReader tr, SourceFile sf, ParserDebug dgb = null)
 		{
@@ -82,6 +83,8 @@ namespace crosspascal.parser
 			DeclReg.LoadRuntimeNames();
 
 			lexer = new DelphiScanner(tr);
+			lexer.yyLexDebugLevel = DebugLevel;
+
 			Object parserRet;
 			try
 			{

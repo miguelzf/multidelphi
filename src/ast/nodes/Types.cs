@@ -202,19 +202,6 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class EnumValue : ConstDeclaration
-	{
-		// Init value to be computed a posteriori
-		public EnumValue(string val) : base(val, null) { }
-
-		public EnumValue(string val, Expression init)
-			: base(val, init)
-		{
-			init.ForcedType = IntegerType.Single;
-		}
-	}
-
-
 	public class RangeType : VariableType, IOrdinalType
 	{
 		public ConstExpression min;
@@ -611,14 +598,14 @@ namespace crosspascal.ast.nodes
 
 	public abstract class StructuredType : VariableType
 	{
-		public VariableType basetype;
+		public TypeNode basetype;
 		public bool IsPacked { get; set; }
 
 		protected StructuredType()
 		{
 		}
 
-		protected StructuredType(VariableType t)
+		protected StructuredType(TypeNode t)
 		{
 			basetype = t;
 		}
@@ -642,8 +629,9 @@ namespace crosspascal.ast.nodes
 
 		void AddDimension(uint size)
 		{
-			if (size * basetype.typeSize > (1<<9))	// 1gb max size
-				Error("Array size too large: " + size);
+			// TODO
+		//	if (size * basetype.typeSize > (1<<9))	// 1gb max size
+		//		Error("Array size too large: " + size);
 
 			dimensions.Add((int)size);
 		}
@@ -662,11 +650,6 @@ namespace crosspascal.ast.nodes
 			//	int dim = range.max - range.min;
 			//	AddDimension(dim);
 			}
-		}
-
-		public ArrayType(VariableType type, String ordinalTypeId) : base(type)
-		{
-			// TODO Resolve and check type size
 		}
 
 		public ArrayType(VariableType type, IntegralType sizeType): base(type)
@@ -698,7 +681,7 @@ namespace crosspascal.ast.nodes
 
 	public class FileType : StructuredType
 	{
-		public FileType(VariableType type = null) : base(type) { }
+		public FileType(TypeNode type = null) : base(type) { }
 
 		public override bool Equals(Object o)
 		{

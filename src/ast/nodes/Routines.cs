@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using crosspascal.semantics;
 
 namespace crosspascal.ast.nodes
 {
@@ -24,7 +25,7 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Function's return type. Must be null for every non-function routine.
 		/// </summary>
-		public ScalarType funcret { get; set; }
+		public TypeNode funcret { get; set; }
 		public OutParamDeclaration returnVar;
 
 		CallableDirectives _directives;
@@ -39,7 +40,7 @@ namespace crosspascal.ast.nodes
 			}
 		}
 
-		public ProceduralType(DeclarationList @params, ScalarType ret = null, CallableDirectives dirs = null)
+		public ProceduralType(DeclarationList @params, TypeNode ret = null, CallableDirectives dirs = null)
 		{
 			this.@params = @params;
 			this.funcret = ret;
@@ -64,7 +65,7 @@ namespace crosspascal.ast.nodes
 
 	public class MethodType : ProceduralType
 	{
-		public MethodType(DeclarationList @params, ScalarType ret = null, CallableDirectives dirs = null)
+		public MethodType(DeclarationList @params, TypeNode ret = null, CallableDirectives dirs = null)
 			: base(@params, ret, dirs)
 		{ 
 		}
@@ -99,7 +100,7 @@ namespace crosspascal.ast.nodes
 
 		public bool IsFunction { get { return Type.funcret != null; } }
 
-		public CallableDeclaration(string name, DeclarationList @params, ScalarType ret = null, CallableDirectives dirs = null)
+		public CallableDeclaration(string name, DeclarationList @params, TypeNode ret = null, CallableDirectives dirs = null)
 			: base(name, new ProceduralType(@params, ret, dirs))
 		{
 		}
@@ -110,7 +111,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class RoutineDeclaration : CallableDeclaration
 	{
-		public RoutineDeclaration(string name, DeclarationList @params, ScalarType ret = null, RoutineDirectives dirs = null)
+		public RoutineDeclaration(string name, DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
 			: base(name, @params, ret, dirs) { }
 	}
 
@@ -123,31 +124,39 @@ namespace crosspascal.ast.nodes
 		public String objname;
 		public String metname;
 
-		public MethodDeclaration(string objname, string name, DeclarationList @params, ScalarType ret = null, MethodDirectives dirs = null)
+		public MethodDeclaration(string objname, string name, DeclarationList @params, ScalarType ret = null,
+								MethodDirectives dirs = null)
 			: base(objname+"."+name, @params, ret, dirs)
 		{
 			this.metname = name;
 			this.objname = objname;
 			isStatic = false;
+
+			foreach (var param in @params)
+				if (param.name == "self")
+					throw new IdentifierRedeclared("Method parameter cannot shadow 'self' reference");
 		}
 	}
 
 	public class SpecialMethodDeclaration : MethodDeclaration
 	{
-		public SpecialMethodDeclaration(string objname, string name, DeclarationList @params)
-			: base(name, objname, @params)	{	}
+		public SpecialMethodDeclaration(string objname, string name, DeclarationList @params,
+										MethodDirectives dirs = null)
+			: base(name, objname, @params, null, dirs)	{	}
 	}
 
 	public class ConstructorDeclaration : SpecialMethodDeclaration
 	{
-		public ConstructorDeclaration(string objname, string name, DeclarationList @params)
-			: base(name, objname, @params)	{	}
+		public ConstructorDeclaration(string objname, string name, DeclarationList @params,
+										MethodDirectives dirs = null)
+			: base(name, objname, @params, dirs) { }
 	}
 
 	public class DestructorDeclaration : SpecialMethodDeclaration
 	{
-		public DestructorDeclaration(string objname, string name, DeclarationList @params)
-			: base(name, objname, @params) { }
+		public DestructorDeclaration(string objname, string name, DeclarationList @params,
+										MethodDirectives dirs = null)
+			: base(name, objname, @params, dirs) { }
 	}
 
 	#endregion
@@ -155,10 +164,10 @@ namespace crosspascal.ast.nodes
 	// not really a declaration, not it makes the grammar cleaner..
 	public class RoutineDefinition : Declaration
 	{
-		public RoutineDeclaration header;
+		public CallableDeclaration header;
 		public RoutineBody body;
 
-		public RoutineDefinition(RoutineDeclaration header, RoutineBody body)
+		public RoutineDefinition(CallableDeclaration header, RoutineBody body)
 		{
 			this.header = header;
 			this.body = body;
@@ -185,9 +194,11 @@ namespace crosspascal.ast.nodes
 
 		HashSet<GeneralDirective> generaldirs = new HashSet<GeneralDirective>();
 
-		public CallableDirectives()
+		public CallableDirectives(int dir = 0)
 		{
 			_callconv = 0;
+			if (dir != 0)
+				Add(dir);
 		}
 
 		public virtual void Add(CallableDirectives dirs)
@@ -255,6 +266,8 @@ namespace crosspascal.ast.nodes
 
 		public ExternalDirective External { get; set; }
 
+		public RoutineDirectives(int dir = 0) : base(dir) { }
+
 		/// <summary>
 		/// Checks the immediate coherence between function directives.
 		/// Must be called after all directives are added
@@ -280,6 +293,8 @@ namespace crosspascal.ast.nodes
 	public class MethodDirectives : CallableDirectives
 	{
 		public HashSet<MethodDirective> methoddirs = new HashSet<MethodDirective>();
+
+		public MethodDirectives(int dir = 0) : base(dir) { }
 
 		public override void Add(int dir)
 		{

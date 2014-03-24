@@ -64,6 +64,11 @@ namespace crosspascal.ast.nodes
 		{
 			AddName(name);
 		}
+
+		public override string ToString()
+		{
+			return "("+ name + " decl type " + (type == null? "null" : type.GetType().Name) + ")";
+		}
 	}
 
 	public class LabelDeclaration : Declaration
@@ -107,7 +112,7 @@ namespace crosspascal.ast.nodes
 	{
 		public Expression init;
 
-		public ParamDeclaration(String id, VariableType t, Expression init = null)
+		public ParamDeclaration(String id, TypeNode t, Expression init = null)
 			: base(id, t)
 		{
 			this.init = init;
@@ -116,17 +121,17 @@ namespace crosspascal.ast.nodes
 
 	public class VarParamDeclaration : ParamDeclaration
 	{
-		public VarParamDeclaration(String id, VariableType t, Expression init = null) : base(id, t, init) { }
+		public VarParamDeclaration(String id, TypeNode t, Expression init = null) : base(id, t, init) { }
 	}
 
 	public class ConstParamDeclaration : ParamDeclaration
 	{
-		public ConstParamDeclaration(String id, VariableType t, Expression init = null) : base(id, t, init) { }
+		public ConstParamDeclaration(String id, TypeNode t, Expression init = null) : base(id, t, init) { }
 	}
 
 	public class OutParamDeclaration : ParamDeclaration
 	{
-		public OutParamDeclaration(String id, VariableType t, Expression init = null) : base(id, t, init) { }
+		public OutParamDeclaration(String id, TypeNode t, Expression init = null) : base(id, t, init) { }
 	}
 
 	#endregion
@@ -146,6 +151,18 @@ namespace crosspascal.ast.nodes
 
 			if (t == null)
 				type = init.Type;
+		}
+	}
+
+	public class EnumValue : ConstDeclaration
+	{
+		// Init value to be computed a posteriori
+		public EnumValue(string val) : base(val, null) { }
+
+		public EnumValue(string val, Expression init)
+			: base(val, init)
+		{
+			init.ForcedType = IntegerType.Single;
 		}
 	}
 
