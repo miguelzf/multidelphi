@@ -35,6 +35,7 @@ namespace crosspascal.ast.nodes
 
 	public abstract class Node
 	{
+		public Node Parent { get; set; }
 
 		/// <summary>
 		/// Report and propagate errors from the syntactic and simple-semantic checks done during the creation of the AST

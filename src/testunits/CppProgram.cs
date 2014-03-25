@@ -31,9 +31,11 @@ namespace crosspascal.testunits
 
 			planner.LoadIncludePaths("include-paths.txt");
 
-			args = new string[1];
+			args = new string[2];
             //args[0] = "d:\\code\\crosspascal\\tests\\test_constant_folding.dpr";
-			args[0] = "d:\\code\\crosspascal\\tests\\test_function_pointers.dpr";		
+			//args[0] = "d:\\code\\crosspascal\\tests\\test_function_pointers.dpr";
+			args[0] = "d:\\code\\crosspascal\\tests\\test_classes.dpr";
+			args[1] = "d:\\code\\crosspascal\\tests\\unit1.pas";		
             //args[0] = "d:\\code\\crosspascal\\tests\\test_control_structures.dpr";
 
 			planner.LoadFiles(args);
@@ -68,8 +70,12 @@ namespace crosspascal.testunits
 					break;
 				}
 
+				ParentProcessor pp = new ParentProcessor();
+				MapTraverser mt = new MapTraverser(pp);
+				mt.traverse(tree);
+
 				AstPrinter astPrinter = new AstPrinter();
-				MapTraverser mt = new MapTraverser(astPrinter);
+				mt = new MapTraverser(astPrinter);
 				mt.traverse(tree);
 				Console.WriteLine(astPrinter);
 
@@ -81,6 +87,8 @@ namespace crosspascal.testunits
 				Console.WriteLine("Now compiling...");
 				mt = new MapTraverser(myProcessor);
 				mt.traverse(tree);
+
+				Console.WriteLine(myProcessor.ToString());
 
 				Console.WriteLine("Done!");
 				Console.ReadLine();

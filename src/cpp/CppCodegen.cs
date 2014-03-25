@@ -11,15 +11,26 @@ namespace crosspascal.cpp
 	class CppCodegen : Processor
 	{
 		private int ident = 0;
+		private StringBuilder builder;
+
+		public CppCodegen()
+		{
+			builder = new StringBuilder();
+		}
+
+		public override string ToString()
+		{
+			return builder.ToString();
+		}
 
 		public void outputCode(string s, bool hasident, bool newline)
 		{
 			if (hasident)
 				for(int i=0; i<ident; i++)
-					Console.Write("	");
-			Console.Write(s);
+					builder.Append("	");
+			builder.Append(s);
 			if (newline)
-				Console.WriteLine("");
+				builder.AppendLine();
 		}
 
 
@@ -213,6 +224,8 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(InitializationSection node)
 		{
+			traverse(node.decls);
+			outputCode((node.Parent as UnitNode).name+"_init()", false, true);
 			Visit((CodeSection) node);
 			return true;
 		}
@@ -367,7 +380,10 @@ namespace crosspascal.cpp
 
 		public override bool Visit(MethodDeclaration node)
 		{
-			Visit((CallableDeclaration) node);
+			outputCode(node.objname + "::" + node.metname+"(", false, false);
+			traverse((node.type as ProceduralType).@params);
+			outputCode(")", false, true);
+
 			return true;
 		}
 
@@ -379,13 +395,17 @@ namespace crosspascal.cpp
 
 		public override bool Visit(ConstructorDeclaration node)
 		{
-			Visit((SpecialMethodDeclaration) node);
+			outputCode(node.objname + "::" + node.objname+"(", false, false);
+			traverse((node.type as ProceduralType).@params);
+			outputCode(")", false, true);
 			return true;
 		}
 
 		public override bool Visit(DestructorDeclaration node)
 		{
-			Visit((SpecialMethodDeclaration) node);
+			outputCode(node.objname + "::~" + node.objname + "(", false, false);
+			traverse((node.type as ProceduralType).@params);
+			outputCode(")", false, true);
 			return true;
 		}
 
@@ -394,6 +414,15 @@ namespace crosspascal.cpp
 			Visit((Declaration) node);
 			traverse(node.header);
 			traverse(node.body);
+
+			if (node.header.IsFunction)
+			{
+				builder.Remove(builder.Length - 3, 3);
+				outputCode("	return result;", true, true);
+				outputCode("}", true, true);
+			}
+
+			outputCode("", false, true);
 			return true;
 		}
 
@@ -1156,15 +1185,18 @@ namespace crosspascal.cpp
 
 		public override bool Visit(FieldAcess node)
 		{
-			Visit((LvalueExpression) node);
-			traverse(node.obj);
+			traverse(node.obj); 
+			outputCode("." + node.field, false, false);			
 			return true;
 		}
 
 		public override bool Visit(Identifier node)
 		{
 			//Visit((LvalueExpression) node);
-            outputCode(node.name, false, false);
+			if (node.name.Equals("self"))
+				outputCode("this", false, false);
+			else
+				outputCode(node.name, false, false);
 			return true;
 		}
 

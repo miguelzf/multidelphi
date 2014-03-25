@@ -198,7 +198,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class WithStatement
+	public class WithStatement : Statement
 	{
 		public ExpressionList with;
 		public Statement body;
