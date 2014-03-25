@@ -26,7 +26,6 @@ namespace crosspascal.testunits
 			sw.Stop();
 
 			Console.WriteLine("Compiling all files took " + (sw.ElapsedMilliseconds/1000.0) + " secs");
-			Console.Read();
 		}		
 		
 

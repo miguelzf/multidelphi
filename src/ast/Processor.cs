@@ -53,7 +53,12 @@ namespace crosspascal.ast
 				traverse = t;
 		}
 
-		
+		public virtual bool Visit(Node node)
+		{
+			return node.Accept(this);
+		}
+
+
 		/// <summary>
 		/// Entry point
 		/// </summary>

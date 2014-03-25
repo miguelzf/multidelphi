@@ -70,7 +70,7 @@ namespace crosspascal.parser
 
 
 		// wrapper for yyparse
-		public CompilationUnit Parse(TextReader tr, SourceFile sf, ParserDebug dgb = null)
+		public TranslationUnit Parse(TextReader tr, SourceFile sf, ParserDebug dgb = null)
 		{
 			if (dgb != null)
 			{
@@ -86,23 +86,26 @@ namespace crosspascal.parser
 			lexer.yyLexDebugLevel = DebugLevel;
 
 			Object parserRet;
-			parserRet = yyparse(lexer);
 			try
 			{
 				parserRet = yyparse(lexer);
 			}
-			catch (Exception yye)
+			catch (ParserException yye)
 			{
-				ErrorOutput.WriteLine(yye.Message + " in line " + lexer.yylineno());
-				ErrorOutput.WriteLine(yye.StackTrace);
-				// only clean way to signal error. null is the default yyVal
-				throw yye; // new InputRejected(GetErrorMessage(yye));
+				ErrorOutput.WriteLine(yye.Message);
+				return null;
+			}
+			catch (Exception e)
+			{
+				ErrorOutput.WriteLine(e.Message + " in line " + lexer.yylineno());
+				ErrorOutput.WriteLine(e.StackTrace);
+				return null;
 			}
 
-			if (!(parserRet is CompilationUnit))
+			if (!(parserRet is TranslationUnit))
 				throw new ParserException("Non-final node derived from parsing:"  + parserRet.GetType());
 
-			return (CompilationUnit)parserRet;
+			return (TranslationUnit)parserRet;
 		}
 
 
@@ -219,6 +222,14 @@ namespace crosspascal.parser
 
 
 		// Internal helpers
+
+		CallableDirectives JoinDirectives(CallableDirectives d1, CallableDirectives d2)
+		{
+			if (d1 == null)
+				return d2;
+			d1.Add(d2);
+			return d1;
+		}
 
 		bool CheckDirectiveId(String expected, String idtoken)
 		{

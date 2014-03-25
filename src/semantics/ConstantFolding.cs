@@ -23,8 +23,8 @@ namespace crosspascal.semantics
 			if (expr is SimpleUnaryExpression)
 				return isNumberLiteral((expr as SimpleUnaryExpression).expr);
 
-			if (expr is ParenthesizedLvalue)
-				return isNumberLiteral((expr as ParenthesizedLvalue).expr);
+			if (expr is ExprAsLvalue)
+				return isNumberLiteral((expr as ExprAsLvalue).expr);
 
 			return false;
 		}
@@ -43,17 +43,17 @@ namespace crosspascal.semantics
 			if (expr is UnaryMinus)
 				return -getNumberValue((expr as UnaryMinus).expr);
 
-			if (expr is ParenthesizedLvalue)
-				return getNumberValue((expr as ParenthesizedLvalue).expr);
+			if (expr is ExprAsLvalue)
+				return getNumberValue((expr as ExprAsLvalue).expr);
 
 			return 0.0;
 		}
 
 		public static Expression FoldExpression(Expression expr)
 		{
-			if (expr is ParenthesizedLvalue)
+			if (expr is ExprAsLvalue)
 			{
-				return new ParenthesizedLvalue(FoldExpression( (expr as ParenthesizedLvalue).expr));
+				return new ExprAsLvalue(FoldExpression( (expr as ExprAsLvalue).expr));
 			}
 			else
 			if (expr is LogicalBinaryExpression)
@@ -185,6 +185,7 @@ namespace crosspascal.semantics
 				Console.WriteLine("Folded expression: " + temp.GetType().Name + " into " + expr.GetType().Name);			
 		}
 
+/*
 		public override bool Visit(VarDeclaration node)
 		{
 			fold(ref node.init);
@@ -393,7 +394,7 @@ namespace crosspascal.semantics
 			fold(ref node.expr);
 			return true;
 		}
-
+*/
 
 	}
 

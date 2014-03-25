@@ -42,18 +42,18 @@ namespace crosspascal.parser
 // EOF treatment:
 %integer	// eof type. same as: %type Int32
 
-/*	// Use explicit <<EOF>> rules instead 
 %eofval{
-	// code to be injected in non-specified <STATE><<EOF>> rules
+	// code to be injected in all non-specified <STATE><<EOF>> rules
 	return YYEOF;
 %eofval}
-*/
 
-// %eofclose	// close the stream at EOF
+%eofclose	// close the stream at EOF
+/*
 %eof{
 	// code to be injected in zzDoEOF() if (!zzEOfDone)
-	zzEOFDone = false;	// revert changes of zzDoEOF()! Should only apply to the top-level stream
 %eof}
+*/
+
 // ------------------------------------------------------
 
 %init{
@@ -338,7 +338,6 @@ on			{ return KW_ON; }
 	default		{ return KW_DEFAULT; }
 	index		{ return KW_INDEX; }
 	implements	{ return KW_IMPLEMENTS; }
-	name		{ return KW_NAME; }
 	nodefault	{ return KW_NODEFAULT; }
 	read		{ return KW_READ; }
 	stored		{ return KW_STORED; }
@@ -348,6 +347,9 @@ on			{ return KW_ON; }
 					yypopstate();
 					return SCOL;
 				}
+				
+				// array properties
+	"["			{ yypushstate(INITIAL); return LBRAC; }
 }
 
 
@@ -457,12 +459,12 @@ asm					{	yypushstate(XASMCODESEC);
 {DEC}+				{ yylval = GetInt(yytext(),10); return CONST_INT; }
 \${HEXA}+			{ yylval = GetInt(yytext().Substring(1), 16); return CONST_INT; }
 nil					{ return CONST_NIL; }
-{DEC}+\.{DEC}+		{ yylval = GetReal(yytext()); Console.WriteLine("REAL LEX: " + (Double) yylval); return CONST_REAL; }
+{DEC}+\.{DEC}+		{ yylval = GetReal(yytext()); return CONST_REAL; }
 {DEC}+e[+-]?{DEC}+	{ yylval = GetReal(yytext()); return CONST_REAL; }
 {DEC}+\.{DEC}+e[+-]?{DEC}+	{ yylval = GetReal(yytext()); return CONST_REAL; }
 	
 	/* literals: Alphanumeric */
-'.'					{ yylval = yytext()[1]; return CONST_CHAR; }
+'.'					{ yylval = (UInt64) yytext()[1]; return CONST_CHAR; }
 	// check that num < 255
 \#{DEC}+			{ yylval = GetInt(yytext().Substring(1), 10); return CONST_CHAR; }
 \#\${HEXA}+			{ yylval = GetInt(yytext().Substring(2), 16); return CONST_CHAR; }
@@ -479,12 +481,11 @@ false				{ yylval = false; return CONST_BOOL; }
 ":"			{ return COLON; }
 ","			{ return COMMA; }
 "["			{ return LBRAC; }
-"("			{ return LPAR; }
-"]"			{ return RBRAC;	}
+"("			{ return LPAR ; }
 
+"]"			{ if (yylaststate() == SPROPSPECS  ) yypopstate(); return RBRAC;}
 ";"			{ if (yylaststate() == XFUNCDIRECTS) yypopstate(); return SCOL; }
-
-")"			{ if (yylaststate() == XFUNCPARAMS) yypopstate(); return RPAR; }
+")"			{ if (yylaststate() == XFUNCPARAMS ) yypopstate(); return RPAR; }
 
 	/* expr: general */
 ":="		{ return KW_ASSIGN; }
@@ -532,8 +533,6 @@ in			{ return KW_IN; }	// is in set
 [ \t]+		{ }     /* ignore whitespace */
 
 {NL}		{ }
-
-<<EOF>>		{	return Accept(); }
 
 .			{ yyerror("Unknown char: " + text + " (ASCII " + ((int) text[0]) +")"); }
 

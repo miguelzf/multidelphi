@@ -72,6 +72,18 @@ namespace crosspascal.core
 
 
 		/// <summary>
+		/// Lists filesin topological order to a string output
+		/// </summary>
+		public String ListFiles()
+		{
+			string outp = "Ordered Source Files:";
+			foreach (string s in filesOrdered.Keys)
+				outp += " " + s;
+			return outp;
+		}
+
+
+		/// <summary>
 		/// Resolves an imported/used Unit dependency, by fetching it from the map of SourceFiles.
 		/// Since the dependencies are topoligally sorted, it is guaranteed to have been previously processed
 		/// (if the user of this class is accessing it thru the iterators, as it should).
@@ -151,6 +163,11 @@ namespace crosspascal.core
 					if (!files.ContainsKey(s))
 					{
 						var file = LoadFile(s);
+						if (file.type == null)	// file could not be found/preprocessed
+						{	Error("File " + file.name + " imported from " + cf.name + " failed to load");
+							continue;
+						}
+
 						if (file.type != "unit")
 						{	Error("Attempt to import non-unit file " + s + " in " + cf.name);
 							continue;
@@ -176,7 +193,6 @@ namespace crosspascal.core
 
 			if (!File.Exists(fpath))
 			{
-				Error("File path " + fpath + " does not exist");
 				return new SourceFile(fname, fpath, null, null, null); ;
 			}
 
@@ -211,7 +227,7 @@ namespace crosspascal.core
 			try	{
 				preprocessor.Preprocess();
 			}
-			catch (PreprocessorException e)
+			catch (PreprocessorException)
 			{	Error("Preprocessing failed");
 				return new SourceFile(fname, fpath, null, null, null);
 			}

@@ -62,9 +62,10 @@ namespace crosspascal.parser
 		{
 			zzReader = null;
 		}
-		
+
 		public void ResetPreprocessor(string fname)
 		{
+			FileName = fname;
 			StreamReader sr = new StreamReader(fname, DefaultEncoding);
 			ResetPreprocessor(sr);
 		}
@@ -73,17 +74,19 @@ namespace crosspascal.parser
 		{	
 			yyreset(sr);
 			ResetPreprocessor();
-			ResetOutput();
+			outBuilder = new StringBuilder();
 			
 			// for debug
 			stateNames = new string[] {"INITIAL", "XCOMMENT1", "XCOMMENT2", "XNOTDEF" };
 			stateStack.Push(INITIAL);
 		}
+				
+		String FileName;
 		
 		void pperror(String msg = "Unknown preprocessing error")
 		{
-		//	throw new PreprocessorException(yyline, msg);
-			Console.Error.WriteLine("[ERROR preprocessor] " + msg + " in line " + yyline);
+			//	throw new PreprocessorException(yyline, msg);
+			Console.Error.WriteLine("[ERROR preprocessor] " + msg + " in File " + FileName  + " line " + yyline);
 		}
 
 
@@ -108,49 +111,9 @@ namespace crosspascal.parser
 		
 		// **********************************************
 		// Output Building
-		
-		struct IncludeFile
-		{
-			public StringBuilder builder;
-			public string filename;
-			
-			public IncludeFile(StringBuilder b, string f)
-			{
-				builder = b;
-				filename= f;
-			}
-		}
-		
-		const int OutputAllocSize = 5000;	// 5k buffer
-		Stack<IncludeFile> includesStack;
+				
 		StringBuilder outBuilder;
-
-		void ResetOutput()
-		{
-			includesStack = new Stack<IncludeFile>();
-			outBuilder = new StringBuilder(OutputAllocSize);
-		}
 		
-		void PushOutputBuffer(string fname)
-		{
-			IncludeFile inc = new IncludeFile(outBuilder, fname);
-			includesStack.Push(inc);
-			outBuilder = new StringBuilder(OutputAllocSize);
-		}
-
-		void PopOutputBuffer()
-		{
-			if (includesStack.Count() == 0)
-				throw new PreprocessorException(yyline, "Attempt to pop output from empty stack");
-		
-			IncludeFile inc = includesStack.Pop();
-			string incOutput = GetOutput();
-			inc.builder.Append(incOutput);
-			outBuilder = inc.builder;
-			
-			CacheInclude(inc.filename, incOutput);
-		}
-
 		public string GetOutput()
 		{
 			return outBuilder.ToString().ToLowerInvariant();	// Delphi is case-insensitive
@@ -205,29 +168,14 @@ NL      = (\r|\n|\r\n)
 						string ifile = GetDirectiveArg("i");
 						string inctext = FetchInclude(ifile);
 						
-						if (inctext != null)
-						{	outBuilder.Append(inctext);
-							break;
-						}
-						
-						string incpath = SearchFile(ifile);
-						if (incpath == null)
-						{	pperror("Include file " + incpath + " not found");
+						if (inctext == null)
+						{	pperror("Include file " + ifile + " not found");
 							break;
 						}
 
-						StreamReader sr = null;
-						try {
-							sr = new StreamReader(incpath, DefaultEncoding);
-						} 
-						catch (IOException ioe) {
-							pperror("Include file " + ifile + " could not be read: " + ioe.Message);
-						}
-						finally {
-							yypushStream(sr);
-							yydebug("Pushed stream from " + ifile + "");
-							PushOutputBuffer(ifile);
-						}
+						StringReader sr = new StringReader(inctext);
+						yypushStream(sr);
+						yydebug("Pushed stream from " + ifile + "");
 					}
 
 	/* defines */
@@ -307,7 +255,6 @@ NL      = (\r|\n|\r\n)
 						{
 							yypopStream();
 							yydebug("Popped stream and began initial state");
-							PopOutputBuffer();
 						}
 						else
 						{

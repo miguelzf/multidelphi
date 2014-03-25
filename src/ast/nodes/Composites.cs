@@ -225,10 +225,10 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class VarEntryDeclaration : FieldDeclaration
 	{
-		public ConstExpression tagvalue;
+		public Expression tagvalue;
 		public RecordType fields;
 
-		public VarEntryDeclaration(ConstExpression tagvalue, DeclarationList fields)
+		public VarEntryDeclaration(Expression tagvalue, DeclarationList fields)
 			: base(null, null)	// type must be later set to the variant type
 		{
 			this.tagvalue = tagvalue;

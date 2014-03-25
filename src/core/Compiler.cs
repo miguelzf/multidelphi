@@ -17,7 +17,7 @@ namespace crosspascal.core
 		TranslationPlanner planner;
 		DelphiParser parser;
 
-		public const int DefaultDebugLevel = 1;
+		public const int DefaultDebugLevel = 0;
 
 		public static int DebugLevel;
 
@@ -42,12 +42,16 @@ namespace crosspascal.core
 
 			// Load, preprocess and order them
 			planner.LoadFiles(filenames);
+			Console.WriteLine(planner.ListFiles());
 
 			AstPrinter astPrinter = new AstPrinter();
 			MapTraverser mt = new MapTraverser(astPrinter);
 
+			int skip = 0;
 			foreach (SourceFile sf in planner.GetSourceFiles())
 			{
+				if (++skip < 7000) continue;
+
 				Console.Write("####### Compile file " + Path.GetFileName(sf.name) + ": ");
 
 				if (sf.preprocText == null)		// preprocessing failed
@@ -57,11 +61,10 @@ namespace crosspascal.core
 
 				StringReader sr = new StringReader(sf.preprocText);
 
-				CompilationUnit ast;
+				TranslationUnit ast = null;
 
 				try {
 					ast = parser.Parse(sr, sf);
-					Console.WriteLine("Parsed OK: " + ast.name + " " + ast.ToString());
 				}
 				catch (ParserException e)
 				{
@@ -71,8 +74,17 @@ namespace crosspascal.core
 					break;
 				}
 
+				if (ast == null)
+				{
+					Console.ReadLine();
+					continue;
+				}
+
+				Console.WriteLine("Parsed OK: " + ast.name + " " + ast.ToString());
+
 				astPrinter.StartProcessing(ast);
-				Console.WriteLine(astPrinter);
+			//	Console.WriteLine(astPrinter);
+			//	Console.ReadLine();
 			}
 
 			return success;

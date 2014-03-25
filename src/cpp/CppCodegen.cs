@@ -49,7 +49,7 @@ namespace crosspascal.cpp
 		// Processor interface
 		//
 
-		public override bool StartProcessing(Node n)
+/*		public override bool StartProcessing(Node n)
 		{
 			return traverse(n);
 		}
@@ -154,7 +154,7 @@ namespace crosspascal.cpp
 			Visit((CompilationUnit) node);
 			traverse(node.@interface);
 			traverse(node.implementation);
-			traverse(node.init);
+			traverse(node.initialization);
 			return true;
 		}
 		
@@ -600,7 +600,7 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-        public override bool Visit(ParenthesizedLvalue node)
+        public override bool Visit(ExprAsLvalue node)
         {
             outputCode("(", false, false);
             //Visit((Statement) node);
@@ -1433,7 +1433,7 @@ namespace crosspascal.cpp
 			traverse(node.compTypes);
 			return true;
 		}
-
+*/
 
 	}
 }

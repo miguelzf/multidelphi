@@ -24,7 +24,7 @@ namespace crosspascal.testunits
 			TranslationPlanner planner;
 			DelphiParser parser;
 
-			string[] globalDefines = null;
+			TranslationUnit tree = null;
 
 			parser = new DelphiParser(0);
 			planner = new TranslationPlanner(globalDefines);

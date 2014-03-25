@@ -99,10 +99,6 @@ namespace crosspascal.ast
 			LeaveNode(n);
 		}
 		
-		
-		//
-		// Processor interface
-		//
 
 		public override bool StartProcessing(Node n)
 		{
@@ -110,6 +106,12 @@ namespace crosspascal.ast
 			return true;
 		}
 
+		
+		#region Processor interface
+		//
+		// Processor interface
+		//
+		
 		public override bool Visit(Node node)
 		{
 			return true;
@@ -1347,5 +1349,7 @@ namespace crosspascal.ast
 			TraversePrint(node.compTypes);
 			return true;
 		}
+
+		#endregion
 	}
 }

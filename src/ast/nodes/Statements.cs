@@ -65,12 +65,12 @@ namespace crosspascal.ast.nodes
 	{
 	}
 
-	public class Assignement : Statement
+	public class Assignment : Statement
 	{
 		public LvalueExpression lvalue;
 		public Expression expr;
 
-		public Assignement(LvalueExpression lvalue, Expression expr)
+		public Assignment(LvalueExpression lvalue, Expression expr)
 		{
 			this.expr = expr;
 		}

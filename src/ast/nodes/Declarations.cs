@@ -10,35 +10,40 @@ namespace crosspascal.ast.nodes
 {
 
 	#region Declarations hierarchy
-	/// <remarks>
 	///	Declaration
+	///		TranslationUnit
+	///			Program
+	///			Library
+	///			Unit
 	///		LabelDeclaration
 	///		ValueDeclaration
 	///			Constant
 	///			Variable
-	///			Parameter	// of routines
+	///			Parameter (of routines)
 	///				DefaultParam
 	///				VarParam
 	///				OutParam
 	///				ConstParam
 	///			Field
 	///		TypeDecl
-	///			Custom-Type
-	///			
-	///			CallableUnit
-	///				Routine
-	///				Method
-	///					SpecialMethod
-	///						Constructor
-	///						Destructor
-	///			ObjectDecl
-	///				Interf
-	///				Record
+	///			[default, value type]
+	///			CompositeDecl
 	///				Class/Object
-	///			
-	/// </remarks>
+	///				Interf
+	///		CallableDecl
+	///			RoutineDecl
+	///			MethodDecl
+	///				SpecialMethod
+	///					Constructor
+	///					Destructor
+	///		CallableDefinition
+	///			RoutineDefinition
+	///			MethodDefinition
 	#endregion
 
+	/// <summary>
+	/// A named declaration. Binds an entity to a name
+	/// </summary>
 	public abstract class Declaration : Node
 	{
 		public String name;
@@ -65,6 +70,9 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	/// <summary>
+	/// 
+	/// </summary>
 	public class LabelDeclaration : Declaration
 	{
 		public LabelDeclaration(String name) : base(name, null) { }
@@ -143,10 +151,13 @@ namespace crosspascal.ast.nodes
 			: base(name, t)
 		{
 			this.init = init;
-			init.EnforceConst = true;
-
-			if (t == null)
-				type = init.Type;
+			
+			if (init != null)	// else, it's an enumvalue
+			{
+				init.EnforceConst = true;
+				if (t == null)
+					type = init.Type;
+			}
 		}
 	}
 
@@ -171,11 +182,6 @@ namespace crosspascal.ast.nodes
 		protected TypeDeclaration() { }
 
 		public TypeDeclaration(String name, TypeNode type) : base(name, type) { }
-	}
-
-	public abstract partial class CallableDeclaration : TypeDeclaration
-	{
-		// In file Routines.cs
 	}
 
 }

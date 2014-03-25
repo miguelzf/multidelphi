@@ -266,10 +266,10 @@ namespace crosspascal.ast.nodes
 	/// </remarks>
 	public class RangeType : VariableType, IOrdinalType
 	{
-		public ConstExpression min;
-		public ConstExpression max;
+		public Expression min;
+		public Expression max;
 
-		public RangeType(ConstExpression min, ConstExpression max)
+		public RangeType(Expression min, Expression max)
 		{
 			this.min = min;
 			this.max = max;
@@ -280,9 +280,6 @@ namespace crosspascal.ast.nodes
 			//	min.value < max.value
 			//	value.range <= type.range:
 		}
-
-		public RangeType(Expression min, Expression max)
-			: this(new ConstExpression(min), new ConstExpression(max)) { }
 
 		public Int64 MinValue()
 		{
@@ -570,10 +567,10 @@ namespace crosspascal.ast.nodes
 
 	public class FixedStringType : StringType
 	{
-		public ConstExpression expr;
+		public Expression expr;
 		public int Len { get; set; }
 
-		public FixedStringType(ConstExpression expr)
+		public FixedStringType(Expression expr)
 		{
 			this.expr = expr;
 

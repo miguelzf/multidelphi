@@ -83,23 +83,28 @@ namespace crosspascal.ast.nodes
 
 			return (Value as IntegralValue).val;
 		}
+
+
+		/// <summary>
+		/// Compare constants
+		/// </summary>
+		public override bool Equals(object obj)
+		{
+			if (!(obj is Expression))
+				return false;
+
+			var ot = (obj as Expression);
+			if (!Type.Equals(ot.Type))
+				return false;
+
+			return Value.Equals(ot.Value);
+		}
 	}
 
 	public class EmptyExpression : Expression
 	{
 		// Do nothing
 	}
-
-    public class ParenthesizedLvalue : LvalueExpression
-    {
-        public Expression expr;
-
-        public ParenthesizedLvalue(Expression expr)
-        {
-            this.expr = expr;
-        }
-    }
-
 
 	public class ExpressionList : ListNode<Expression>
 	{
@@ -123,22 +128,14 @@ namespace crosspascal.ast.nodes
 	//==========================================================================
 
 	/// <summary>
-	/// Wrapper node for const expressions
+	/// Base class for const expressions
 	/// Should be used for all initializations
 	/// </summary>
-	public class ConstExpression : Expression
+	public abstract class ConstExpression : Expression
 	{
-		public Expression expr;
-
 		public ConstExpression()
 		{
-		}
-
-		public ConstExpression(Expression expr)
-		{
-			this.expr = expr;
 			this.EnforceConst = true;
-			expr.EnforceConst = true;
 		}
 
 		/// <summary>
@@ -150,10 +147,10 @@ namespace crosspascal.ast.nodes
 				return false;
 
 			var ot  = (obj as ConstExpression);
-			if (!expr.Type.Equals(ot.Type))
+			if (!Type.Equals(ot.Type))
 				return false;
 
-			return expr.Value.Equals(ot.Value);
+			return Value.Equals(ot.Value);
 		}
 	}
 
@@ -200,14 +197,226 @@ namespace crosspascal.ast.nodes
 	public class FieldInit : ConstExpression
 	{
 		public String fieldname;
+		public Expression expr;
 
 		public FieldInit(string name, Expression expr)
-			: base(expr)
 		{
 			fieldname = name;
+			this.expr = expr;
 		}
 	}
 
+	public class ConstIdentifier : ConstExpression
+	{		
+		public string name;
+
+		public ConstIdentifier(string val)
+		{
+			this.name = val;
+		}
+	}
+
+	#endregion
+
+
+	#region Literals
+	//==========================================================================
+	// Literals
+	//==========================================================================
+
+	public abstract class Literal : ConstExpression
+	{
+		public Literal() { }
+
+		public Literal(ConstantValue val, ScalarType t)
+		{
+			this.Type = this.ForcedType = t;
+			this.Value = val;
+			this.IsConst = true;
+		}
+
+		public abstract ConstantValue Default();
+	}
+
+	public abstract class OrdinalLiteral : Literal
+	{
+		public OrdinalLiteral() { }
+
+		public OrdinalLiteral(ulong v, IntegralType t) : base(new IntegralValue(v), t) { }
+
+		public override ConstantValue Default()
+		{
+			return new IntegralValue(0);
+		}
+	}
+
+	public class IntLiteral : OrdinalLiteral
+	{
+		public IntLiteral(ulong val) : base((ulong)val, IntegerType.Single) { }
+	}
+
+	public class CharLiteral : OrdinalLiteral
+	{
+		public CharLiteral(char value) : base((ulong)value, CharType.Single) { }
+	}
+
+	public class BoolLiteral : OrdinalLiteral
+	{
+		public BoolLiteral(bool value) : base(Convert.ToUInt64(value), BoolType.Single) { }
+	}
+
+	public class StringLiteral : Literal
+	{
+		public bool isChar;
+
+		public StringLiteral(string value)
+			: base(new StringValue(value), StringType.Single)
+		{
+			if (value.Length == 1)
+				isChar = true;
+		}
+
+		public override ConstantValue Default()
+		{
+			return new StringValue("");
+		}
+	}
+
+	public class RealLiteral : Literal
+	{
+		public RealLiteral(double value) : base(new RealValue(value), RealType.Single) { }
+
+		public override ConstantValue Default()
+		{
+			return new RealValue(0.0);
+		}
+	}
+
+	public class PointerLiteral : Literal
+	{
+		public PointerLiteral(ulong value)
+			: base(new IntegralValue(value), PointerType.Single)
+		{
+			if (value != 0x0)	// Const_NIl
+				Error("Pointer constant can only be nil");
+		}
+
+		public override ConstantValue Default()
+		{
+			return new IntegralValue(0);
+		}
+	}
+
+	#endregion
+
+
+	#region Compile-time computed values
+	#pragma warning disable 659
+
+	public abstract class ConstantValue : Node
+	{
+
+	}
+
+	// For ints, chars and bools
+	public class IntegralValue : ConstantValue
+	{
+		public ulong val;
+		public IntegralValue(ulong val) { this.val = val; }
+
+		public override bool Equals(object obj)
+		{
+			return (obj is IntegralValue) && val == ((IntegralValue)obj).val;
+		}
+
+		// Assumes the values belong same-type constants
+		// this < other
+		public ulong range(IntegralValue l2)
+		{
+			ulong range = l2.val - this.val;
+
+			if (range > l2.val)
+				ErrorInternal("IntegralValue negative range: " + l2.val + " - " + this.val);
+
+			return range;
+		}
+
+		/*			long val1 = (long)Value;
+					if (l2.GetType() == typeof(SIntLiteral))
+					{
+						long val2 = (long) l2.Value;
+						if (val2 < val1)
+						{	Error("Invalid range: upper limit less than lower");
+							return 0;
+						}
+
+						if ((val1 < 0) == (val2 < 0))	// same sign
+							return (ulong) (val2 - val1);
+						else	// diff sign
+							return (ulong)val1 + (ulong)val2;
+					}
+					else	// l1 == UIntLiteral
+					{
+						ulong val2 = (ulong)l2.Value;
+						if (val1 < 0)	// negative
+						{
+							return val2. + (ulong)val1;
+						}
+						else	// positive
+						if (val2 < (ulong) val1)
+						{	Error("Invalid range: upper limit less than lower");
+							return 0;
+						}
+
+					}
+				}
+				protected override ulong range(OrdinalLiteral l1)
+				{
+					if (!l1.ISA(typeof(IntLiteral)))
+					{
+						ErrorInternal("Int Literal range with non integer type");
+						return 0;
+					}
+					return 1;
+				}
+				// range(this... other)
+				public abstract ulong range(OrdinalLiteral l1);
+
+				public override ulong range(OrdinalLiteral l1)
+				{
+					if (base.range(l1) == 0)
+						return 0;
+
+					if ((long)Value - (long)l1.Value)
+
+					return Math.Abs((long)Value - (long)l1.Value);
+				}
+		*/
+	}
+
+	public class StringValue : ConstantValue
+	{
+		public string val;
+		public StringValue(string val) { this.val = val; }
+
+		public override bool Equals(object obj)
+		{
+			return (obj is StringValue) && val == ((StringValue)obj).val;
+		}
+	}
+
+	public class RealValue : ConstantValue
+	{
+		public double val;
+		public RealValue(double val) { this.val = val; }
+
+		public override bool Equals(object obj)
+		{
+			return (obj is RealValue) && val == ((RealValue)obj).val;
+		}
+	}
+
+	#pragma warning restore 659
 	#endregion
 
 
@@ -387,14 +596,6 @@ namespace crosspascal.ast.nodes
 		public TypeCast(Expression e, CompositeType t) : base(e, t) { }
 	}
 
-	/// <summary>
-	/// VarType(expr)
-	/// </summary>
-	public class ValueCast : TypeBinaryExpression
-	{
-		public ValueCast(Expression e, VariableType t) : base(e, t) { }
-	}
-
 	#endregion
 
 	#endregion	// Binary expressions
@@ -458,205 +659,6 @@ namespace crosspascal.ast.nodes
 
 	#endregion
 
-	#region Compile-time computed values
-	#pragma warning disable 659
-
-	public abstract class ConstantValue : Node
-	{
-
-	}
-
-	// For ints, chars and bools
-	public class IntegralValue : ConstantValue
-	{
-		public ulong val;
-		public IntegralValue(ulong val) { this.val = val; }
-
-		public override bool Equals(object obj)
-		{
-			return (obj is IntegralValue) && val == ((IntegralValue)obj).val;
-		}
-
-		// Assumes the values belong same-type constants
-		// this < other
-		public ulong range(IntegralValue l2)
-		{
-			ulong range = l2.val - this.val;
-
-			if (range > l2.val)
-				ErrorInternal("IntegralValue negative range: " + l2.val + " - " + this.val);
-
-			return range;
-		}
-
-/*			long val1 = (long)Value;
-			if (l2.GetType() == typeof(SIntLiteral))
-			{
-				long val2 = (long) l2.Value;
-				if (val2 < val1)
-				{	Error("Invalid range: upper limit less than lower");
-					return 0;
-				}
-
-				if ((val1 < 0) == (val2 < 0))	// same sign
-					return (ulong) (val2 - val1);
-				else	// diff sign
-					return (ulong)val1 + (ulong)val2;
-			}
-			else	// l1 == UIntLiteral
-			{
-				ulong val2 = (ulong)l2.Value;
-				if (val1 < 0)	// negative
-				{
-					return val2. + (ulong)val1;
-				}
-				else	// positive
-				if (val2 < (ulong) val1)
-				{	Error("Invalid range: upper limit less than lower");
-					return 0;
-				}
-
-			}
-		}
-		protected override ulong range(OrdinalLiteral l1)
-		{
-			if (!l1.ISA(typeof(IntLiteral)))
-			{
-				ErrorInternal("Int Literal range with non integer type");
-				return 0;
-			}
-			return 1;
-		}
-		// range(this... other)
-		public abstract ulong range(OrdinalLiteral l1);
-
-		public override ulong range(OrdinalLiteral l1)
-		{
-			if (base.range(l1) == 0)
-				return 0;
-
-			if ((long)Value - (long)l1.Value)
-
-			return Math.Abs((long)Value - (long)l1.Value);
-		}
-*/
-	}
-
-	public class StringValue : ConstantValue
-	{
-		public string val;
-		public StringValue(string val) { this.val = val; }
-
-		public override bool Equals(object obj)
-		{
-			return (obj is StringValue) && val == ((StringValue)obj).val;
-		}
-	}
-
-	public class RealValue : ConstantValue
-	{
-		public double val;
-		public RealValue(double val) { this.val = val; }
-
-		public override bool Equals(object obj)
-		{
-			return (obj is RealValue) && val == ((RealValue)obj).val;
-		}
-	}
-
-	#pragma warning restore 659
-	#endregion
-
-
-	#region Literals
-	//==========================================================================
-	// Literals
-	//==========================================================================
-
-	public abstract class Literal : UnaryExpression
-	{
-		public Literal() { }
-
-		public Literal(ConstantValue val, ScalarType t)
-		{
-			this.Type = this.ForcedType = t;
-			this.Value = val;
-			this.IsConst = this.EnforceConst = true;
-		}
-
-		public abstract ConstantValue Default();
-	}
-
-	public abstract class OrdinalLiteral : Literal
-	{
-		public OrdinalLiteral() { }
-
-		public OrdinalLiteral(ulong v, IntegralType t) : base(new IntegralValue(v),t) { }
-
-		public override ConstantValue Default()
-		{
-			return new IntegralValue(0);
-		}
-	}
-
-	public class IntLiteral : OrdinalLiteral
-	{
-		public IntLiteral(ulong val)	: base((ulong) val, IntegerType.Single) { }
-	}
-
-	public class CharLiteral : OrdinalLiteral
-	{
-		public CharLiteral(char value)	: base((ulong)value, CharType.Single) { }
-	}
-
-	public class BoolLiteral : OrdinalLiteral
-	{
-		public BoolLiteral(bool value)	: base(Convert.ToUInt64(value), BoolType.Single) { }
-	}
-
-	public class StringLiteral : Literal
-	{
-		public bool isChar;
-
-		public StringLiteral(string value)
-			: base(new StringValue(value), StringType.Single)
-		{
-			if (value.Length == 1)
-				isChar = true;
-		}
-
-		public override ConstantValue Default()
-		{
-			return new StringValue("");
-		}
-	}
-
-	public class RealLiteral : Literal
-	{
-		public RealLiteral(double value) : base(new RealValue(value),RealType.Single) { }
-
-		public override ConstantValue Default()
-		{
-			return new RealValue(0.0);
-		}
-	}
-
-	public class PointerLiteral : Literal
-	{
-		public PointerLiteral(ulong value)
-			: base(new IntegralValue(value), PointerType.Single)
-		{
-			if (value != 0x0)	// Const_NIl
-				Error("Pointer constant can only be nil");
-		}
-
-		public override ConstantValue Default()
-		{
-			return new IntegralValue(0);
-		}
-	}
-
-	#endregion
 
 
 	#region Left-value expressions
@@ -667,6 +669,32 @@ namespace crosspascal.ast.nodes
 	public abstract class LvalueExpression : UnaryExpression
 	{
 	}
+
+	public class ExprAsLvalue : LvalueExpression
+	{
+		public Expression expr;
+
+		public ExprAsLvalue(Expression expr)
+		{
+			this.expr = expr;
+		}
+	}
+
+	/// <summary>
+	/// VarType(expr)
+	/// </summary>
+	public class ValueCast : LvalueExpression
+	{
+		public VariableType casttype;
+		public Expression expr;
+
+		public ValueCast(Expression e, VariableType t)
+		{
+			this.casttype = t;
+			this.expr = e;
+		}
+	}
+
 
 	/// <summary>
 	/// To be resolver after parsing
@@ -777,7 +805,7 @@ namespace crosspascal.ast.nodes
 	}
 
 	/// <summary>
-	/// TO BE resolved into one of Id, FuncCall, or Typecast after creation 
+	/// Identifier that refers to a named declaration
 	/// </summary>
 	public class Identifier : LvalueExpression
 	{

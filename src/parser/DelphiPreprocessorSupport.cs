@@ -25,26 +25,21 @@ namespace crosspascal.parser
 
 		/// <summary>
 		/// Queries the cache for an include file.
-		/// If not found, prepares to add one when the preprocessor finishes the file
+		/// If not found, loads the file text to cache and returns it.
 		/// </summary>
-		bool FetchInclude2(string fname, out string include)
-		{
-			if (IncludesCache.ContainsKey(fname))
-			{	include = IncludesCache[fname];
-				return true;
-			}
-			else {
-				// File not in cache, load it and prepare for processing
-				include = SearchFile(fname);
-				return false;
-			}
-		}
-
 		string FetchInclude(string fname)
 		{
-			string ret;
-			IncludesCache.TryGetValue(fname, out ret);
-			return ret;		// null if not found
+			string text;
+			if (IncludesCache.TryGetValue(fname, out text))
+				return text;
+
+			string fpath = SearchFile(fname);
+			if (fpath == null)
+				return null;
+
+			text = new StreamReader(fpath, DefaultEncoding).ReadToEnd();
+			CacheInclude(fname, text);
+			return text;		// null if not found
 		}
 		
 		void CacheInclude(string fname, string text)

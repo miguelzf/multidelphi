@@ -15,17 +15,15 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// CompilationUnit: top level source file. Can be Program, Unit, Library or Package
 	/// </summary>
-	public abstract class CompilationUnit : Node
+	public abstract class TranslationUnit : Declaration
 	{
-		public String name;
-
-		public CompilationUnit(String name) 
+		public TranslationUnit(String name) : base(name)
 		{
 			this.name = name;
 		}
 	}
 
-	public class ProgramNode : CompilationUnit
+	public class ProgramNode : TranslationUnit
 	{
 		public NodeList uses;
 		public ProgramBody body;
@@ -37,7 +35,7 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class LibraryNode : CompilationUnit
+	public class LibraryNode : TranslationUnit
 	{
 		public ProgramBody body;
 		public NodeList uses;
@@ -49,21 +47,25 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class UnitNode : CompilationUnit
+	public class UnitNode : TranslationUnit
 	{
 		public InterfaceSection @interface;
 		public ImplementationSection implementation;
-		public Node init;
+		public InitializationSection initialization;
+		public FinalizationSection finalization;
 
-		public UnitNode(String name, InterfaceSection interfce, ImplementationSection impl, Node init) : base(name)
+		public UnitNode(String name, InterfaceSection interfce, ImplementationSection impl, 
+						InitializationSection init = null, FinalizationSection final = null)
+			: base(name)
 		{
-			this.@interface = interfce;
-			this.implementation = impl;
-			this.init = init;
+			@interface = interfce;
+			implementation = impl;
+			initialization = init;
+			finalization   = final;
 		}
 	}
 
-	public class PackageNode : CompilationUnit
+	public class PackageNode : TranslationUnit
 	{
 		public NodeList requires;
 		public NodeList contains;

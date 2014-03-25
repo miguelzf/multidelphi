@@ -80,9 +80,9 @@ namespace crosspascal.ast.nodes
 	#region Routines' Declarations
 
 	/// <summary>
-	/// Declaration of a procedural type, i.e. Callable unit
+	/// Declaration of a Callable unit, i.e. a global routine or method
 	/// </summary>
-	public abstract partial class CallableDeclaration : TypeDeclaration
+	public abstract partial class CallableDeclaration : Declaration
 	{
 		/// <summary>
 		/// Gets this callable Procedural Type (downcasted from the Declaration's base type)
@@ -162,20 +162,47 @@ namespace crosspascal.ast.nodes
 			: base(name, objname, @params, dirs) { }
 	}
 
-	#endregion
 
-	// not really a declaration, not it makes the grammar cleaner..
-	public class RoutineDefinition : Declaration
+
+	/// <summary>
+	/// Callable definition/implementation
+	/// </summary>
+	public abstract class CallableDefinition : Declaration
 	{
 		public CallableDeclaration header;
 		public RoutineBody body;
 
-		public RoutineDefinition(CallableDeclaration header, RoutineBody body)
+		public CallableDefinition(CallableDeclaration header, RoutineBody body)
 		{
 			this.header = header;
 			this.body = body;
 		}
 	}
+
+	/// <summary>
+	/// Routine definition/implementation
+	/// </summary>
+	public class RoutineDefinition : CallableDefinition
+	{
+		public RoutineDefinition(RoutineDeclaration header, RoutineBody body)
+			: base (header, body)
+		{
+		}
+	}
+
+	/// <summary>
+	/// Method definition/implementation
+	/// </summary>
+	public class MethodDefinition : CallableDefinition
+	{
+		public MethodDefinition(MethodDeclaration header, RoutineBody body)
+			: base(header, body)
+		{
+		}
+	}
+
+	#endregion
+
 
 
 	#region Directives' Aggregators
@@ -190,7 +217,7 @@ namespace crosspascal.ast.nodes
 		{
 			get { return _callconv ; }
 			set {
-				if (_callconv != 0) Error("Cannot specify more than 1 Call convention");
+				if (_callconv != 0) Error("Cannot specify more than one Call convention");
 				else				_callconv = value; 
 			}
 		}
@@ -262,14 +289,34 @@ namespace crosspascal.ast.nodes
 			get { return _importdir; }
 			set
 			{
-				if (_importdir != 0) Error("Cannot specify more than external/forward directive");
+				if (_importdir != ImportDirective.Default)
+					Error("Cannot specify more than one external/forward directive");
 				else _importdir = value;
 			}
 		}
 
-		public ExternalDirective External { get; set; }
+		private ExternalDirective _external;
+		public ExternalDirective External
+		{
+			get { return _external; }
+			set
+			{	_external = value;
+				Importdir = ImportDirective.External;
+			}
+		}
 
-		public RoutineDirectives(int dir = 0) : base(dir) { }
+		public RoutineDirectives(int dir = 0)
+		{
+			Add(dir);
+		}
+
+		public override void Add(int dir = 0)
+		{
+			if (Enum.IsDefined(typeof(ImportDirective), dir))
+				Importdir = (ImportDirective) dir;
+			else 
+				base.Add(dir);
+		}
 
 		/// <summary>
 		/// Checks the immediate coherence between function directives.
@@ -348,15 +395,23 @@ namespace crosspascal.ast.nodes
 
 	public struct ExternalDirective
 	{
-		public ConstExpression File { get; set; }
-		public ConstExpression Name { get; set; }
+		public Expression File { get; set; }
+		public Expression Name { get; set; }
 
-		public ExternalDirective(ConstExpression file, ConstExpression name = null) : this()
+		public ExternalDirective(Expression file, Expression name = null)
+			: this()
 		{
 			File = file;
 			Name = name;
+
+			File.EnforceConst = true;
 			File.ForcedType = StringType.Single;
-			Name.ForcedType = StringType.Single;
+
+			if (name != null)
+			{
+				Name.EnforceConst = true;
+				Name.ForcedType = StringType.Single;
+			}
 		}
 
 		/// <summary>

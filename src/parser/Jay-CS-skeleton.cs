@@ -137,15 +137,13 @@ t    this.debug = (ParserDebug)yyd;
 .
 .  internal Object yyparse (IScanner yyLex)
 .  {
-.	  // reset
-.    yyState = 0;                    // state stack ptr
-.    int currentToken = -1;
-.	 Object yyVal = null;                   // value stack ptr
-.	 int yyToken = -1;					// current input
-.
+.    int currentToken = 0;
 .    if (yyMax <= 0) yyMax = 256;			// initial size
+.    yyState = 0;                                   // state stack ptr
 .    int [] yyStates = new int[yyMax];	                // state stack 
+.    Object yyVal = null;                               // value stack ptr
 .    Object [] yyVals = new Object[yyMax];	        // value stack
+.    int yyToken = -1;					// current input
 .    int yyErrorFlag = 0;				// #tks to shift
 .
  local		## %{ ... %} after the first %%
@@ -190,7 +188,7 @@ t              debug.shift(yyState, yyTable[yyN], yyErrorFlag-1);
 .  
 .            case 0:
 .              yyExpectingState = yyState;
-.              // yyerror(String.Format ("syntax error, got token `{0}'", yyname (yyToken)), yyExpecting(yyState));
+.          //  yyerror(String.Format ("syntax error, got token `{0}'", yyname (yyToken)), yyExpecting(yyState));
 t              if (debug != null) debug.error("syntax error");
 .              if (yyToken == 0 /*eof*/ || yyToken == eof_token) throw new UnexpectedEof(yyLex.yylineno());
 .              goto case 1;
