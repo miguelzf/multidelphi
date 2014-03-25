@@ -157,7 +157,7 @@ namespace crosspascal.semantics
 			if (cldecl == null)
 				return null;
 
-			return cldecl.Type.GetInheritableMembers().GetDeclaration(decl.name);
+			return cldecl.Type.GetInheritableMembers().Where(x => x.name == decl.name).ElementAt(0);
 		}
 
 		public void LoadCompositeContext(CompositeDeclaration cdecl)

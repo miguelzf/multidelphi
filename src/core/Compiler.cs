@@ -19,7 +19,7 @@ namespace crosspascal.core
 
 		public const int DefaultDebugLevel = 1;
 
-		public int DebugLevel;
+		public static int DebugLevel;
 
 		public Compiler(string[] globalDefines = null) : this(DefaultDebugLevel, globalDefines)
 		{

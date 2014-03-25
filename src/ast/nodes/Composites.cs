@@ -69,16 +69,16 @@ namespace crosspascal.ast.nodes
 		public IEnumerable<Declaration> GetPublicMembers()
 		{
 			var list = sections.Where(x => x.scope == Scope.Public || x.scope == Scope.Published);
-			return list.SelectMany(x => x.decls);
+			return list.SelectMany(x => x.Decls());
 		}
 
 		/// <summary>
 		/// Returns public, protected and published methods
 		/// </summary>
-		public DeclarationList GetInheritableMembers()
+		public IEnumerable<Declaration> GetInheritableMembers()
 		{
 			var list = sections.Where(x => x.scope != Scope.Private);
-			return new DeclarationList(list.SelectMany(x => x.decls));
+			return list.SelectMany(x => x.Decls());
 		}
 
 		public CompositeType(ArrayList heritage, ScopedSectionList seclist)
@@ -88,6 +88,8 @@ namespace crosspascal.ast.nodes
 				this.heritage.Add(s);
 
 			sections = seclist;
+			if (sections == null)
+				sections = new ScopedSectionList();
 		}
 	}
 
@@ -99,6 +101,8 @@ namespace crosspascal.ast.nodes
 			: base(heritage, seclist)
 		{
 			self = new FieldDeclaration("self", this);
+
+			sections.Add(new ScopedSection(Scope.Protected, new DeclarationList(self), null));
 		}
 	}
 
@@ -142,6 +146,19 @@ namespace crosspascal.ast.nodes
  		{
 			this.scope	= scope;
 			this.fields = fields;
+			if (fields == null)
+				fields = new DeclarationList();
+		}
+
+		/// <summary>
+		/// Fields, Methods and Properties
+		/// </summary>
+		public IEnumerable<Declaration> Decls()
+		{
+			foreach (var f in fields)
+				yield return f;
+			foreach (var d in decls)
+				yield return d;
 		}
 	}
 

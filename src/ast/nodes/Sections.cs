@@ -163,9 +163,11 @@ namespace crosspascal.ast.nodes
 			decls = new DeclarationList();
 		}
 
-		public Section(DeclarationList decls)
+		public Section(DeclarationList dls)
 		{
-			this.decls = decls;
+			decls = dls;
+			if (decls == null)
+				decls = new DeclarationList();
 		}
 	}
 
