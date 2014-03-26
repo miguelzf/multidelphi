@@ -38,7 +38,7 @@ namespace crosspascal.parser
 	// =========================================================================
 
 %start goal
-%type<string> id typeid idtypeopt labelid stringconst conststr expid
+%type<string> id qualifid idtypeopt labelid stringconst conststr expid
 %type<ArrayList> labelidlst idlst
 
 	// sections and declarations
@@ -85,14 +85,14 @@ namespace crosspascal.parser
 %type<LvalueExpression> routinecall lvalue 
 %type<RoutineCall> inheritedcall
 %type<Identifier> identifier
-%type<Expression> unaryexpr expr rangestart set inheritedexpr setelem constexpr
+%type<Expression> unaryexpr expr rangestart set inheritedexpr setelem constexpr constinit paraminitopt
 %type<ExpressionList> caselabellst exprlst constexprlst exprlstopt setelemlst arrayexprlst 
 %type<TypeList> arrayszlst
 %type<FieldInitList> fieldconstlst 
 %type<FieldInit> fieldconst
 %type<EnumValueList> enumelemlst
 %type<EnumValue> enumelem
-%type<ConstExpression> paraminitopt functypeinit arrayconst recordconst constinit
+%type<ConstExpression> functypeinit arrayconst recordconst
 
 	// Composites
 %type<DeclarationList> recvariant recfield recvarfield recfieldlst propfield recvarlst
@@ -906,8 +906,8 @@ unaryexpr
 
 expr
 	: unaryexpr								{ $$ = $1; }
-	| expr KW_AS id							{ $$ = new TypeCast($1, new UnresolvedClassType($3)); }
-	| expr KW_IS id							{ $$ = new TypeIs($1, new UnresolvedClassType($3)); }
+	| expr KW_AS qualifid					{ $$ = new TypeCast($1, new ReferenceType($3)); }
+	| expr KW_IS qualifid					{ $$ = new TypeIs($1, new ReferenceType($3)); }
 	| expr KW_IN expr						{ $$ = new SetIn($1, $3); }
 	| expr relop expr %prec KW_EQ			{ $$ = CreateBinaryExpression($1, $2, $3); }
 	| expr addop expr %prec KW_SUB			{ $$ = CreateBinaryExpression($1, $2, $3); }
@@ -1367,12 +1367,12 @@ typeopt		// ignored for now
 	;
 
 vartype
- 	: typeid					{ $$ = new UnresolvedType($1); }
+ 	: qualifid					{ $$ = new UnresolvedType($1); }
 	| TYPE_STR /*dynamic size*/	{ $$ = StringType.Single; }
 	| TYPE_STR LBRAC constexpr RBRAC { $$ = new FixedStringType($3); }
 	| KW_DEREF vartype 			{ $$ = new PointerType($2); }
 	| TYPE_PTR					{ $$ = PointerType.Single; }
-	| KW_CLASS KW_OF typeid		{ $$ = new MetaclassType(new UnresolvedClassType($3)); }
+	| KW_CLASS KW_OF qualifid	{ $$ = new MetaclassType(new ReferenceType($3)); }
 	| packstructtype			{ $$ = $1; }
 	| rangetype					{ $$ = $1; }
 	| enumtype					{ $$ = $1; }
@@ -1380,11 +1380,11 @@ vartype
 
 ordinaltype
 	: rangetype					{ $$ = $1; }
-	| typeid					{ $$ = new UnresolvedOrdinalType($1); }
+	| qualifid					{ $$ = new UnresolvedOrdinalType($1); }
 	;
 
 funcparamtype
-	: typeid							{ $$ = new UnresolvedVariableType($1); }
+	: qualifid							{ $$ = new UnresolvedVariableType($1); }
 	| TYPE_ARRAY KW_OF funcparamtype	{ $$ = new ArrayType($3); }
 	| TYPE_STR /*dynamic size*/			{ $$ = StringType.Single; }
 	| TYPE_STR LBRAC constexpr RBRAC	{ $$ = new FixedStringType($3); }
@@ -1392,7 +1392,7 @@ funcparamtype
 	;
 
 funcrettype
-	: typeid					{ $$ = new UnresolvedType($1); }
+	: qualifid					{ $$ = new UnresolvedType($1); }
 	| TYPE_PTR					{ $$ = PointerType.Single; }
 	| TYPE_STR /*dynamic size*/	{ $$ = StringType.Single; }
 	;
@@ -1432,7 +1432,7 @@ arrayszlst
 
 arraytype
 	: TYPE_ARRAY LBRAC arrayszlst RBRAC KW_OF vartype 	{ $$ = new ArrayType($6, $3); }
-	| TYPE_ARRAY LBRAC typeid	  RBRAC KW_OF vartype	{ $$ = new ArrayType($6, new UnresolvedIntegralType($3)); }
+	| TYPE_ARRAY LBRAC qualifid	  RBRAC KW_OF vartype	{ $$ = new ArrayType($6, new UnresolvedIntegralType($3)); }
 	| TYPE_ARRAY KW_OF vartype 	{ $$ = new ArrayType($3); }
 	;
 
@@ -1446,16 +1446,16 @@ filetype
 	;
 
 fixedtype
-	: typeid							{ $$ = new UnresolvedVariableType($1); }
+	: qualifid							{ $$ = new UnresolvedVariableType($1); }
 	| TYPE_STR LBRAC constexpr RBRAC	{ $$ = new FixedStringType($3); }
 	| packstructtype					{ $$ = $1; }
 	| rangetype							{ $$ = $1; }
 	| proceduraltype SCOL funcdiropt	{ $$ = $1; $1.Directives = $3; }
 	;
 	
-typeid	// qualified
-	: id						{ $$ = $1; }
-	| typeid KW_DOT id			{ $$ = $1 + "." + $3; }
+qualifid	// qualified
+	: id							{ $$ = $1; }
+	| qualifid KW_DOT id			{ $$ = $1 + "." + $3; }
 	;
 	
 %%

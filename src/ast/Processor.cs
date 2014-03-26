@@ -55,7 +55,7 @@ namespace crosspascal.ast
 
 		public virtual bool Visit(Node node)
 		{
-			return node.Accept(this);
+			return true;
 		}
 
 

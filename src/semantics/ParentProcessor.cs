@@ -419,6 +419,12 @@ namespace crosspascal.semantics
 			TraverseSetParent(node,node.guid);
 			return true;
 		}
+
+		public override bool Visit(ReferenceType node)
+		{
+			Visit((TypeNode)node);
+			return true;
+		}
 		
 		public override bool Visit(ScopedSection node)
 		{

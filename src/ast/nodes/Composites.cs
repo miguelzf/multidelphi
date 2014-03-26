@@ -31,6 +31,8 @@ namespace crosspascal.ast.nodes
 		public ClassDeclaration(String name, ClassType ctype)
 			: base(name, ctype)
 		{
+			ctype.self = new FieldDeclaration("self", new ReferenceType(name, ctype));
+			ctype.sections.Add(new ScopedSection(Scope.Protected, new DeclarationList(ctype.self), null));
 		}
 	}
 
@@ -119,8 +121,22 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	#endregion
+	/// <summary>
+	/// A reference to a composite type, used in values
+	/// </summary>
+	public class ReferenceType : TypeNode
+	{
+		public String qualifid;
+		public CompositeType reftype;
 
+		public ReferenceType(String qualifid, CompositeType reftype = null)
+		{
+			this.qualifid = qualifid;
+			this.reftype = reftype;
+		}
+	}
+
+	#endregion
 
 
 	#region Composite Sections

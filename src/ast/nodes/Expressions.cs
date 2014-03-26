@@ -585,7 +585,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class TypeIs : TypeBinaryExpression
 	{
-		public TypeIs(Expression e1, CompositeType e2) : base(e1, e2) { }
+		public TypeIs(Expression e1, ReferenceType e2) : base(e1, e2) { }
 	}
 
 	/// <summary>
@@ -593,7 +593,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class TypeCast : TypeBinaryExpression
 	{
-		public TypeCast(Expression e, CompositeType t) : base(e, t) { }
+		public TypeCast(Expression e, ReferenceType t) : base(e, t) { }
 	}
 
 	#endregion

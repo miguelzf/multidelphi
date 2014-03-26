@@ -69,6 +69,7 @@
     <Compile Include="ast\nodes\Statements.cs" />
     <Compile Include="ast\nodes\Expressions.cs" />
     <Compile Include="ast\nodes\Nodes.cs" />
+    <Compile Include="ast\PostProcessing.cs" />
     <Compile Include="ast\Processor.cs" />
     <Compile Include="ast\ProcessorGenerated.cs" />
     <Compile Include="ast\VisitorTraverser.cs" />

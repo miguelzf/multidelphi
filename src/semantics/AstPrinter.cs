@@ -511,7 +511,13 @@ namespace crosspascal.semantics
 			TraversePrint(node.guid);
 			return true;
 		}
-		
+
+		public override bool Visit(ReferenceType node)
+		{
+			Visit((TypeNode)node);
+			return true;
+		}
+
 		public override bool Visit(ScopedSection node)
 		{
 			Visit((Section) node);

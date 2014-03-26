@@ -414,6 +414,12 @@ namespace crosspascal.ast
 			return true;
 		}
 		
+		public virtual bool Visit(ReferenceType node)
+		{
+			Visit((TypeNode) node);
+			return true;
+		}
+
 		public virtual bool Visit(ScopedSection node)
 		{
 			Visit((Section) node);

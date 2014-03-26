@@ -50,7 +50,7 @@ namespace crosspascal.core
 			int skip = 0;
 			foreach (SourceFile sf in planner.GetSourceFiles())
 			{
-				if (++skip < 7000) continue;
+				if (++skip < 20) continue;
 
 				Console.Write("####### Compile file " + Path.GetFileName(sf.name) + ": ");
 
@@ -82,7 +82,10 @@ namespace crosspascal.core
 
 				Console.WriteLine("Parsed OK: " + ast.name + " " + ast.ToString());
 
+				PostProcessing.SetParents(ast);
+				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
 				astPrinter.StartProcessing(ast);
+
 			//	Console.WriteLine(astPrinter);
 			//	Console.ReadLine();
 			}
