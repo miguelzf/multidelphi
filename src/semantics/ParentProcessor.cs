@@ -412,21 +412,21 @@ namespace crosspascal.semantics
 		public override bool Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
-			traverse(node.sections);
+			TraverseSetParent(node,node.sections);
 			return true;
 		}
 		
 		public override bool Visit(ClassType node)
 		{
 			Visit((CompositeType) node);
-			traverse(node.self);
+			TraverseSetParent(node,node.self);
 			return true;
 		}
 		
 		public override bool Visit(InterfaceType node)
 		{
 			Visit((CompositeType) node);
-			traverse(node.guid);
+			TraverseSetParent(node,node.guid);
 			return true;
 		}
 
