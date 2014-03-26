@@ -23,9 +23,9 @@ namespace crosspascal.ast
 		// Public interface
 
 		public AstPrinter(System.Type t) : base(t) { }
-
+		
 		public AstPrinter(Traverser t) : base(t) { }
-
+		
 		public AstPrinter(TreeTraverse t = null) : base(t) { }
 
 
@@ -33,12 +33,12 @@ namespace crosspascal.ast
 		{
 			return builder.ToString();
 		}
-
+		
 		public string GetRepresenation()
 		{
 			return this.ToString();
 		}
-
+		
 		public void Reset()
 		{
 			identLevel = 0;
@@ -111,12 +111,8 @@ namespace crosspascal.ast
 		//
 		// Processor interface
 		//
-		
-		public override bool Visit(Node node)
-		{
-			return true;
-		}
-		
+
+
 		public override bool Visit(FixmeNode node)
 		{
 			Visit((Node) node);
@@ -135,17 +131,10 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public override bool Visit(ListString node)
-		{
-			return true;
-		}
-		
 		public override bool Visit(NodeList node)
 		{
-			Console.WriteLine("NODELIST");
 			foreach (Node n in node.nodes)
 				TraversePrint(n);
-			Console.WriteLine("NODELIST END");
 			return true;
 		}
 		
@@ -191,15 +180,15 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public override bool Visit(CompilationUnit node)
+		public override bool Visit(TranslationUnit node)
 		{
-			Visit((Node) node);
+			Visit((Declaration) node);
 			return true;
 		}
 		
 		public override bool Visit(ProgramNode node)
 		{
-			Visit((CompilationUnit) node);
+			Visit((TranslationUnit) node);
 			TraversePrint(node.uses);
 			TraversePrint(node.body);
 			return true;
@@ -207,24 +196,25 @@ namespace crosspascal.ast
 		
 		public override bool Visit(LibraryNode node)
 		{
-			Visit((CompilationUnit) node);
-			TraversePrint(node.uses);
+			Visit((TranslationUnit) node);
 			TraversePrint(node.body);
+			TraversePrint(node.uses);
 			return true;
 		}
 		
 		public override bool Visit(UnitNode node)
 		{
-			Visit((CompilationUnit) node);
+			Visit((TranslationUnit) node);
 			TraversePrint(node.@interface);
 			TraversePrint(node.implementation);
-			TraversePrint(node.init);
+			TraversePrint(node.initialization);
+			TraversePrint(node.finalization);
 			return true;
 		}
 		
 		public override bool Visit(PackageNode node)
 		{
-			Visit((CompilationUnit) node);
+			Visit((TranslationUnit) node);
 			TraversePrint(node.requires);
 			TraversePrint(node.contains);
 			return true;
@@ -382,17 +372,15 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public override bool Visit(TypeDeclaration node)
+		public override bool Visit(EnumValue node)
 		{
-			Visit((Declaration) node);
+			Visit((ConstDeclaration) node);
 			return true;
 		}
 		
-		public override bool Visit(CallableDeclaration node)
+		public override bool Visit(TypeDeclaration node)
 		{
-			Visit((TypeDeclaration) node);
-			TraversePrint(node.Type);
-			TraversePrint(node.Directives);
+			Visit((Declaration) node);
 			return true;
 		}
 		
@@ -405,6 +393,14 @@ namespace crosspascal.ast
 		public override bool Visit(MethodType node)
 		{
 			Visit((ProceduralType) node);
+			return true;
+		}
+		
+		public override bool Visit(CallableDeclaration node)
+		{
+			Visit((Declaration) node);
+			TraversePrint(node.Type);
+			TraversePrint(node.Directives);
 			return true;
 		}
 		
@@ -438,11 +434,23 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public override bool Visit(RoutineDefinition node)
+		public override bool Visit(CallableDefinition node)
 		{
 			Visit((Declaration) node);
 			TraversePrint(node.header);
 			TraversePrint(node.body);
+			return true;
+		}
+		
+		public override bool Visit(RoutineDefinition node)
+		{
+			Visit((CallableDefinition) node);
+			return true;
+		}
+		
+		public override bool Visit(MethodDefinition node)
+		{
+			Visit((CallableDefinition) node);
 			return true;
 		}
 		
@@ -492,6 +500,7 @@ namespace crosspascal.ast
 		public override bool Visit(ClassType node)
 		{
 			Visit((CompositeType) node);
+			TraversePrint(node.self);
 			return true;
 		}
 		
@@ -591,7 +600,7 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public override bool Visit(Assignement node)
+		public override bool Visit(Assignment node)
 		{
 			Visit((Statement) node);
 			TraversePrint(node.lvalue);
@@ -676,6 +685,7 @@ namespace crosspascal.ast
 		
 		public override bool Visit(WithStatement node)
 		{
+			Visit((Statement) node);
 			TraversePrint(node.with);
 			TraversePrint(node.body);
 			return true;
@@ -751,7 +761,6 @@ namespace crosspascal.ast
 		public override bool Visit(ConstExpression node)
 		{
 			Visit((Expression) node);
-			TraversePrint(node.expr);
 			return true;
 		}
 		
@@ -785,6 +794,85 @@ namespace crosspascal.ast
 		public override bool Visit(FieldInit node)
 		{
 			Visit((ConstExpression) node);
+			TraversePrint(node.expr);
+			return true;
+		}
+		
+		public override bool Visit(ConstIdentifier node)
+		{
+			Visit((ConstExpression) node);
+			return true;
+		}
+		
+		public override bool Visit(Literal node)
+		{
+			Visit((ConstExpression) node);
+			return true;
+		}
+		
+		public override bool Visit(OrdinalLiteral node)
+		{
+			Visit((Literal) node);
+			return true;
+		}
+		
+		public override bool Visit(IntLiteral node)
+		{
+			Visit((OrdinalLiteral) node);
+			return true;
+		}
+		
+		public override bool Visit(CharLiteral node)
+		{
+			Visit((OrdinalLiteral) node);
+			return true;
+		}
+		
+		public override bool Visit(BoolLiteral node)
+		{
+			Visit((OrdinalLiteral) node);
+			return true;
+		}
+		
+		public override bool Visit(StringLiteral node)
+		{
+			Visit((Literal) node);
+			return true;
+		}
+		
+		public override bool Visit(RealLiteral node)
+		{
+			Visit((Literal) node);
+			return true;
+		}
+		
+		public override bool Visit(PointerLiteral node)
+		{
+			Visit((Literal) node);
+			return true;
+		}
+		
+		public override bool Visit(ConstantValue node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public override bool Visit(IntegralValue node)
+		{
+			Visit((ConstantValue) node);
+			return true;
+		}
+		
+		public override bool Visit(StringValue node)
+		{
+			Visit((ConstantValue) node);
+			return true;
+		}
+		
+		public override bool Visit(RealValue node)
+		{
+			Visit((ConstantValue) node);
 			return true;
 		}
 		
@@ -990,81 +1078,39 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public override bool Visit(ConstantValue node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public override bool Visit(IntegralValue node)
-		{
-			Visit((ConstantValue) node);
-			return true;
-		}
-		
-		public override bool Visit(StringValue node)
-		{
-			Visit((ConstantValue) node);
-			return true;
-		}
-		
-		public override bool Visit(RealValue node)
-		{
-			Visit((ConstantValue) node);
-			return true;
-		}
-		
-		public override bool Visit(Literal node)
-		{
-			Visit((UnaryExpression) node);
-			return true;
-		}
-		
-		public override bool Visit(OrdinalLiteral node)
-		{
-			Visit((Literal) node);
-			return true;
-		}
-		
-		public override bool Visit(IntLiteral node)
-		{
-			Visit((OrdinalLiteral) node);
-			return true;
-		}
-		
-		public override bool Visit(CharLiteral node)
-		{
-			Visit((OrdinalLiteral) node);
-			return true;
-		}
-		
-		public override bool Visit(BoolLiteral node)
-		{
-			Visit((OrdinalLiteral) node);
-			return true;
-		}
-		
-		public override bool Visit(StringLiteral node)
-		{
-			Visit((Literal) node);
-			return true;
-		}
-		
-		public override bool Visit(RealLiteral node)
-		{
-			Visit((Literal) node);
-			return true;
-		}
-		
-		public override bool Visit(PointerLiteral node)
-		{
-			Visit((Literal) node);
-			return true;
-		}
-		
 		public override bool Visit(LvalueExpression node)
 		{
 			Visit((UnaryExpression) node);
+			return true;
+		}
+		
+		public override bool Visit(ExprAsLvalue node)
+		{
+			Visit((LvalueExpression) node);
+			TraversePrint(node.expr);
+			return true;
+		}
+		
+		public override bool Visit(ValueCast node)
+		{
+			Visit((LvalueExpression) node);
+			TraversePrint(node.casttype);
+			TraversePrint(node.expr);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedIdOrCall node)
+		{
+			Visit((LvalueExpression) node);
+			TraversePrint(node.id);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedCastorCall node)
+		{
+			Visit((LvalueExpression) node);
+			TraversePrint(node.func);
+			TraversePrint(node.args);
 			return true;
 		}
 		
@@ -1119,9 +1165,33 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public override bool Visit(UndefinedType node)
+		public override bool Visit(UnresolvedType node)
 		{
 			Visit((TypeNode) node);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedClassType node)
+		{
+			Visit((ClassType) node);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedVariableType node)
+		{
+			Visit((VariableType) node);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedIntegralType node)
+		{
+			Visit((IntegralType) node);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedOrdinalType node)
+		{
+			Visit((VariableType) node);
 			return true;
 		}
 		
@@ -1138,22 +1208,10 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public override bool Visit(TypeUnknown node)
-		{
-			Visit((TypeNode) node);
-			return true;
-		}
-		
 		public override bool Visit(EnumType node)
 		{
 			Visit((VariableType) node);
 			TraversePrint(node.enumVals);
-			return true;
-		}
-		
-		public override bool Visit(EnumValue node)
-		{
-			Visit((ConstDeclaration) node);
 			return true;
 		}
 		
@@ -1168,39 +1226,6 @@ namespace crosspascal.ast
 		public override bool Visit(ScalarType node)
 		{
 			Visit((VariableType) node);
-			return true;
-		}
-		
-		public override bool Visit(ScalarTypeForward node)
-		{
-			Visit((ScalarType) node);
-			return true;
-		}
-		
-		public override bool Visit(StringType node)
-		{
-			Visit((ScalarType) node);
-			return true;
-		}
-		
-		public override bool Visit(FixedStringType node)
-		{
-			Visit((ScalarType) node);
-			TraversePrint(node.expr);
-			return true;
-		}
-		
-		public override bool Visit(VariantType node)
-		{
-			Visit((ScalarType) node);
-			TraversePrint(node.actualtype);
-			return true;
-		}
-		
-		public override bool Visit(PointerType node)
-		{
-			Visit((ScalarType) node);
-			TraversePrint(node.pointedType);
 			return true;
 		}
 		
@@ -1315,6 +1340,33 @@ namespace crosspascal.ast
 		public override bool Visit(CurrencyType node)
 		{
 			Visit((RealType) node);
+			return true;
+		}
+		
+		public override bool Visit(StringType node)
+		{
+			Visit((ScalarType) node);
+			return true;
+		}
+		
+		public override bool Visit(FixedStringType node)
+		{
+			Visit((StringType) node);
+			TraversePrint(node.expr);
+			return true;
+		}
+		
+		public override bool Visit(VariantType node)
+		{
+			Visit((VariableType) node);
+			TraversePrint(node.actualtype);
+			return true;
+		}
+		
+		public override bool Visit(PointerType node)
+		{
+			Visit((ScalarType) node);
+			TraversePrint(node.pointedType);
 			return true;
 		}
 		

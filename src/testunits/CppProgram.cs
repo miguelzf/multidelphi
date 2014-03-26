@@ -24,10 +24,8 @@ namespace crosspascal.testunits
 			TranslationPlanner planner;
 			DelphiParser parser;
 
-			TranslationUnit tree = null;
-
 			parser = new DelphiParser(0);
-			planner = new TranslationPlanner(globalDefines);
+			planner = new TranslationPlanner(null);
 
 			planner.LoadIncludePaths("include-paths.txt");
 
@@ -39,7 +37,6 @@ namespace crosspascal.testunits
             //args[0] = "d:\\code\\crosspascal\\tests\\test_control_structures.dpr";
 
 			planner.LoadFiles(args);
-			bool success;
 
 			// TestReadAll(args);
 			foreach (SourceFile sf in planner.GetSourceFiles())
@@ -47,14 +44,11 @@ namespace crosspascal.testunits
 				Console.Write("####### Compile file " + Path.GetFileName(sf.name) + ": ");
 
 				if (sf.preprocText == null)		// preprocessing failed
-				{
-					success = false;
 					break;
-				}
 
 				StringReader sr = new StringReader(sf.preprocText);
 
-				CompilationUnit tree;
+				TranslationUnit tree;
 
 
 				try
@@ -66,7 +60,6 @@ namespace crosspascal.testunits
 				{
 					Console.Error.WriteLine(e);
 					Console.Error.WriteLine("Parsing failed");
-					success = false;
 					break;
 				}
 

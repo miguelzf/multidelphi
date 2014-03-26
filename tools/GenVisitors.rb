@@ -59,15 +59,16 @@ def gen_code(nodes, gen_method, isbase)
 	arrcode << "namespace crosspascal.ast"
 	arrcode << "{"
 	if isbase
-		arrcode << "\t" + "protected abstract partial class " + $genclassname
+		arrcode << "\t" + "public abstract partial class " + $genclassname
 	elsif
-		arrcode << "\t" + "protected class " + $genclassname + " : Processor"
+		arrcode << "\t" + "public class " + $genclassname + " : Processor"
 	end
 	arrcode << "\t{"
 	arrcode << "\t\t//	Complete interface to be implemented by any specific AST processor	"
 
 	nodesNames= nodes.values.map { |x| x.name }
-	codeLines = nodes.values.map { |x| gen_concrete_visit(x,nodesNames) if !(/<|>/ =~ x.name) } # do not visit generic types
+	codeLines = nodes.values.map { |x| gen_concrete_visit(x,nodesNames) if !(/<|>/ =~ x.name) and x.name != "Node"  }
+																		# do not visit generic types and the base Node class
 	codeLines.each do |x| x.insert(0, "") if x != nil end
 	text = codeLines.join("\n\t\t")
 	arrcode << text
@@ -81,7 +82,7 @@ def gen_abstract_visit(node,names)
 	cname = node.name
 	cfields = node.fields
 	arrcode = []
-	arrcode << "protected abstract "+ $visitreturntype +" Visit(" + cname  + " node);"
+	arrcode << "public abstract "+ $visitreturntype +" Visit(" + cname  + " node);"
 	arrcode 
 end
 
@@ -89,7 +90,7 @@ def gen_warning_visit(node,names)
 	cname = node.name
 	cfields = node.fields
 	arrcode = []
-	arrcode << "protected virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
+	arrcode << "public virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
 	arrcode << "{"
 	arrcode << "\tConsole.Error.WriteLine(\"Visit("+cname + ") not yet implemented.\");"
 	gen_return_stmt(arrcode, "\t")
@@ -103,7 +104,7 @@ def gen_concrete_visit(node,names)
 	bname = node.base
 	
 	arrcode = []
-	arrcode << "protected virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
+	arrcode << "public virtual "+ $visitreturntype +" Visit(" + cname  + " node)"
 	arrcode << "{"
 	
 	# call visit of the baseclass on the current node, if the baseclass is a node
@@ -166,7 +167,7 @@ def process_class(name,body)
 	fields.each do |x| staticqualifs.each do |y| x.gsub! Regexp.new(y+'\s+.*'), ''  end end 
 	
 	# cleanup spurious qualifiers
-	qualifs = ['protected', 'private', 'protected', 'internal', 'virtual', 'abstract',
+	qualifs = ['public', 'private', 'protected', 'internal', 'virtual', 'abstract',
 				'internal', 'partial', 'sealed', 'override', 'unsafe']
 	fields.each do |x| qualifs.each do |y| x.gsub! Regexp.new(y+'\s*'), ''  end end 
 	fields.reject!(&:empty?)
@@ -202,58 +203,65 @@ nodelines.each { |x| x.strip! }
 
 nodes = Hash.new
 
+
 for i in 0 ... nodelines.size
 	line = nodelines[i]
 	
-	if line.length > 1
+	if line.length < 5
+		next
+	end
 
-		ma = /class\s+(\w+)(.*)/.match line
-	
-		if ma != nil and ma[2][0] != "<" 		# ignores classes with generics
+	qualifs = '(\s*public)?(\s+internal)?(\s+abstract)?(\s+partial)?'
+	if Regexp.new('^'+qualifs+'\s*class\s+(\w+)').match(line) == nil
+		next
+	end
+		
+	ma = /class\s+(\w+)(.*)/.match line
 
-			# Enter class to process
-			classname = ma[1]	# get 1st match result
-			classtext = ''
-			level = 0
-			
-			basema = /:\s*([<>.\w]+)/.match(ma[2])
-			if basema != nil
-				basename = basema[1]
-			else
-				basename = ''
-			end
-			
-			if (/{/ =~ line ) != nil
-				line = /({.*)/.match(ma[2])[1]		# '{' after class line
-			else
-				i += 1
-				line = nodelines[i]
-			end
-			
-			while i < nodelines.size
-				line.gsub! /\/\/.*/, ''		# remove 1-line comments
-				classtext += line
-				if ( /{/ =~ line ) != nil
-					level += 1		# open block
-				end
-				if ( /}/ =~ line ) != nil
-					level -= 1	# close  block
-					if level == 0
-						break
-					end
-				end
-				i += 1
-				line = nodelines[i]
-			end
-			classtext = classtext[1,classtext.size-2]
-			
-			classtext.gsub! /\/\*.*?\*\//, ''	# remove block comments
-			
-			fields = process_class(classname, classtext);
-			node = ASTNode.new(classname,fields,basename)
-			#node.print
-			nodes[classname] = node
+	if ma[2][0] != "<" 		# ignores classes with generics
+
+		# Enter class to process
+		classname = ma[1]	# get 1st match result
+		classtext = ''
+		level = 0
+		
+		basema = /:\s*([<>.\w]+)/.match(ma[2])
+		if basema != nil
+			basename = basema[1]
+		else
+			basename = ''
 		end
+		
+		if (/{/ =~ line ) != nil
+			line = /({.*)/.match(ma[2])[1]		# '{' after class line
+		else
+			i += 1
+			line = nodelines[i]
+		end
+		
+		while i < nodelines.size
+			line.gsub! /\/\/.*/, ''		# remove 1-line comments
+			classtext += line
+			if ( /{/ =~ line ) != nil
+				level += 1		# open block
+			end
+			if ( /}/ =~ line ) != nil
+				level -= 1	# close  block
+				if level == 0
+					break
+				end
+			end
+			i += 1
+			line = nodelines[i]
+		end
+		classtext = classtext[1,classtext.size-2]
+		
+		classtext.gsub! /\/\*.*?\*\//, ''	# remove block comments
+		
+		fields = process_class(classname, classtext);
+		node = ASTNode.new(classname,fields,basename)
+		#node.print
+		nodes[classname] = node
 	end
 end
 

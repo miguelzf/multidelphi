@@ -61,7 +61,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ast\AstPrinter.cs" />
     <Compile Include="ast\nodes\Composites.cs" />
     <Compile Include="ast\nodes\Declarations.cs" />
     <Compile Include="ast\nodes\Sections.cs" />
@@ -90,6 +89,7 @@
     <Compile Include="parser\IScanner.cs" />
     <Compile Include="parser\ParserDebug.cs" />
     <Compile Include="parser\SyntacticErrors.cs" />
+    <Compile Include="semantics\AstPrinter.cs" />
     <Compile Include="semantics\ConstantFolding.cs" />
     <Compile Include="semantics\DeclarationsRegistry.cs" />
     <Compile Include="semantics\ParentProcessor.cs" />

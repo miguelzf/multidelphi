@@ -128,7 +128,7 @@ namespace crosspascal.ast.nodes
 	//==========================================================================
 
 	/// <summary>
-	/// Base class for const expressions
+	/// Constant expressions
 	/// Should be used for all initializations
 	/// </summary>
 	public abstract class ConstExpression : Expression
