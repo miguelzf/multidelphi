@@ -24,13 +24,20 @@ namespace crosspascal.ast
 		{
 			BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
+			// do not recurse on Refs to classes or records, avoid circular deps
+			if (ntype == typeof(ClassRefType) || ntype == typeof(RecordRefType))
+				return;
+
 			foreach (FieldInfo f in ntype.GetFields(flags))
 				if (typeof(Node).IsAssignableFrom(f.FieldType))
 				{
 					Node fi = (Node) f.GetValue(root);
 					if (fi != null)
 					{
-						fi.Parent = root;
+						// ignore VariableType nodes, that may be reused. no single parent
+						if (!typeof(VariableType).IsAssignableFrom(f.FieldType))
+							fi.Parent = root;
+
 						SetParents(fi, f.FieldType);
 					}
 				}

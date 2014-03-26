@@ -33,7 +33,7 @@ namespace crosspascal.ast
 			Visit((Node) node);
 			return true;
 		}
-		
+				
 		public virtual bool Visit(NodeList node)
 		{
 			foreach (Node n in node.nodes)
@@ -290,6 +290,10 @@ namespace crosspascal.ast
 		public virtual bool Visit(ProceduralType node)
 		{
 			Visit((TypeNode) node);
+			traverse(node.@params);
+			traverse(node.funcret);
+			traverse(node.returnVar);
+			traverse(node.Directives);
 			return true;
 		}
 		
@@ -397,6 +401,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
+			traverse(node.sections);
 			return true;
 		}
 		
@@ -414,9 +419,17 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(ReferenceType node)
+		public virtual bool Visit(ClassRefType node)
 		{
-			Visit((TypeNode) node);
+		//	Do not traverse this node! circular dependency
+		//	traverse(node.reftype);
+			return true;
+		}
+
+		public virtual bool Visit(RecordRefType node)
+		{
+			//	Do not traverse this node! circular dependency
+			//	traverse(node.reftype);
 			return true;
 		}
 

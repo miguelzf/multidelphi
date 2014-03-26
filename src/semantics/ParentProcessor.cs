@@ -17,6 +17,11 @@ namespace crosspascal.semantics
 		}
 
 
+		//
+		// Do not set parent backreference in types! 
+		// They are to be re-used throughout the tree (actually making it a DAG)
+		//
+
 		#region Processor interface
 		//
 		// Processor interface
@@ -296,6 +301,10 @@ namespace crosspascal.semantics
 		public override bool Visit(ProceduralType node)
 		{
 			Visit((TypeNode) node);
+			TraverseSetParent(node, node.@params);
+			TraverseSetParent(node, node.funcret);
+			TraverseSetParent(node, node.returnVar);
+			TraverseSetParent(node, node.Directives);
 			return true;
 		}
 		
@@ -403,29 +412,38 @@ namespace crosspascal.semantics
 		public override bool Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
+			traverse(node.sections);
 			return true;
 		}
 		
 		public override bool Visit(ClassType node)
 		{
 			Visit((CompositeType) node);
-			TraverseSetParent(node,node.self);
+			traverse(node.self);
 			return true;
 		}
 		
 		public override bool Visit(InterfaceType node)
 		{
 			Visit((CompositeType) node);
-			TraverseSetParent(node,node.guid);
+			traverse(node.guid);
 			return true;
 		}
 
-		public override bool Visit(ReferenceType node)
+		public override bool Visit(ClassRefType node)
 		{
-			Visit((TypeNode)node);
+			//	Do not traverse this node! circular dependency
+			//	traverse(node.reftype);
 			return true;
 		}
-		
+
+		public override bool Visit(RecordRefType node)
+		{
+			//	Do not traverse this node! circular dependency
+			//	traverse(node.reftype);
+			return true;
+		}
+
 		public override bool Visit(ScopedSection node)
 		{
 			Visit((Section) node);
@@ -1017,7 +1035,7 @@ namespace crosspascal.semantics
 		public override bool Visit(UnresolvedIdOrCall node)
 		{
 			Visit((LvalueExpression) node);
-			TraverseSetParent(node,node.id);
+			traverse(node.id);
 			return true;
 		}
 		
@@ -1119,22 +1137,22 @@ namespace crosspascal.semantics
 		public override bool Visit(MetaclassType node)
 		{
 			Visit((VariableType) node);
-			TraverseSetParent(node,node.baseType);
+			traverse(node.baseType);
 			return true;
 		}
 		
 		public override bool Visit(EnumType node)
 		{
 			Visit((VariableType) node);
-			TraverseSetParent(node,node.enumVals);
+			traverse(node.enumVals);
 			return true;
 		}
 		
 		public override bool Visit(RangeType node)
 		{
 			Visit((VariableType) node);
-			TraverseSetParent(node,node.min);
-			TraverseSetParent(node,node.max);
+			traverse(node.min);
+			traverse(node.max);
 			return true;
 		}
 		
@@ -1267,28 +1285,28 @@ namespace crosspascal.semantics
 		public override bool Visit(FixedStringType node)
 		{
 			Visit((StringType) node);
-			TraverseSetParent(node,node.expr);
+			traverse(node.expr);
 			return true;
 		}
 		
 		public override bool Visit(VariantType node)
 		{
 			Visit((VariableType) node);
-			TraverseSetParent(node,node.actualtype);
+			traverse(node.actualtype);
 			return true;
 		}
 		
 		public override bool Visit(PointerType node)
 		{
 			Visit((ScalarType) node);
-			TraverseSetParent(node,node.pointedType);
+			traverse(node.pointedType);
 			return true;
 		}
 		
 		public override bool Visit(StructuredType node)
 		{
 			Visit((VariableType) node);
-			TraverseSetParent(node,node.basetype);
+			traverse(node.basetype);
 			return true;
 		}
 		
@@ -1313,7 +1331,7 @@ namespace crosspascal.semantics
 		public override bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			TraverseSetParent(node,node.compTypes);
+			traverse(node.compTypes);
 			return true;
 		}
 

@@ -23,8 +23,6 @@ namespace crosspascal.semantics
 		// =================================================
 		// Public interface
 
-		public AstPrinter(System.Type t) : base(t) { }
-		
 		public AstPrinter(Traverser t) : base(t) { }
 		
 		public AstPrinter(TreeTraverse t = null) : base(t) { }
@@ -95,6 +93,7 @@ namespace crosspascal.semantics
 			if (n == null)
 				return;
 
+		//	Console.WriteLine("[DEBUG] Traverse node " + n);
 			EnterNode(n);
 			traverse(n);
 			LeaveNode(n);
@@ -388,6 +387,10 @@ namespace crosspascal.semantics
 		public override bool Visit(ProceduralType node)
 		{
 			Visit((TypeNode) node);
+			TraversePrint(node.@params);
+			TraversePrint(node.funcret);
+			TraversePrint(node.returnVar);
+			TraversePrint(node.Directives);
 			return true;
 		}
 		
@@ -495,6 +498,7 @@ namespace crosspascal.semantics
 		public override bool Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
+			TraversePrint(node.sections);
 			return true;
 		}
 		
@@ -512,9 +516,19 @@ namespace crosspascal.semantics
 			return true;
 		}
 
-		public override bool Visit(ReferenceType node)
+		public override bool Visit(ClassRefType node)
 		{
-			Visit((TypeNode)node);
+			Visit((ClassType)node);
+			//	Do not traverse this node! circular dependency
+			//	traverse(node.reftype);
+			return true;
+		}
+
+		public override bool Visit(RecordRefType node)
+		{
+			Visit((RecordType)node);
+			//	Do not traverse this node! circular dependency
+			//	traverse(node.reftype);
 			return true;
 		}
 
@@ -1109,7 +1123,7 @@ namespace crosspascal.semantics
 		public override bool Visit(UnresolvedIdOrCall node)
 		{
 			Visit((LvalueExpression) node);
-			TraversePrint(node.id);
+			traverse(node.id);
 			return true;
 		}
 		

@@ -61,26 +61,21 @@ namespace crosspascal.core
 			switch (method)
 			{	// Possible methods to create a processor:
 
-				// use traverser type
-				case 1:
-					proc = new AstPrinter(traverserType);
-					break;
-
 				// use traverser object
-				case 2:
+				case 1:
 					Traverser vtrav = (Traverser)Activator.CreateInstance(traverserType);
 					proc = new AstPrinter(vtrav);
 					vtrav.Processor = proc;
 					break;
 
 				// use 2 steps
-				case 3:
+				case 2:
 					proc = new AstPrinter();
 					Activator.CreateInstance(traverserType, proc);
 					break;
 
 				// explicitly set traverser
-				case 4:
+				case 3:
 					proc = new AstPrinter();
 					Traverser trav = (Traverser)Activator.CreateInstance(traverserType, proc);
 					trav.Processor = proc;

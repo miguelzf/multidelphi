@@ -24,6 +24,7 @@ namespace crosspascal.ast.nodes
 	///			ClassType
 	///			InterfaceType
 	/// 	VariableType
+	///		 	ClassRefType
 	/// 		ScalarType
 	/// 			IntegralType		: IOrdinalType
 	/// 				IntegerType
@@ -174,22 +175,6 @@ namespace crosspascal.ast.nodes
 			throw new InvalidAbstractException(this, "Equals");
 		}
 	}
-
-	public class MetaclassType : VariableType
-	{
-		public TypeNode baseType;
-
-		public MetaclassType(TypeNode baseType)
-		{
-			this.baseType = baseType;
-		}
-
-		public override bool Equals(Object o)
-		{
-			return (o is MetaclassType) && baseType.Equals((o as MetaclassType).baseType);
-		}
-	}
-
 
 
 	#region Ordinal Types
@@ -641,6 +626,24 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
+	public class MetaclassType : ScalarType
+	{
+		public TypeNode baseType;
+
+		public MetaclassType(TypeNode baseType)
+		{
+			this.baseType = baseType;
+		}
+
+		public override bool Equals(Object o)
+		{
+			return (o is MetaclassType) && baseType.Equals((o as MetaclassType).baseType);
+		}
+	}
+
+
+
 	/// ==========================================================================
 	/// ==========================================================================
 
@@ -802,6 +805,22 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	/// <summary>
+	/// A reference to a record. 1 level of indirection to avoid circular dependencies
+	/// </summary>
+	public class RecordRefType : RecordType
+	{
+		public String qualifid;
+		public RecordType reftype;
+
+		public RecordRefType(String qualifid, RecordType reftype = null)
+			: base(null)
+		{
+			this.qualifid = qualifid;
+			this.reftype = reftype;
+		}
+	}
+	
 	#endregion
 
 }

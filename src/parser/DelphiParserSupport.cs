@@ -27,10 +27,6 @@ namespace crosspascal.parser
 
 		public static int DebugLevel;
 
-		// to be fetched in the AST Declaration node
-		public static DeclarationsRegistry DeclReg;
-
-
 		//
 		// Entry point and public interface
 		//
@@ -68,7 +64,6 @@ namespace crosspascal.parser
 
 		DelphiScanner lexer;
 
-
 		// wrapper for yyparse
 		public TranslationUnit Parse(TextReader tr, SourceFile sf, ParserDebug dgb = null)
 		{
@@ -79,9 +74,6 @@ namespace crosspascal.parser
 			}
 
 			source = sf;
-			DeclReg = new DeclarationsRegistry();
-			DeclReg.LoadRuntimeNames();
-
 			lexer = new DelphiScanner(tr);
 			lexer.yyLexDebugLevel = DebugLevel;
 
@@ -106,47 +98,6 @@ namespace crosspascal.parser
 				throw new ParserException("Non-final node derived from parsing:"  + parserRet.GetType());
 
 			return (TranslationUnit)parserRet;
-		}
-
-
-
-		//
-		// AST cleaning/shaping up
-		// 
-
-		/// <summary>
-		/// Finalize processing of an Unit's interface section, by saving its symbol context
-		/// </summary>
-		void FinishInterfaceSection()
-		{
-			source.interfContext = DeclReg.ExportContext();
-		}
-
-		/// <summary>
-		/// Import dependency from a Unit SourceFile already parsed,
-		/// by loading its interface context
-		/// </summary>
-		void ImportDependency(string id)
-		{
-			var ctx = source.GetDependency(id).interfContext;
-			ctx.id = id;
-			DeclReg.ImportContext(ctx);
-		}
-
-
-		/// <summary>
-		/// Resolves an id, disambiguating between RoutineCalls and Identifiers
-		/// </summary>
-		LvalueExpression ResolveId(Identifier id)
-		{
-			String name = id.name;
-			if (DeclReg.CheckType<ProceduralType>(name) != null)
-				return new RoutineCall(id);
-			else
-				if (DeclReg.CheckValue<ValueDeclaration>(name) != null)
-					return id;
-				else
-					throw new DeclarationNotFound(name);
 		}
 
 

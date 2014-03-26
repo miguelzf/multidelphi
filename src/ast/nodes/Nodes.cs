@@ -120,23 +120,6 @@ namespace crosspascal.ast.nodes
 	#region Node Lists
 
 	/// <summary>
-	/// String list wrapper to use in Jay, since it breaks with generics
-	/// </summary>
-	public class ListString : List<String>
-	{
-		public ListString(String s)
-		{
-			base.Add(s);
-		}
-
-		public ListString(IEnumerable<String> strs)
-			: base(strs)
-		{
-		}
-	}
-
-
-	/// <summary>
 	/// Lists of Nodes, Expressions, Statements etc
 	/// </summary>
 	public interface IListNode<T> : IEnumerable<T> where T : Node

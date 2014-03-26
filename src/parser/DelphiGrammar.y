@@ -295,7 +295,7 @@ implsec
 	;
 
 interfsec
-	: KW_INTERF usesopt interfdecllst	{ $$ = new InterfaceSection($2, $3); FinishInterfaceSection(); }
+	: KW_INTERF usesopt interfdecllst	{ $$ = new InterfaceSection($2, $3); }
 	;
 
 interfdecllst
@@ -906,8 +906,8 @@ unaryexpr
 
 expr
 	: unaryexpr								{ $$ = $1; }
-	| expr KW_AS qualifid					{ $$ = new TypeCast($1, new ReferenceType($3)); }
-	| expr KW_IS qualifid					{ $$ = new TypeIs($1, new ReferenceType($3)); }
+	| expr KW_AS qualifid					{ $$ = new TypeCast($1, new ClassRefType($3)); }
+	| expr KW_IS qualifid					{ $$ = new TypeIs($1, new ClassRefType($3)); }
 	| expr KW_IN expr						{ $$ = new SetIn($1, $3); }
 	| expr relop expr %prec KW_EQ			{ $$ = CreateBinaryExpression($1, $2, $3); }
 	| expr addop expr %prec KW_SUB			{ $$ = CreateBinaryExpression($1, $2, $3); }
@@ -1372,7 +1372,7 @@ vartype
 	| TYPE_STR LBRAC constexpr RBRAC { $$ = new FixedStringType($3); }
 	| KW_DEREF vartype 			{ $$ = new PointerType($2); }
 	| TYPE_PTR					{ $$ = PointerType.Single; }
-	| KW_CLASS KW_OF qualifid	{ $$ = new MetaclassType(new ReferenceType($3)); }
+	| KW_CLASS KW_OF qualifid	{ $$ = new MetaclassType(new ClassRefType($3)); }
 	| packstructtype			{ $$ = $1; }
 	| rangetype					{ $$ = $1; }
 	| enumtype					{ $$ = $1; }
@@ -1455,7 +1455,7 @@ fixedtype
 	
 qualifid	// qualified
 	: id							{ $$ = $1; }
-	| qualifid KW_DOT id			{ $$ = $1 + "." + $3; }
+	| id KW_DOT id					{ $$ = $1 + "." + $3; }
 	;
 	
 %%

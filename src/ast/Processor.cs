@@ -28,16 +28,6 @@ namespace crosspascal.ast
 			return true;
 		}
 
-		// Instantiate Traverser class
-		public Processor(System.Type t)
-		{
-			if (t == null || !t.IsSubclassOf(typeof(Traverser)))
-				return;
-
-			Traverser instance = (Traverser) Activator.CreateInstance(t, new object[] {this});
-			traverse = instance.traverse;
-		}
-
 		// Create with given traverser object
 		public Processor(Traverser trav)
 		{

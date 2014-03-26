@@ -261,7 +261,12 @@ for i in 0 ... nodelines.size
 		fields = process_class(classname, classtext);
 		node = ASTNode.new(classname,fields,basename)
 		#node.print
-		nodes[classname] = node
+		if	nodes[classname] != nil
+			nodes[classname].fields.concat fields
+			puts 'Node ' + classname + ' already exists'
+		elsif
+			nodes[classname] = node
+		end
 	end
 end
 

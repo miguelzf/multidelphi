@@ -31,7 +31,7 @@ namespace crosspascal.ast.nodes
 		public ClassDeclaration(String name, ClassType ctype)
 			: base(name, ctype)
 		{
-			ctype.self = new FieldDeclaration("self", new ReferenceType(name, ctype));
+			ctype.self = new FieldDeclaration("self", new ClassRefType(name, ctype));
 			ctype.sections.Add(new ScopedSection(Scope.Protected, new DeclarationList(ctype.self), null));
 		}
 	}
@@ -85,11 +85,7 @@ namespace crosspascal.ast.nodes
 
 		public CompositeType(ArrayList heritage, ScopedSectionList seclist)
 		{
-			this.heritage = new List<String>();
-
-			if (heritage != null)
-				foreach (String s in heritage)
-					this.heritage.Add(s);
+			this.heritage = new List<String>(heritage.Cast<String>());
 
 			sections = seclist;
 			if (sections == null)
@@ -104,9 +100,6 @@ namespace crosspascal.ast.nodes
 		public ClassType(ArrayList heritage, ScopedSectionList seclist = null)
 			: base(heritage, seclist)
 		{
-			self = new FieldDeclaration("self", this);
-
-			sections.Add(new ScopedSection(Scope.Protected, new DeclarationList(self), null));
 		}
 	}
 
@@ -121,15 +114,17 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
 	/// <summary>
-	/// A reference to a composite type, used in values
+	/// A reference to a class. 1 level of indirection to avoid circular dependencies
 	/// </summary>
-	public class ReferenceType : TypeNode
+	public class ClassRefType : ClassType
 	{
 		public String qualifid;
-		public CompositeType reftype;
+		public ClassType reftype;
 
-		public ReferenceType(String qualifid, CompositeType reftype = null)
+		public ClassRefType(String qualifid, ClassType reftype = null)
+			: base(new ArrayList())
 		{
 			this.qualifid = qualifid;
 			this.reftype = reftype;

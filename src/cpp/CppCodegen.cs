@@ -491,9 +491,19 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(ReferenceType node)
+		public override bool Visit(ClassRefType node)
 		{
-			Visit((TypeNode)node);
+			Visit((ClassType)node);
+			//	Do not traverse this node! circular dependency
+			//	traverse(node.reftype);
+			return true;
+		}
+
+		public override bool Visit(RecordRefType node)
+		{
+			Visit((RecordType)node);
+			//	Do not traverse this node! circular dependency
+			//	traverse(node.reftype);
 			return true;
 		}
 		
