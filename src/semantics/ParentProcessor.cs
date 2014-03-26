@@ -8,16 +8,20 @@ using crosspascal.ast.nodes;
 namespace crosspascal.semantics
 {
 	class ParentProcessor : Processor
-	{		
+	{
+		
+		private bool TraverseSetParent(Node parent, Node child)
+		{
+			child.Parent = parent;
+			return traverse(child);
+		}
+
+
+		#region Processor interface
 		//
 		// Processor interface
 		//
 
-		public override bool Visit(Node node)
-		{
-			return true;
-		}
-		
 		public override bool Visit(FixmeNode node)
 		{
 			Visit((Node) node);
@@ -36,96 +40,92 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(ListString node)
-		{
-			return true;
-		}
-		
 		public override bool Visit(NodeList node)
 		{
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
 		public override bool Visit(StatementList node)
 		{
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
 		public override bool Visit(TypeList node)
 		{
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
 		public override bool Visit(IntegralTypeList node)
 		{
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
 		public override bool Visit(IdentifierList node)
 		{
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
 		public override bool Visit(DeclarationList node)
 		{
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
 		public override bool Visit(EnumValueList node)
 		{
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
-		public override bool Visit(CompilationUnit node)
+		public override bool Visit(TranslationUnit node)
 		{
-			Visit((Node) node);
+			Visit((Declaration) node);
 			return true;
 		}
 		
 		public override bool Visit(ProgramNode node)
 		{
-			Visit((CompilationUnit) node);
-			node.uses.Parent = node;
-			node.body.Parent = node;
+			Visit((TranslationUnit) node);
+			TraverseSetParent(node,node.uses);
+			TraverseSetParent(node,node.body);
 			return true;
 		}
 		
 		public override bool Visit(LibraryNode node)
 		{
-			Visit((CompilationUnit) node);
-			node.uses.Parent = node;
-			node.body.Parent = node;
+			Visit((TranslationUnit) node);
+			TraverseSetParent(node,node.body);
+			TraverseSetParent(node,node.uses);
 			return true;
 		}
 		
 		public override bool Visit(UnitNode node)
 		{
-			Visit((CompilationUnit) node);
-			node.@interface.Parent = node;
-			node.implementation.Parent = node;
-			node.init.Parent = node;
+			Visit((TranslationUnit) node);
+			TraverseSetParent(node,node.@interface);
+			TraverseSetParent(node,node.implementation);
+			TraverseSetParent(node,node.initialization);
+			TraverseSetParent(node,node.finalization);
 			return true;
 		}
 		
 		public override bool Visit(PackageNode node)
 		{
-			Visit((CompilationUnit) node);
-			node.requires.Parent = node;
-			node.contains.Parent = node;
+			Visit((TranslationUnit) node);
+			TraverseSetParent(node,node.requires);
+			TraverseSetParent(node,node.contains);
 			return true;
 		}
 		
@@ -156,21 +156,21 @@ namespace crosspascal.semantics
 		public override bool Visit(ExportItem node)
 		{
 			Visit((UnitItem) node);
-			node.formalparams.Parent = node;
+			TraverseSetParent(node,node.formalparams);
 			return true;
 		}
 		
 		public override bool Visit(Section node)
 		{
 			Visit((Node) node);
-			node.decls.Parent = node;
+			TraverseSetParent(node,node.decls);
 			return true;
 		}
 		
 		public override bool Visit(CodeSection node)
 		{
 			Visit((Section) node);
-			node.block.Parent = node;
+			TraverseSetParent(node,node.block);
 			return true;
 		}
 		
@@ -201,7 +201,7 @@ namespace crosspascal.semantics
 		public override bool Visit(DeclarationSection node)
 		{
 			Visit((Section) node);
-			node.uses.Parent = node;
+			TraverseSetParent(node,node.uses);
 			return true;
 		}
 		
@@ -226,7 +226,7 @@ namespace crosspascal.semantics
 		public override bool Visit(Declaration node)
 		{
 			Visit((Node) node);
-			node.type.Parent = node;
+			TraverseSetParent(node,node.type);
 			return true;
 		}
 		
@@ -245,14 +245,14 @@ namespace crosspascal.semantics
 		public override bool Visit(VarDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			node.init.Parent = node;
+			TraverseSetParent(node,node.init);
 			return true;
 		}
 		
 		public override bool Visit(ParamDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			node.init.Parent = node;
+			TraverseSetParent(node,node.init);
 			return true;
 		}
 		
@@ -277,21 +277,19 @@ namespace crosspascal.semantics
 		public override bool Visit(ConstDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			node.init.Parent = node;
+			TraverseSetParent(node,node.init);
+			return true;
+		}
+		
+		public override bool Visit(EnumValue node)
+		{
+			Visit((ConstDeclaration) node);
 			return true;
 		}
 		
 		public override bool Visit(TypeDeclaration node)
 		{
 			Visit((Declaration) node);
-			return true;
-		}
-		
-		public override bool Visit(CallableDeclaration node)
-		{
-			Visit((TypeDeclaration) node);
-			node.Type.Parent = node;
-			node.Directives.Parent = node;
 			return true;
 		}
 		
@@ -304,6 +302,14 @@ namespace crosspascal.semantics
 		public override bool Visit(MethodType node)
 		{
 			Visit((ProceduralType) node);
+			return true;
+		}
+		
+		public override bool Visit(CallableDeclaration node)
+		{
+			Visit((Declaration) node);
+			TraverseSetParent(node,node.Type);
+			TraverseSetParent(node,node.Directives);
 			return true;
 		}
 		
@@ -337,11 +343,23 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(RoutineDefinition node)
+		public override bool Visit(CallableDefinition node)
 		{
 			Visit((Declaration) node);
-			node.header.Parent = node;
-			node.body.Parent = node;
+			TraverseSetParent(node,node.header);
+			TraverseSetParent(node,node.body);
+			return true;
+		}
+		
+		public override bool Visit(RoutineDefinition node)
+		{
+			Visit((CallableDefinition) node);
+			return true;
+		}
+		
+		public override bool Visit(MethodDefinition node)
+		{
+			Visit((CallableDefinition) node);
 			return true;
 		}
 		
@@ -366,7 +384,7 @@ namespace crosspascal.semantics
 		public override bool Visit(CompositeDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
-			node.Type.Parent = node;
+			TraverseSetParent(node,node.Type);
 			return true;
 		}
 		
@@ -391,27 +409,28 @@ namespace crosspascal.semantics
 		public override bool Visit(ClassType node)
 		{
 			Visit((CompositeType) node);
+			TraverseSetParent(node,node.self);
 			return true;
 		}
 		
 		public override bool Visit(InterfaceType node)
 		{
 			Visit((CompositeType) node);
-			node.guid.Parent = node;
+			TraverseSetParent(node,node.guid);
 			return true;
 		}
 		
 		public override bool Visit(ScopedSection node)
 		{
 			Visit((Section) node);
-			node.fields.Parent = node;
+			TraverseSetParent(node,node.fields);
 			return true;
 		}
 		
 		public override bool Visit(ScopedSectionList node)
 		{
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
@@ -424,38 +443,38 @@ namespace crosspascal.semantics
 		public override bool Visit(VariantDeclaration node)
 		{
 			Visit((FieldDeclaration) node);
-			node.varfields.Parent = node;
+			TraverseSetParent(node,node.varfields);
 			return true;
 		}
 		
 		public override bool Visit(VarEntryDeclaration node)
 		{
 			Visit((FieldDeclaration) node);
-			node.tagvalue.Parent = node;
-			node.fields.Parent = node;
+			TraverseSetParent(node,node.tagvalue);
+			TraverseSetParent(node,node.fields);
 			return true;
 		}
 		
 		public override bool Visit(PropertyDeclaration node)
 		{
 			Visit((FieldDeclaration) node);
-			node.specifiers.Parent = node;
+			TraverseSetParent(node,node.specifiers);
 			return true;
 		}
 		
 		public override bool Visit(ArrayProperty node)
 		{
 			Visit((PropertyDeclaration) node);
-			node.indexes.Parent = node;
+			TraverseSetParent(node,node.indexes);
 			return true;
 		}
 		
 		public override bool Visit(PropertySpecifiers node)
 		{
 			Visit((Node) node);
-			node.index.Parent = node;
-			node.stored.Parent = node;
-			node.@default.Parent = node;
+			TraverseSetParent(node,node.index);
+			TraverseSetParent(node,node.stored);
+			TraverseSetParent(node,node.@default);
 			return true;
 		}
 		
@@ -468,7 +487,7 @@ namespace crosspascal.semantics
 		public override bool Visit(LabelStatement node)
 		{
 			Visit((Statement) node);
-			node.stmt.Parent = node;
+			TraverseSetParent(node,node.stmt);
 			return true;
 		}
 		
@@ -490,11 +509,11 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(Assignement node)
+		public override bool Visit(Assignment node)
 		{
 			Visit((Statement) node);
-			node.lvalue.Parent = node;
-			node.expr.Parent = node;
+			TraverseSetParent(node,node.lvalue);
+			TraverseSetParent(node,node.expr);
 			return true;
 		}
 		
@@ -507,41 +526,41 @@ namespace crosspascal.semantics
 		public override bool Visit(IfStatement node)
 		{
 			Visit((Statement) node);
-			node.condition.Parent = node;
-			node.thenblock.Parent = node;
-			node.elseblock.Parent = node;
+			TraverseSetParent(node,node.condition);
+			TraverseSetParent(node,node.thenblock);
+			TraverseSetParent(node,node.elseblock);
 			return true;
 		}
 		
 		public override bool Visit(ExpressionStatement node)
 		{
 			Visit((Statement) node);
-			node.expr.Parent = node;
+			TraverseSetParent(node,node.expr);
 			return true;
 		}
 		
 		public override bool Visit(CaseSelector node)
 		{
 			Visit((Statement) node);
-			node.list.Parent = node;
-			node.stmt.Parent = node;
+			TraverseSetParent(node,node.list);
+			TraverseSetParent(node,node.stmt);
 			return true;
 		}
 		
 		public override bool Visit(CaseStatement node)
 		{
 			Visit((Statement) node);
-			node.condition.Parent = node;
-			node.selectors.Parent = node;
-			node.caseelse.Parent = node;
+			TraverseSetParent(node,node.condition);
+			TraverseSetParent(node,node.selectors);
+			TraverseSetParent(node,node.caseelse);
 			return true;
 		}
 		
 		public override bool Visit(LoopStatement node)
 		{
 			Visit((Statement) node);
-			node.condition.Parent = node;
-			node.block.Parent = node;
+			TraverseSetParent(node,node.condition);
+			TraverseSetParent(node,node.block);
 			return true;
 		}
 		
@@ -560,62 +579,63 @@ namespace crosspascal.semantics
 		public override bool Visit(ForLoop node)
 		{
 			Visit((LoopStatement) node);
-			node.var.Parent = node;
-			node.start.Parent = node;
-			node.end.Parent = node;
+			TraverseSetParent(node,node.var);
+			TraverseSetParent(node,node.start);
+			TraverseSetParent(node,node.end);
 			return true;
 		}
 		
 		public override bool Visit(BlockStatement node)
 		{
 			Visit((Statement) node);
-			node.stmts.Parent = node;
+			TraverseSetParent(node,node.stmts);
 			return true;
 		}
 		
 		public override bool Visit(WithStatement node)
 		{
-			node.with.Parent = node;
-			node.body.Parent = node;
+			Visit((Statement) node);
+			TraverseSetParent(node,node.with);
+			TraverseSetParent(node,node.body);
 			return true;
 		}
 		
 		public override bool Visit(TryFinallyStatement node)
 		{
 			Visit((Statement) node);
-			node.body.Parent = node;
-			node.final.Parent = node;
+			TraverseSetParent(node,node.body);
+			TraverseSetParent(node,node.final);
 			return true;
 		}
 		
 		public override bool Visit(TryExceptStatement node)
 		{
 			Visit((Statement) node);
-			node.body.Parent = node;
-			node.final.Parent = node;
+			TraverseSetParent(node,node.body);
+			TraverseSetParent(node,node.final);
 			return true;
 		}
 		
 		public override bool Visit(ExceptionBlock node)
 		{
 			Visit((Statement) node);
-			node.onList.Parent = node;
-			node.@default.Parent = node;
+			TraverseSetParent(node,node.onList);
+			TraverseSetParent(node,node.@default);
 			return true;
 		}
 		
 		public override bool Visit(RaiseStatement node)
 		{
 			Visit((Statement) node);
-			node.lvalue.Parent = node;
-			node.expr.Parent = node;
+			TraverseSetParent(node,node.lvalue);
+			TraverseSetParent(node,node.expr);
 			return true;
 		}
 		
 		public override bool Visit(OnStatement node)
 		{
 			Visit((Statement) node);
-			node.body.Parent = node;
+			TraverseSetParent(node,node.body);
 			return true;
 		}
 		
@@ -628,9 +648,9 @@ namespace crosspascal.semantics
 		public override bool Visit(Expression node)
 		{
 			Visit((Node) node);
-			node.Type.Parent = node;
-			node.Value.Parent = node;
-			node.ForcedType.Parent = node;
+			TraverseSetParent(node,node.Type);
+			TraverseSetParent(node,node.Value);
+			TraverseSetParent(node,node.ForcedType);
 			return true;
 		}
 		
@@ -643,21 +663,20 @@ namespace crosspascal.semantics
 		public override bool Visit(ExpressionList node)
 		{
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
 		public override bool Visit(ConstExpression node)
 		{
 			Visit((Expression) node);
-			node.expr.Parent = node;
 			return true;
 		}
 		
 		public override bool Visit(StructuredConstant node)
 		{
 			Visit((ConstExpression) node);
-			node.exprlist.Parent = node;
+			TraverseSetParent(node,node.exprlist);
 			return true;
 		}
 		
@@ -677,13 +696,92 @@ namespace crosspascal.semantics
 		{
 			Visit((ExpressionList) node);
 			foreach (Node n in node.nodes)
-				n.Parent = node;
+				TraverseSetParent(node,n);
 			return true;
 		}
 		
 		public override bool Visit(FieldInit node)
 		{
 			Visit((ConstExpression) node);
+			TraverseSetParent(node,node.expr);
+			return true;
+		}
+		
+		public override bool Visit(ConstIdentifier node)
+		{
+			Visit((ConstExpression) node);
+			return true;
+		}
+		
+		public override bool Visit(Literal node)
+		{
+			Visit((ConstExpression) node);
+			return true;
+		}
+		
+		public override bool Visit(OrdinalLiteral node)
+		{
+			Visit((Literal) node);
+			return true;
+		}
+		
+		public override bool Visit(IntLiteral node)
+		{
+			Visit((OrdinalLiteral) node);
+			return true;
+		}
+		
+		public override bool Visit(CharLiteral node)
+		{
+			Visit((OrdinalLiteral) node);
+			return true;
+		}
+		
+		public override bool Visit(BoolLiteral node)
+		{
+			Visit((OrdinalLiteral) node);
+			return true;
+		}
+		
+		public override bool Visit(StringLiteral node)
+		{
+			Visit((Literal) node);
+			return true;
+		}
+		
+		public override bool Visit(RealLiteral node)
+		{
+			Visit((Literal) node);
+			return true;
+		}
+		
+		public override bool Visit(PointerLiteral node)
+		{
+			Visit((Literal) node);
+			return true;
+		}
+		
+		public override bool Visit(ConstantValue node)
+		{
+			Visit((Node) node);
+			return true;
+		}
+		
+		public override bool Visit(IntegralValue node)
+		{
+			Visit((ConstantValue) node);
+			return true;
+		}
+		
+		public override bool Visit(StringValue node)
+		{
+			Visit((ConstantValue) node);
+			return true;
+		}
+		
+		public override bool Visit(RealValue node)
+		{
+			Visit((ConstantValue) node);
 			return true;
 		}
 		
@@ -696,8 +794,8 @@ namespace crosspascal.semantics
 		public override bool Visit(SetIn node)
 		{
 			Visit((BinaryExpression) node);
-			node.expr.Parent = node;
-			node.set.Parent = node;
+			TraverseSetParent(node,node.expr);
+			TraverseSetParent(node,node.set);
 			return true;
 		}
 		
@@ -710,8 +808,8 @@ namespace crosspascal.semantics
 		public override bool Visit(ArithmethicBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			node.left.Parent = node;
-			node.right.Parent = node;
+			TraverseSetParent(node,node.left);
+			TraverseSetParent(node,node.right);
 			return true;
 		}
 		
@@ -766,8 +864,8 @@ namespace crosspascal.semantics
 		public override bool Visit(LogicalBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			node.left.Parent = node;
-			node.right.Parent = node;
+			TraverseSetParent(node,node.left);
+			TraverseSetParent(node,node.right);
 			return true;
 		}
 		
@@ -828,8 +926,8 @@ namespace crosspascal.semantics
 		public override bool Visit(TypeBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			node.expr.Parent = node;
-			node.types.Parent = node;
+			TraverseSetParent(node,node.expr);
+			TraverseSetParent(node,node.types);
 			return true;
 		}
 		
@@ -854,7 +952,7 @@ namespace crosspascal.semantics
 		public override bool Visit(SimpleUnaryExpression node)
 		{
 			Visit((Expression) node);
-			node.expr.Parent = node;
+			TraverseSetParent(node,node.expr);
 			return true;
 		}
 		
@@ -885,79 +983,7 @@ namespace crosspascal.semantics
 		public override bool Visit(Set node)
 		{
 			Visit((UnaryExpression) node);
-			node.setelems.Parent = node;
-			return true;
-		}
-		
-		public override bool Visit(ConstantValue node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public override bool Visit(IntegralValue node)
-		{
-			Visit((ConstantValue) node);
-			return true;
-		}
-		
-		public override bool Visit(StringValue node)
-		{
-			Visit((ConstantValue) node);
-			return true;
-		}
-		
-		public override bool Visit(RealValue node)
-		{
-			Visit((ConstantValue) node);
-			return true;
-		}
-		
-		public override bool Visit(Literal node)
-		{
-			Visit((UnaryExpression) node);
-			return true;
-		}
-		
-		public override bool Visit(OrdinalLiteral node)
-		{
-			Visit((Literal) node);
-			return true;
-		}
-		
-		public override bool Visit(IntLiteral node)
-		{
-			Visit((OrdinalLiteral) node);
-			return true;
-		}
-		
-		public override bool Visit(CharLiteral node)
-		{
-			Visit((OrdinalLiteral) node);
-			return true;
-		}
-		
-		public override bool Visit(BoolLiteral node)
-		{
-			Visit((OrdinalLiteral) node);
-			return true;
-		}
-		
-		public override bool Visit(StringLiteral node)
-		{
-			Visit((Literal) node);
-			return true;
-		}
-		
-		public override bool Visit(RealLiteral node)
-		{
-			Visit((Literal) node);
-			return true;
-		}
-		
-		public override bool Visit(PointerLiteral node)
-		{
-			Visit((Literal) node);
+			TraverseSetParent(node,node.setelems);
 			return true;
 		}
 		
@@ -967,42 +993,72 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
+		public override bool Visit(ExprAsLvalue node)
+		{
+			Visit((LvalueExpression) node);
+			TraverseSetParent(node,node.expr);
+			return true;
+		}
+		
+		public override bool Visit(ValueCast node)
+		{
+			Visit((LvalueExpression) node);
+			TraverseSetParent(node,node.casttype);
+			TraverseSetParent(node,node.expr);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedIdOrCall node)
+		{
+			Visit((LvalueExpression) node);
+			TraverseSetParent(node,node.id);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedCastorCall node)
+		{
+			Visit((LvalueExpression) node);
+			TraverseSetParent(node,node.func);
+			TraverseSetParent(node,node.args);
+			return true;
+		}
+		
 		public override bool Visit(ArrayAccess node)
 		{
 			Visit((LvalueExpression) node);
-			node.lvalue.Parent = node;
-			node.acessors.Parent = node;
-			node.array.Parent = node;
+			TraverseSetParent(node,node.lvalue);
+			TraverseSetParent(node,node.acessors);
+			TraverseSetParent(node,node.array);
 			return true;
 		}
 		
 		public override bool Visit(PointerDereference node)
 		{
 			Visit((LvalueExpression) node);
-			node.expr.Parent = node;
+			TraverseSetParent(node,node.expr);
 			return true;
 		}
 		
 		public override bool Visit(InheritedCall node)
 		{
 			Visit((LvalueExpression) node);
-			node.call.Parent = node;
+			TraverseSetParent(node,node.call);
 			return true;
 		}
 		
 		public override bool Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
-			node.func.Parent = node;
-			node.args.Parent = node;
-			node.basictype.Parent = node;
+			TraverseSetParent(node,node.func);
+			TraverseSetParent(node,node.args);
+			TraverseSetParent(node,node.basictype);
 			return true;
 		}
 		
 		public override bool Visit(FieldAcess node)
 		{
 			Visit((LvalueExpression) node);
-			node.obj.Parent = node;
+			TraverseSetParent(node,node.obj);
 			return true;
 		}
 		
@@ -1018,9 +1074,33 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(UndefinedType node)
+		public override bool Visit(UnresolvedType node)
 		{
 			Visit((TypeNode) node);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedClassType node)
+		{
+			Visit((ClassType) node);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedVariableType node)
+		{
+			Visit((VariableType) node);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedIntegralType node)
+		{
+			Visit((IntegralType) node);
+			return true;
+		}
+		
+		public override bool Visit(UnresolvedOrdinalType node)
+		{
+			Visit((VariableType) node);
 			return true;
 		}
 		
@@ -1033,73 +1113,28 @@ namespace crosspascal.semantics
 		public override bool Visit(MetaclassType node)
 		{
 			Visit((VariableType) node);
-			node.baseType.Parent = node;
-			return true;
-		}
-		
-		public override bool Visit(TypeUnknown node)
-		{
-			Visit((TypeNode) node);
+			TraverseSetParent(node,node.baseType);
 			return true;
 		}
 		
 		public override bool Visit(EnumType node)
 		{
 			Visit((VariableType) node);
-			node.enumVals.Parent = node;
-			return true;
-		}
-		
-		public override bool Visit(EnumValue node)
-		{
-			Visit((ConstDeclaration) node);
+			TraverseSetParent(node,node.enumVals);
 			return true;
 		}
 		
 		public override bool Visit(RangeType node)
 		{
 			Visit((VariableType) node);
-			node.min.Parent = node;
-			node.max.Parent = node;
+			TraverseSetParent(node,node.min);
+			TraverseSetParent(node,node.max);
 			return true;
 		}
 		
 		public override bool Visit(ScalarType node)
 		{
 			Visit((VariableType) node);
-			return true;
-		}
-		
-		public override bool Visit(ScalarTypeForward node)
-		{
-			Visit((ScalarType) node);
-			return true;
-		}
-		
-		public override bool Visit(StringType node)
-		{
-			Visit((ScalarType) node);
-			return true;
-		}
-		
-		public override bool Visit(FixedStringType node)
-		{
-			Visit((ScalarType) node);
-			node.expr.Parent = node;
-			return true;
-		}
-		
-		public override bool Visit(VariantType node)
-		{
-			Visit((ScalarType) node);
-			node.actualtype.Parent = node;
-			return true;
-		}
-		
-		public override bool Visit(PointerType node)
-		{
-			Visit((ScalarType) node);
-			node.pointedType.Parent = node;
 			return true;
 		}
 		
@@ -1217,10 +1252,37 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
+		public override bool Visit(StringType node)
+		{
+			Visit((ScalarType) node);
+			return true;
+		}
+		
+		public override bool Visit(FixedStringType node)
+		{
+			Visit((StringType) node);
+			TraverseSetParent(node,node.expr);
+			return true;
+		}
+		
+		public override bool Visit(VariantType node)
+		{
+			Visit((VariableType) node);
+			TraverseSetParent(node,node.actualtype);
+			return true;
+		}
+		
+		public override bool Visit(PointerType node)
+		{
+			Visit((ScalarType) node);
+			TraverseSetParent(node,node.pointedType);
+			return true;
+		}
+		
 		public override bool Visit(StructuredType node)
 		{
 			Visit((VariableType) node);
-			node.basetype.Parent = node;
+			TraverseSetParent(node,node.basetype);
 			return true;
 		}
 		
@@ -1245,9 +1307,11 @@ namespace crosspascal.semantics
 		public override bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			node.compTypes.Parent = node;
+			TraverseSetParent(node,node.compTypes);
 			return true;
 		}
+
+		#endregion
 
 	}
 }

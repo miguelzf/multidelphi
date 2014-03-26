@@ -8,6 +8,7 @@ using crosspascal.ast;
 using crosspascal.ast.nodes;
 using crosspascal.utils;
 using crosspascal.parser;
+using crosspascal.semantics;
 
 
 namespace crosspascal.core

@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using crosspascal.ast.nodes;
 using System.Reflection;
 using System.Collections;
+using crosspascal.ast;
+using crosspascal.ast.nodes;
 
-namespace crosspascal.ast
+namespace crosspascal.semantics
 {
 
 	// For debug, prints the whole tree
