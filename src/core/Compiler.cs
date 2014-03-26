@@ -45,12 +45,11 @@ namespace crosspascal.core
 			Console.WriteLine(planner.ListFiles());
 
 			AstPrinter astPrinter = new AstPrinter();
-			MapTraverser mt = new MapTraverser(astPrinter);
 
 			int skip = 0;
 			foreach (SourceFile sf in planner.GetSourceFiles())
 			{
-				if (++skip < 20) continue;
+				if (++skip < 0) continue;
 
 				Console.Write("####### Compile file " + Path.GetFileName(sf.name) + ": ");
 
@@ -86,7 +85,7 @@ namespace crosspascal.core
 				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
 				astPrinter.StartProcessing(ast);
 
-			//	Console.WriteLine(astPrinter);
+				Console.WriteLine(astPrinter);
 			//	Console.ReadLine();
 			}
 

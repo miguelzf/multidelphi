@@ -1055,7 +1055,7 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(FieldAcess node)
+		public virtual bool Visit(FieldAccess node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.obj);

@@ -44,11 +44,13 @@ namespace crosspascal.ast
 			traverse = trav.traverse;
 		}
 
-		// Create with given traverser function
+		/// <summary>
+		/// Create with given traverser function, or with default (MapTraverser)
+		/// </summary>
 		public Processor(TreeTraverse t = null)
 		{
 			if (t == null)
-				traverse = emptyTraverse;
+				traverse = new MapTraverser(this).traverse;
 			else
 				traverse = t;
 		}

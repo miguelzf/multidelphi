@@ -1203,7 +1203,7 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(FieldAcess node)
+		public override bool Visit(FieldAccess node)
 		{
 			traverse(node.obj); 
 			outputCode("." + node.field, false, false);			

@@ -1153,7 +1153,7 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(FieldAcess node)
+		public override bool Visit(FieldAccess node)
 		{
 			Visit((LvalueExpression) node);
 			TraversePrint(node.obj);

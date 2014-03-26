@@ -873,14 +873,14 @@ identifier
 routinecall
 	: identifier							{ $$ = new RoutineCall($1); }
 	| lvalue LPAR exprlstopt RPAR			{ $$ = new RoutineCall($1, $3); }
-	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
+	| lvalue KW_DOT id						{ $$ = new FieldAccess($1, $3); }
 	;
 	
 lvalue	// lvalue
 	: identifier							{ $$ = new UnresolvedIdOrCall($1); }
 	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCastorCall($1, $3); }
 	| TYPE_PTR LPAR expr RPAR				{ $$ = new ValueCast($3, PointerType.Single); }
-	| lvalue KW_DOT id						{ $$ = new FieldAcess($1, $3); }
+	| lvalue KW_DOT id						{ $$ = new FieldAccess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
 	| stringconst LBRAC expr RBRAC			{ if ($1.Length < 2)

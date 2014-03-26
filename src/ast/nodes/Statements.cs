@@ -72,6 +72,7 @@ namespace crosspascal.ast.nodes
 
 		public Assignment(LvalueExpression lvalue, Expression expr)
 		{
+			this.lvalue = lvalue;
 			this.expr = expr;
 		}
 	}

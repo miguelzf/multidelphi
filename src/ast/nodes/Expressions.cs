@@ -792,12 +792,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class FieldAcess : LvalueExpression
+	public class FieldAccess : LvalueExpression
 	{
 		public LvalueExpression obj;
 		public string field;
 
-		public FieldAcess(LvalueExpression obj, string field)
+		public FieldAccess(LvalueExpression obj, string field)
 		{
 			this.obj = obj;
 			this.field = field;
