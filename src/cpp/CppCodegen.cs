@@ -1041,7 +1041,7 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(TypeCast node)
+		public override bool Visit(RuntimeCast node)
 		{
 			Visit((TypeBinaryExpression) node);
 			return true;
@@ -1210,6 +1210,14 @@ namespace crosspascal.cpp
 			traverse(node.args);
             outputCode(")", false, false);
 			//traverse(node.basictype);
+			return true;
+		}
+
+		public override bool Visit(ClassInstantiation node)
+		{
+			Visit((LvalueExpression)node);
+			traverse(node.castType);
+			traverse(node.args);
 			return true;
 		}
 

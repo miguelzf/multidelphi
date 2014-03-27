@@ -591,9 +591,9 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// 'Expr AS CompositeType'
 	/// </summary>
-	public class TypeCast : TypeBinaryExpression
+	public class RuntimeCast : TypeBinaryExpression
 	{
-		public TypeCast(Expression e, ClassRefType t) : base(e, t) { }
+		public RuntimeCast(Expression e, ClassRefType t) : base(e, t) { }
 	}
 
 	#endregion
@@ -683,12 +683,12 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// VarType(expr)
 	/// </summary>
-	public class ValueCast : LvalueExpression
+	public class StaticCast : LvalueExpression
 	{
-		public VariableType casttype;
+		public TypeNode casttype;
 		public Expression expr;
 
-		public ValueCast(VariableType t, Expression e)
+		public StaticCast(TypeNode t, Expression e)
 		{
 			this.casttype = t;
 			this.expr = e;
@@ -712,12 +712,12 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// To be resolver after parsing
 	/// </summary>
-	public class UnresolvedCastorCall : LvalueExpression
+	public class UnresolvedCall : LvalueExpression
 	{
 		public LvalueExpression func;
 		public ExpressionList args;
 
-		public UnresolvedCastorCall(LvalueExpression lval, ExpressionList args)
+		public UnresolvedCall(LvalueExpression lval, ExpressionList args)
 		{
 			this.func = lval;
 			this.args = args;
@@ -789,6 +789,25 @@ namespace crosspascal.ast.nodes
 			: this(fname)
 		{
 			basictype = t;
+		}
+	}
+
+	public class ClassInstantiation : LvalueExpression
+	{
+		public ClassRefType castType;
+		public String constructor;
+		public ExpressionList args;
+
+		public ClassInstantiation(ClassRefType type, String constr, ExpressionList args)
+		{
+			this.castType = type;
+			this.constructor = constr;
+			this.args = args;
+		}
+
+		public ClassInstantiation(ClassType type, String constr, ExpressionList args)
+			: this(new ClassRefType(type.Name, type), constr, args)
+		{
 		}
 	}
 

@@ -950,7 +950,7 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(TypeCast node)
+		public virtual bool Visit(RuntimeCast node)
 		{
 			Visit((TypeBinaryExpression) node);
 			return true;
@@ -1013,7 +1013,7 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(ValueCast node)
+		public virtual bool Visit(StaticCast node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.casttype);
@@ -1028,7 +1028,7 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(UnresolvedCastorCall node)
+		public virtual bool Visit(UnresolvedCall node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.func);
@@ -1065,6 +1065,14 @@ namespace crosspascal.ast
 			traverse(node.func);
 			traverse(node.args);
 			traverse(node.basictype);
+			return true;
+		}
+
+		public virtual bool Visit(ClassInstantiation node)
+		{
+			Visit((LvalueExpression) node);
+			traverse(node.castType);
+			traverse(node.args);
 			return true;
 		}
 		

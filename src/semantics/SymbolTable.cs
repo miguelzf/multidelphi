@@ -160,7 +160,7 @@ namespace crosspascal.semantics
 			int i = 0;
 			foreach (var c in contexts)
 			{
-				if (i++ == nctxs || c.id == "runtime")
+				if (i++ == nctxs) //|| c.id == "runtime")
 					break;
 				outp += c.ListContext() + sep;
 			}

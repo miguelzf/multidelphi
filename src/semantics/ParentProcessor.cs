@@ -964,7 +964,7 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(TypeCast node)
+		public override bool Visit(RuntimeCast node)
 		{
 			Visit((TypeBinaryExpression) node);
 			return true;
@@ -1027,7 +1027,7 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(ValueCast node)
+		public override bool Visit(StaticCast node)
 		{
 			Visit((LvalueExpression) node);
 			TraverseSetParent(node,node.casttype);
@@ -1042,7 +1042,7 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(UnresolvedCastorCall node)
+		public override bool Visit(UnresolvedCall node)
 		{
 			Visit((LvalueExpression) node);
 			TraverseSetParent(node,node.func);

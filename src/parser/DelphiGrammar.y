@@ -871,15 +871,14 @@ identifier
 	
 	// routine call to be used as a statement
 routinecall
-	: identifier							{ $$ = new RoutineCall($1); }
-	| lvalue LPAR exprlstopt RPAR			{ $$ = new RoutineCall($1, $3); }
-	| lvalue KW_DOT id						{ $$ = new FieldAccess($1, $3); }
+	: identifier							{ $$ = new UnresolvedCall($1, new ExpressionList()); }
+	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }
 	;
 	
 lvalue	// lvalue
 	: identifier							{ $$ = new UnresolvedId($1); }
-	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCastorCall($1, $3); }
-	| TYPE_PTR LPAR expr RPAR				{ $$ = new ValueCast(PointerType.Single, $3); }
+	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }
+	| TYPE_PTR LPAR expr RPAR				{ $$ = new StaticCast(PointerType.Single, $3); }
 	| lvalue KW_DOT id						{ $$ = new FieldAccess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
@@ -906,7 +905,7 @@ unaryexpr
 
 expr
 	: unaryexpr								{ $$ = $1; }
-	| expr KW_AS qualifid					{ $$ = new TypeCast($1, new ClassRefType($3)); }
+	| expr KW_AS qualifid					{ $$ = new RuntimeCast($1, new ClassRefType($3)); }
 	| expr KW_IS qualifid					{ $$ = new TypeIs($1, new ClassRefType($3)); }
 	| expr KW_IN expr						{ $$ = new SetIn($1, $3); }
 	| expr relop expr %prec KW_EQ			{ $$ = CreateBinaryExpression($1, $2, $3); }

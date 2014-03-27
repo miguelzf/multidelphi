@@ -121,6 +121,12 @@ namespace crosspascal.ast.nodes
 		{
 			this.init = init;
 		}
+
+		// Use with caution!! does not clone init
+		public ParamDeclaration Clone()
+		{
+			return new ParamDeclaration(name, type, null);
+		}
 	}
 
 	public class VarParamDeclaration : ParamDeclaration

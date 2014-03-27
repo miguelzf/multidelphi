@@ -94,6 +94,15 @@ namespace crosspascal.semantics
 			return lval;
 		}
 
+
+		/// <summary>
+		/// Register new declaration, of any kind
+		/// </summary>
+		public void RegisterDeclaration(Declaration decl)
+		{
+			RegisterDeclaration(decl.name, decl);
+		}
+
 		/// <summary>
 		/// Register new declaration, of any kind
 		/// </summary>
@@ -371,7 +380,20 @@ namespace crosspascal.semantics
 		void CreateBuiltinFunction(RoutineDeclaration routine)
 		{
 			builtinFunctions.Add(routine.name, routine);
-			RegisterDeclaration(routine.name, routine);
+			RegisterDeclaration(routine);
+
+			var rtype = routine.Type;
+			if (rtype.funcret != null || rtype.@params != null)
+			{
+				EnterContext("builtin func " + routine.name);
+				
+				foreach (var p in rtype.@params)
+					RegisterDeclaration(p);
+				if (rtype.returnVar != null)
+					RegisterDeclaration(rtype.returnVar);
+
+				LeaveContext();
+			}
 		}
 
 		/// <summary>
@@ -449,16 +471,21 @@ namespace crosspascal.semantics
 			CreateBuiltinType("thandle", IntegerType.Single);
 		}
 
+
+
 		public void LoadBuiltinFunctions()
 		{
-			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("cos", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
-			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("sin", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
-			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("trunc", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
-			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("round", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
-			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("frac", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
-			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("exp", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
-			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("writeln", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
-			EnterContext(); CreateBuiltinFunction(new RoutineDeclaration("readln", new DeclarationList(new ParamDeclaration("x", FloatType.Single)), FloatType.Single)); LeaveContext();
+			var t = FloatType.Single;
+			var p = new ParamDeclaration("x", t);
+
+			string[] floatFuncs = { "cos", "sin", "trunc", "round", "frac", "exp" };
+			foreach (var s in floatFuncs)
+				CreateBuiltinFunction(new RoutineDeclaration(s, new DeclarationList(p.Clone()), t));
+
+			CreateBuiltinFunction(new RoutineDeclaration("writeln", 
+									new DeclarationList(new ParamDeclaration("s", StringType.Single))));
+			CreateBuiltinFunction(new RoutineDeclaration("readln" , 
+									new DeclarationList(new ParamDeclaration("s", StringType.Single))));
 		}
 
 		#endregion

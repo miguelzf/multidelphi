@@ -12,11 +12,11 @@ using crosspascal.core;
 namespace crosspascal.semantics
 {
 
-	class CastTypeWrapper : LvalueExpression
+	class TypeWrapper : LvalueExpression
 	{
-		public VariableType castType { get; set; }
+		public TypeNode castType { get; set; }
 
-		public CastTypeWrapper(VariableType vt)
+		public TypeWrapper(TypeNode vt)
 		{
 			castType = vt;
 		}
@@ -1104,7 +1104,7 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(TypeCast node)
+		public override bool Visit(RuntimeCast node)
 		{
 			Visit((TypeBinaryExpression) node);
 			return true;
@@ -1169,7 +1169,7 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(ValueCast node)
+		public override bool Visit(StaticCast node)
 		{
 			Visit((LvalueExpression) node);
 			if (TraverseResolve(node, node.casttype))
@@ -1187,41 +1187,63 @@ namespace crosspascal.semantics
 		{
 			String name = node.id.name;
 
-			TypeNode t = nameReg.CheckType<TypeNode>(name);
-			if (t == null)
-			{
-				if (nameReg.CheckValue<ValueDeclaration>(name) != null)
-					resolved = node.id;
-				else
-					return Error("DeclarationNotFound: " + name);
+			Declaration d = nameReg.GetDeclaration(name);
+			if (d == null)
+				return Error("DeclarationNotFound: " + name);
 				//	throw new DeclarationNotFound(name);
-			}
-			else if (t is ProceduralType)
+
+			if (d is CallableDeclaration)
 				resolved = new RoutineCall(node.id);
-			else if (t is ClassType)
-				// TODO calls to static methods,  constructors etc
+
+			else if (d is ValueDeclaration)
 				resolved = node.id;
-			else	// VariableType
-				resolved = new CastTypeWrapper(t as VariableType);
+
+			else if (d is TypeDeclaration)
+				resolved = new TypeWrapper(d.type);	// type for casts and instantiations
+
+			else
+				Error("unexpected declaration type " + d);
 
 			return true;
 		}
 		
-		public override bool Visit(UnresolvedCastorCall node)
+		/// <summary>
+		/// Resolves a call-like syntactic structure, into
+		/// 1) routine calls
+		/// 2) static type casts
+		/// 3) class instantiations
+		/// </summary>
+		public override bool Visit(UnresolvedCall node)
 		{
 			if (TraverseResolve(node, node.func))
 				node.func = ResolvedNode<LvalueExpression>();
 			traverse(node.args);
 
-			if (node.func is CastTypeWrapper)
+			if (node.func is TypeWrapper)
 			{
 				if (node.args.Count() > 1)
 					return Error("Cast may take only 1 argument");
-				resolved = new ValueCast((node.func as CastTypeWrapper).castType, node.args.Get(0));
+				resolved = new StaticCast((node.func as TypeWrapper).castType, node.args.Get(0));
+				return true;
 			}
-			else
-				resolved = new RoutineCall(node.func, node.args);
+			
+			if (node.func is FieldAccess)
+			{
+				FieldAccess fa = node.func as FieldAccess;
+				if (fa.obj is TypeWrapper)
+				{
+					TypeNode fat = (fa.obj as TypeWrapper).castType;
+					if (fat is ClassType)
+					{	resolved = new ClassInstantiation(fat as ClassType, fa.field, node.args);
+						return true;
+					}
+					else
+						return Error("Cannot instantiate non-class type");
+				}
+			}
 
+			// default
+			resolved = new RoutineCall(node.func, node.args);
 			return true;
 		}
 		
