@@ -29,11 +29,11 @@ namespace crosspascal.testunits
 
 			planner.LoadIncludePaths("include-paths.txt");
 
-			args = new string[1];
+			args = new string[2];
             //args[0] = "d:\\code\\crosspascal\\tests\\test_constant_folding.dpr";
 			//args[0] = "d:\\code\\crosspascal\\tests\\test_function_pointers.dpr";
-			args[0] = "d:\\code\\crosspascal\\tests\\test_classes2.dpr";
-			//args[1] = "d:\\code\\crosspascal\\tests\\unit1.pas";		
+			args[0] = "d:\\code\\crosspascal\\tests\\test_classes.dpr";
+			args[1] = "d:\\code\\crosspascal\\tests\\unit1.pas";		
             //args[0] = "d:\\code\\crosspascal\\tests\\test_control_structures.dpr";
 
 			planner.LoadFiles(args);

@@ -225,7 +225,9 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(RoutineBody node)
 		{
+			DeclReg.EnterContext();
 			Visit((CodeSection) node);
+			DeclReg.LeaveContext();
 			return true;
 		}
 		
@@ -399,7 +401,7 @@ namespace crosspascal.cpp
  			if (node == null) 
 				return false;
 
-			if (node is ClassDeclaration)
+			if (node is ScopedSection)
 				return true;
 
 			return IsClassDeclaration(node.Parent);
@@ -407,10 +409,14 @@ namespace crosspascal.cpp
 
 		public override bool Visit(MethodDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
-
+		
+			if ((node.type as ProceduralType).funcret == null)
+				outputCode("void ", false, false);
+			else
+				traverse((node.type as ProceduralType).funcret);
 			if (IsClassDeclaration(node))
 			{
+				DeclReg.RegisterDeclaration(node.name, node);
 				outputCode(node.metname + "(", false, false);
 				traverse((node.type as ProceduralType).@params);
 				outputCode(");", false, true);
@@ -433,8 +439,9 @@ namespace crosspascal.cpp
 
 		public override bool Visit(ConstructorDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
-
+			if (IsClassDeclaration(node))
+				DeclReg.RegisterDeclaration(node.name, node);
+			
 			outputCode(node.objname + "::" + node.objname+"(", false, false);
 			traverse((node.type as ProceduralType).@params);
 			outputCode(")", false, true);
@@ -443,7 +450,8 @@ namespace crosspascal.cpp
 
 		public override bool Visit(DestructorDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
+			if (IsClassDeclaration(node))
+				DeclReg.RegisterDeclaration(node.name, node);
 
 			outputCode(node.objname + "::~" + node.objname + "(", false, false);
 			traverse((node.type as ProceduralType).@params);
@@ -1287,7 +1295,8 @@ namespace crosspascal.cpp
 
 		public override bool Visit(FieldAccess node)
 		{
-			//if (symtab.Lookup((lvla as FieldAccess).lval.name) == ClassDeclaration)
+			if (node.obj is Identifier  && DeclReg.symtab.Lookup((node.obj as Identifier).name) is ClassDeclaration))
+				outputCode("cpde", true, true);
 
 			traverse(node.obj); 
 			outputCode("." + node.field, false, false);			
