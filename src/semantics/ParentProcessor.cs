@@ -12,6 +12,9 @@ namespace crosspascal.semantics
 		
 		private bool TraverseSetParent(Node parent, Node child)
 		{
+			if (child == null)
+				return false;
+
 			child.Parent = parent;
 			return traverse(child);
 		}
@@ -1032,7 +1035,7 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(UnresolvedIdOrCall node)
+		public override bool Visit(UnresolvedId node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.id);

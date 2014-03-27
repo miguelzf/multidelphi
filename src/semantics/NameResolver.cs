@@ -7,102 +7,74 @@ using System.Reflection;
 using System.Collections;
 using crosspascal.ast;
 using crosspascal.ast.nodes;
+using crosspascal.core;
 
 namespace crosspascal.semantics
 {
 
-	// For debug, prints the whole tree
-
-	class AstPrinter : Processor
+	class CastTypeWrapper : LvalueExpression
 	{
-		private int identLevel = 0;
-		private StringBuilder builder = new StringBuilder();
+		public VariableType castType { get; set; }
 
-		const string identText = "  ";
+		public CastTypeWrapper(VariableType vt)
+		{
+			castType = vt;
+		}
+	}
+
+	class NameResolver : Processor
+	{
+		DeclarationsRegistry nameReg;
+		SourceFile source;
 
 		// =================================================
 		// Public interface
-
-		public AstPrinter(Traverser t) : base(t) { }
 		
-		public AstPrinter(TreeTraverse t = null) : base(t) { }
+		public NameResolver(Traverser t) : base(t) { }
 
-
-		public override string ToString()
-		{
-			return builder.ToString();
-		}
+		public NameResolver(TreeTraverse t = null) : base(t) { }
 		
-		public string GetRepresenation()
+		public void Reset(SourceFile sf)
 		{
-			return this.ToString();
-		}
-		
-		public void Reset()
-		{
-			identLevel = 0;
-			builder.Clear();
+			source = sf;
+			nameReg = new DeclarationsRegistry();
+			nameReg.LoadRuntimeNames();
 		}
 
-		// =================================================
-
-		private String GetNodeNames(Node n)
+		bool Error(string msg)
 		{
-			BindingFlags allbindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public 
-									 | BindingFlags.NonPublic| BindingFlags.FlattenHierarchy;
-			StringComparison scase = StringComparison.OrdinalIgnoreCase;
-
-			Type ntype = n.GetType();
-			string names = "";
-
-			foreach (var f in ntype.GetFields(allbindings))
-			{
-				string fname = f.Name;
-				if (f.FieldType.Name.Equals("string", scase))
-				{
-					if (fname.EndsWith("name", scase)
-					|| fname.EndsWith("id", scase)
-					|| fname.StartsWith("id", scase))
-						names += " " + f.GetValue(n);
-				}
-			}
-
-			if (names != "")
-				names = ":" + names;
-			return names;
+			Console.WriteLine("[ERROR in Name Resolving] " + msg);
+			return false;
 		}
 
 
-		// Printing helper
-		private void EnterNode(Node n)
+		private Node resolved = null;
+
+		private bool TraverseResolve(Node parent, Node child)
 		{
-			string name = n.GetType().Name + GetNodeNames(n);
-			builder.Append(String.Concat(Enumerable.Repeat(identText, identLevel)));
-			builder.AppendLine(name);
-			identLevel++;
+			traverse(child);
+
+			if (resolved != null)
+				resolved.Parent = child.Parent;
+
+			return (resolved != null);
 		}
 
-		private void LeaveNode(Node n)
+		T ResolvedNode<T>() where T : Node
 		{
-			identLevel--;
-		}
-
-		
-		private void TraversePrint(Node n)
-		{
-			if (n == null)
-				return;
-
-		//	Console.WriteLine("[DEBUG] Traverse node " + n);
-			EnterNode(n);
-			traverse(n);
-			LeaveNode(n);
+			Node t = resolved;
+			resolved = null;
+			return (T) t;
 		}
 		
-
 		public override bool StartProcessing(Node n)
 		{
-			TraversePrint(n);
+			if (nameReg == null || source == null)
+			{	Error("Must initialize NameResolver before using");
+				return false;
+			}
+
+			TraverseResolve(null,n);
 			return true;
 		}
 
@@ -134,49 +106,49 @@ namespace crosspascal.semantics
 		public override bool Visit(NodeList node)
 		{
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
 		public override bool Visit(StatementList node)
 		{
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
 		public override bool Visit(TypeList node)
 		{
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
 		public override bool Visit(IntegralTypeList node)
 		{
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
 		public override bool Visit(IdentifierList node)
 		{
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
 		public override bool Visit(DeclarationList node)
 		{
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
 		public override bool Visit(EnumValueList node)
 		{
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
@@ -189,34 +161,34 @@ namespace crosspascal.semantics
 		public override bool Visit(ProgramNode node)
 		{
 			Visit((TranslationUnit) node);
-			TraversePrint(node.uses);
-			TraversePrint(node.body);
+			traverse(node.uses);
+			traverse(node.body);
 			return true;
 		}
 		
 		public override bool Visit(LibraryNode node)
 		{
 			Visit((TranslationUnit) node);
-			TraversePrint(node.body);
-			TraversePrint(node.uses);
+			traverse(node.body);
+			traverse(node.uses);
 			return true;
 		}
 		
 		public override bool Visit(UnitNode node)
 		{
 			Visit((TranslationUnit) node);
-			TraversePrint(node.@interface);
-			TraversePrint(node.implementation);
-			TraversePrint(node.initialization);
-			TraversePrint(node.finalization);
+			traverse(node.@interface);
+			traverse(node.implementation);
+			traverse(node.initialization);
+			traverse(node.finalization);
 			return true;
 		}
 		
 		public override bool Visit(PackageNode node)
 		{
 			Visit((TranslationUnit) node);
-			TraversePrint(node.requires);
-			TraversePrint(node.contains);
+			traverse(node.requires);
+			traverse(node.contains);
 			return true;
 		}
 		
@@ -229,6 +201,13 @@ namespace crosspascal.semantics
 		public override bool Visit(UsesItem node)
 		{
 			Visit((UnitItem) node);
+			
+			// Import dependency from a Unit SourceFile already parsed, by loading its interface context
+			string id = node.name;
+			var ctx = source.GetDependency(id).interfContext;
+			ctx.id = id;
+			nameReg.ImportContext(ctx);
+
 			return true;
 		}
 		
@@ -247,21 +226,21 @@ namespace crosspascal.semantics
 		public override bool Visit(ExportItem node)
 		{
 			Visit((UnitItem) node);
-			TraversePrint(node.formalparams);
+			traverse(node.formalparams);
 			return true;
 		}
 		
 		public override bool Visit(Section node)
 		{
 			Visit((Node) node);
-			TraversePrint(node.decls);
+			traverse(node.decls);
 			return true;
 		}
 		
 		public override bool Visit(CodeSection node)
 		{
 			Visit((Section) node);
-			TraversePrint(node.block);
+			traverse(node.block);
 			return true;
 		}
 		
@@ -273,7 +252,9 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(RoutineBody node)
 		{
+			nameReg.EnterContext("Routine Def body");
 			Visit((CodeSection) node);
+			nameReg.LeaveContext();
 			return true;
 		}
 		
@@ -292,18 +273,24 @@ namespace crosspascal.semantics
 		public override bool Visit(DeclarationSection node)
 		{
 			Visit((Section) node);
-			TraversePrint(node.uses);
+			traverse(node.uses);
 			return true;
 		}
 		
 		public override bool Visit(InterfaceSection node)
 		{
 			Visit((DeclarationSection) node);
+			/// Finalize processing of an Unit's interface section, by saving its symbol context
+			source.interfContext = nameReg.ExportContext();
 			return true;
 		}
 		
 		public override bool Visit(ImplementationSection node)
 		{
+			// Bothr the Interface and the Implementation do NOT open a new declaring context
+			nameReg.EnterContext("implementation");	// TODO CHANGE THIS
+			Console.WriteLine("IMPLEMENTATION");
+
 			Visit((DeclarationSection) node);
 			return true;
 		}
@@ -317,7 +304,14 @@ namespace crosspascal.semantics
 		public override bool Visit(Declaration node)
 		{
 			Visit((Node) node);
-			TraversePrint(node.type);
+			
+			// Important!! Register declaration *BEFORE* processing the type.
+			// the type may open a context for subtypes
+			nameReg.RegisterDeclaration(node.name, node);
+
+			if (TraverseResolve(node, node.type))
+				node.type = ResolvedNode<TypeNode>();
+
 			return true;
 		}
 		
@@ -336,14 +330,16 @@ namespace crosspascal.semantics
 		public override bool Visit(VarDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			TraversePrint(node.init);
+			if (TraverseResolve(node, node.init))
+				node.init = ResolvedNode<Expression>();
 			return true;
 		}
 		
 		public override bool Visit(ParamDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			TraversePrint(node.init);
+			if (TraverseResolve(node, node.init))
+				node.init = ResolvedNode<Expression>();
 			return true;
 		}
 		
@@ -368,7 +364,8 @@ namespace crosspascal.semantics
 		public override bool Visit(ConstDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			TraversePrint(node.init);
+			if (TraverseResolve(node, node.init))
+				node.init = ResolvedNode<Expression>();
 			return true;
 		}
 		
@@ -387,10 +384,10 @@ namespace crosspascal.semantics
 		public override bool Visit(ProceduralType node)
 		{
 			Visit((TypeNode) node);
-			TraversePrint(node.@params);
-			TraversePrint(node.funcret);
-			TraversePrint(node.returnVar);
-			TraversePrint(node.Directives);
+			traverse(node.@params);
+			traverse(node.funcret);
+			traverse(node.returnVar);
+			traverse(node.Directives);
 			return true;
 		}
 		
@@ -400,23 +397,48 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
+		// TODO allow for definitions in implementation of funcs declared in interface
 		public override bool Visit(CallableDeclaration node)
 		{
-			Visit((Declaration) node);
-			TraversePrint(node.Type);
-			TraversePrint(node.Directives);
+			Visit((Declaration) node);	// register decl
 			return true;
 		}
 		
 		public override bool Visit(RoutineDeclaration node)
 		{
-			Visit((CallableDeclaration) node);
+			nameReg.RegisterDeclaration(node.name, node);
+
+			nameReg.EnterContext("Routine " + node.name + " Params");
+			if (TraverseResolve(node, node.Type))
+				node.type = ResolvedNode<ProceduralType>();
+			TraverseResolve(node, node.Directives);
+
+			if (!(node.Parent is CallableDefinition))
+				nameReg.LeaveContext();
+			// else, keep context open for func body
+
 			return true;
 		}
 		
 		public override bool Visit(MethodDeclaration node)
 		{
-			Visit((CallableDeclaration) node);
+			nameReg.RegisterDeclaration(node.name, node);
+
+			string declTag = "Method " + node.FullName() + " Params";
+			if (node.Parent is CallableDefinition)
+				nameReg.EnterMethodContext(node.objname);
+			else
+				nameReg.EnterContext(declTag);
+
+		//	Visit((CallableDeclaration)node);
+
+			if (TraverseResolve(node, node.Type))
+				node.type = ResolvedNode<ProceduralType>();
+			TraverseResolve(node, node.Directives);
+
+			if (!(node.Parent is CallableDefinition))
+				nameReg.LeaveContext();
+			// else, keep context open for func body
 			return true;
 		}
 		
@@ -440,21 +462,23 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(CallableDefinition node)
 		{
-			Visit((Declaration) node);
-			TraversePrint(node.header);
-			TraversePrint(node.body);
+			//Visit((Declaration) node);
+			traverse(node.header);	// opens context
+			traverse(node.body);	// opens context
 			return true;
 		}
 		
 		public override bool Visit(RoutineDefinition node)
 		{
 			Visit((CallableDefinition) node);
+			nameReg.LeaveContext();			// leave declaring/header context
 			return true;
 		}
 		
 		public override bool Visit(MethodDefinition node)
 		{
 			Visit((CallableDefinition) node);
+			nameReg.LeaveMethodContext();	// leave declaring/header context
 			return true;
 		}
 		
@@ -479,7 +503,6 @@ namespace crosspascal.semantics
 		public override bool Visit(CompositeDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
-			TraversePrint(node.Type);
 			return true;
 		}
 		
@@ -498,51 +521,48 @@ namespace crosspascal.semantics
 		public override bool Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
-			TraversePrint(node.sections);
+			nameReg.EnterContext("Composite");
+			traverse(node.sections);
+			nameReg.LeaveContext();
 			return true;
 		}
 		
 		public override bool Visit(ClassType node)
 		{
 			Visit((CompositeType) node);
-			TraversePrint(node.self);
 			return true;
 		}
 		
 		public override bool Visit(InterfaceType node)
 		{
 			Visit((CompositeType) node);
-			TraversePrint(node.guid);
+			traverse(node.guid);
 			return true;
 		}
 
 		public override bool Visit(ClassRefType node)
 		{
-			Visit((ClassType)node);
-			//	Do not traverse this node! circular dependency
-			//	traverse(node.reftype);
+			// TODO
 			return true;
 		}
 
 		public override bool Visit(RecordRefType node)
 		{
-			Visit((RecordType)node);
-			//	Do not traverse this node! circular dependency
-			//	traverse(node.reftype);
+			// TODO
 			return true;
 		}
 
 		public override bool Visit(ScopedSection node)
 		{
 			Visit((Section) node);
-			TraversePrint(node.fields);
+			traverse(node.fields);
 			return true;
 		}
 		
 		public override bool Visit(ScopedSectionList node)
 		{
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
@@ -555,38 +575,41 @@ namespace crosspascal.semantics
 		public override bool Visit(VariantDeclaration node)
 		{
 			Visit((FieldDeclaration) node);
-			TraversePrint(node.varfields);
+			traverse(node.varfields);
 			return true;
 		}
 		
 		public override bool Visit(VarEntryDeclaration node)
 		{
 			Visit((FieldDeclaration) node);
-			TraversePrint(node.tagvalue);
-			TraversePrint(node.fields);
+			if (TraverseResolve(node, node.tagvalue))
+				node.tagvalue = ResolvedNode<Expression>();
+			traverse(node.fields);
 			return true;
 		}
 		
 		public override bool Visit(PropertyDeclaration node)
 		{
 			Visit((FieldDeclaration) node);
-			TraversePrint(node.specifiers);
+			traverse(node.specifiers);
 			return true;
 		}
 		
 		public override bool Visit(ArrayProperty node)
 		{
 			Visit((PropertyDeclaration) node);
-			TraversePrint(node.indexes);
+			traverse(node.indexes);
 			return true;
 		}
 		
 		public override bool Visit(PropertySpecifiers node)
 		{
 			Visit((Node) node);
-			TraversePrint(node.index);
-			TraversePrint(node.stored);
-			TraversePrint(node.@default);
+			if (TraverseResolve(node, node.index))
+				node.index = ResolvedNode<IntLiteral>();
+			if (TraverseResolve(node, node.stored))
+				node.stored = ResolvedNode<ConstExpression>();
+			TraverseResolve(node,node.@default);
 			return true;
 		}
 		
@@ -599,7 +622,7 @@ namespace crosspascal.semantics
 		public override bool Visit(LabelStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.stmt);
+			traverse(node.stmt);
 			return true;
 		}
 		
@@ -624,8 +647,10 @@ namespace crosspascal.semantics
 		public override bool Visit(Assignment node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.lvalue);
-			TraversePrint(node.expr);
+			if (TraverseResolve(node, node.lvalue))
+				node.lvalue = ResolvedNode<LvalueExpression>();
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
 		
@@ -638,41 +663,48 @@ namespace crosspascal.semantics
 		public override bool Visit(IfStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.condition);
-			TraversePrint(node.thenblock);
-			TraversePrint(node.elseblock);
+			if (TraverseResolve(node, node.condition))
+				node.condition = ResolvedNode<Expression>();
+			traverse(node.thenblock);
+			traverse(node.elseblock);
 			return true;
 		}
 		
 		public override bool Visit(ExpressionStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.expr);
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
 		
 		public override bool Visit(CaseSelector node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.list);
-			TraversePrint(node.stmt);
+			traverse(node.list);
+			if (TraverseResolve(node, node.stmt))
+				node.stmt = ResolvedNode<Statement>();
 			return true;
 		}
 		
 		public override bool Visit(CaseStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.condition);
-			TraversePrint(node.selectors);
-			TraversePrint(node.caseelse);
+			if (TraverseResolve(node, node.condition))
+				node.condition = ResolvedNode<Expression>();
+			traverse(node.selectors);
+			if (TraverseResolve(node, node.caseelse))
+				node.caseelse = ResolvedNode<Statement>();
 			return true;
 		}
 		
 		public override bool Visit(LoopStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.condition);
-			TraversePrint(node.block);
+			if (TraverseResolve(node, node.condition))
+				node.condition = ResolvedNode<Expression>();
+			if (TraverseResolve(node, node.block))
+				node.block = ResolvedNode<Statement>();
 			return true;
 		}
 		
@@ -691,63 +723,74 @@ namespace crosspascal.semantics
 		public override bool Visit(ForLoop node)
 		{
 			Visit((LoopStatement) node);
-			TraversePrint(node.var);
-			TraversePrint(node.start);
-			TraversePrint(node.end);
+			if (TraverseResolve(node, node.var))
+				node.var = ResolvedNode<Identifier>();
+			if (TraverseResolve(node, node.start))
+				node.start = ResolvedNode<Expression>();
+			if (TraverseResolve(node, node.end))
+				node.end = ResolvedNode<Expression>();
 			return true;
 		}
 		
 		public override bool Visit(BlockStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.stmts);
+			traverse(node.stmts);
 			return true;
 		}
 		
 		public override bool Visit(WithStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.with);
-			TraversePrint(node.body);
+			traverse(node.with);
+			if (TraverseResolve(node, node.body))
+				node.body = ResolvedNode<Statement>();
 			return true;
 		}
 		
 		public override bool Visit(TryFinallyStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.body);
-			TraversePrint(node.final);
+			if (TraverseResolve(node, node.body))
+				node.body = ResolvedNode<BlockStatement>();
+			if (TraverseResolve(node, node.final))
+				node.final = ResolvedNode<BlockStatement>();
 			return true;
 		}
 		
 		public override bool Visit(TryExceptStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.body);
-			TraversePrint(node.final);
+			if (TraverseResolve(node, node.body))
+				node.body = ResolvedNode<BlockStatement>();
+			if (TraverseResolve(node, node.final))
+				node.final = ResolvedNode<ExceptionBlock>();
 			return true;
 		}
 		
 		public override bool Visit(ExceptionBlock node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.onList);
-			TraversePrint(node.@default);
+			traverse(node.onList);
+			TraverseResolve(node,node.@default);
 			return true;
 		}
 		
 		public override bool Visit(RaiseStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.lvalue);
-			TraversePrint(node.expr);
+			if (TraverseResolve(node, node.lvalue))
+				node.lvalue = ResolvedNode<LvalueExpression>();
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
 		
 		public override bool Visit(OnStatement node)
 		{
 			Visit((Statement) node);
-			TraversePrint(node.body);
+			if (TraverseResolve(node, node.body))
+				node.body = ResolvedNode<Statement>();
 			return true;
 		}
 		
@@ -760,9 +803,12 @@ namespace crosspascal.semantics
 		public override bool Visit(Expression node)
 		{
 			Visit((Node) node);
-			TraversePrint(node.Type);
-			TraversePrint(node.Value);
-			TraversePrint(node.ForcedType);
+			if (TraverseResolve(node, node.Type))
+				node.Type = ResolvedNode<TypeNode>();
+			if (TraverseResolve(node, node.Value))
+				node.Value = ResolvedNode<ConstantValue>();
+			if (TraverseResolve(node, node.ForcedType))
+				node.ForcedType = ResolvedNode<TypeNode>();
 			return true;
 		}
 		
@@ -775,7 +821,7 @@ namespace crosspascal.semantics
 		public override bool Visit(ExpressionList node)
 		{
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
@@ -788,7 +834,7 @@ namespace crosspascal.semantics
 		public override bool Visit(StructuredConstant node)
 		{
 			Visit((ConstExpression) node);
-			TraversePrint(node.exprlist);
+			traverse(node.exprlist);
 			return true;
 		}
 		
@@ -808,14 +854,15 @@ namespace crosspascal.semantics
 		{
 			Visit((ExpressionList) node);
 			foreach (Node n in node.nodes)
-				TraversePrint(n);
+				traverse(n);
 			return true;
 		}
 		
 		public override bool Visit(FieldInit node)
 		{
 			Visit((ConstExpression) node);
-			TraversePrint(node.expr);
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
 		
@@ -906,8 +953,10 @@ namespace crosspascal.semantics
 		public override bool Visit(SetIn node)
 		{
 			Visit((BinaryExpression) node);
-			TraversePrint(node.expr);
-			TraversePrint(node.set);
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
+			if (TraverseResolve(node, node.set))
+				node.set = ResolvedNode<Expression>();
 			return true;
 		}
 		
@@ -920,8 +969,10 @@ namespace crosspascal.semantics
 		public override bool Visit(ArithmethicBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			TraversePrint(node.left);
-			TraversePrint(node.right);
+			if (TraverseResolve(node, node.left))
+				node.left = ResolvedNode<Expression>();
+			if (TraverseResolve(node, node.right))
+				node.right = ResolvedNode<Expression>();
 			return true;
 		}
 		
@@ -976,8 +1027,10 @@ namespace crosspascal.semantics
 		public override bool Visit(LogicalBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			TraversePrint(node.left);
-			TraversePrint(node.right);
+			if (TraverseResolve(node, node.left))
+				node.left = ResolvedNode<Expression>();
+			if (TraverseResolve(node, node.right))
+				node.right = ResolvedNode<Expression>();
 			return true;
 		}
 		
@@ -1038,8 +1091,10 @@ namespace crosspascal.semantics
 		public override bool Visit(TypeBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			TraversePrint(node.expr);
-			TraversePrint(node.types);
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
+			if (TraverseResolve(node, node.types))
+				node.types = ResolvedNode<TypeNode>();
 			return true;
 		}
 		
@@ -1064,7 +1119,8 @@ namespace crosspascal.semantics
 		public override bool Visit(SimpleUnaryExpression node)
 		{
 			Visit((Expression) node);
-			TraversePrint(node.expr);
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
 		
@@ -1095,7 +1151,7 @@ namespace crosspascal.semantics
 		public override bool Visit(Set node)
 		{
 			Visit((UnaryExpression) node);
-			TraversePrint(node.setelems);
+			traverse(node.setelems);
 			return true;
 		}
 		
@@ -1108,69 +1164,110 @@ namespace crosspascal.semantics
 		public override bool Visit(ExprAsLvalue node)
 		{
 			Visit((LvalueExpression) node);
-			TraversePrint(node.expr);
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
 		
 		public override bool Visit(ValueCast node)
 		{
 			Visit((LvalueExpression) node);
-			TraversePrint(node.casttype);
-			TraversePrint(node.expr);
+			if (TraverseResolve(node, node.casttype))
+				node.casttype = ResolvedNode<VariableType>();
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
 		
+		/// <summary>
+		/// Resolves an id, disambiguating between routines, variables and types
+		/// TODO classes, units
+		/// </summary>
 		public override bool Visit(UnresolvedId node)
 		{
-			Visit((LvalueExpression) node);
-			traverse(node.id);
+			String name = node.id.name;
+
+			TypeNode t = nameReg.CheckType<TypeNode>(name);
+			if (t == null)
+			{
+				if (nameReg.CheckValue<ValueDeclaration>(name) != null)
+					resolved = node.id;
+				else
+					return Error("DeclarationNotFound: " + name);
+				//	throw new DeclarationNotFound(name);
+			}
+			else if (t is ProceduralType)
+				resolved = new RoutineCall(node.id);
+			else if (t is ClassType)
+				// TODO calls to static methods,  constructors etc
+				resolved = node.id;
+			else	// VariableType
+				resolved = new CastTypeWrapper(t as VariableType);
+
 			return true;
 		}
 		
 		public override bool Visit(UnresolvedCastorCall node)
 		{
-			Visit((LvalueExpression) node);
-			TraversePrint(node.func);
-			TraversePrint(node.args);
+			if (TraverseResolve(node, node.func))
+				node.func = ResolvedNode<LvalueExpression>();
+			traverse(node.args);
+
+			if (node.func is CastTypeWrapper)
+			{
+				if (node.args.Count() > 1)
+					return Error("Cast may take only 1 argument");
+				resolved = new ValueCast((node.func as CastTypeWrapper).castType, node.args.Get(0));
+			}
+			else
+				resolved = new RoutineCall(node.func, node.args);
+
 			return true;
 		}
 		
 		public override bool Visit(ArrayAccess node)
 		{
 			Visit((LvalueExpression) node);
-			TraversePrint(node.lvalue);
-			TraversePrint(node.acessors);
-			TraversePrint(node.array);
+			if (TraverseResolve(node, node.lvalue))
+				node.lvalue = ResolvedNode<LvalueExpression>();
+			traverse(node.acessors);
+			if (TraverseResolve(node, node.array))
+				node.array = ResolvedNode<ArrayConst>();
 			return true;
 		}
 		
 		public override bool Visit(PointerDereference node)
 		{
 			Visit((LvalueExpression) node);
-			TraversePrint(node.expr);
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
 		
 		public override bool Visit(InheritedCall node)
 		{
 			Visit((LvalueExpression) node);
-			TraversePrint(node.call);
+			if (TraverseResolve(node, node.call))
+				node.call = ResolvedNode<RoutineCall>();
 			return true;
 		}
 		
 		public override bool Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
-			TraversePrint(node.func);
-			TraversePrint(node.args);
-			TraversePrint(node.basictype);
+			if (TraverseResolve(node, node.func))
+				node.func = ResolvedNode<LvalueExpression>();
+			traverse(node.args);
+			if (TraverseResolve(node, node.basictype))
+				node.basictype = ResolvedNode<ScalarType>();
 			return true;
 		}
 		
 		public override bool Visit(FieldAccess node)
 		{
 			Visit((LvalueExpression) node);
-			TraversePrint(node.obj);
+			if (TraverseResolve(node, node.obj))
+				node.obj = ResolvedNode<LvalueExpression>();
 			return true;
 		}
 		
@@ -1188,31 +1285,32 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(UnresolvedType node)
 		{
-			Visit((TypeNode) node);
+			resolved = nameReg.FetchType(node.id);
 			return true;
 		}
 		
 		public override bool Visit(UnresolvedClassType node)
 		{
-			Visit((ClassType) node);
+			resolved = nameReg.FetchType<ClassType>(node.id);
 			return true;
 		}
 		
 		public override bool Visit(UnresolvedVariableType node)
 		{
-			Visit((VariableType) node);
+			resolved = nameReg.FetchType<VariableType>(node.id);
 			return true;
 		}
 		
 		public override bool Visit(UnresolvedIntegralType node)
 		{
-			Visit((IntegralType) node);
+			resolved = nameReg.FetchType<IntegralType>(node.id);
 			return true;
 		}
 		
 		public override bool Visit(UnresolvedOrdinalType node)
 		{
-			Visit((VariableType) node);
+			// TODO drill down to a specific IOrdinalType
+			resolved = nameReg.FetchType<VariableType>(node.id);
 			return true;
 		}
 		
@@ -1225,22 +1323,25 @@ namespace crosspascal.semantics
 		public override bool Visit(MetaclassType node)
 		{
 			Visit((VariableType) node);
-			TraversePrint(node.baseType);
+			if (TraverseResolve(node, node.baseType))
+				node.baseType = ResolvedNode<TypeNode>();
 			return true;
 		}
 		
 		public override bool Visit(EnumType node)
 		{
 			Visit((VariableType) node);
-			TraversePrint(node.enumVals);
+			traverse(node.enumVals);
 			return true;
 		}
 		
 		public override bool Visit(RangeType node)
 		{
 			Visit((VariableType) node);
-			TraversePrint(node.min);
-			TraversePrint(node.max);
+			if (TraverseResolve(node, node.min))
+				node.min = ResolvedNode<Expression>();
+			if (TraverseResolve(node, node.max))
+				node.max = ResolvedNode<Expression>();
 			return true;
 		}
 		
@@ -1373,28 +1474,32 @@ namespace crosspascal.semantics
 		public override bool Visit(FixedStringType node)
 		{
 			Visit((StringType) node);
-			TraversePrint(node.expr);
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
 		
 		public override bool Visit(VariantType node)
 		{
 			Visit((VariableType) node);
-			TraversePrint(node.actualtype);
+			if (TraverseResolve(node, node.actualtype))
+				node.actualtype = ResolvedNode<VariableType>();
 			return true;
 		}
 		
 		public override bool Visit(PointerType node)
 		{
 			Visit((ScalarType) node);
-			TraversePrint(node.pointedType);
+			if (TraverseResolve(node, node.pointedType))
+				node.pointedType = ResolvedNode<TypeNode>();
 			return true;
 		}
 		
 		public override bool Visit(StructuredType node)
 		{
 			Visit((VariableType) node);
-			TraversePrint(node.basetype);
+			if (TraverseResolve(node, node.basetype))
+				node.basetype = ResolvedNode<TypeNode>();
 			return true;
 		}
 		
@@ -1419,7 +1524,10 @@ namespace crosspascal.semantics
 		public override bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			TraversePrint(node.compTypes);
+
+			nameReg.EnterContext("record");
+			traverse(node.compTypes);
+			nameReg.LeaveContext();
 			return true;
 		}
 

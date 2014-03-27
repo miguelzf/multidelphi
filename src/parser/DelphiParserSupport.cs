@@ -60,12 +60,10 @@ namespace crosspascal.parser
 		// Per-file mutable parsing state
 		//
 
-		SourceFile source;
-
 		DelphiScanner lexer;
 
 		// wrapper for yyparse
-		public TranslationUnit Parse(TextReader tr, SourceFile sf, ParserDebug dgb = null)
+		public TranslationUnit Parse(TextReader tr, ParserDebug dgb = null)
 		{
 			if (dgb != null)
 			{
@@ -73,7 +71,6 @@ namespace crosspascal.parser
 				DebugLevel = 1;
 			}
 
-			source = sf;
 			lexer = new DelphiScanner(tr);
 			lexer.yyLexDebugLevel = DebugLevel;
 

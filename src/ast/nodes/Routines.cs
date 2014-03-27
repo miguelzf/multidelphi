@@ -101,7 +101,15 @@ namespace crosspascal.ast.nodes
 			set { Type.Directives = value;}
 		}
 
+		/// <summary>
+		/// Returns wether this callable is a function or procedue
+		/// </summary>
 		public bool IsFunction { get { return Type.funcret != null; } }
+
+		/// <summary>
+		/// Gets the fully qualified name of this callable (obj+metname for methods)
+		/// </summary>
+		public abstract String FullName();
 
 		public CallableDeclaration(string name, DeclarationList @params, TypeNode ret = null, CallableDirectives dirs = null)
 			: base(name, new ProceduralType(@params, ret, dirs))
@@ -114,6 +122,11 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class RoutineDeclaration : CallableDeclaration
 	{
+		public override string FullName()
+		{
+			return name;
+		}
+
 		public RoutineDeclaration(string name, DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
 			: base(name, @params, ret, dirs) { }
 	}
@@ -127,13 +140,20 @@ namespace crosspascal.ast.nodes
 		public String objname;
 		public String metname;
 
+		private string fullname;
+		public override string FullName()
+		{
+			return fullname;
+		}
+
 		public MethodDeclaration(string objname, string name, DeclarationList @params, TypeNode ret = null,
 								MethodDirectives dirs = null)
-			: base(objname+"."+name, @params, ret, dirs)
+			: base(name, @params, ret, dirs)
 		{
 			this.metname = name;
 			this.objname = objname;
 			isStatic = false;
+			fullname = objname + "." + name;
 
 			foreach (var param in @params)
 				if (param.name == "self")

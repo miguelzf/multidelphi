@@ -53,7 +53,7 @@ namespace crosspascal.testunits
 
 				try
 				{
-					tree = parser.Parse(sr, sf);
+					tree = parser.Parse(sr);
 					Console.WriteLine("Parsed OK: " + tree.name + " " + tree.ToString());
 				}
 				catch (ParserException e)

@@ -45,6 +45,7 @@ namespace crosspascal.core
 			Console.WriteLine(planner.ListFiles());
 
 			AstPrinter astPrinter = new AstPrinter();
+			NameResolver resolver = new NameResolver();
 
 			int skip = 0;
 			foreach (SourceFile sf in planner.GetSourceFiles())
@@ -63,7 +64,7 @@ namespace crosspascal.core
 				TranslationUnit ast = null;
 
 				try {
-					ast = parser.Parse(sr, sf);
+					ast = parser.Parse(sr);
 				}
 				catch (ParserException e)
 				{
@@ -81,8 +82,13 @@ namespace crosspascal.core
 
 				Console.WriteLine("Parsed OK: " + ast.name + " " + ast.ToString());
 
-				PostProcessing.SetParents(ast);
+				//PostProcessing.SetParents(ast);
+				new ParentProcessor().StartProcessing(ast);
 				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
+				resolver.Reset(sf);
+				resolver.StartProcessing(ast);
+				Console.WriteLine("Name Resolving OK: " + ast.name + " " + ast.ToString());
+
 				astPrinter.StartProcessing(ast);
 
 				Console.WriteLine(astPrinter);

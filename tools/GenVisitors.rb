@@ -66,9 +66,8 @@ def gen_code(nodes, gen_method, isbase)
 	arrcode << "\t{"
 	arrcode << "\t\t//	Complete interface to be implemented by any specific AST processor	"
 
-	nodesNames= nodes.values.map { |x| x.name }
-	codeLines = nodes.values.map { |x| gen_concrete_visit(x,nodesNames) if !(/<|>/ =~ x.name) and x.name != "Node"  }
-																		# do not visit generic types and the base Node class
+	nodesNames= nodes.values.map { |x| x.name }						# do not visit generic types and the base Node class
+	codeLines = nodes.values.map { |x| gen_concrete_visit(x,nodesNames) if !(/</ =~ x.name) and x.name != "Node"  }
 	codeLines.each do |x| x.insert(0, "") if x != nil end
 	text = codeLines.join("\n\t\t")
 	arrcode << text
@@ -120,6 +119,8 @@ def gen_concrete_visit(node,names)
 		
 	for field in cfields
 		type,name = field.split(' ')[0,2];
+		puts field + " of " + type
+		
 	#	if !(/<|>/ =~ type) 	# do not visit generic types
 		if names.include? type 
 			arrcode << "\t" + "traverse(node." + name + ");"
@@ -218,7 +219,7 @@ for i in 0 ... nodelines.size
 		
 	ma = /class\s+(\w+)(.*)/.match line
 
-	if ma[2][0] != "<" 		# ignores classes with generics
+	if (ma[2][0] == '<') 	# ignores classes with generics
 
 		# Enter class to process
 		classname = ma[1]	# get 1st match result
@@ -276,5 +277,5 @@ genmethod = method(:gen_concrete_visit)	# to generate Visitors/Processors with v
 
 output = gen_code nodes,genmethod,$genbasevisitor
 
-File.open(genfilename, "w").puts(output)
+#File.open(genfilename, "w").puts(output)
 

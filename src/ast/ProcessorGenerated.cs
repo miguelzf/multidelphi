@@ -1021,7 +1021,7 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(UnresolvedIdOrCall node)
+		public virtual bool Visit(UnresolvedId node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.id);

@@ -38,9 +38,36 @@ namespace crosspascal.ast
 						if (!typeof(VariableType).IsAssignableFrom(f.FieldType))
 							fi.Parent = root;
 
-						SetParents(fi, f.FieldType);
+						if (f.FieldType.BaseType.IsGenericType)
+						{
+							Type bt = f.FieldType;
+						/* TODO
+							if (bt.IsSubclassOf(ListNode<Node>))
+								SetParentsList<Node>(fi, root);
+							else if (f.FieldType is NodeList)
+								SetParentsList<Node>(fi, root);
+							if (f.FieldType is NodeList)
+								SetParentsList<Node>(fi, root);
+							if (f.FieldType is NodeList)
+								SetParentsList<Node>(fi, root);
+								
+						*/
+						}
+						else
+							SetParents(fi, f.FieldType);
 					}
 				}
+		}
+
+		static void SetParentsList<T>(Node nlist, Node par) where T : Node
+		{
+			ListNode<T> list = (ListNode<T>) nlist;
+
+			foreach (Node n in list)
+			{
+				SetParents(n, n.GetType());
+				n.Parent = par;
+			}
 		}
 	}
 }

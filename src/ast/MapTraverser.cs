@@ -83,15 +83,23 @@ namespace crosspascal.ast
 			MethodInfo mi;
 			if (!methodsMapping.TryGetValue(nodeType, out mi))
 				return true;		// method not mapped. Nothing to do
-			
-			Object oret = mi.Invoke(Processor, new object[] { n });
 
-			if (oret == null)
-			{	Logger.log.Error("Process method " + mi + " invocation failed");
-				return false;
+			try
+			{
+				Object oret = mi.Invoke(Processor, new object[] { n });
+
+				if (oret == null)
+				{	Logger.log.Error("Process method " + mi + " invocation failed");
+					return false;
+				}
+
+				return (bool)oret;
+			}
+			catch (TargetInvocationException e)	// wrapper for an exception occurring in the invocation
+			{
+				throw e.InnerException;
 			}
 
-			return (bool) oret;
 		}
 	}
 }

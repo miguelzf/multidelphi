@@ -688,7 +688,7 @@ namespace crosspascal.ast.nodes
 		public VariableType casttype;
 		public Expression expr;
 
-		public ValueCast(Expression e, VariableType t)
+		public ValueCast(VariableType t, Expression e)
 		{
 			this.casttype = t;
 			this.expr = e;
@@ -699,11 +699,11 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// To be resolver after parsing
 	/// </summary>
-	public class UnresolvedIdOrCall : LvalueExpression
+	public class UnresolvedId : LvalueExpression
 	{
 		public Identifier id;
 
-		public UnresolvedIdOrCall(Identifier val)
+		public UnresolvedId(Identifier val)
 		{
 			id = val;
 		}

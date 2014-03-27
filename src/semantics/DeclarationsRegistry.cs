@@ -100,13 +100,12 @@ namespace crosspascal.semantics
 		public void RegisterDeclaration(String name, Declaration decl)
 		{
 			// check if the declaration creates a context (classes, functions, records)
-			if (CheckContextCreation(name, decl))
-			{	// return
-			}
-			else if (!symtab.Add(name, decl))
+		//	if (CheckContextCreation(name, decl))	// old code. TODO remove
+	
+			if (!symtab.Add(name, decl))
 				throw new IdentifierRedeclared(name);
 
-			//Console.WriteLine("Register Decl " + name + Environment.NewLine + symtab.ListTable(3));
+			Console.WriteLine("Register Decl " + name); // + Environment.NewLine + symtab.ListTable(3));
 		}
 
 		/// <summary>
@@ -121,11 +120,13 @@ namespace crosspascal.semantics
 		public void EnterContext(string id = null)
 		{
 			symtab.Push(id);
-			//Console.WriteLine("CREATE CONTEXT " + id);
+			Console.WriteLine("CREATE CONTEXT " + id);
 		}
 		public String LeaveContext()
 		{
-			return symtab.Pop();
+			string id = symtab.Pop();
+			Console.WriteLine("DESTROY CONTEXT " + id);
+			return id;
 		}
 
 
@@ -191,8 +192,9 @@ namespace crosspascal.semantics
 
 		public void LeaveMethodContext()
 		{
-			LeaveContext();	// method
+			LeaveContext();	// method params
 			string id = LeaveContext();
+			Console.WriteLine("ID = " + id);
 			int nInherited = Int32.Parse(id);
 			for (int i = 0; i < nInherited; i++)
 				LeaveContext();
@@ -361,12 +363,15 @@ namespace crosspascal.semantics
 
 		void CreateBuiltinType(String name, VariableType type)
 		{
-			builtinTypes.Add(name, new TypeDeclaration(name, type));
+			var decl = new TypeDeclaration(name, type);
+			builtinTypes.Add(name, decl);
+			RegisterDeclaration(name, decl);
 		}
 
 		void CreateBuiltinFunction(RoutineDeclaration routine)
 		{
 			builtinFunctions.Add(routine.name, routine);
+			RegisterDeclaration(routine.name, routine);
 		}
 
 		/// <summary>
