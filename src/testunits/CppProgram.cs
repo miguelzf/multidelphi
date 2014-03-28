@@ -66,6 +66,10 @@ namespace crosspascal.testunits
 				ParentProcessor pp = new ParentProcessor();
 				pp.StartProcessing(tree);
 
+				NameResolver nr = new NameResolver();
+				nr.Reset(sf);
+				nr.StartProcessing(tree);
+				
 				AstPrinter astPrinter = new AstPrinter();
 				astPrinter.StartProcessing(tree);
 				Console.WriteLine(astPrinter);
