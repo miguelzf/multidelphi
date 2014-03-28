@@ -257,13 +257,17 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(InterfaceSection node)
 		{
+			DeclReg.EnterContext();
 			Visit((DeclarationSection) node);
+			DeclReg.ExitContext();
 			return true;
 		}
 		
 		public override bool Visit(ImplementationSection node)
 		{
+			DeclReg.EnterContext();
 			Visit((DeclarationSection) node);
+			DeclReg.ExitContext();
 			return true;
 		}
 		
@@ -378,7 +382,9 @@ namespace crosspascal.cpp
 
 		public override bool Visit(RoutineDeclaration node)
 		{
+			DeclReg.EnterContext();
 			Visit((CallableDeclaration) node);
+			DeclReg.ExitContext();
 			return true;
 		}
 
@@ -396,7 +402,9 @@ namespace crosspascal.cpp
 		public override bool Visit(MethodDeclaration node)
 		{
 			Visit((CallableDeclaration) node);
-			
+
+			DeclReg.EnterContext();
+
 			if (node.Type.funcret == null)
 				outputCode("void ", false, false);
 			else
@@ -405,6 +413,8 @@ namespace crosspascal.cpp
 			outputCode(node.metname + "(", false, false);
 			traverse(node.Type.@params);
 			outputCode(");", false, true);
+
+			DeclReg.ExitContext();
 			return true;
 		}
 
@@ -412,6 +422,8 @@ namespace crosspascal.cpp
 		{
 			Visit((RoutineDeclaration)node);
 			traverse(node.body);
+
+			DeclReg.EnterContext();
 
 			if (node.IsFunction)
 			{
@@ -421,11 +433,14 @@ namespace crosspascal.cpp
 			}
 
 			outputCode("", false, true);
+
+			DeclReg.ExitContext();
 			return true;
 		}
 
 		public override bool Visit(MethodDefinition node)
 		{
+			DeclReg.EnterCompositeContext(node.declaringType);
 			Visit((CallableDeclaration) node);
 			
 			if (node.Type.funcret == null)
@@ -455,6 +470,8 @@ namespace crosspascal.cpp
 			}
 
 			outputCode("", false, true);
+
+			DeclReg.LeaveCompositeContext(node.declaringType);
 			return true;
 		}
 
