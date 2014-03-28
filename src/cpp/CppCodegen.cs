@@ -16,10 +16,10 @@ namespace crosspascal.cpp
 		private StringBuilder builder;
 		private DeclarationsRegistry DeclReg;
 
-		public CppCodegen()
+		public CppCodegen(DeclarationsRegistry enviroment)
 		{
 			builder = new StringBuilder();
-			DeclReg = new DeclarationsRegistry();
+			DeclReg = enviroment;
 			DeclReg.LoadRuntimeNames();
 		}
 
@@ -227,7 +227,7 @@ namespace crosspascal.cpp
 		{
 			DeclReg.EnterContext();
 			Visit((CodeSection) node);
-			DeclReg.LeaveContext();
+			DeclReg.ExitContext();
 			return true;
 		}
 		

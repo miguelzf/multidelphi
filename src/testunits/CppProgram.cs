@@ -64,22 +64,22 @@ namespace crosspascal.testunits
 				}
 
 				ParentProcessor pp = new ParentProcessor();
-				MapTraverser mt = new MapTraverser(pp);
-				mt.traverse(tree);
+				pp.StartProcessing(tree);
 
 				AstPrinter astPrinter = new AstPrinter();
-				mt = new MapTraverser(astPrinter);
-				mt.traverse(tree);
+				astPrinter.StartProcessing(tree);
 				Console.WriteLine(astPrinter);
 
-				Processor constfolder = new ConstantFolder();
-				mt = new MapTraverser(constfolder);
-				mt.traverse(tree);
+				NameResolver resolver = new NameResolver();
+				resolver.Reset(sf);
+				resolver.StartProcessing(tree);
 
-				Processor myProcessor = new CppCodegen();
+				Processor constfolder = new ConstantFolder();
+				constfolder.StartProcessing(tree);
+
+				Processor myProcessor = new CppCodegen(resolver.nameReg);
 				Console.WriteLine("Now compiling...");
-				mt = new MapTraverser(myProcessor);
-				mt.traverse(tree);
+				myProcessor.StartProcessing(tree);
 
 				Console.WriteLine(myProcessor.ToString());
 			}

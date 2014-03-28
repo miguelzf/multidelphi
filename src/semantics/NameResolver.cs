@@ -24,7 +24,7 @@ namespace crosspascal.semantics
 
 	class NameResolver : Processor
 	{
-		DeclarationsRegistry nameReg;
+		public DeclarationsRegistry nameReg { get; set; }
 		SourceFile source;
 
 		// =================================================
