@@ -20,7 +20,6 @@ namespace crosspascal.cpp
 		{
 			builder = new StringBuilder();
 			DeclReg = enviroment;
-			DeclReg.LoadRuntimeNames();
 		}
 
 		public override string ToString()

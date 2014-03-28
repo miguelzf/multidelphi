@@ -16,8 +16,8 @@ namespace crosspascal.semantics
 
 		SymbolContextNode<T> current;
 
-		// Context path taken
-		Stack<SymbolContextNode<T>> path = new Stack<SymbolContextNode<T>>(1000);
+		// Context path taken, excluding current context
+		Stack<SymbolContextNode<T>> path = new Stack<SymbolContextNode<T>>(1024);
 
 		int numContexts = 0;
 
@@ -31,7 +31,7 @@ namespace crosspascal.semantics
 		/// </summary>
 		public void Reset()
 		{
-			path = new Stack<SymbolContextNode<T>>(1000);
+			path = new Stack<SymbolContextNode<T>>(1024);
 			current = root;
 		}
 
@@ -131,8 +131,8 @@ namespace crosspascal.semantics
 		/// </summary>
 		internal string EnterContext(SymbolContextNode<T> ctx)
 		{
+			path.Push(current);
 			current = ctx;
-			path.Push(ctx);
 			return ctx.id;
 		}
 
@@ -141,9 +141,9 @@ namespace crosspascal.semantics
 		/// </summary>
 		public String ExitContext()
 		{
-			var ctx = path.Pop();
-			current = ctx;
-			return ctx.id;
+			string currid = current.id;
+			current = path.Pop();
+			return currid;
 		}
 
 		#endregion
@@ -179,6 +179,7 @@ namespace crosspascal.semantics
 		{
 			if (!CheckValidKey(key))
 				return null;
+
 			return LookupRec(current, key);
 		}
 

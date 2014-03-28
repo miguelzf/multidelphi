@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using crosspascal.utils;
 using crosspascal.ast.nodes;
+using System.Runtime.Serialization;
 
 namespace crosspascal.ast
 {
@@ -98,7 +99,17 @@ namespace crosspascal.ast
 			}
 			catch (TargetInvocationException e)	// wrapper for an exception occurring in the invocation
 			{
-				throw new Exception("Wrapper", e.InnerException);
+				throw new Exception("wrapper", e.InnerException);
+
+				// TODO
+				var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
+				var mgr = new ObjectManager(null, ctx);
+				var si = new SerializationInfo(e.InnerException.GetType(), new FormatterConverter());
+				e.InnerException.GetObjectData(si, ctx);
+				mgr.RegisterObject(e.InnerException, 1, si);
+				mgr.DoFixups();
+
+				throw e.InnerException;
 			}
 
 		}

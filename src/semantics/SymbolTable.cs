@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace crosspascal.semantics
 {
-	// Unused for now
+	// Not used now
 
 	/// <summary>
 	/// Stack-based symbol table

@@ -47,6 +47,7 @@ namespace crosspascal.semantics
 		/// </summary>
 		internal void ImportContext(SymbolContextNode<Declaration> ctx)
 		{
+			ctx.allowShadowing = true;
 			Debug("IMPORT CONTEXT " + ctx.id);
 			symEnv.ImportParentContext(ctx);
 			symEnv.ExitContext();
@@ -125,7 +126,7 @@ namespace crosspascal.semantics
 		{
 			CreateContext(type.Name);
 			foreach (var decl in type.GetInheritableMembers())
-				RegisterDeclaration(decl);
+				symEnv.Add(decl.name, decl);
 		//	ExitContext();
 		}
 
@@ -133,7 +134,7 @@ namespace crosspascal.semantics
 		{
 			CreateParentContext(type.Name);
 			foreach (var decl in type.GetInheritableMembers())
-				RegisterDeclaration(decl);
+				symEnv.Add(decl.name, decl);
 			ExitContext();
 		}
 

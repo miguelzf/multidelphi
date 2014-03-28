@@ -294,7 +294,7 @@ namespace crosspascal.semantics
 		public override bool Visit(ImplementationSection node)
 		{
 			// allow shadowing in main body
-			nameReg.CreateContext("interface", true);
+			nameReg.CreateContext("implementation", true);
 			Visit((DeclarationSection) node);
 			return true;
 		}
@@ -468,9 +468,10 @@ namespace crosspascal.semantics
 		{
 			Visit((CallableDeclaration)node);
 			nameReg.RegisterDeclaration(node.QualifiedName, node);
+			nameReg.CreateContext(node.QualifiedName + " Params");
 			traverse(node.Type);
 			traverse(node.Directives);
-			nameReg.LeaveCompositeContext(node.declaringType);
+			nameReg.ExitContext();
 			return true;
 		}
 
@@ -478,7 +479,7 @@ namespace crosspascal.semantics
 		{
 			Visit((CallableDeclaration)node);
 
-			nameReg.RegisterDeclaration(node.QualifiedName, node);
+			nameReg.RegisterDeclaration(node.objname+"."+node.QualifiedName, node);
 			CompositeType type = nameReg.CreateCompositeContext(node.objname);
 			node.declaringType = type;
 
@@ -662,35 +663,11 @@ namespace crosspascal.semantics
 		// 
 		// Statements
 		//
-
-		public override bool Visit(Statement node)
-		{
-			Visit((Node) node);
-			return true;
-		}
 		
 		public override bool Visit(LabelStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.stmt);
-			return true;
-		}
-		
-		public override bool Visit(EmptyStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public override bool Visit(BreakStatement node)
-		{
-			Visit((Statement) node);
-			return true;
-		}
-		
-		public override bool Visit(ContinueStatement node)
-		{
-			Visit((Statement) node);
 			return true;
 		}
 		
@@ -704,6 +681,7 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
+		// TODO check label
 		public override bool Visit(GotoStatement node)
 		{
 			Visit((Statement) node);
@@ -758,18 +736,6 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(RepeatLoop node)
-		{
-			Visit((LoopStatement) node);
-			return true;
-		}
-		
-		public override bool Visit(WhileLoop node)
-		{
-			Visit((LoopStatement) node);
-			return true;
-		}
-		
 		public override bool Visit(ForLoop node)
 		{
 			Visit((LoopStatement) node);
@@ -779,13 +745,6 @@ namespace crosspascal.semantics
 				node.start = ResolvedNode<Expression>();
 			if (TraverseResolve(node, node.end))
 				node.end = ResolvedNode<Expression>();
-			return true;
-		}
-		
-		public override bool Visit(BlockStatement node)
-		{
-			Visit((Statement) node);
-			traverse(node.stmts);
 			return true;
 		}
 		
