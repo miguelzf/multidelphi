@@ -1295,8 +1295,8 @@ namespace crosspascal.cpp
 
 		public override bool Visit(FieldAccess node)
 		{
-			if (node.obj is Identifier  && DeclReg.symtab.Lookup((node.obj as Identifier).name) is ClassDeclaration))
-				outputCode("cpde", true, true);
+			//if (node.obj is Identifier  && DeclReg.symtab.Lookup((node.obj as Identifier).name) is ClassDeclaration))
+				//outputCode("cpde", true, true);
 
 			traverse(node.obj); 
 			outputCode("." + node.field, false, false);			
