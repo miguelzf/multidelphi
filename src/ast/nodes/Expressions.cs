@@ -717,10 +717,12 @@ namespace crosspascal.ast.nodes
 		public LvalueExpression func;
 		public ExpressionList args;
 
-		public UnresolvedCall(LvalueExpression lval, ExpressionList args)
+		public UnresolvedCall(LvalueExpression lval, ExpressionList args = null)
 		{
 			this.func = lval;
 			this.args = args;
+			if (args == null)
+				this.args = new ExpressionList();
 		}
 	}
 

@@ -871,7 +871,8 @@ identifier
 	
 	// routine call to be used as a statement
 routinecall
-	: identifier							{ $$ = new UnresolvedCall($1, new ExpressionList()); }
+	: identifier							{ $$ = new RoutineCall($1); }
+	| lvalue KW_DOT id						{ $$ = new UnresolvedCall(new FieldAccess($1, $3)); }
 	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }
 	;
 	
