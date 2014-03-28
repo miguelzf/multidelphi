@@ -104,7 +104,10 @@ namespace crosspascal.semantics
 			Visit((Node) node);
 			return true;
 		}
-		
+
+
+		#region	Lists
+
 		public override bool Visit(NodeList node)
 		{
 			foreach (Node n in node.nodes)
@@ -153,7 +156,12 @@ namespace crosspascal.semantics
 				traverse(n);
 			return true;
 		}
-		
+
+		#endregion // Lists
+
+
+		#region Sections
+
 		public override bool Visit(TranslationUnit node)
 		{
 			Visit((Declaration) node);
@@ -171,13 +179,15 @@ namespace crosspascal.semantics
 		public override bool Visit(LibraryNode node)
 		{
 			Visit((TranslationUnit) node);
-			traverse(node.body);
 			traverse(node.uses);
+			traverse(node.body);
 			return true;
 		}
 		
 		public override bool Visit(UnitNode node)
 		{
+			// do not allow shadowing in interface section
+			nameReg.CreateContext("unit " + node.name, false);
 			Visit((TranslationUnit) node);
 			traverse(node.@interface);
 			traverse(node.implementation);
@@ -209,7 +219,6 @@ namespace crosspascal.semantics
 			var ctx = source.GetDependency(id).interfContext;
 			ctx.id = id;
 			nameReg.ImportContext(ctx);
-
 			return true;
 		}
 		
@@ -252,14 +261,6 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(RoutineBody node)
-		{
-			nameReg.EnterContext("Routine Def body");
-			Visit((CodeSection) node);
-			nameReg.ExitContext();
-			return true;
-		}
-		
 		public override bool Visit(InitializationSection node)
 		{
 			Visit((CodeSection) node);
@@ -274,25 +275,26 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(DeclarationSection node)
 		{
-			Visit((Section) node);
 			traverse(node.uses);
+			Visit((Section)node);
 			return true;
 		}
 		
 		public override bool Visit(InterfaceSection node)
 		{
+			// do not allow shadowing in the implementation section
+			nameReg.CreateContext("interface", false);
+
 			Visit((DeclarationSection) node);
-			/// Finalize processing of an Unit's interface section, by saving its symbol context
+			// Finalize processing of an Unit's interface section, by saving its symbol context
 			source.interfContext = nameReg.ExportContext();
 			return true;
 		}
 		
 		public override bool Visit(ImplementationSection node)
 		{
-			// Bothr the Interface and the Implementation do NOT open a new declaring context
-			nameReg.EnterContext("implementation");	// TODO CHANGE THIS
-			Console.WriteLine("IMPLEMENTATION");
-
+			// allow shadowing in main body
+			nameReg.CreateContext("interface", true);
 			Visit((DeclarationSection) node);
 			return true;
 		}
@@ -302,7 +304,15 @@ namespace crosspascal.semantics
 			Visit((RoutineBody) node);
 			return true;
 		}
-		
+
+		#endregion Sections
+
+
+		#region Declarations
+		//
+		// Declarations
+		// 
+
 		public override bool Visit(Declaration node)
 		{
 			Visit((Node) node);
@@ -382,126 +392,149 @@ namespace crosspascal.semantics
 			Visit((Declaration) node);
 			return true;
 		}
+
+		#endregion Declarations
+
+
+		#region Routines
+		//
+		// Routines
+		// 
+
+		// TODO override ToString for ever non-singular funcparamtype 
+
+		public override bool Visit(CallableDeclaration node)
+		{
+			// first resolve the params types, in order to determine the fully qualified proc name
+			foreach (ParamDeclaration p in node.Type.@params)
+				if (TraverseResolve(p, p.type))
+					p.type = ResolvedNode<TypeNode>();
+
+			String fullqualname = node.name;
+			if (node.Directives.Contains((int) GeneralDirective.Overload))
+				foreach (ParamDeclaration p in node.Type.@params)
+				{
+					String qualname = p.type.ToString();
+					fullqualname += "$" + qualname.Substring(qualname.LastIndexOf('.') + 1);
+				}
+
+			node.QualifiedName = fullqualname;
+			
+			return true;
+		}
 		
+		public override bool Visit(RoutineDeclaration node)
+		{
+			Visit((CallableDeclaration)node);
+			node.declaringScope = node.Parent.Parent as Section;
+
+			nameReg.RegisterDeclaration(node.QualifiedName, node);
+			nameReg.CreateContext(node.QualifiedName + " Params");
+			traverse(node.Type);
+			traverse(node.Directives);
+			nameReg.ExitContext();
+
+			return true;
+		}
+
+		public override bool Visit(RoutineDefinition node)
+		{
+			Visit((CallableDeclaration)node);
+			node.declaringScope = node.Parent.Parent as Section;
+
+			bool checkRegister = true;
+			// check if current callable is an implementation of a declared callable (in the interface)
+			var decl = nameReg.GetDeclaration(node.QualifiedName);
+			if (decl is RoutineDeclaration && node.declaringScope is ImplementationSection
+			&& (decl as RoutineDeclaration).declaringScope is InterfaceSection)
+			{	// implementation of a declared routine
+				checkRegister = false;	// declare it, ignoring the interface shadowing
+			}
+			// 	if decl not null, will throw exception when trying to register
+
+			nameReg.RegisterDeclaration(node.QualifiedName, node, checkRegister);
+
+			nameReg.CreateContext(node.QualifiedName + " Params");
+
+			traverse(node.Type);
+			traverse(node.Directives);
+			traverse(node.body);
+
+			nameReg.ExitContext();
+			return true;
+		}
+		
+		public override bool Visit(MethodDeclaration node)
+		{
+			Visit((CallableDeclaration)node);
+			nameReg.RegisterDeclaration(node.QualifiedName, node);
+			traverse(node.Type);
+			traverse(node.Directives);
+			nameReg.LeaveCompositeContext(node.declaringType);
+			return true;
+		}
+
+		public override bool Visit(MethodDefinition node)
+		{
+			Visit((CallableDeclaration)node);
+
+			nameReg.RegisterDeclaration(node.QualifiedName, node);
+			CompositeType type = nameReg.CreateCompositeContext(node.objname);
+			node.declaringType = type;
+
+			traverse(node.Type);
+			traverse(node.Directives);
+			traverse(node.body);	// opens context
+			nameReg.LeaveCompositeContext(node.declaringType);
+			return true;
+		}
+
+		public override bool Visit(RoutineBody node)
+		{
+			nameReg.CreateContext("routine def body");
+			Visit((CodeSection)node);
+			nameReg.ExitContext();
+			return true;
+		}
+
 		public override bool Visit(ProceduralType node)
 		{
-			Visit((TypeNode) node);
+			Visit((TypeNode)node);
 			traverse(node.@params);
 			traverse(node.funcret);
 			traverse(node.returnVar);
 			traverse(node.Directives);
 			return true;
 		}
-		
+
 		public override bool Visit(MethodType node)
 		{
-			Visit((ProceduralType) node);
+			Visit((ProceduralType)node);
 			return true;
 		}
 		
-		// TODO allow for definitions in implementation of funcs declared in interface
-		public override bool Visit(CallableDeclaration node)
+		public override bool Visit(ImportDirectives node)
 		{
-			Visit((Declaration) node);	// register decl
+			Visit((RoutineDirectives) node);
+			if (node.External != null)
+			{
+				ExternalDirective dir = node.External;
+				if (TraverseResolve(node, dir.File))
+					dir.File = ResolvedNode<Expression>();
+				if (TraverseResolve(node, dir.Name))
+					dir.Name = ResolvedNode<Expression>();
+			}
 			return true;
 		}
 		
-		public override bool Visit(RoutineDeclaration node)
-		{
-			nameReg.RegisterDeclaration(node.name, node);
+		#endregion	// routines
 
-			nameReg.EnterContext("Routine " + node.name + " Params");
-			if (TraverseResolve(node, node.Type))
-				node.type = ResolvedNode<ProceduralType>();
-			TraverseResolve(node, node.Directives);
 
-			if (!(node.Parent is CallableDefinition))
-				nameReg.ExitContext();
-			// else, keep context open for func body
+		#region Composites
+		// 
+		// Composites
+		// 
 
-			return true;
-		}
-		
-		public override bool Visit(MethodDeclaration node)
-		{
-			nameReg.RegisterDeclaration(node.name, node);
-
-			string declTag = "Method " + node.FullName() + " Params";
-			if (node.Parent is CallableDefinition)
-				nameReg.EnterMethodContext(node.objname);
-			else
-				nameReg.EnterContext(declTag);
-
-		//	Visit((CallableDeclaration)node);
-
-			if (TraverseResolve(node, node.Type))
-				node.type = ResolvedNode<ProceduralType>();
-			TraverseResolve(node, node.Directives);
-
-			if (!(node.Parent is CallableDefinition))
-				nameReg.ExitContext();
-			// else, keep context open for func body
-			return true;
-		}
-		
-		public override bool Visit(SpecialMethodDeclaration node)
-		{
-			Visit((MethodDeclaration) node);
-			return true;
-		}
-		
-		public override bool Visit(ConstructorDeclaration node)
-		{
-			Visit((SpecialMethodDeclaration) node);
-			return true;
-		}
-		
-		public override bool Visit(DestructorDeclaration node)
-		{
-			Visit((SpecialMethodDeclaration) node);
-			return true;
-		}
-		
-		public override bool Visit(CallableDefinition node)
-		{
-			//Visit((Declaration) node);
-			traverse(node.header);	// opens context
-			traverse(node.body);	// opens context
-			return true;
-		}
-		
-		public override bool Visit(RoutineDefinition node)
-		{
-			Visit((CallableDefinition) node);
-			nameReg.ExitContext();			// leave declaring/header context
-			return true;
-		}
-		
-		public override bool Visit(MethodDefinition node)
-		{
-			Visit((CallableDefinition) node);
-			nameReg.LeaveMethodContext();	// leave declaring/header context
-			return true;
-		}
-		
-		public override bool Visit(CallableDirectives node)
-		{
-			Visit((Node) node);
-			return true;
-		}
-		
-		public override bool Visit(RoutineDirectives node)
-		{
-			Visit((CallableDirectives) node);
-			return true;
-		}
-		
-		public override bool Visit(MethodDirectives node)
-		{
-			Visit((CallableDirectives) node);
-			return true;
-		}
-		
 		public override bool Visit(CompositeDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
@@ -520,10 +553,17 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
+		/// <remarks>
+		/// ATTENTION!! Should only be used in declarations of composites.
+		/// For references/ids, use Class/InterfRefType
+		/// </remarks>
 		public override bool Visit(CompositeType node)
 		{
-			Visit((TypeNode) node);
-			nameReg.EnterContext("Composite");
+			foreach (var s in node.GetAllMethods())
+				s.declaringType = node;
+
+			Visit((TypeNode)node);
+			nameReg.CreateInheritedContext(node);
 			traverse(node.sections);
 			nameReg.ExitContext();
 			return true;
@@ -614,7 +654,15 @@ namespace crosspascal.semantics
 			TraverseResolve(node,node.@default);
 			return true;
 		}
-		
+
+		#endregion	// composites
+
+
+		#region	Statements
+		// 
+		// Statements
+		//
+
 		public override bool Visit(Statement node)
 		{
 			Visit((Node) node);
@@ -801,7 +849,15 @@ namespace crosspascal.semantics
 			Visit((BlockStatement) node);
 			return true;
 		}
-		
+
+		#endregion	// Statements
+
+
+		#region	Expressions
+		//
+		// Expressions
+		//
+
 		public override bool Visit(Expression node)
 		{
 			Visit((Node) node);
@@ -1180,7 +1236,10 @@ namespace crosspascal.semantics
 				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
-		
+
+		#endregion  // Expressions
+
+
 		/// <summary>
 		/// Resolves an id, disambiguating between routines, variables and types
 		/// TODO classes, units
@@ -1300,7 +1359,14 @@ namespace crosspascal.semantics
 			Visit((LvalueExpression) node);
 			return true;
 		}
-		
+
+
+
+		#region	Types
+		//
+		// Types
+		//
+
 		public override bool Visit(TypeNode node)
 		{
 			Visit((Node) node);
@@ -1549,11 +1615,13 @@ namespace crosspascal.semantics
 		{
 			Visit((StructuredType) node);
 
-			nameReg.EnterContext("record");
+			nameReg.CreateContext("record");
 			traverse(node.compTypes);
 			nameReg.ExitContext();
 			return true;
 		}
+
+		#endregion // types
 
 		#endregion
 	}

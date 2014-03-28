@@ -28,7 +28,7 @@ namespace crosspascal.parser
 			throw new InputRejected(lexer.yylineno(), msg);
 		}
 			
-		string lastObjectName = null;	// keeps track of current class/object/interface being parsed
+		string lastObjName = null;	// keeps track of current class/object/interface being parsed
 		
 %}
 
@@ -56,16 +56,18 @@ namespace crosspascal.parser
 %type<TypeDeclaration> typedecl
 
 	// functions
-%type<CallableDefinition> routinedef routinedefunqualif
-%type<RoutineDeclaration> routineproto routinedeclext routinedecl 
-%type<MethodDeclaration> metdefproto methoddecl methoddeclin methodroutinedef
-%type<RoutineDirectives>  funcdirectlst funcdir_noterm_opt funcdiropt importdiropt importdirforced 
+%type<CallableDeclaration> routinedeclmain
+%type<RoutineDeclaration> routineproto routinedeclinterf
+%type<MethodDeclaration> methoddecl classmetdecl interfmetdecl 
+%type<MethodDefinition> methoddef metdefproto
+%type<ImportDirectives> funcdirectlst funcdir_noterm_opt funcdiropt importdiropt importdirforced 
 %type<MethodDirectives> metdirectopt metdirectlst smetdirs smetdirslst
-%type<int> funcdirective  funcqualif funcdeprecated metdirective metqualif routinecallconv smetqualif
+%type<int> funcdirective  funcqualif funcdeprecated metdirective metqualif routinecallconv smetqualif 
+%type<MethodKind> kwmetspec
 %type<RoutineBody> funcdefine
 %type<DeclarationList> formalparams formalparamslst formalparm formalparm
 %type<ExternalDirective>  externarg
-%type<string> kwconstruct kwdestruct kwfunction kwprocedure
+%type<string> kwfunction kwprocedure
 
 	// statements
 %type<BlockStatement> block funcblock assemblerstmt	blockstmt
@@ -336,7 +338,7 @@ declseclst
 
 interfdecl
 	: basicdeclsec			{ $$ = $1;}
-	| routinedecl			{ $$ = new DeclarationList($1);}
+	| routinedeclinterf		{ $$ = new DeclarationList($1);}
 	| thrvarsec				{ $$ = $1;}
 	| rscstringsec			{ $$ = $1;}
 	;
@@ -345,15 +347,14 @@ maindeclsec
 	: basicdeclsec			{ $$ = $1;}
 	| thrvarsec				{ $$ = $1;}
 	| exportsec				{ $$ = $1;}
-	| routinedeclext		{ $$ = new DeclarationList($1);}
-	| routinedef			{ $$ = new DeclarationList($1);}
+	| routinedeclmain		{ $$ = new DeclarationList($1);}
 	| labeldeclsec			{ $$ = $1;}
 	;
 
 funcdeclsec
 	: basicdeclsec			{ $$ = $1;}
 	| labeldeclsec			{ $$ = $1;}
-	| routinedefunqualif	{ $$ = new DeclarationList($1);}
+///	| routinedefunqualif	{ $$ = new DeclarationList($1);}
 	;
 
 basicdeclsec
@@ -474,55 +475,49 @@ kwclass
 
 	// Prototypes/signatures
 	// proc proto for definitions or external/forward decls
-	// check that funcrecopt is null for every kind except FUNCTION
-
-routinedef
-	: routinedefunqualif						{ $$ = $1; }
-	| methodroutinedef funcdefine SCOL 			{ $$ = new MethodDefinition($1, $2); }
-	;
-	
-methodroutinedef
-	:			metdefproto SCOL metdirectopt 	{ $$ = $1; $1.Directives = $3; }
-	| KW_CLASS	metdefproto SCOL metdirectopt 	{ $$ = $2; $2.Directives = $4; $2.isStatic = true; }
-	| kwconstruct KW_DOT id formalparams SCOL smetdirs	{ $$ = new ConstructorDeclaration($1, $3, $4, $6); }
-	| kwdestruct  KW_DOT id formalparams SCOL smetdirs	{ $$ = new DestructorDeclaration ($1, $3, $4, $6); }
-	;
-	
-metdefproto
-	: kwfunction  KW_DOT id formalparams funcret 	{ $$ = new MethodDeclaration($1, $3, $4, $5); }
-	| kwprocedure KW_DOT id formalparams 			{ $$ = new MethodDeclaration($1, $3, $4); }
-	;
-	
-	// global routine definition
-routinedefunqualif
-	: routineproto funcdiropt funcdefine SCOL	{ $$ = new RoutineDefinition($1, $3); $1.Directives = $2; }
-	;
-	
-	// routine decl for interface sections
-routinedecl
-	: routineproto importdiropt			{ $$ = $1; $1.Directives = $2; }
-	;
-
-	// routine decl for implementation sections, needs an external/forward
-routinedeclext
-	: routineproto importdirforced		{ $$ = $1; $1.Directives = $2; }
+		
+	// global routine decl or finition
+routinedeclmain											// create defintion from type created in declaration rule
+	: routineproto funcdiropt funcdefine SCOL			{ $$ = new RoutineDefinition($1.name, $1.Type, $2, $3); }
+	| routineproto importdirforced						{ $$ = $1; $1.Directives = $2; }
+	| methoddef funcdefine SCOL							{ $$ = $1; $1.body = $2; }
 	;
 
 methoddecl
-	: methoddeclin						{ $$ = $1; }
+	: kwfunction  formalparams funcret SCOL 			{ $$ = new MethodDeclaration(lastObjName, $1, $2, $3); }
+	| kwprocedure formalparams         SCOL 			{ $$ = new MethodDeclaration(lastObjName, $1, $2, null); }
 	;
 	
-methoddeclin
-	: kwfunction  formalparams funcret SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $1, $2, $3, $5); }
-	| kwprocedure formalparams         SCOL metdirectopt	{ $$ = new MethodDeclaration(lastObjectName, $1, $2, null, $4); }
-	| kwconstruct formalparams SCOL smetdirs				{ $$ = new ConstructorDeclaration(lastObjectName, $1, $2, $4); }
-	| kwdestruct  formalparams SCOL smetdirs				{ $$ = new DestructorDeclaration(lastObjectName, $1, $2, $4); }
+routineproto
+	: kwfunction  formalparams funcret	SCOL			{ $$ = new RoutineDeclaration($1, $2, $3); }
+	| kwprocedure formalparams 			SCOL			{ $$ = new RoutineDeclaration($1, $2); }
+	;	
+
+methoddef
+	:			metdefproto SCOL metdirectopt 			{ $$ = $1; $1.Directives = $3; }
+	| KW_CLASS	metdefproto SCOL metdirectopt 			{ $$ = $2; $2.Directives = $4; $2.isStatic = true; }
+	| kwmetspec id KW_DOT id formalparams SCOL smetdirs	{ $$ = new MethodDefinition($2, $4, $5, null, $7, $1);}
 	;
 
-routineproto
-	: kwfunction  formalparams funcret	SCOL	{ $$ = new RoutineDeclaration($1, $2, $3); }
-	| kwprocedure formalparams 			SCOL	{ $$ = new RoutineDeclaration($1, $2); }
-	;	
+metdefproto
+	: kwfunction  KW_DOT id formalparams funcret 		{ $$ = new MethodDefinition($1, $3, $4, $5); }
+	| kwprocedure KW_DOT id formalparams 				{ $$ = new MethodDefinition($1, $3, $4); }
+	;
+	
+	// routine decl for interface sections
+routinedeclinterf
+	: routineproto 										{ $$ = $1; }
+	;
+
+classmetdecl
+	: methoddecl metdirectopt							{ $$ = $1; $1.Directives = $2; }
+	| kwmetspec id formalparams SCOL smetdirs			{ $$ = new MethodDeclaration(lastObjName, $2, $3, null, $5, $1);
+															Console.WriteLine("CONSTRUCT METDECL: " + lastObjName); }
+	;
+
+interfmetdecl
+	: methoddecl 										{ $$ = $1; }
+	;
 
 kwfunction
 	: KW_FUNCTION  id	{ $$ = $2; }
@@ -530,26 +525,24 @@ kwfunction
 kwprocedure
 	: KW_PROCEDURE id	{ $$ = $2; }
 	;
-kwconstruct
-	: KW_CONSTRUCTOR id	{ $$ = $2; }
-	;
-kwdestruct
-	: KW_DESTRUCTOR  id	{ $$ = $2; }
+kwmetspec
+	: KW_CONSTRUCTOR 	{ $$ = MethodKind.Constructor; }
+	| KW_DESTRUCTOR  	{ $$ = MethodKind.Destructor; }
 	;
 	
 proceduraltype
-	: proceduralsign							{ $$ = $1; }
+	: proceduralsign									{ $$ = $1; }
 	;
 	
 proceduralsign
-	: KW_PROCEDURE formalparams 							{ $$ = new ProceduralType($2); }
+	: KW_PROCEDURE formalparams 						{ $$ = new ProceduralType($2); }
 	| KW_FUNCTION  formalparams funcret					{ $$ = new ProceduralType($2, $3); } 
 	| KW_PROCEDURE formalparams KW_OF KW_OBJECT			{ $$ = new MethodType($2); } 
 	| KW_FUNCTION  formalparams funcret KW_OF KW_OBJECT	{ $$ = new MethodType($2, $3); } 
 	;
 
 funcret
-	: COLON funcrettype					{ $$ = $2;}
+	: COLON funcrettype									{ $$ = $2;}
 	;
 
 
@@ -612,8 +605,8 @@ importdiropt
 	;	
 	
 importdirforced
-	: funcdiropt KW_EXTERNAL externarg SCOL funcdiropt	{ $$ = JoinDirectives($1, $5); if ($$ != null) $1.External = $3; }
-	| funcdiropt KW_FORWARD SCOL funcdiropt				{ $$ = JoinDirectives($1, $4); if ($$ != null) $1.Add((int) ImportDirective.Forward); }
+	: funcdiropt KW_EXTERNAL externarg SCOL funcdiropt	{ $$ = JoinImportDirectives($1, $5, $3); }
+	| funcdiropt KW_FORWARD SCOL funcdiropt				{ $$ = JoinImportDirectives($1, $4, ImportDirective.Forward); }
 	;
 
 externarg
@@ -623,22 +616,22 @@ externarg
 	;
 
 funcdir_noterm_opt
-	:									{ $$ = null	; }
+	:									{ $$ = null ; }
 	| funcdirectlst						{ $$ = $1	; }
 	;
 
 funcdiropt
-	:									{ $$ = null	; }
+	:									{ $$ = null ; }
 	| funcdirectlst SCOL				{ $$ = $1	; }
 	;
 
 metdirectopt
-	:									{ $$ = null	; }
+	:									{ $$ = null ; }
 	| metdirectlst SCOL					{ $$ = $1	; }
 	;
 
 smetdirs
-	:									{ $$ = null	; }
+	:									{ $$ = null ; }
 	| smetdirslst SCOL					{ $$ = $1	; }
 	;
 
@@ -1229,7 +1222,7 @@ classcomplst
 	;
 	
 classcomp
-	: staticopt methoddecl		{ $$ = $2; $2.isStatic = $1; }
+	: staticopt classmetdecl	{ $$ = $2; $2.isStatic = $1; }
 	| property					{ $$ = $1; }
 	;
 
@@ -1253,7 +1246,7 @@ interfcomplst
 	;
 	
 interfcomp
-	: methoddecl				{ $$ = $1; }
+	: interfmetdecl				{ $$ = $1; }
 	| property					{ $$ = $1; }
 	;
 	
@@ -1358,7 +1351,7 @@ typedecl
 	;
 
 idtypeopt
-	: id KW_EQ 	typeopt			{ $$ = lastObjectName = $1; }
+	: id KW_EQ 	typeopt			{ $$ = lastObjName = $1; }
 	;
 
 typeopt		// ignored for now

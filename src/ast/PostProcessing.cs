@@ -34,27 +34,37 @@ namespace crosspascal.ast
 					Node fi = (Node) f.GetValue(root);
 					if (fi != null)
 					{
+						Type bt = f.FieldType;
+
 						// ignore VariableType nodes, that may be reused. no single parent
-						if (!typeof(VariableType).IsAssignableFrom(f.FieldType))
+						if (!typeof(VariableType).IsAssignableFrom(bt))
 							fi.Parent = root;
 
-						if (f.FieldType.BaseType.IsGenericType)
+						if (bt.BaseType.IsGenericType && bt.BaseType.Name.StartsWith("ListNode"))
 						{
-							Type bt = f.FieldType;
-						/* TODO
-							if (bt.IsSubclassOf(ListNode<Node>))
+						//	Type genParamType = bt.BaseType.GetGenericArguments()[0];
+						//	Type genListType  = typeof(ListNode<>).MakeGenericType(genParamType);
+						//	object list = Convert.ChangeType(fi, genListType);
+
+							if (fi is IntegralTypeList)
+								SetParentsList<IntegralType>(fi, root);
+							else if (fi is DeclarationList)
+								SetParentsList<Declaration>(fi, root);
+							else if (fi is ExpressionList)
+								SetParentsList<Expression>(fi, root);
+							else if (fi is StatementList)
+								SetParentsList<Statement>(fi, root);
+							else if (fi is FieldInitList)
+								SetParentsList<FieldInit>(fi, root);
+							else if (fi is EnumValueList)
+								SetParentsList<EnumValue>(fi, root);
+							else if (fi is IdentifierList)
+								SetParentsList<Identifier>(fi, root);
+							else if (fi is NodeList)
 								SetParentsList<Node>(fi, root);
-							else if (f.FieldType is NodeList)
-								SetParentsList<Node>(fi, root);
-							if (f.FieldType is NodeList)
-								SetParentsList<Node>(fi, root);
-							if (f.FieldType is NodeList)
-								SetParentsList<Node>(fi, root);
-								
-						*/
 						}
 						else
-							SetParents(fi, f.FieldType);
+							SetParents(fi, bt);
 					}
 				}
 		}

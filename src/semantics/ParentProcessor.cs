@@ -114,8 +114,8 @@ namespace crosspascal.semantics
 		public override bool Visit(LibraryNode node)
 		{
 			Visit((TranslationUnit) node);
-			TraverseSetParent(node,node.body);
-			TraverseSetParent(node,node.uses);
+			TraverseSetParent(node, node.uses);
+			TraverseSetParent(node, node.body);
 			return true;
 		}
 		
@@ -208,8 +208,8 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(DeclarationSection node)
 		{
-			Visit((Section) node);
-			TraverseSetParent(node,node.uses);
+			TraverseSetParent(node, node.uses);
+			Visit((Section)node);
 			return true;
 		}
 		
@@ -336,60 +336,36 @@ namespace crosspascal.semantics
 			Visit((CallableDeclaration) node);
 			return true;
 		}
-		
-		public override bool Visit(SpecialMethodDeclaration node)
+
+		public override bool Visit(RoutineDefinition node)
 		{
-			Visit((MethodDeclaration) node);
-			return true;
-		}
-		
-		public override bool Visit(ConstructorDeclaration node)
-		{
-			Visit((SpecialMethodDeclaration) node);
-			return true;
-		}
-		
-		public override bool Visit(DestructorDeclaration node)
-		{
-			Visit((SpecialMethodDeclaration) node);
-			return true;
-		}
-		
-		public override bool Visit(CallableDefinition node)
-		{
-			Visit((Declaration) node);
-			TraverseSetParent(node,node.header);
+			Visit((RoutineDeclaration)node);
 			TraverseSetParent(node,node.body);
 			return true;
 		}
-		
-		public override bool Visit(RoutineDefinition node)
-		{
-			Visit((CallableDefinition) node);
-			return true;
-		}
-		
+
 		public override bool Visit(MethodDefinition node)
 		{
-			Visit((CallableDefinition) node);
+			Visit((MethodDeclaration)node);
+			TraverseSetParent(node,node.body);
 			return true;
 		}
-		
-		public override bool Visit(CallableDirectives node)
+
+		public override bool Visit(RoutineDirectives node)
 		{
 			Visit((Node) node);
 			return true;
 		}
 		
-		public override bool Visit(RoutineDirectives node)
+		public override bool Visit(ImportDirectives node)
 		{
-			Visit((CallableDirectives) node);
+			Visit((RoutineDirectives) node);
 			return true;
 		}
 		
 		public override bool Visit(MethodDirectives node)
 		{
-			Visit((CallableDirectives) node);
+			Visit((RoutineDirectives) node);
 			return true;
 		}
 		

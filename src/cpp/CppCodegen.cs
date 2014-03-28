@@ -251,8 +251,8 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(DeclarationSection node)
 		{
-			Visit((Section) node);
 			traverse(node.uses);
+			Visit((Section)node);
 			return true;
 		}
 		
@@ -301,8 +301,6 @@ namespace crosspascal.cpp
             outputCode(name, false, false);
             i++;
 
-			DeclReg.RegisterDeclaration(name, node);
-
 			traverse(node.init);
             outputCode(";", false, true);
             return true;
@@ -310,8 +308,6 @@ namespace crosspascal.cpp
 
 		public override bool Visit(ParamDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
-
 			Visit((ValueDeclaration) node);
 			traverse(node.init);
 			return true;
@@ -319,29 +315,24 @@ namespace crosspascal.cpp
 
 		public override bool Visit(VarParamDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
-
 			Visit((ParamDeclaration) node);
 			return true;
 		}
 
 		public override bool Visit(ConstParamDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
 			Visit((ParamDeclaration) node);
 			return true;
 		}
 
 		public override bool Visit(OutParamDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
 			Visit((ParamDeclaration) node);
 			return true;
 		}
 		
 		public override bool Visit(ConstDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
             string name = node.name as string;
             outputCode("#define "+name+" ", false, false);			
 			traverse(node.init);
@@ -351,15 +342,11 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(TypeDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
-			
 			return true;
 		}
 		
 		public override bool Visit(CallableDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
-			
 			traverse(node.Type);
             string name = node.name as string;
             outputCode(name, false, false);
@@ -386,13 +373,13 @@ namespace crosspascal.cpp
 
 		public override bool Visit(MethodType node)
 		{
-
+			Visit((ProceduralType) node);
 			return true;
 		}
 
 		public override bool Visit(RoutineDeclaration node)
 		{
-			DeclReg.RegisterDeclaration(node.name, node);
+			Visit((CallableDeclaration) node);
 			return true;
 		}
 
@@ -409,63 +396,25 @@ namespace crosspascal.cpp
 
 		public override bool Visit(MethodDeclaration node)
 		{
-		
-			if ((node.type as ProceduralType).funcret == null)
+			Visit((CallableDeclaration) node);
+			
+			if (node.Type.funcret == null)
 				outputCode("void ", false, false);
 			else
-				traverse((node.type as ProceduralType).funcret);
-			if (IsClassDeclaration(node))
-			{
-				DeclReg.RegisterDeclaration(node.name, node);
-				outputCode(node.metname + "(", false, false);
-				traverse((node.type as ProceduralType).@params);
-				outputCode(");", false, true);
-			}
-			else
-			{
-				outputCode(node.objname + "::" + node.metname + "(", false, false);
-				traverse((node.type as ProceduralType).@params);
-				outputCode(")", false, true);
-			}
-
+				traverse(node.Type.funcret);
+				
+			outputCode(node.metname + "(", false, false);
+			traverse(node.Type.@params);
+			outputCode(");", false, true);
 			return true;
 		}
 
-		public override bool Visit(SpecialMethodDeclaration node)
+		public override bool Visit(RoutineDefinition node)
 		{
-			Visit((MethodDeclaration) node);
-			return true;
-		}
-
-		public override bool Visit(ConstructorDeclaration node)
-		{
-			if (IsClassDeclaration(node))
-				DeclReg.RegisterDeclaration(node.name, node);
-			
-			outputCode(node.objname + "::" + node.objname+"(", false, false);
-			traverse((node.type as ProceduralType).@params);
-			outputCode(")", false, true);
-			return true;
-		}
-
-		public override bool Visit(DestructorDeclaration node)
-		{
-			if (IsClassDeclaration(node))
-				DeclReg.RegisterDeclaration(node.name, node);
-
-			outputCode(node.objname + "::~" + node.objname + "(", false, false);
-			traverse((node.type as ProceduralType).@params);
-			outputCode(")", false, true);
-			return true;
-		}
-
-		public override bool Visit(CallableDefinition node)
-		{
-			Visit((Declaration) node);
-			traverse(node.header);
+			Visit((RoutineDeclaration)node);
 			traverse(node.body);
 
-			if (node.header.IsFunction)
+			if (node.IsFunction)
 			{
 				builder.Remove(builder.Length - 3, 3);
 				outputCode("	return result;", true, true);
@@ -476,33 +425,55 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(RoutineDefinition node)
-		{
-			Visit((CallableDefinition)node);
-			return true;
-		}
-
 		public override bool Visit(MethodDefinition node)
 		{
-			Visit((CallableDefinition)node);
-			return true;
-		}
+			Visit((CallableDeclaration) node);
+			
+			if (node.Type.funcret == null)
+				outputCode("void ", false, false);
+			else
+				traverse(node.Type.funcret);
+			
+			String metid;
+			if (node.IsDestructor)
+				metid = "::~" + node.objname;
+			else if (node.IsConstructor)
+				metid = "::" + node.objname;
+			else
+				metid = "::~" + node.metname;
 
-		public override bool Visit(CallableDirectives node)
-		{
-			Visit((Node) node);
+			outputCode(node.objname + metid + "(", false, false);
+					
+			traverse(node.Type.@params);
+			outputCode(")", false, true);
+		
+			traverse(node.body);
+			if (node.IsFunction)
+			{
+				builder.Remove(builder.Length - 3, 3);
+				outputCode("	return result;", true, true);
+				outputCode("}", true, true);
+			}
+
+			outputCode("", false, true);
 			return true;
 		}
 
 		public override bool Visit(RoutineDirectives node)
 		{
-			Visit((CallableDirectives) node);
+			Visit((Node) node);
+			return true;
+		}
+
+		public override bool Visit(ImportDirectives node)
+		{
+			Visit((RoutineDirectives) node);
 			return true;
 		}
 
 		public override bool Visit(MethodDirectives node)
 		{
-			Visit((CallableDirectives) node);
+			Visit((RoutineDirectives) node);
 			return true;
 		}
 

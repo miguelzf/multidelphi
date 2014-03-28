@@ -36,39 +36,51 @@ namespace crosspascal.semantics
 
 	public class DeclarationNotFound : SemanticException
 	{
-		const string DefaultMsg = "Undeclared Identifier: ";
+		protected static string FormatMessage(string basemsg, string idname)
+		{
+			return basemsg + ": " + idname;
+		}
 
-		public DeclarationNotFound(int lineno, string idname) : base(lineno, DefaultMsg + idname) { }
+		const string DefaultMsg = "Undeclared identifier";
 
-		public DeclarationNotFound(string idname) : base(DefaultMsg + idname) { }
+		public DeclarationNotFound(int lineno, string basemsg, string id)
+			: base(lineno, FormatMessage(basemsg,id)) { }
+
+		public DeclarationNotFound(string basemsg, string id)
+			: base(FormatMessage(basemsg,id)) { }
+
+		public DeclarationNotFound(int lineno, string id)
+			: base(lineno, FormatMessage(DefaultMsg, id)) { }
+
+		public DeclarationNotFound(string id)
+			: base(FormatMessage(DefaultMsg, id)) { }
 	}
-
 
 	public class CompositeNotFound : DeclarationNotFound
 	{
 		const string DefaultMsg = "Class or Interface not found";
 
-		public CompositeNotFound(int lineno, string idname) : base(lineno, DefaultMsg + ": "+ idname) { }
+		public CompositeNotFound(int lineno, string idname) : base(lineno, DefaultMsg, idname) { }
 
-		public CompositeNotFound(string idname) : base(DefaultMsg + ": " + idname) { }
+		public CompositeNotFound(string idname) : base(DefaultMsg, idname) { }
 	}
 
 	public class MethordOrFieldNotFound : DeclarationNotFound
 	{
-		const string DefaultMsg = "No Method or Field found";
+		const string DefaultMsg = "Method or Field not found";
 
-		public MethordOrFieldNotFound(int lineno, string idname) : base(lineno, DefaultMsg + ": "+ idname) { }
+		public MethordOrFieldNotFound(int lineno, string idname) : base(lineno, DefaultMsg, idname) { }
 
-		public MethordOrFieldNotFound(string idname) : base(DefaultMsg + ": " + idname) { }
+		public MethordOrFieldNotFound(string idname) : base(DefaultMsg, idname) { }
 	}
 
 	public class FieldNotFound : DeclarationNotFound
 	{
-		const string DefaultMsg = "No Method or Field found";
+		const string DefaultMsg = "Filed not found";
 
-		public FieldNotFound(int lineno, string idname) : base(lineno, DefaultMsg + ": " + idname) { }
+		public FieldNotFound(int lineno, string idname) : base(lineno, DefaultMsg, idname) { }
 
-		public FieldNotFound(string idname) : base(DefaultMsg + ": " + idname) { }
+		public FieldNotFound(string idname) : base(DefaultMsg, idname) { }
 	}
 
 

@@ -32,13 +32,9 @@ namespace crosspascal.ast.nodes
 	///				Interf
 	///		CallableDecl
 	///			RoutineDecl
+	///				RoutineDefinition
 	///			MethodDecl
-	///				SpecialMethod
-	///					Constructor
-	///					Destructor
-	///		CallableDefinition
-	///			RoutineDefinition
-	///			MethodDefinition
+	///				MethodDefitnion
 	#endregion
 
 	/// <summary>

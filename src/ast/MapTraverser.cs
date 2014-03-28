@@ -89,7 +89,8 @@ namespace crosspascal.ast
 				Object oret = mi.Invoke(Processor, new object[] { n });
 
 				if (oret == null)
-				{	Logger.log.Error("Process method " + mi + " invocation failed");
+				{
+					Logger.log.Error("Process method " + mi + " invocation failed");
 					return false;
 				}
 
@@ -97,7 +98,7 @@ namespace crosspascal.ast
 			}
 			catch (TargetInvocationException e)	// wrapper for an exception occurring in the invocation
 			{
-				throw e.InnerException;
+				throw new Exception("Wrapper", e.InnerException);
 			}
 
 		}

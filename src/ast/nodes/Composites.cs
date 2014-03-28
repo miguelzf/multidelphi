@@ -64,9 +64,26 @@ namespace crosspascal.ast.nodes
 
 		// optional
 		public String Name { get; set; }
+		
+		// to be set by the Resolver
+		public int numAncestors { get; set; }
+		// to be set by the Resolver
+		public List<CompositeType> ancestors;
+
+
+		#region Accessors to declared Members
 
 		/// <summary>
 		/// Returns public and published methods
+		/// </summary>
+		public IEnumerable<MethodDeclaration> GetPublicMethods()
+		{
+			var list = sections.Where(x => x.scope == Scope.Public || x.scope == Scope.Published);
+			return list.SelectMany(x => x.decls).Cast<MethodDeclaration>();
+		}
+
+		/// <summary>
+		/// Returns public and published members
 		/// </summary>
 		public IEnumerable<Declaration> GetPublicMembers()
 		{
@@ -77,11 +94,47 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Returns public, protected and published methods
 		/// </summary>
+		public IEnumerable<MethodDeclaration> GetInheritableMethods()
+		{
+			var list = sections.Where(x => x.scope != Scope.Private);
+			return list.SelectMany(x => x.decls).Cast<MethodDeclaration>();
+		}
+
+		/// <summary>
+		/// Returns public, protected and published members
+		/// </summary>
 		public IEnumerable<Declaration> GetInheritableMembers()
 		{
 			var list = sections.Where(x => x.scope != Scope.Private);
 			return list.SelectMany(x => x.Decls());
 		}
+
+		/// <summary>
+		/// Returns all methods
+		/// </summary>
+		public IEnumerable<MethodDeclaration> GetAllMethods()
+		{
+			return sections.SelectMany(x => x.decls).Cast<MethodDeclaration>();
+		}
+
+		/// <summary>
+		/// Returns all fields
+		/// </summary>
+		public IEnumerable<FieldDeclaration> GetAllFields()
+		{
+			return sections.SelectMany(x => x.fields).Cast<FieldDeclaration>();
+		}
+
+		/// <summary>
+		/// Returns all members
+		/// </summary>
+		public IEnumerable<Declaration> GetAllMembers()
+		{
+			return sections.SelectMany(x => x.Decls());
+		}
+
+		#endregion
+
 
 		public CompositeType(ArrayList heritage, ScopedSectionList seclist)
 		{

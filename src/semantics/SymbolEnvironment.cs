@@ -16,11 +16,23 @@ namespace crosspascal.semantics
 
 		SymbolContextNode<T> current;
 
+		// Context path taken
+		Stack<SymbolContextNode<T>> path = new Stack<SymbolContextNode<T>>(1000);
+
 		int numContexts = 0;
 
 		public SymbolEnvironment()
 		{
-			CreateContext("initial: empty default context");
+			root = current = new SymbolContextNode<T>("initial: empty default context");
+		}
+
+		/// <summary>
+		/// Reset path back to root
+		/// </summary>
+		public void Reset()
+		{
+			path = new Stack<SymbolContextNode<T>>(1000);
+			current = root;
 		}
 
 
@@ -55,6 +67,7 @@ namespace crosspascal.semantics
 		{
 			ctx.AddParent(current);
 			current = ctx;
+			numContexts++;
 			EnterContext(0);
 		}
 
@@ -71,7 +84,7 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Export current context by cloning
 		/// </summary>
-		internal SymbolContextNode<T> ExportCurrentContext()
+		internal SymbolContextNode<T> ExportContext()
 		{
 			return current.Clone();
 		}
@@ -92,51 +105,45 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Enters the next context in the DAG, the first of the current context's children
 		/// </summary>
-		public void EnterContext()
+		public string EnterContext()
 		{
-			EnterContext(0);
+			return EnterContext(0);
 		}
 
 		/// <summary>
 		/// Enters the child context with the given 'id'
 		/// </summary>
-		public void EnterContext(string id)
+		public string EnterContext(string id)
 		{
-			EnterContext(current.GetChild(id));
+			return EnterContext(current.GetChild(id));
 		}
 
 		/// <summary>
 		/// Enters the child context in the given index
 		/// </summary>
-		public void EnterContext(int idx)
+		public string EnterContext(int idx)
 		{
-			EnterContext(current.GetChild(idx));
+			return EnterContext(current.GetChild(idx));
 		}
 
 		/// <summary>
 		/// Enters the context passed as argument
 		/// </summary>
-		public void EnterContext(SymbolContextNode<T> ctx)
+		internal string EnterContext(SymbolContextNode<T> ctx)
 		{
 			current = ctx;
+			path.Push(ctx);
+			return ctx.id;
 		}
 
 		/// <summary>
-		/// Leaves the current Symbol context and switches to its 1st parent
+		/// Leaves the current Symbol context and switches to the last context
 		/// </summary>
 		public String ExitContext()
 		{
-			return ExitContext(0);
-		}
-
-		/// <summary>
-		/// Leaves the current Symbol context and switches to the parent with the index
-		/// </summary>
-		public String ExitContext(int idx)
-		{
-			string id = current.id;
-			current = current.GetParent(idx);
-			return id;
+			var ctx = path.Pop();
+			current = ctx;
+			return ctx.id;
 		}
 
 		#endregion
@@ -151,6 +158,10 @@ namespace crosspascal.semantics
 			return true;
 		}
 
+		/// <summary>
+		/// Recursive DFS from bottom to top (children to parents).
+		/// (takes the each parent in depth)
+		/// </summary>
 		T LookupRec(SymbolContextNode<T> ctx,  String key)
 		{
 			T t = ctx.Lookup(key);
@@ -158,7 +169,7 @@ namespace crosspascal.semantics
 				return t;
 
 			foreach (var p in ctx.parents)
-				if ((t = LookupRec(ctx, key)) != null)
+				if ((t = LookupRec(p, key)) != null)
 					return t;
 
 			return null;
@@ -279,11 +290,12 @@ namespace crosspascal.semantics
 			this.allowShadowing = allowShadowing;
 			this.lastInserted = null;
 			this.parents = parents;
-			symbols = new Dictionary<String, T>();
+			children = new List<SymbolContextNode<T>>(16);
+			symbols = new Dictionary<String, T>(32);
 		}
 
 		internal SymbolContextNode(String id = null, bool allowShadowing = true)
-			: this(new List<SymbolContextNode<T>>(10), id, allowShadowing)
+			: this(new List<SymbolContextNode<T>>(4), id, allowShadowing)
 		{
 		}
 
@@ -364,7 +376,7 @@ namespace crosspascal.semantics
 
 
 		/// <summary>
-		/// clones without the parents
+		/// clones without the parents or children
 		/// </summary>
 		internal SymbolContextNode<T> Clone()
 		{

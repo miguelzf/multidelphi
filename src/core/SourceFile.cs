@@ -28,7 +28,7 @@ namespace crosspascal.core
 		/// <summary>
 		/// Symbol context of the Interface section, if it's a unit. To be loaded by the Uses directive
 		/// </summary>
-		internal SymbolContext<Declaration> interfContext;
+		internal SymbolContextNode<Declaration> interfContext;
 
 		/// <summary>
 		/// Get all dependencies' names, both interface and implementation deps

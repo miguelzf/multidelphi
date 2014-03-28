@@ -13,88 +13,56 @@ namespace crosspascal.semantics
 	/// </summary>
 	public class DeclarationsRegistry
 	{
-		public SymbolTable<Declaration> symtab = new SymbolTable<Declaration>();
+		public SymbolEnvironment<Declaration> symEnv = new SymbolEnvironment<Declaration>();
 
 		// probably won't be needed
 		Dictionary<String, TypeDeclaration> builtinTypes = new Dictionary<String, TypeDeclaration>();
 		Dictionary<String, RoutineDeclaration> builtinFunctions = new Dictionary<String, RoutineDeclaration>();
 
+		int DebugLevel = 1;
+
 		public DeclarationsRegistry()
 		{
 		}
 
+		void Debug(string msg)
+		{
+			if (DebugLevel > 0)
+				Console.WriteLine(msg);
+		}
+
 		public void LoadRuntimeNames()
 		{
-			symtab.Push("runtime");
+			symEnv.CreateContext("runtime");
 			LoadBuiltinTypesBasic();
 			LoadBuiltinTypesPointer();
 			LoadBuiltinTypesWindows();	// test
 			LoadBuiltinFunctions();
-			symtab.Push("global");
+			symEnv.CreateContext("global");
 		}
 
 
 		/// <summary>
 		/// Import external context. To load used/imported units
 		/// </summary>
-		internal void ImportContext(SymbolContext<Declaration> ctx)
+		internal void ImportContext(SymbolContextNode<Declaration> ctx)
 		{
-			symtab.ImportCurrentContext(ctx);
+			Debug("IMPORT CONTEXT " + ctx.id);
+			symEnv.ImportParentContext(ctx);
+			symEnv.ExitContext();
 		}
 
 		/// <summary>
-		/// Export current context, should be a unit interface context,
+		/// Export current context. Should be a unit interface context,
 		/// to later be able to load used/import this unit
 		/// </summary>
-		internal SymbolContext<Declaration> ExportContext()
+		internal SymbolContextNode<Declaration> ExportContext()
 		{
-			return symtab.ExportCurrentContext();
+			var ctx = symEnv.ExportContext();
+			Debug("EXPORT CONTEXT " + ctx.id);
+			return ctx;
 		}
 
-
-/*		// Old code
-
-		/// <summary>
-		/// Checks if a declaration is a context-creation declaration (routine or object).
-		/// If it is, then it has already opened a new context, and now the
-		/// declaration must be registered in the previous context
-		/// </summary>
-		bool CheckContextCreation(String name, Declaration decl)
-		{
-			TypeNode tdecl = decl.type;
-
-			if (decl is CallableDeclaration || decl is CompositeDeclaration
-				// re-used record types have been already declared, so they never come here
-			|| (decl is VariantDeclaration && tdecl is RecordType))
-			{
-				if (!symtab.AddToPrevious(name, decl))
-					throw new IdentifierRedeclared(name);
-				return true;
-			}
-			return false;
-		}
-
-
-		/// <summary>
-		/// Checks if an assignment's lvalue is a call to its declaring function,
-		/// in which case, it is actually a reference to the function's return var.
-		/// Create the aproppriate node
-		/// </summary>
-		public LvalueExpression CheckSameFunctionAssignment(LvalueExpression lval)
-		{
-			// check that the expr is a funcall with a single id
-			if (lval is RoutineCall && ((RoutineCall)lval).func is Identifier)
-			{
-				string name = ((Identifier)((RoutineCall)lval).func).name;
-				// check that the id refers to the declaring function
-				CallableDeclaration decl = GetDeclaratingRoutine();
-				if (decl.IsFunction && decl.name == name)
-					return new Identifier("result");	// standard name for func ret
-			}
-
-			return lval;
-		}
-*/
 
 		/// <summary>
 		/// Register new declaration, of any kind
@@ -107,15 +75,12 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Register new declaration, of any kind
 		/// </summary>
-		public void RegisterDeclaration(String name, Declaration decl)
+		public void RegisterDeclaration(String name, Declaration decl, bool checkCanAdd = true)
 		{
-			// check if the declaration creates a context (classes, functions, records)
-		//	if (CheckContextCreation(name, decl))	// old code. TODO remove
-	
-			if (!symtab.Add(name, decl))
+			if (checkCanAdd && !symEnv.Add(name, decl))
 				throw new IdentifierRedeclared(name);
 
-			Console.WriteLine("Register Decl " + name); // + Environment.NewLine + symtab.ListTable(3));
+			Debug("Register Decl " + name); // + Environment.NewLine + symtab.ListTable(3));
 		}
 
 		/// <summary>
@@ -124,96 +89,138 @@ namespace crosspascal.semantics
 		/// </summary>
 		public Declaration GetDeclaration(String name)
 		{
-			return symtab.Lookup(name);
+			return symEnv.Lookup(name);
 		}
 
-		public void EnterContext(string id = null)
+		public void CreateContext(string id = null, bool allowShadowing = true)
 		{
-			symtab.Push(id);
-			Console.WriteLine("CREATE CONTEXT " + id);
+			symEnv.CreateContext(id, allowShadowing);
+			Debug("CREATE CONTEXT " + id);
 		}
+
+		public void CreateParentContext(string id = null)
+		{
+			symEnv.CreateParentContext(id);
+			Debug("CREATE PARENT CONTEXT " + id);
+		}
+
+		public void EnterContext()
+		{
+			string id = symEnv.EnterContext();
+			Debug("ENTER CONTEXT " + id);
+		}
+
 		public String ExitContext()
 		{
-			string id = symtab.Pop();
-			Console.WriteLine("DESTROY CONTEXT " + id);
+			string id = symEnv.ExitContext();
+			Debug("EXIT CONTEXT " + id);
 			return id;
 		}
 
 
+
 		#region Loading of Class/Interface Contexts
 
-	/*	// Old code
-	
-		/// <summary>
-		/// Searches for the encloding declaring context function, if any.
-		/// </summary>
-		private CallableDeclaration GetDeclaratingRoutine()
+		void LoadAncestorContext(CompositeType type)
 		{
-			Declaration decl = symtab.GetLastSymbolFromContext(1);
-			if (decl is CallableDeclaration)
-				return decl as CallableDeclaration;
-			return null;
+			CreateContext(type.Name);
+			foreach (var decl in type.GetInheritableMembers())
+				RegisterDeclaration(decl);
+		//	ExitContext();
+		}
+
+		void LoadMultipleHeritageContext(InterfaceType type)
+		{
+			CreateParentContext(type.Name);
+			foreach (var decl in type.GetInheritableMembers())
+				RegisterDeclaration(decl);
+			ExitContext();
+		}
+
+		CompositeType LoadAncestors(CompositeType type)
+		{
+			// No real multiple inheritance in Delphi. Load recursively only the 1st inherit
+			if (type.ancestors.Count > 0)
+				LoadAncestors(type.ancestors[0]);
+
+			LoadAncestorContext(type);
+
+			// Load the inherited interfaces as parallel contexts
+			for (int i = 1; i < type.ancestors.Count; i++)
+				LoadMultipleHeritageContext(type.ancestors[0] as InterfaceType);
+
+			return type;
 		}
 
 		/// <summary>
-		/// Searches for a declared name, in a composite-defined declaring context 
-		/// (class or interface) that has declared the current method
+		/// Sets references to inherited types
+		/// </summary> 
+		void SetAncestors(CompositeType type)
+		{
+			type.ancestors = new List<CompositeType>(type.heritage.Count);
+			foreach (string s in type.heritage)
+			{
+				var cdecl = GetDeclaration(s) as CompositeDeclaration;
+				if (cdecl == null)
+					throw new CompositeNotFound(s);
+				type.ancestors.Add(cdecl.Type);
+			}
+
+			// No real multiple inheritance in Delphi. Level is determined by 1st inherit
+			if (type.ancestors.Count > 0)
+				type.numAncestors = type.ancestors.ElementAt<CompositeType>(0).numAncestors + 1;
+			else
+				type.numAncestors = 0;
+		}
+
+		/// <summary>
+		/// Loads all herited ancestor contexts, creates and loads all members in its own context
 		/// </summary>
-		/// <returns></returns>
-		private Declaration GetEnclosedDeclaration(String name)
+		public CompositeType CreateCompositeContext(String cname)
 		{
-			var decl = GetDeclaratingRoutine() as MethodDeclaration;
-			if (decl == null)
-				return null;
-
-			var cldecl = GetDeclaration(decl.objname) as CompositeDeclaration;
-			if (cldecl == null)
-				return null;
-
-			return cldecl.Type.GetInheritableMembers().Where(x => x.name == decl.name).ElementAt(0);
-		}
-	*/
-
-		public void LoadCompositeContext(CompositeDeclaration cdecl)
-		{
-			EnterContext(cdecl.name);
-			foreach (var decl in cdecl.Type.GetInheritableMembers())
-				symtab.Add(decl.name, decl);
-		}
-
-		public int LoadHeritageContext(String cname)
-		{
-			int nstates = 0;
-			var decl = GetDeclaration(cname) as ClassDeclaration;
+			var decl = GetDeclaration(cname) as CompositeDeclaration;
 			if (decl == null)
 				throw new CompositeNotFound(cname);
+			CompositeType type = decl.Type;
 
-			// No real multiple inheritance in Delphi. Load only the 1st inherit, the class
-			if (decl.Type.heritage.Count > 0)
-				nstates += LoadHeritageContext(decl.Type.heritage[0]);
-
-			LoadCompositeContext(decl);
-			return nstates+1;
-		}
-		
-		public void EnterMethodContext(String cname)
-		{
-			int nstatesLoaded = LoadHeritageContext(cname);		// class+heritage
-			EnterContext(""+nstatesLoaded);	// top-level contetx
-			EnterContext("method-params");	// method params context
+			SetAncestors(type);
+			LoadAncestors(type);
+			return type;
 		}
 
-		public void LeaveMethodContext()
+		/// <summary>
+		/// Loads all herited ancestor contexts, and creates in its own context
+		/// </summary>
+		public void CreateInheritedContext(CompositeType type)
+		{		
+			SetAncestors(type);
+
+			// No real multiple inheritance in Delphi. Load recursively only the 1st inherit
+			if (type.ancestors.Count > 0)
+				LoadAncestors(type.ancestors[0]);
+
+			CreateContext(type.Name);
+
+			// Load the inherited interfaces as parallel contexts
+			for (int i = 1; i < type.ancestors.Count; i++)
+				LoadMultipleHeritageContext(type.ancestors[0] as InterfaceType);
+		}
+
+
+		public void EnterCompositeContext(CompositeType type)
 		{
-			ExitContext();	// method params
-			string id = ExitContext();
-			Console.WriteLine("ID = " + id);
-			int nInherited = Int32.Parse(id);
-			for (int i = 0; i < nInherited; i++)
+			for (int i = 0; i < type.numAncestors; i++)
+				EnterContext();
+		}
+
+		public void LeaveCompositeContext(CompositeType type)
+		{
+			for (int i = 0; i < type.numAncestors; i++)
 				ExitContext();
 		}
 
 		#endregion
+
 
 
 		Declaration FetchMethodOrField(String name)
@@ -301,6 +308,7 @@ namespace crosspascal.semantics
 		#endregion
 
 
+
 		#region Lookup of Value Declarations
 
 		/// <summary>
@@ -347,8 +355,6 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Parametric Fetch function for ValueDeclarations
 		/// </summary>
-		/// <param name="name"></param>
-		/// <returns></returns>
 		public T FetchValue<T>(String name) where T : ValueDeclaration
 		{
 			return (T) FetchValue(name, typeof(T));
@@ -372,6 +378,7 @@ namespace crosspascal.semantics
 		#endregion
 
 
+
 		#region Loading of Built-in types
 
 		void CreateBuiltinType(String name, VariableType type)
@@ -389,7 +396,7 @@ namespace crosspascal.semantics
 			var rtype = routine.Type;
 			if (rtype.funcret != null || rtype.@params != null)
 			{
-				EnterContext("builtin func " + routine.name);
+				CreateContext("builtin func " + routine.name);
 				
 				foreach (var p in rtype.@params)
 					RegisterDeclaration(p);
@@ -403,10 +410,6 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Load the built-in basic types.
 		/// </summary>
-		/// <remarks>
-		/// Warning! Cannot be called from the constructor. Creates a circular dependency where 
-		/// for each created built-in, the Declaration tries to register the typename in the global TRegister
-		/// </remarks>
 		public void LoadBuiltinTypesBasic()
 		{
 			CreateBuiltinType("boolean", BoolType.Single);
@@ -438,16 +441,11 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Load the built-in pointer types.
 		/// </summary>
-		/// <remarks>
-		/// Warning! Cannot be called from the constructor. Creates a circular dependency where 
-		/// for each created built-in, the Declaration tries to register the typename in the global TRegister
-		/// </remarks>
 		public void LoadBuiltinTypesPointer()
 		{
 			CreateBuiltinType("pchar", new PointerType(StringType.Single));
 			CreateBuiltinType("pboolean", new PointerType(BoolType.Single));
 			CreateBuiltinType("pbyte", new PointerType(BoolType.Single));
-
 			CreateBuiltinType("pshortstring", new PointerType(StringType.Single));
 			CreateBuiltinType("pwidestr", new PointerType(StringType.Single));
 			CreateBuiltinType("preal48", new PointerType(DoubleType.Single));
@@ -474,8 +472,6 @@ namespace crosspascal.semantics
 		{
 			CreateBuiltinType("thandle", IntegerType.Single);
 		}
-
-
 
 		public void LoadBuiltinFunctions()
 		{

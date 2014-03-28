@@ -84,8 +84,8 @@ namespace crosspascal.core
 				Console.WriteLine("Parsed OK: " + ast.name + " " + ast.ToString());
 				Console.ResetColor();
 
-				//PostProcessing.SetParents(ast);
-				new ParentProcessor().StartProcessing(ast);
+				PostProcessing.SetParents(ast);
+			//	new ParentProcessor().StartProcessing(ast);
 				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
 				resolver.Reset(sf);
 				resolver.StartProcessing(ast);

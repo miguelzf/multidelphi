@@ -31,8 +31,8 @@ namespace crosspascal.ast.nodes
 		public TypeNode funcret { get; set; }
 		public OutParamDeclaration returnVar;
 
-		CallableDirectives _directives;
-		public CallableDirectives Directives
+		RoutineDirectives _directives;
+		public RoutineDirectives Directives
 		{
 			get { return _directives; }
 			set
@@ -43,7 +43,7 @@ namespace crosspascal.ast.nodes
 			}
 		}
 
-		public ProceduralType(DeclarationList @params, TypeNode ret = null, CallableDirectives dirs = null)
+		public ProceduralType(DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
 		{
 			this.@params = @params;
 			this.funcret = ret;
@@ -68,7 +68,7 @@ namespace crosspascal.ast.nodes
 
 	public class MethodType : ProceduralType
 	{
-		public MethodType(DeclarationList @params, TypeNode ret = null, CallableDirectives dirs = null)
+		public MethodType(DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
 			: base(@params, ret, dirs)
 		{ 
 		}
@@ -95,10 +95,13 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Gets this callable type's Directives
 		/// </summary>
-		public CallableDirectives Directives
+		public RoutineDirectives Directives
 		{
 			get { return Type.Directives; }
-			set { Type.Directives = value;}
+			set {
+				if (value != null)	// cannot set to null!
+					Type.Directives = value;
+				}
 		}
 
 		/// <summary>
@@ -107,12 +110,27 @@ namespace crosspascal.ast.nodes
 		public bool IsFunction { get { return Type.funcret != null; } }
 
 		/// <summary>
-		/// Gets the fully qualified name of this callable (obj+metname for methods)
+		/// Gets the fully qualified name of this callable 
+		/// (obj+metname for methods, plus parameter types for overloads)
+		/// To be set by the Resolver
 		/// </summary>
-		public abstract String FullName();
+		public String QualifiedName;
 
-		public CallableDeclaration(string name, DeclarationList @params, TypeNode ret = null, CallableDirectives dirs = null)
+		/// <summary>
+		/// Gets the full method name, withhout parameters
+		/// </summary>
+		public abstract String Fullname();
+
+		public CallableDeclaration(string name, DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
 			: base(name, new ProceduralType(@params, ret, dirs))
+		{
+		}
+
+		/// <summary>
+		/// Construct from a procedural type
+		/// </summary>
+		public CallableDeclaration(string name, ProceduralType type)
+			: base(name, type)
 		{
 		}
 	}
@@ -122,13 +140,31 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class RoutineDeclaration : CallableDeclaration
 	{
-		public override string FullName()
+		private string fullname;
+		public override string Fullname()
 		{
 			return name;
 		}
 
+		// to be set by the resolver. 
+		public Section declaringScope;
+
 		public RoutineDeclaration(string name, DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
-			: base(name, @params, ret, dirs) { }
+			: base(name, @params, ret, dirs)
+		{
+			if (Directives == null)
+				Directives = new RoutineDirectives();
+		}
+
+		/// <summary>
+		/// Construct from a procedural type
+		/// </summary>
+		public RoutineDeclaration(string name, ProceduralType type)
+			: base(name, type)
+		{
+			if (Directives == null)
+				Directives = new RoutineDirectives();
+		}
 	}
 
 	/// <summary>
@@ -140,20 +176,33 @@ namespace crosspascal.ast.nodes
 		public String objname;
 		public String metname;
 
+		public MethodKind kind;
+
+		public bool IsDefault     { get { return kind == MethodKind.Default		; } }
+		public bool IsConstructor { get { return kind == MethodKind.Constructor	; } }
+		public bool IsDestructor  { get { return kind == MethodKind.Destructor	; } }
+
 		private string fullname;
-		public override string FullName()
+		public override string Fullname()
 		{
 			return fullname;
 		}
 
+		// to be set by the resolver
+		public CompositeType declaringType;
+
 		public MethodDeclaration(string objname, string name, DeclarationList @params, TypeNode ret = null,
-								MethodDirectives dirs = null)
+								RoutineDirectives dirs = null, MethodKind kind = MethodKind.Default)
 			: base(name, @params, ret, dirs)
 		{
 			this.metname = name;
 			this.objname = objname;
 			isStatic = false;
 			fullname = objname + "." + name;
+			this.kind = kind;
+
+			if (Directives == null)
+				Directives = new MethodDirectives();
 
 			foreach (var param in @params)
 				if (param.name == "self")
@@ -161,63 +210,52 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class SpecialMethodDeclaration : MethodDeclaration
+	public enum MethodKind
 	{
-		public SpecialMethodDeclaration(string objname, string name, DeclarationList @params,
-										MethodDirectives dirs = null)
-			: base(name, objname, @params, null, dirs)	{	}
+		Default,
+		Constructor,
+		Destructor
 	}
-
-	public class ConstructorDeclaration : SpecialMethodDeclaration
-	{
-		public ConstructorDeclaration(string objname, string name, DeclarationList @params,
-										MethodDirectives dirs = null)
-			: base(name, objname, @params, dirs) { }
-	}
-
-	public class DestructorDeclaration : SpecialMethodDeclaration
-	{
-		public DestructorDeclaration(string objname, string name, DeclarationList @params,
-										MethodDirectives dirs = null)
-			: base(name, objname, @params, dirs) { }
-	}
-
-
+	
 
 	/// <summary>
-	/// Callable definition/implementation
+	/// Routine definition (implementation)
 	/// </summary>
-	public abstract class CallableDefinition : Declaration
+	public class RoutineDefinition : RoutineDeclaration
 	{
-		public CallableDeclaration header;
 		public RoutineBody body;
 
-		public CallableDefinition(CallableDeclaration header, RoutineBody body)
+		public RoutineDefinition(string name, DeclarationList @params, TypeNode ret = null,
+								RoutineDirectives dirs = null,  RoutineBody body = null)
+			: base(name, @params, ret, dirs)
 		{
-			this.header = header;
+			this.body = body;
+		}
+
+		/// <summary>
+		/// Construct from a procedural type
+		/// </summary>
+		public RoutineDefinition(string name, ProceduralType type, RoutineDirectives dirs = null,  RoutineBody body = null)
+			: base(name, type)
+		{
+			this.Directives.Add(dirs);
 			this.body = body;
 		}
 	}
 
 	/// <summary>
-	/// Routine definition/implementation
+	/// Method definition (implementation)
 	/// </summary>
-	public class RoutineDefinition : CallableDefinition
+	public class MethodDefinition : MethodDeclaration
 	{
-		public RoutineDefinition(RoutineDeclaration header, RoutineBody body)
-			: base (header, body)
-		{
-		}
-	}
+		public RoutineBody body;
 
-	/// <summary>
-	/// Method definition/implementation
-	/// </summary>
-	public class MethodDefinition : CallableDefinition
-	{
-		public MethodDefinition(MethodDeclaration header, RoutineBody body)
-			: base(header, body)
+		public MethodDefinition(string objname, string name, DeclarationList @params,
+								TypeNode ret = null,  RoutineDirectives dirs = null,
+								MethodKind kind = MethodKind.Default, RoutineBody body = null)
+			: base(objname, name, @params, ret, dirs)
 		{
+			this.body = body;
 		}
 	}
 
@@ -230,7 +268,7 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// Callable Units Directives
 	/// </summary>
-	public abstract class CallableDirectives : Node
+	public class RoutineDirectives : Node
 	{
 		private CallConvention _callconv = 0;
 		public CallConvention   Callconv
@@ -244,14 +282,14 @@ namespace crosspascal.ast.nodes
 
 		HashSet<GeneralDirective> generaldirs = new HashSet<GeneralDirective>();
 
-		public CallableDirectives(int dir = 0)
+		public RoutineDirectives(int dir = 0)
 		{
 			_callconv = 0;
 			if (dir != 0)
 				Add(dir);
 		}
 
-		public virtual void Add(CallableDirectives dirs)
+		public virtual void Add(RoutineDirectives dirs)
 		{
 			if (dirs == null)
 				return;
@@ -269,6 +307,16 @@ namespace crosspascal.ast.nodes
 				Callconv = (CallConvention)dir;
 			else
 				Error("Invalid routine diretive");
+		}
+
+		public virtual bool Contains(int dir)
+		{
+			if (Enum.IsDefined(typeof(GeneralDirective), dir))
+				return generaldirs.Contains((GeneralDirective)dir);
+			else if (Enum.IsDefined(typeof(CallConvention), dir))
+				return Callconv == (CallConvention)dir;
+			else
+				return Error("Invalid routine diretive");
 		}
 
 		/// <summary>
@@ -290,9 +338,9 @@ namespace crosspascal.ast.nodes
 
 		public override bool Equals(object o)
 		{
-			if (o == null || !(o is CallableDirectives))
+			if (o == null || !(o is RoutineDirectives))
 				return false;
-			CallableDirectives rtype = (CallableDirectives) o;
+			RoutineDirectives rtype = (RoutineDirectives) o;
 			return Callconv == rtype.Callconv && generaldirs.SequenceEqual(rtype.generaldirs);
 		}
 	}
@@ -301,7 +349,7 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// Routine Directives
 	/// </summary>
-	public class RoutineDirectives : CallableDirectives
+	public class ImportDirectives : RoutineDirectives
 	{
 		private ImportDirective _importdir = ImportDirective.Default;
 		public ImportDirective Importdir
@@ -325,7 +373,12 @@ namespace crosspascal.ast.nodes
 			}
 		}
 
-		public RoutineDirectives(int dir = 0)
+		public ImportDirectives(ImportDirective dir)
+		{
+			Importdir = dir;
+		}
+
+		public ImportDirectives(int dir = 0)
 		{
 			Add(dir);
 		}
@@ -336,6 +389,19 @@ namespace crosspascal.ast.nodes
 				Importdir = (ImportDirective) dir;
 			else 
 				base.Add(dir);
+		}
+
+		public override void Add(RoutineDirectives dirs)
+		{
+			base.Add(dirs);
+		}
+
+		public virtual bool Contains(int dir)
+		{
+			if (Enum.IsDefined(typeof(ImportDirective), dir))
+				return Importdir == (ImportDirective)dir;
+			else
+				return base.Contains(dir);
 		}
 
 		/// <summary>
@@ -352,7 +418,7 @@ namespace crosspascal.ast.nodes
 		{
 			if (!base.Equals(o))
 				return false;
-			var ot = (RoutineDirectives) o;
+			var ot = (ImportDirectives) o;
 			return Importdir == ot.Importdir && External.Equals(ot.External);
 		}
 	}
@@ -360,7 +426,7 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// Method Directives
 	/// </summary>
-	public class MethodDirectives : CallableDirectives
+	public class MethodDirectives : RoutineDirectives
 	{
 		public HashSet<MethodDirective> methoddirs = new HashSet<MethodDirective>();
 
@@ -379,6 +445,14 @@ namespace crosspascal.ast.nodes
 			base.Add(dirs);
 			foreach (MethodDirective dir in dirs.methoddirs)
 				methoddirs.Add(dir);
+		}
+
+		public virtual bool Contains(int dir)
+		{
+			if (Enum.IsDefined(typeof(MethodDirective), dir))
+				return methoddirs.Contains((MethodDirective)dir);
+			else
+				return base.Contains(dir);
 		}
 
 		/// <summary>
@@ -413,13 +487,12 @@ namespace crosspascal.ast.nodes
 
 	#region Directives' Constants
 
-	public struct ExternalDirective
+	public class ExternalDirective
 	{
 		public Expression File { get; set; }
 		public Expression Name { get; set; }
 
 		public ExternalDirective(Expression file, Expression name = null)
-			: this()
 		{
 			File = file;
 			Name = name;

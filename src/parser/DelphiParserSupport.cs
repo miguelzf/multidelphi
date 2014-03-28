@@ -171,12 +171,19 @@ namespace crosspascal.parser
 
 		// Internal helpers
 
-		CallableDirectives JoinDirectives(CallableDirectives d1, CallableDirectives d2)
+		ImportDirectives JoinImportDirectives(RoutineDirectives d1, RoutineDirectives d2, ExternalDirective e)
 		{
-			if (d1 == null)
-				return d2;
-			d1.Add(d2);
-			return d1;
+			var id = JoinImportDirectives(d1, d2, ImportDirective.External);
+			id.External = e;
+			return id;
+		}
+
+		ImportDirectives JoinImportDirectives(RoutineDirectives d1, RoutineDirectives d2, ImportDirective i)
+		{
+			var id = new ImportDirectives(i);
+			id.Add(d1);
+			id.Add(d2);
+			return id;
 		}
 
 		bool CheckDirectiveId(String expected, String idtoken)

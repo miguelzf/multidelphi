@@ -100,8 +100,8 @@ namespace crosspascal.ast
 		public virtual bool Visit(LibraryNode node)
 		{
 			Visit((TranslationUnit) node);
-			traverse(node.body);
 			traverse(node.uses);
+			traverse(node.body);
 			return true;
 		}
 		
@@ -194,8 +194,8 @@ namespace crosspascal.ast
 		
 		public virtual bool Visit(DeclarationSection node)
 		{
-			Visit((Section) node);
 			traverse(node.uses);
+			Visit((Section)node);
 			return true;
 		}
 		
@@ -323,59 +323,35 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(SpecialMethodDeclaration node)
-		{
-			Visit((MethodDeclaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ConstructorDeclaration node)
-		{
-			Visit((SpecialMethodDeclaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(DestructorDeclaration node)
-		{
-			Visit((SpecialMethodDeclaration) node);
-			return true;
-		}
-		
-		public virtual bool Visit(CallableDefinition node)
-		{
-			Visit((Declaration) node);
-			traverse(node.header);
-			traverse(node.body);
-			return true;
-		}
-		
 		public virtual bool Visit(RoutineDefinition node)
 		{
-			Visit((CallableDefinition) node);
+			Visit((RoutineDeclaration)node);
+			traverse(node.body); 
 			return true;
 		}
 		
 		public virtual bool Visit(MethodDefinition node)
 		{
-			Visit((CallableDefinition) node);
-			return true;
-		}
-		
-		public virtual bool Visit(CallableDirectives node)
-		{
-			Visit((Node) node);
+			Visit((MethodDeclaration)node);
+			traverse(node.body);
 			return true;
 		}
 		
 		public virtual bool Visit(RoutineDirectives node)
 		{
-			Visit((CallableDirectives) node);
+			Visit((Node) node);
+			return true;
+		}
+		
+		public virtual bool Visit(ImportDirectives node)
+		{
+			Visit((RoutineDirectives) node);
 			return true;
 		}
 		
 		public virtual bool Visit(MethodDirectives node)
 		{
-			Visit((CallableDirectives) node);
+			Visit((RoutineDirectives) node);
 			return true;
 		}
 		

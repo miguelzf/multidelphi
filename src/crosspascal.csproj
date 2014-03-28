@@ -98,6 +98,9 @@
     </Compile>
     <Compile Include="semantics\ParentProcessor.cs" />
     <Compile Include="semantics\SemanticErrors.cs" />
+    <Compile Include="semantics\SymbolEnvironment.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="semantics\SymbolTable.cs" />
     <Compile Include="semantics\TypeValidator.cs" />
     <Compile Include="testunits\CppProgram.cs" />
