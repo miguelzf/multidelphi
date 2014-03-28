@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace crosspascal.semantics
 {
+	// Unused for now
+
 	/// <summary>
 	/// Stack-based symbol table
 	/// </summary>
@@ -42,31 +44,6 @@ namespace crosspascal.semantics
 			current = contexts.Peek();
 			return ret;
 		}
-
-		/// <summary>
-		/// Add to previous context
-		/// </summary>
-		public bool AddToPrevious(String key, T symb)
-		{
-			if (!CheckValidKey(key))
-				return false;
-
-			if (!CanAddSymbol(key))
-				return false;
-
-			// Stack.ElementAt starts counting from the most *recent* pushed
-			return contexts.ElementAt(1).Add(key,symb);
-		}
-
-		/// <summary>
-		/// Get last symbol from the ctxIndex-previous context.
-		/// The current context is ctxIndex = 0
-		/// </summary>
-		public T GetLastSymbolFromContext(int ctxIndex)
-		{
-			return contexts.ElementAt(ctxIndex).lastInserted;
-		}
-
 
 		bool CheckValidKey(String key)
 		{
@@ -160,7 +137,7 @@ namespace crosspascal.semantics
 			int i = 0;
 			foreach (var c in contexts)
 			{
-				if (i++ == nctxs) //|| c.id == "runtime")
+				if (i++ == nctxs || c.id == "runtime")
 					break;
 				outp += c.ListContext() + sep;
 			}

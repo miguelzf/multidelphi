@@ -80,7 +80,9 @@ namespace crosspascal.core
 					continue;
 				}
 
+				Console.ForegroundColor = ConsoleColor.Green;
 				Console.WriteLine("Parsed OK: " + ast.name + " " + ast.ToString());
+				Console.ResetColor();
 
 				//PostProcessing.SetParents(ast);
 				new ParentProcessor().StartProcessing(ast);

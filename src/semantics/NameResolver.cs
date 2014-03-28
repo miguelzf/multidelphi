@@ -43,7 +43,9 @@ namespace crosspascal.semantics
 
 		bool Error(string msg)
 		{
+			Console.ForegroundColor = ConsoleColor.Red;
 			Console.WriteLine("[ERROR in Name Resolving] " + msg);
+			Console.ResetColor();
 			return false;
 		}
 
@@ -254,7 +256,7 @@ namespace crosspascal.semantics
 		{
 			nameReg.EnterContext("Routine Def body");
 			Visit((CodeSection) node);
-			nameReg.LeaveContext();
+			nameReg.ExitContext();
 			return true;
 		}
 		
@@ -414,7 +416,7 @@ namespace crosspascal.semantics
 			TraverseResolve(node, node.Directives);
 
 			if (!(node.Parent is CallableDefinition))
-				nameReg.LeaveContext();
+				nameReg.ExitContext();
 			// else, keep context open for func body
 
 			return true;
@@ -437,7 +439,7 @@ namespace crosspascal.semantics
 			TraverseResolve(node, node.Directives);
 
 			if (!(node.Parent is CallableDefinition))
-				nameReg.LeaveContext();
+				nameReg.ExitContext();
 			// else, keep context open for func body
 			return true;
 		}
@@ -471,7 +473,7 @@ namespace crosspascal.semantics
 		public override bool Visit(RoutineDefinition node)
 		{
 			Visit((CallableDefinition) node);
-			nameReg.LeaveContext();			// leave declaring/header context
+			nameReg.ExitContext();			// leave declaring/header context
 			return true;
 		}
 		
@@ -523,7 +525,7 @@ namespace crosspascal.semantics
 			Visit((TypeNode) node);
 			nameReg.EnterContext("Composite");
 			traverse(node.sections);
-			nameReg.LeaveContext();
+			nameReg.ExitContext();
 			return true;
 		}
 		
@@ -1549,7 +1551,7 @@ namespace crosspascal.semantics
 
 			nameReg.EnterContext("record");
 			traverse(node.compTypes);
-			nameReg.LeaveContext();
+			nameReg.ExitContext();
 			return true;
 		}
 

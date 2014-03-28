@@ -52,6 +52,7 @@ namespace crosspascal.semantics
 		}
 
 
+/*		// Old code
 
 		/// <summary>
 		/// Checks if a declaration is a context-creation declaration (routine or object).
@@ -73,7 +74,7 @@ namespace crosspascal.semantics
 			return false;
 		}
 
-		
+
 		/// <summary>
 		/// Checks if an assignment's lvalue is a call to its declaring function,
 		/// in which case, it is actually a reference to the function's return var.
@@ -93,7 +94,7 @@ namespace crosspascal.semantics
 
 			return lval;
 		}
-
+*/
 
 		/// <summary>
 		/// Register new declaration, of any kind
@@ -131,7 +132,7 @@ namespace crosspascal.semantics
 			symtab.Push(id);
 			Console.WriteLine("CREATE CONTEXT " + id);
 		}
-		public String LeaveContext()
+		public String ExitContext()
 		{
 			string id = symtab.Pop();
 			Console.WriteLine("DESTROY CONTEXT " + id);
@@ -141,6 +142,8 @@ namespace crosspascal.semantics
 
 		#region Loading of Class/Interface Contexts
 
+	/*	// Old code
+	
 		/// <summary>
 		/// Searches for the encloding declaring context function, if any.
 		/// </summary>
@@ -169,6 +172,7 @@ namespace crosspascal.semantics
 
 			return cldecl.Type.GetInheritableMembers().Where(x => x.name == decl.name).ElementAt(0);
 		}
+	*/
 
 		public void LoadCompositeContext(CompositeDeclaration cdecl)
 		{
@@ -201,12 +205,12 @@ namespace crosspascal.semantics
 
 		public void LeaveMethodContext()
 		{
-			LeaveContext();	// method params
-			string id = LeaveContext();
+			ExitContext();	// method params
+			string id = ExitContext();
 			Console.WriteLine("ID = " + id);
 			int nInherited = Int32.Parse(id);
 			for (int i = 0; i < nInherited; i++)
-				LeaveContext();
+				ExitContext();
 		}
 
 		#endregion
@@ -392,7 +396,7 @@ namespace crosspascal.semantics
 				if (rtype.returnVar != null)
 					RegisterDeclaration(rtype.returnVar);
 
-				LeaveContext();
+				ExitContext();
 			}
 		}
 
