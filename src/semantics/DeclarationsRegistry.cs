@@ -208,15 +208,21 @@ namespace crosspascal.semantics
 		}
 
 
+		/// <summary>
+		/// Enters all inherited contexts + its own
+		/// </summary>
 		public void EnterCompositeContext(CompositeType type)
 		{
-			for (int i = 0; i < type.numAncestors; i++)
+			for (int i = 0; i <= type.numAncestors; i++)
 				EnterContext();
 		}
 
-		public void LeaveCompositeContext(CompositeType type)
+		/// <summary>
+		/// Enters all inherited contexts + its own
+		/// </summary>
+		public void ExitCompositeContext(CompositeType type)
 		{
-			for (int i = 0; i < type.numAncestors; i++)
+			for (int i = 0; i <= type.numAncestors; i++)
 				ExitContext();
 		}
 
@@ -386,7 +392,8 @@ namespace crosspascal.semantics
 		{
 			var decl = new TypeDeclaration(name, type);
 			builtinTypes.Add(name, decl);
-			RegisterDeclaration(name, decl);
+			if (!symEnv.Add(name, decl))
+				throw new IdentifierRedeclared(name);
 		}
 
 		void CreateBuiltinFunction(RoutineDeclaration routine)
@@ -397,14 +404,14 @@ namespace crosspascal.semantics
 			var rtype = routine.Type;
 			if (rtype.funcret != null || rtype.@params != null)
 			{
-				CreateContext("builtin func " + routine.name);
+				symEnv.CreateContext("builtin func " + routine.name);
 				
 				foreach (var p in rtype.@params)
 					RegisterDeclaration(p);
 				if (rtype.returnVar != null)
 					RegisterDeclaration(rtype.returnVar);
 
-				ExitContext();
+				symEnv.ExitContext();
 			}
 		}
 

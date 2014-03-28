@@ -486,7 +486,7 @@ namespace crosspascal.semantics
 			traverse(node.Type);
 			traverse(node.Directives);
 			traverse(node.body);	// opens context
-			nameReg.LeaveCompositeContext(node.declaringType);
+			nameReg.ExitCompositeContext(node.declaringType);
 			return true;
 		}
 
@@ -566,7 +566,7 @@ namespace crosspascal.semantics
 			Visit((TypeNode)node);
 			nameReg.CreateInheritedContext(node);
 			traverse(node.sections);
-			nameReg.ExitContext();
+			nameReg.ExitCompositeContext(node);
 			return true;
 		}
 		
