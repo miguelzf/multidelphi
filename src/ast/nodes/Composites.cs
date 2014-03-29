@@ -71,71 +71,6 @@ namespace crosspascal.ast.nodes
 		public List<CompositeType> ancestors;
 
 
-		#region Accessors to declared Members
-
-		/// <summary>
-		/// Returns public and published methods
-		/// </summary>
-		public IEnumerable<MethodDeclaration> GetPublicMethods()
-		{
-			var list = sections.Where(x => x.scope == Scope.Public || x.scope == Scope.Published);
-			return list.SelectMany(x => x.decls).Cast<MethodDeclaration>();
-		}
-
-		/// <summary>
-		/// Returns public and published members
-		/// </summary>
-		public IEnumerable<Declaration> GetPublicMembers()
-		{
-			var list = sections.Where(x => x.scope == Scope.Public || x.scope == Scope.Published);
-			return list.SelectMany(x => x.Decls());
-		}
-
-		/// <summary>
-		/// Returns public, protected and published methods
-		/// </summary>
-		public IEnumerable<MethodDeclaration> GetInheritableMethods()
-		{
-			var list = sections.Where(x => x.scope != Scope.Private);
-			return list.SelectMany(x => x.decls).Cast<MethodDeclaration>();
-		}
-
-		/// <summary>
-		/// Returns public, protected and published members
-		/// </summary>
-		public IEnumerable<Declaration> GetInheritableMembers()
-		{
-			var list = sections.Where(x => x.scope != Scope.Private);
-			return list.SelectMany(x => x.Decls());
-		}
-
-		/// <summary>
-		/// Returns all methods
-		/// </summary>
-		public IEnumerable<MethodDeclaration> GetAllMethods()
-		{
-			return sections.SelectMany(x => x.decls).Cast<MethodDeclaration>();
-		}
-
-		/// <summary>
-		/// Returns all fields
-		/// </summary>
-		public IEnumerable<FieldDeclaration> GetAllFields()
-		{
-			return sections.SelectMany(x => x.fields).Cast<FieldDeclaration>();
-		}
-
-		/// <summary>
-		/// Returns all members
-		/// </summary>
-		public IEnumerable<Declaration> GetAllMembers()
-		{
-			return sections.SelectMany(x => x.Decls());
-		}
-
-		#endregion
-
-
 		public CompositeType(ArrayList heritage, ScopedSectionList seclist)
 		{
 			this.heritage = new List<String>(heritage.Cast<String>());
@@ -143,8 +78,141 @@ namespace crosspascal.ast.nodes
 			sections = seclist;
 			if (sections == null)
 				sections = new ScopedSectionList();
+
+			// to be filled during resolving
+			ancestors = new List<CompositeType>(heritage.Count);
 		}
+
+
+		#region Accessors to declared Members
+
+		/// <summary>
+		/// Returns public and published methods
+		/// </summary>
+		public virtual IEnumerable<MethodDeclaration> GetPublicMethods()
+		{
+			return GetAllMethods(Scope.Public | Scope.Published);
+		}
+
+		/// <summary>
+		/// Returns public and published members
+		/// </summary>
+		public virtual IEnumerable<Declaration> GetPublicMembers()
+		{
+			return GetAllMembers(Scope.Public | Scope.Published);
+		}
+
+		/// <summary>
+		/// Returns public, protected and published methods
+		/// </summary>
+		public virtual IEnumerable<MethodDeclaration> GetInheritableMethods()
+		{
+			return GetAllMethods(Scope.Public | Scope.Published | Scope.Protected);
+		}
+
+		/// <summary>
+		/// Returns public, protected and published members
+		/// </summary>
+		public virtual IEnumerable<Declaration> GetInheritableMembers()
+		{
+			return GetAllMembers(Scope.Public | Scope.Published | Scope.Protected);
+		}
+
+		/// <summary>
+		/// Returns all members with given scope
+		/// </summary>
+		public virtual IEnumerable<Declaration> GetAllMembers(Scope s = (Scope) 0xffffff)
+		{
+			foreach (var d in sections.Where(x => (x.scope & s) != 0).SelectMany(x => x.Decls()))
+				yield return d;
+
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllMembers(s))
+					yield return d;
+		}
+
+		/// <summary>
+		/// Returns all methods in the given scopes
+		/// </summary>
+		public virtual IEnumerable<MethodDeclaration> GetAllMethods(Scope s = (Scope) 0xffffff)
+		{
+			foreach (var f in sections.Where(x => (x.scope & s) != 0).
+								SelectMany(x => x.decls).Cast<MethodDeclaration>())
+				yield return f;
+
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllMethods(s))
+					yield return d;
+		}
+
+		/// <summary>
+		/// Returns all fields in the given scopes
+		/// </summary>
+		public virtual IEnumerable<FieldDeclaration> GetAllFields(Scope s = (Scope) 0xffffff)
+		{
+			foreach (var f in sections.Where(x => (x.scope & s) != 0).
+								SelectMany(x => x.fields).Cast<FieldDeclaration>())
+				yield return f;
+
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllFields(s))
+					yield return d;
+		}
+
+		/// <summary>
+		/// Returns a member with the given name
+		/// </summary>
+		public virtual Declaration GetMember(String id)
+		{
+			Declaration d;
+			foreach (var s in sections)
+				if ((d = s.GetMember(id)) != null)
+					return d;
+
+			foreach (var a in ancestors)
+				if ((d = a.GetMember(id)) != null)
+					return d;
+
+			return null;
+		}
+
+		/// <summary>
+		/// Returns a method with the given name
+		/// </summary>
+		public virtual MethodDeclaration GetMethod(String id)
+		{
+			MethodDeclaration d;
+			foreach (var s in sections)
+				if ((d = s.GetMethod(id)) != null)
+					return d;
+
+			foreach (var a in ancestors)
+				if ((d = a.GetMethod(id)) != null)
+					return d;
+
+			return null;
+		}
+
+		/// <summary>
+		/// Returns a field with the given name
+		/// </summary>
+		public virtual FieldDeclaration GetField(String id)
+		{
+			FieldDeclaration d;
+			foreach (var s in sections)
+				if ((d = s.GetField(id)) != null)
+					return d;
+
+			foreach (var a in ancestors)
+				if ((d = a.GetField(id)) != null)
+					return d;
+
+			return null;
+		}
+
+		#endregion
 	}
+
 
 	public class ClassType : CompositeType
 	{
@@ -176,6 +244,90 @@ namespace crosspascal.ast.nodes
 		public String qualifid;
 		public ClassType reftype;
 
+		#region Accessors to declared Members
+
+		/// <summary>
+		/// Returns public and published methods
+		/// </summary>
+		public override IEnumerable<MethodDeclaration> GetPublicMethods()
+		{
+			return reftype.GetPublicMethods();
+		}
+
+		/// <summary>
+		/// Returns public and published members
+		/// </summary>
+		public override IEnumerable<Declaration> GetPublicMembers()
+		{
+			return reftype.GetPublicMembers();
+		}
+
+		/// <summary>
+		/// Returns public, protected and published methods
+		/// </summary>
+		public override IEnumerable<MethodDeclaration> GetInheritableMethods()
+		{
+			return reftype.GetInheritableMethods();
+		}
+
+		/// <summary>
+		/// Returns public, protected and published members
+		/// </summary>
+		public override IEnumerable<Declaration> GetInheritableMembers()
+		{
+			return reftype.GetInheritableMembers();
+		}
+
+		/// <summary>
+		/// Returns all methods
+		/// </summary>
+		public override IEnumerable<MethodDeclaration> GetAllMethods(Scope s = (Scope) 0xffffff)
+		{
+			return reftype.GetAllMethods(s);
+		}
+
+		/// <summary>
+		/// Returns all fields
+		/// </summary>
+		public override IEnumerable<FieldDeclaration> GetAllFields(Scope s = (Scope) 0xffffff)
+		{
+			return reftype.GetAllFields(s);
+		}
+
+		/// <summary>
+		/// Returns all members
+		/// </summary>
+		public override IEnumerable<Declaration> GetAllMembers(Scope s = (Scope) 0xffffff)
+		{
+			return reftype.GetAllMembers(s);
+		}
+
+		/// <summary>
+		/// Returns a member with the given name
+		/// </summary>
+		public override Declaration GetMember(String id)
+		{
+			return reftype.GetMember(id);
+		}
+
+		/// <summary>
+		/// Returns a method with the given name
+		/// </summary>
+		public override MethodDeclaration GetMethod(String id)
+		{
+			return reftype.GetMethod(id);
+		}
+
+		/// <summary>
+		/// Returns a field with the given name
+		/// </summary>
+		public override FieldDeclaration GetField(String id)
+		{
+			return reftype.GetField(id);
+		}
+
+		#endregion
+
 		public ClassRefType(String qualifid, ClassType reftype = null)
 			: base(new ArrayList())
 		{
@@ -195,7 +347,7 @@ namespace crosspascal.ast.nodes
 
 	public enum Scope
 	{
-		Public,
+		Public = 9000,
 		Protected,
 		Private,
 		Published
@@ -207,11 +359,11 @@ namespace crosspascal.ast.nodes
 
 		public DeclarationList fields;
 
-		public ScopedSection(Scope scope, DeclarationList fields, DeclarationList components)
-			: base(components)
+		public ScopedSection(Scope scope, DeclarationList fs, DeclarationList cs)
+			: base(cs)
  		{
 			this.scope	= scope;
-			this.fields = fields;
+			this.fields = fs;
 			if (fields == null)
 				fields = new DeclarationList();
 		}
@@ -226,6 +378,38 @@ namespace crosspascal.ast.nodes
 			foreach (var d in decls)
 				yield return d;
 		}
+
+
+		/// <summary>
+		/// Returns a member with the given name
+		/// </summary>
+		public Declaration GetMember(String id)
+		{
+			Declaration d;
+			if ((d = fields.GetDeclaration(id)) != null)
+				return d;
+			if ((d = decls.GetDeclaration(id)) != null)
+				return d;
+			return null;
+		}
+
+		/// <summary>
+		/// Returns a method with the given name
+		/// </summary>
+		public MethodDeclaration GetMethod(String id)
+		{
+			return decls.GetDeclaration(id) as MethodDeclaration;
+		}
+
+		/// <summary>
+		/// Returns a field with the given name
+		/// </summary>
+		public FieldDeclaration GetField(String id)
+		{
+			return fields.GetDeclaration(id) as FieldDeclaration;
+		}
+
+
 	}
 
 	public class ScopedSectionList : ListNode<ScopedSection>

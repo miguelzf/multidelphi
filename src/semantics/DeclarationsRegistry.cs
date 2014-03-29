@@ -182,7 +182,6 @@ namespace crosspascal.semantics
 		/// </summary> 
 		void SetAncestors(CompositeType type)
 		{
-			type.ancestors = new List<CompositeType>(type.heritage.Count);
 			foreach (string s in type.heritage)
 			{
 				var cdecl = GetDeclaration(s) as CompositeDeclaration;

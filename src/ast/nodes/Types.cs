@@ -22,9 +22,9 @@ namespace crosspascal.ast.nodes
 	/// 	ProceduralType
 	/// 	CompositeType
 	///			ClassType
+	///			 	ClassRefType
 	///			InterfaceType
 	/// 	VariableType
-	///		 	ClassRefType
 	/// 		ScalarType
 	/// 			IntegralType		: IOrdinalType
 	/// 				IntegerType
@@ -46,6 +46,7 @@ namespace crosspascal.ast.nodes
 	///				Set	  > OrdinalType 
 	///				File  > VariableType
 	///		 		Record > TypeNode ...
+	///		 			RecordRefType
 	///			VariantType > VariableType
 	///		 		
 	/// UnresolvedTypes extend each type, so that they may be used in their place
@@ -56,6 +57,10 @@ namespace crosspascal.ast.nodes
 
 	public abstract class TypeNode : Node
 	{
+		public bool IsFieldedType()
+		{
+			return this is RecordRefType || this is CompositeType;
+		}
 
 		public override bool Equals(Object o)
 		{
@@ -80,17 +85,6 @@ namespace crosspascal.ast.nodes
 		public String id;
 
 		public UnresolvedType(String id)
-		{
-			this.id = id;
-		}
-	}
-
-
-	public class UnresolvedClassType : ClassType, IUnresolvedType
-	{
-		public String id;
-
-		public UnresolvedClassType(String id) : base(null)
 		{
 			this.id = id;
 		}
@@ -798,6 +792,17 @@ namespace crosspascal.ast.nodes
 			this.compTypes = compTypes;
 		}
 
+		/// <summary>
+		/// Returns a field with the given name
+		/// </summary>
+		public virtual FieldDeclaration GetField(String id)
+		{
+			foreach (var s in compTypes.Cast<FieldDeclaration>())
+				if (s.name == id)
+					return s;
+			return null;
+		}
+
 		public override bool Equals(Object o)
 		{
 			return base.Equals(o) && (o is RecordType)
@@ -818,6 +823,11 @@ namespace crosspascal.ast.nodes
 		{
 			this.qualifid = qualifid;
 			this.reftype = reftype;
+		}
+
+		public override FieldDeclaration GetField(String id)
+		{
+			return reftype.GetField(id);
 		}
 	}
 	

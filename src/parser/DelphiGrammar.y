@@ -38,7 +38,7 @@ namespace crosspascal.parser
 	// =========================================================================
 
 %start goal
-%type<string> id qualifid idtypeopt labelid stringconst conststr expid
+%type<string> id qualifid idtypeopt labelid stringconst stringorchar stringnonnull conststr expid
 %type<ArrayList> labelidlst idlst
 
 	// sections and declarations
@@ -46,7 +46,8 @@ namespace crosspascal.parser
 %type<UnitItem> containsitem usesitem expitem 
 %type<NodeList> usesopt useslst requires requireslst containslst contains expitemlst
 %type<DeclarationList> interfdecllst maindecllst declseclst interfdecl maindeclsec funcdeclsec basicdeclsec
-%type<DeclarationList> thrvarsec rscstringsec exportsec labeldeclsec constsec typesec varsec rscstringlst vardecl objfield
+%type<DeclarationList> thrvarsec rscstringsec exportsec labeldeclsec constsec
+%type<DeclarationList> typesec varsec rscstringlst vardecl objfield
 %type<ImplementationSection> implsec
 %type<InterfaceSection> interfsec
 %type<InitializationSection> initsec
@@ -72,14 +73,16 @@ namespace crosspascal.parser
 	// statements
 %type<BlockStatement> block funcblock assemblerstmt	blockstmt
 %type<ExceptionBlock> exceptionblock
-%type<Statement> stmt nonlbl_stmt assign goto_stmt ifstmt casestmt elsecase repeatstmt whilestmt forstmt withstmt caseselector ondef
-%type<Statement> tryexceptstmt tryfinallystmt raisestmt 
+%type<Statement> stmt nonlbl_stmt assign goto_stmt ifstmt casestmt elsecase caseselector 
+%type<Statement> tryexceptstmt tryfinallystmt raisestmt ondef repeatstmt whilestmt forstmt withstmt 
 %type<StatementList> caseselectorlst onlst stmtlist asmcode
 
 	// expresssions
-%type<Literal> literal basicliteral discrete stringlit
+%type<Literal> literal basicliteral discrete strorcharlit
+%type<StringLiteral> stringlit
 %type<int> mulop addop relop 
-%type<int> KW_EQ KW_GT KW_LT KW_LE KW_GE KW_NE KW_IN KW_IS KW_SUM KW_SUB KW_OR KW_XOR KW_MUL KW_DIV KW_QUOT KW_MOD KW_SHL KW_SHR KW_AS KW_AND
+%type<int> KW_EQ KW_GT KW_LT KW_LE KW_GE KW_NE KW_IN KW_IS KW_SUM KW_SUB KW_OR KW_XOR
+%type<int> KW_MUL KW_DIV KW_QUOT KW_MOD KW_SHL KW_SHR KW_AS KW_AND
 %type<ulong> constint constnil
 %type<bool>   constbool
 %type<double> constreal
@@ -265,7 +268,7 @@ containslst
 
 containsitem
 	: id						{ $$ = new ContainsItem($1); }
-	| id KW_IN stringconst		{ $$ = new ContainsItem($1, $3); }
+	| id KW_IN stringnonnull	{ $$ = new ContainsItem($1, $3); }
 	;
 
 usesopt
@@ -281,7 +284,7 @@ useslst
 usesitem
 	: id						{ $$ = new UsesItem($1); }
 	// TODO
-	| id KW_IN stringconst		{ $$ = new UsesItem($1, $3);}
+	| id KW_IN stringnonnull	{ $$ = new UsesItem($1, $3);}
 	;
 
 unit
@@ -444,7 +447,7 @@ expitemlst
 
 expitem
 	: expid formalparams 						{ $$ = new ExportItem($1, $2); }
-	| expid formalparams KW_NAME stringconst	{ $$ = new ExportItem($1, $2, $4); }
+	| expid formalparams KW_NAME  stringnonnull	{ $$ = new ExportItem($1, $2, $4); }
 	| expid formalparams KW_INDEX constint		{ $$ = new ExportItem($1, $2, (int) $4); }
 	;
 	
@@ -865,7 +868,7 @@ identifier
 	// routine call to be used as a statement
 routinecall
 	: identifier							{ $$ = new RoutineCall($1); }
-	| lvalue KW_DOT id						{ $$ = new UnresolvedCall(new FieldAccess($1, $3)); }
+	| lvalue KW_DOT id						{ $$ = new UnresolvedCall(new ObjectAccess($1, $3)); }
 	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }
 	;
 	
@@ -873,18 +876,12 @@ lvalue	// lvalue
 	: identifier							{ $$ = new UnresolvedId($1); }
 	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }
 	| TYPE_PTR LPAR expr RPAR				{ $$ = new StaticCast(PointerType.Single, $3); }
-	| lvalue KW_DOT id						{ $$ = new FieldAccess($1, $3); }
+	| lvalue KW_DOT id						{ $$ = new ObjectAccess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
-	| stringconst LBRAC expr RBRAC			{ if ($1.Length < 2)
-												yyerror("Cannot access character or empty string as an array");
-											 else
-												$$ = new ArrayAccess(new ArrayConst($1), new ExpressionList($3));
-											}
+	| stringnonnull LBRAC expr RBRAC		{ $$ = new ArrayAccess(new ArrayConst($1), new ExpressionList($3)); }
 	| LPAR expr RPAR						{ $$ = new ExprAsLvalue($2); }
 	;
-
-//	Log.Instance().Write(logWarning,'AL',Proc+' not avaliable.');
 
 unaryexpr
 	: literal								{ $$ = $1; }
@@ -949,7 +946,7 @@ exprlstopt
 
 literal
 	: basicliteral	{ $$ = $1; }
-	| stringlit		{ $$ = $1; }
+	| strorcharlit	{ $$ = $1; }
 	;
 
 basicliteral
@@ -965,17 +962,29 @@ discrete
 	| constbool		{ $$ = new BoolLiteral($1);}
 	;
 
-stringlit
-	: stringconst	{ $$ =  (($1.Length==1)? (Literal) new CharLiteral($1[0]) : (Literal) new StringLiteral($1)); }
+strorcharlit
+	: stringorchar	{ $$ = (($1.Length==1)? (Literal) new CharLiteral($1[0]) : (Literal) new StringLiteral($1)); }
 	;
 
-stringconst
+stringlit
+	: stringconst	{ $$ = new StringLiteral($1); }
+	;
+
+stringorchar
 	: conststr					{ $$ = $1; }
 	| constchar					{ $$ = ""+$1; }
-	| stringconst conststr		{ $$ = $1 + $2; }
-	| stringconst constchar		{ $$ = $1 + $2; }
+	| stringorchar conststr		{ $$ = $1 + $2; }
+	| stringorchar constchar	{ $$ = $1 + $2; }
+	;
+	
+stringconst
+	: stringorchar				{ $$ = $1; if ($1.Length == 1) yyerror("Expected string, found char"); }
 	;
 
+stringnonnull
+	: stringconst				{ $$ = $1; if ($1.Length == 0) yyerror("Invalid empty string"); }
+	;
+	
 idlst
 	: id						{ $$ = new ArrayList(); ($$ as ArrayList).Add($1); }
 	| idlst COMMA id			{ $$ = $1; $1.Add($3); }

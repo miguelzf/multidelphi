@@ -1040,7 +1040,6 @@ namespace crosspascal.ast
 			Visit((LvalueExpression) node);
 			traverse(node.func);
 			traverse(node.args);
-			traverse(node.basictype);
 			return true;
 		}
 
@@ -1052,7 +1051,7 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(FieldAccess node)
+		public virtual bool Visit(ObjectAccess node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.obj);
@@ -1074,12 +1073,6 @@ namespace crosspascal.ast
 		public virtual bool Visit(UnresolvedType node)
 		{
 			Visit((TypeNode) node);
-			return true;
-		}
-		
-		public virtual bool Visit(UnresolvedClassType node)
-		{
-			Visit((ClassType) node);
 			return true;
 		}
 		

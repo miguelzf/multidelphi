@@ -19,6 +19,7 @@ namespace crosspascal.semantics
 		public TypeWrapper(TypeNode vt)
 		{
 			castType = vt;
+			this.Type = vt;
 		}
 	}
 
@@ -320,6 +321,14 @@ namespace crosspascal.semantics
 			// the type may open a context for subtypes
 			nameReg.RegisterDeclaration(node.name, node);
 
+		/*	// OLD prolly won't be used
+			// all declaration types are visited
+			if ((node.type is CompositeType && !(node is CompositeDeclaration))
+			||	(node.type is RecordType	&& !(node is RecordDeclaration)))
+				// do not traverse, avoid circular deps
+				return true;
+		*/
+
 			if (TraverseResolve(node, node.type))
 				node.type = ResolvedNode<TypeNode>();
 
@@ -582,18 +591,6 @@ namespace crosspascal.semantics
 		{
 			Visit((CompositeType) node);
 			traverse(node.guid);
-			return true;
-		}
-
-		public override bool Visit(ClassRefType node)
-		{
-			// TODO
-			return true;
-		}
-
-		public override bool Visit(RecordRefType node)
-		{
-			// TODO
 			return true;
 		}
 
@@ -1161,22 +1158,28 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(AddressLvalue node)
-		{
-			Visit((SimpleUnaryExpression) node);
-			return true;
-		}
-		
 		public override bool Visit(Set node)
 		{
 			Visit((UnaryExpression) node);
 			traverse(node.setelems);
 			return true;
 		}
-		
+
+		public override bool Visit(AddressLvalue node)
+		{
+			Visit((SimpleUnaryExpression)node);
+			return true;
+		}	
+
+		#endregion  // Expressions
+
+
+
+		#region Lvalues
+
 		public override bool Visit(LvalueExpression node)
 		{
-			Visit((UnaryExpression) node);
+		//	Visit((UnaryExpression) node);
 			return true;
 		}
 		
@@ -1185,6 +1188,8 @@ namespace crosspascal.semantics
 			Visit((LvalueExpression) node);
 			if (TraverseResolve(node, node.expr))
 				node.expr = ResolvedNode<Expression>();
+
+			node.Type = node.expr.Type;
 			return true;
 		}
 		
@@ -1197,8 +1202,6 @@ namespace crosspascal.semantics
 				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
-
-		#endregion  // Expressions
 
 
 		/// <summary>
@@ -1214,14 +1217,20 @@ namespace crosspascal.semantics
 				return Error("DeclarationNotFound: " + name);
 				//	throw new DeclarationNotFound(name);
 
-			if (d is CallableDeclaration)
-				resolved = new RoutineCall(node.id);
+			node.id.Type = d.type;
+
+			if (d is TypeDeclaration)
+				resolved = new TypeWrapper(d.type);	// type for casts and instantiations
+
+			else if (d.type is ProceduralType)
+			{
+				var call = new RoutineCall(node.id);
+				call.Type= (d.type as ProceduralType).funcret;
+				resolved = call;
+			}
 
 			else if (d is ValueDeclaration)
 				resolved = node.id;
-
-			else if (d is TypeDeclaration)
-				resolved = new TypeWrapper(d.type);	// type for casts and instantiations
 
 			else
 				Error("unexpected declaration type " + d);
@@ -1246,81 +1255,146 @@ namespace crosspascal.semantics
 				if (node.args.Count() > 1)
 					return Error("Cast may take only 1 argument");
 				resolved = new StaticCast((node.func as TypeWrapper).castType, node.args.Get(0));
-				return true;
-			}
-			
-			if (node.func is FieldAccess)
-			{
-				FieldAccess fa = node.func as FieldAccess;
-				if (fa.obj is TypeWrapper)
-				{
-					TypeNode fat = (fa.obj as TypeWrapper).castType;
-					if (fat is ClassType)
-					{	resolved = new ClassInstantiation(fat as ClassType, fa.field, node.args);
-						return true;
-					}
-					else
-						return Error("Cannot instantiate non-class type");
-				}
 			}
 
-			// default
-			resolved = new RoutineCall(node.func, node.args);
+			if (node.func is RoutineCall)	// call with an id, default
+			{
+				RoutineCall call = node.func as RoutineCall;
+				call.args = node.args;
+				resolved = call;
+			}
+
+			else
+			{	RoutineCall call = new RoutineCall(node.func, node.args);
+				traverse(call);	// resolve if needed
+				if (resolved == null)
+					resolved = call;
+			}
+
 			return true;
 		}
-		
-		public override bool Visit(ArrayAccess node)
-		{
-			Visit((LvalueExpression) node);
-			if (TraverseResolve(node, node.lvalue))
-				node.lvalue = ResolvedNode<LvalueExpression>();
-			traverse(node.acessors);
-			if (TraverseResolve(node, node.array))
-				node.array = ResolvedNode<ArrayConst>();
-			return true;
-		}
-		
-		public override bool Visit(PointerDereference node)
-		{
-			Visit((LvalueExpression) node);
-			if (TraverseResolve(node, node.expr))
-				node.expr = ResolvedNode<Expression>();
-			return true;
-		}
-		
-		public override bool Visit(InheritedCall node)
-		{
-			Visit((LvalueExpression) node);
-			if (TraverseResolve(node, node.call))
-				node.call = ResolvedNode<RoutineCall>();
-			return true;
-		}
-		
+			
 		public override bool Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
 			if (TraverseResolve(node, node.func))
 				node.func = ResolvedNode<LvalueExpression>();
 			traverse(node.args);
-			if (TraverseResolve(node, node.basictype))
-				node.basictype = ResolvedNode<ScalarType>();
+
+			if (!(node.func.Type is ProceduralType))
+				return Error("Attempt to Call a non-procedural type: " + node.func.Type);
+
+			MethodType mt = node.func.Type as MethodType;
+			if (mt != null && mt.IsConstructor)
+			{
+				if (!(node.func is ObjectAccess)
+				|| !((node.func as ObjectAccess).obj is TypeWrapper))
+					return Error("Attempt to call constructor using an instance reference");
+
+				ObjectAccess ac = (node.func as ObjectAccess);
+				resolved = new ClassInstantiation((ac.obj as TypeWrapper).Type as ClassType, ac.field, node.args);
+			}
+
 			return true;
 		}
 		
-		public override bool Visit(FieldAccess node)
+		public override bool Visit(ObjectAccess node)
 		{
 			Visit((LvalueExpression) node);
 			if (TraverseResolve(node, node.obj))
 				node.obj = ResolvedNode<LvalueExpression>();
+
+			TypeNode ftype = node.obj.Type;
+			if (!ftype.IsFieldedType())
+				return Error("Attempt to access non-object type");
+
+			if (node.obj is TypeWrapper)
+			{
+				// nothing, catch as a method call
+			}
+
+			Declaration d;
+			if (ftype is RecordType)
+			{
+				if ((d = (ftype as RecordType).GetField(node.field)) == null)
+					return Error("Field " + node.field + " not found in Record");
+			}
+
+			else if (ftype is ClassType)
+			{
+				if ((d = (ftype as ClassType).GetMember(node.field)) == null)
+					return Error("Member " + node.field + " not found in Class " + (ftype as ClassType).Name);
+			}
+
+			else if (ftype is InterfaceType)
+			{
+				if ((d = (ftype as InterfaceType).GetMethod(node.field)) == null)
+					return Error("Method " + node.field + " not found in Interface " + (ftype as InterfaceType).Name);
+			}
+			else
+				return Error("unknown object type");	// should never happen
+
+			node.Type = d.type;
 			return true;
 		}
 		
 		public override bool Visit(Identifier node)
 		{
 			Visit((LvalueExpression) node);
+			
+			Declaration d = nameReg.GetDeclaration(node.name);
+			node.Type = d.type;
+
 			return true;
 		}
 
+		public override bool Visit(ArrayAccess node)
+		{
+			Visit((LvalueExpression)node);
+			if (TraverseResolve(node, node.lvalue))
+				node.lvalue = ResolvedNode<LvalueExpression>();
+			traverse(node.acessors);
+			if (TraverseResolve(node, node.array))
+				node.array = ResolvedNode<ArrayConst>();
+
+			if (node.array != null && node.lvalue != null)
+				Error("Internal: Array access both const and var");
+
+			// const array access
+			if (node.array != null)
+			{
+				// TODO
+			}
+
+			// var array access
+			if (node.lvalue != null)
+			{
+				if (!(node.lvalue.Type is ArrayType))
+					return Error("Expected array type in Array Access");
+
+				node.Type = (node.lvalue.Type as ArrayType).basetype;
+			}
+
+			return true;
+		}
+
+		public override bool Visit(PointerDereference node)
+		{
+			Visit((LvalueExpression)node);
+			if (TraverseResolve(node, node.expr))
+				node.expr = ResolvedNode<Expression>();
+			return true;
+		}
+
+		public override bool Visit(InheritedCall node)
+		{
+			Visit((LvalueExpression)node);
+			if (TraverseResolve(node, node.call))
+				node.call = ResolvedNode<RoutineCall>();
+			return true;
+		}
+
+		#endregion	// lvalues
 
 
 		#region	Types
@@ -1337,18 +1411,34 @@ namespace crosspascal.semantics
 		public override bool Visit(UnresolvedType node)
 		{
 			resolved = nameReg.FetchType(node.id);
+			if (resolved is RecordType)
+				resolved = new RecordRefType(node.id, (resolved as RecordType));
+			if (resolved is ClassType)
+				resolved = new ClassRefType(node.id, (resolved as ClassType));
 			return true;
 		}
-		
-		public override bool Visit(UnresolvedClassType node)
+
+		public override bool Visit(ClassRefType node)
 		{
-			resolved = nameReg.FetchType<ClassType>(node.id);
+			if (node.reftype == null)
+				node.reftype = nameReg.FetchType<ClassType>(node.qualifid);
+			return true;
+		}
+
+		public override bool Visit(RecordRefType node)
+		{
+			if (node.reftype == null)
+				node.reftype = nameReg.FetchType<RecordType>(node.qualifid);
 			return true;
 		}
 		
 		public override bool Visit(UnresolvedVariableType node)
 		{
 			resolved = nameReg.FetchType<VariableType>(node.id);
+			if (resolved is RecordType)
+				resolved = new RecordRefType(node.id, (resolved as RecordType));
+			if (resolved is ClassType)
+				resolved = new ClassRefType(node.id, (resolved as ClassType));
 			return true;
 		}
 		

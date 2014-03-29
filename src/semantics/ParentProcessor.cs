@@ -1054,11 +1054,10 @@ namespace crosspascal.semantics
 			Visit((LvalueExpression) node);
 			TraverseSetParent(node,node.func);
 			TraverseSetParent(node,node.args);
-			TraverseSetParent(node,node.basictype);
 			return true;
 		}
 		
-		public override bool Visit(FieldAccess node)
+		public override bool Visit(ObjectAccess node)
 		{
 			Visit((LvalueExpression) node);
 			TraverseSetParent(node,node.obj);
@@ -1080,12 +1079,6 @@ namespace crosspascal.semantics
 		public override bool Visit(UnresolvedType node)
 		{
 			Visit((TypeNode) node);
-			return true;
-		}
-		
-		public override bool Visit(UnresolvedClassType node)
-		{
-			Visit((ClassType) node);
 			return true;
 		}
 		

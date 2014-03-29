@@ -31,6 +31,7 @@ namespace crosspascal.ast.nodes
 	///					ArrayAcess
 	///					UnresolvedCastorCall
 	///					UnresolvedIdOrCall
+	///					UnresolvedAccess
 	///			BinaryExpr
 	///				Arithmetic
 	///				Type
@@ -585,7 +586,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class TypeIs : TypeBinaryExpression
 	{
-		public TypeIs(Expression e1, ClassRefType e2) : base(e1, e2) { }
+		public TypeIs(Expression e1, ClassType e2) : base(e1, e2) { }
 	}
 
 	/// <summary>
@@ -593,7 +594,7 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class RuntimeCast : TypeBinaryExpression
 	{
-		public RuntimeCast(Expression e, ClassRefType t) : base(e, t) { }
+		public RuntimeCast(Expression e, ClassType t) : base(e, t) { }
 	}
 
 	#endregion
@@ -660,7 +661,6 @@ namespace crosspascal.ast.nodes
 	#endregion
 
 
-
 	#region Left-value expressions
 	//==========================================================================
 	// Lvalue Expressions
@@ -695,36 +695,6 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-
-	/// <summary>
-	/// To be resolver after parsing
-	/// </summary>
-	public class UnresolvedId : LvalueExpression
-	{
-		public Identifier id;
-
-		public UnresolvedId(Identifier val)
-		{
-			id = val;
-		}
-	}
-
-	/// <summary>
-	/// To be resolver after parsing
-	/// </summary>
-	public class UnresolvedCall : LvalueExpression
-	{
-		public LvalueExpression func;
-		public ExpressionList args;
-
-		public UnresolvedCall(LvalueExpression lval, ExpressionList args = null)
-		{
-			this.func = lval;
-			this.args = args;
-			if (args == null)
-				this.args = new ExpressionList();
-		}
-	}
 
 	public class ArrayAccess : LvalueExpression
 	{
@@ -770,27 +740,17 @@ namespace crosspascal.ast.nodes
 	{
 		public LvalueExpression func;
 		public ExpressionList args;
-		public ScalarType basictype;
 
 		public RoutineCall(LvalueExpression func)
 		{
 			this.func = func;
-			args = null;
+			args = new ExpressionList();
 		}
 
 		public RoutineCall(LvalueExpression func, ExpressionList args)
 			: this(func)
 		{
 			this.args = args;
-		}
-
-		/// <summary>
-		/// For built-in ordinal functions (High, Low, Pred, Ord)
-		/// </summary>
-		public RoutineCall(LvalueExpression fname, ScalarType t)
-			: this(fname)
-		{
-			basictype = t;
 		}
 	}
 
@@ -813,12 +773,12 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class FieldAccess : LvalueExpression
+	public class ObjectAccess : LvalueExpression
 	{
 		public LvalueExpression obj;
 		public string field;
 
-		public FieldAccess(LvalueExpression obj, string field)
+		public ObjectAccess(LvalueExpression obj, string field)
 		{
 			this.obj = obj;
 			this.field = field;
@@ -838,6 +798,49 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
+	#region Unresolved Lvalue expressions
+
+	/// <summary>
+	/// Base class of unresolved lvalues
+	/// </summary>
+	public abstract class UnresolvedLvalue : LvalueExpression
+	{
+	}
+
+	/// <summary>
+	/// Identifier, to be resolver after parsing
+	/// </summary>
+	public class UnresolvedId : UnresolvedLvalue
+	{
+		public Identifier id;
+
+		public UnresolvedId(Identifier val)
+		{
+			id = val;
+		}
+	}
+
+	/// <summary>
+	/// Call, to be resolver after parsing
+	/// </summary>
+	public class UnresolvedCall : UnresolvedLvalue
+	{
+		public LvalueExpression func;
+		public ExpressionList args;
+
+		public UnresolvedCall(LvalueExpression lval, ExpressionList args = null)
+		{
+			this.func = lval;
+			this.args = args;
+			if (args == null)
+				this.args = new ExpressionList();
+		}
+	}
+
 	#endregion
+
+
+	#endregion		// lvalues
 
 }

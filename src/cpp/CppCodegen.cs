@@ -434,9 +434,9 @@ namespace crosspascal.cpp
 				traverse(node.Type.funcret);
 			
 			String metid;
-			if (node.IsDestructor)
+			if (node.Type.IsDestructor)
 				metid = "::~" + node.objname;
-			else if (node.IsConstructor)
+			else if (node.Type.IsConstructor)
 				metid = "::" + node.objname;
 			else
 				metid = "::~" + node.metname;
@@ -1256,7 +1256,6 @@ namespace crosspascal.cpp
             outputCode("(", false, false); 
 			traverse(node.args);
             outputCode(")", false, false);
-			//traverse(node.basictype);
 			return true;
 		}
 
@@ -1268,7 +1267,7 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(FieldAccess node)
+		public override bool Visit(ObjectAccess node)
 		{
 			//if (node.obj is Identifier  && DeclReg.symtab.Lookup((node.obj as Identifier).name) is ClassDeclaration))
 				//outputCode("cpde", true, true);

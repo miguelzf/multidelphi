@@ -68,9 +68,17 @@ namespace crosspascal.ast.nodes
 
 	public class MethodType : ProceduralType
 	{
-		public MethodType(DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
+		public MethodKind kind;
+
+		public bool IsDefault { get { return kind == MethodKind.Default; } }
+		public bool IsConstructor { get { return kind == MethodKind.Constructor; } }
+		public bool IsDestructor { get { return kind == MethodKind.Destructor; } }
+
+		public MethodType(DeclarationList @params, TypeNode ret = null,
+						RoutineDirectives dirs = null, MethodKind kind = MethodKind.Default )
 			: base(@params, ret, dirs)
-		{ 
+		{
+			this.kind = kind;
 		}
 	}
 
@@ -176,16 +184,15 @@ namespace crosspascal.ast.nodes
 		public String objname;
 		public String metname;
 
-		public MethodKind kind;
-
-		public bool IsDefault     { get { return kind == MethodKind.Default		; } }
-		public bool IsConstructor { get { return kind == MethodKind.Constructor	; } }
-		public bool IsDestructor  { get { return kind == MethodKind.Destructor	; } }
-
 		private string fullname;
 		public override string Fullname()
 		{
 			return fullname;
+		}
+
+		public new MethodType Type
+		{
+			get { return (MethodType)this.type; }
 		}
 
 		// to be set by the resolver
@@ -193,13 +200,12 @@ namespace crosspascal.ast.nodes
 
 		public MethodDeclaration(string objname, string name, DeclarationList @params, TypeNode ret = null,
 								RoutineDirectives dirs = null, MethodKind kind = MethodKind.Default)
-			: base(name, @params, ret, dirs)
+			: base(name, new MethodType(@params, ret, dirs, kind))
 		{
 			this.metname = name;
 			this.objname = objname;
 			isStatic = false;
 			fullname = objname + "." + name;
-			this.kind = kind;
 
 			if (Directives == null)
 				Directives = new MethodDirectives();
@@ -253,7 +259,7 @@ namespace crosspascal.ast.nodes
 		public MethodDefinition(string objname, string name, DeclarationList @params,
 								TypeNode ret = null,  RoutineDirectives dirs = null,
 								MethodKind kind = MethodKind.Default, RoutineBody body = null)
-			: base(objname, name, @params, ret, dirs)
+			: base(objname, name, @params, ret, dirs, kind)
 		{
 			this.body = body;
 		}

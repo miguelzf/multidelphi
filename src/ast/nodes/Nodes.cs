@@ -45,7 +45,10 @@ namespace crosspascal.ast.nodes
 		{
 			string outp = "[ERROR] " + msg;
 			// throw new crosspascal.parser.AstNodeException(outp);
+			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine(outp);
+			Console.WriteLine("[ERROR in Name Resolving] " + msg);
+			Console.ResetColor();
 			return false;
 		}
 
@@ -57,7 +60,10 @@ namespace crosspascal.ast.nodes
 		{
 			string outp = "[ERROR internal] " + msg;
 			// throw new crosspascal.parser.AstNodeException(outp);
+			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine(outp);
+			Console.Error.WriteLine(outp);
+			Console.ResetColor();
 			return false;
 		}
 
@@ -268,7 +274,7 @@ namespace crosspascal.ast.nodes
 
 		public Declaration GetDeclaration(String name)
 		{
-			return GetDeclarations(name).ElementAt(0);
+			return nodes.FirstOrDefault(x => x.name == name);
 		}
 
 		public IEnumerable<Declaration> GetDeclarations(String name)
