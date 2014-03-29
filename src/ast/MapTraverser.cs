@@ -102,14 +102,15 @@ namespace crosspascal.ast
 				throw new Exception("wrapper", e.InnerException);
 
 				// TODO
+			/*
 				var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
 				var mgr = new ObjectManager(null, ctx);
 				var si = new SerializationInfo(e.InnerException.GetType(), new FormatterConverter());
 				e.InnerException.GetObjectData(si, ctx);
 				mgr.RegisterObject(e.InnerException, 1, si);
 				mgr.DoFixups();
-
 				throw e.InnerException;
+			 */
 			}
 
 		}

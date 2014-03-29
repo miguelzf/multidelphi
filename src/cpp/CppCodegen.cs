@@ -224,9 +224,9 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(RoutineBody node)
 		{
-			DeclReg.EnterContext();
+			DeclReg.LoadNext();
 			Visit((CodeSection) node);
-			DeclReg.ExitContext();
+			DeclReg.LoadNext();
 			return true;
 		}
 		
@@ -257,17 +257,15 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(InterfaceSection node)
 		{
-			DeclReg.EnterContext();
+			DeclReg.LoadNext();
 			Visit((DeclarationSection) node);
-			DeclReg.ExitContext();
 			return true;
 		}
 		
 		public override bool Visit(ImplementationSection node)
 		{
-			DeclReg.EnterContext();
-			Visit((DeclarationSection) node);
-			DeclReg.ExitContext();
+			DeclReg.LoadNext();
+			Visit((DeclarationSection)node);
 			return true;
 		}
 		
@@ -347,7 +345,22 @@ namespace crosspascal.cpp
 		{
 			return true;
 		}
-		
+
+		public override bool Visit(ProceduralType node)
+		{
+			traverse(node.funcret);
+			outputCode("(*", false, false);
+			traverse(node.@params);
+			outputCode(")", false, false);
+			return true;
+		}
+
+		public override bool Visit(MethodType node)
+		{
+			Visit((ProceduralType)node);
+			return true;
+		}
+
 		public override bool Visit(CallableDeclaration node)
 		{
 			traverse(node.Type);
@@ -365,45 +378,18 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(ProceduralType node)
-		{
-			traverse(node.funcret);
-			outputCode("(*", false, false);
-			traverse(node.@params);
-			outputCode(")", false, false);
-			return true;
-		}
-
-		public override bool Visit(MethodType node)
-		{
-			Visit((ProceduralType) node);
-			return true;
-		}
-
 		public override bool Visit(RoutineDeclaration node)
 		{
-			DeclReg.EnterContext();
+			DeclReg.LoadNext();	// routine params params
 			Visit((CallableDeclaration) node);
-			DeclReg.ExitContext();
+			DeclReg.LoadNext();
 			return true;
-		}
-
-		private bool IsClassDeclaration(Node node)
-		{
- 			if (node == null) 
-				return false;
-
-			if (node is ScopedSection)
-				return true;
-
-			return IsClassDeclaration(node.Parent);
 		}
 
 		public override bool Visit(MethodDeclaration node)
 		{
-			Visit((CallableDeclaration) node);
-
-			DeclReg.EnterContext();
+			DeclReg.LoadNext();	// method params
+			Visit((CallableDeclaration)node);
 
 			if (node.Type.funcret == null)
 				outputCode("void ", false, false);
@@ -414,16 +400,15 @@ namespace crosspascal.cpp
 			traverse(node.Type.@params);
 			outputCode(");", false, true);
 
-			DeclReg.ExitContext();
+			DeclReg.LoadNext();
 			return true;
 		}
 
 		public override bool Visit(RoutineDefinition node)
 		{
-			Visit((RoutineDeclaration)node);
+			DeclReg.LoadNext();
+			Visit((CallableDeclaration)node);
 			traverse(node.body);
-
-			DeclReg.EnterContext();
 
 			if (node.IsFunction)
 			{
@@ -434,14 +419,14 @@ namespace crosspascal.cpp
 
 			outputCode("", false, true);
 
-			DeclReg.ExitContext();
+			DeclReg.LoadNext();
 			return true;
 		}
 
 		public override bool Visit(MethodDefinition node)
 		{
-			DeclReg.EnterCompositeContext(node.declaringType);
-			Visit((CallableDeclaration) node);
+			DeclReg.LoadNextComposite(node.declaringType);
+			DeclReg.LoadNext();	// method params
 			
 			if (node.Type.funcret == null)
 				outputCode("void ", false, false);
@@ -471,7 +456,8 @@ namespace crosspascal.cpp
 
 			outputCode("", false, true);
 
-			DeclReg.LeaveCompositeContext(node.declaringType);
+			DeclReg.LoadNext();
+			DeclReg.LoadNextComposite(node.declaringType);
 			return true;
 		}
 
@@ -518,13 +504,15 @@ namespace crosspascal.cpp
 		public override bool Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
+			DeclReg.LoadNextComposite(node);
+			traverse(node.sections);
+			DeclReg.LoadNextComposite(node);
 			return true;
 		}
 
 		public override bool Visit(ClassType node)
-		{			
-			//traverse(node.self);
-			traverse(node.sections);
+		{
+			Visit((CompositeType)node);
 			return true;
 		}
 

@@ -26,13 +26,24 @@ namespace crosspascal.semantics
 			root = current = new SymbolContextNode<T>("initial: empty default context");
 		}
 
+
 		/// <summary>
-		/// Reset path back to root
 		/// </summary>
 		public void Reset()
 		{
-			path = new Stack<SymbolContextNode<T>>(1024);
 			current = root;
+		}
+
+		/// <summary>
+		/// Traverse the whole DAG, in BFS order, from top to down, and enter each context
+		/// </summary>
+		public IEnumerable<bool> LoadNextContext()
+		{
+			for (int i = path.Count; i >= 0; i--)
+			{
+				current = path.ElementAt(i);
+				yield return true;
+			}
 		}
 
 
@@ -78,7 +89,6 @@ namespace crosspascal.semantics
 		{
 			current.AddParent(ctx);
 			numContexts++;
-			EnterContext(ctx);
 		}
 
 		/// <summary>
@@ -135,6 +145,7 @@ namespace crosspascal.semantics
 			current = ctx;
 			return ctx.id;
 		}
+
 
 		/// <summary>
 		/// Leaves the current Symbol context and switches to the last context
@@ -306,11 +317,13 @@ namespace crosspascal.semantics
 		internal void AddParent(SymbolContextNode<T> parent)
 		{
 			parents.Add(parent);
+			parent.children.Add(this);
 		}
 
-		internal void AddChild(SymbolContextNode<T> parent)
+		internal void AddChild(SymbolContextNode<T> child)
 		{
-			children.Add(parent);
+			child.parents.Add(this);
+			children.Add(child);
 		}
 
 		internal SymbolContextNode<T> GetParent(int idx)

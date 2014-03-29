@@ -38,7 +38,6 @@ namespace crosspascal.semantics
 		{
 			source = sf;
 			nameReg = new DeclarationsRegistry();
-			nameReg.LoadRuntimeNames();
 		}
 
 		bool Error(string msg)
@@ -482,10 +481,13 @@ namespace crosspascal.semantics
 			nameReg.RegisterDeclaration(node.objname+"."+node.QualifiedName, node);
 			CompositeType type = nameReg.CreateCompositeContext(node.objname);
 			node.declaringType = type;
+			nameReg.CreateContext(node.QualifiedName + " Params");
 
 			traverse(node.Type);
 			traverse(node.Directives);
 			traverse(node.body);	// opens context
+
+			nameReg.ExitContext();
 			nameReg.ExitCompositeContext(node.declaringType);
 			return true;
 		}

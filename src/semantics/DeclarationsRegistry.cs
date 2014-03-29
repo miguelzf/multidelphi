@@ -23,6 +23,7 @@ namespace crosspascal.semantics
 
 		public DeclarationsRegistry()
 		{
+			LoadRuntimeNames();
 		}
 
 		void Debug(string msg)
@@ -31,7 +32,31 @@ namespace crosspascal.semantics
 				Console.WriteLine(msg);
 		}
 
-		public void LoadRuntimeNames()
+
+		/// <summary>
+		/// Call this method before using the environment.
+		/// Resets the current context to the start
+		/// </summary>
+		public void InitEnvironment()
+		{
+			symEnv.Reset();
+			LoadNext();	// runtime
+			LoadNext();	// global
+		}
+
+		public void LoadNext()
+		{
+			symEnv.LoadNextContext();
+		}
+
+		public void LoadNextComposite(CompositeType type)
+		{
+			for (int i = 0; i <= type.numAncestors; i++)
+				symEnv.LoadNextContext();
+		}
+		
+
+		void LoadRuntimeNames()
 		{
 			symEnv.CreateContext("runtime");
 			LoadBuiltinTypesBasic();
@@ -50,7 +75,6 @@ namespace crosspascal.semantics
 			ctx.allowShadowing = true;
 			Debug("IMPORT CONTEXT " + ctx.id);
 			symEnv.ImportParentContext(ctx);
-			symEnv.ExitContext();
 		}
 
 		/// <summary>
@@ -401,6 +425,8 @@ namespace crosspascal.semantics
 			builtinFunctions.Add(routine.name, routine);
 			RegisterDeclaration(routine);
 
+			return;
+		/*	// do not create context for args, just leave the func name declared
 			var rtype = routine.Type;
 			if (rtype.funcret != null || rtype.@params != null)
 			{
@@ -413,6 +439,7 @@ namespace crosspascal.semantics
 
 				symEnv.ExitContext();
 			}
+		 */
 		}
 
 		/// <summary>

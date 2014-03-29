@@ -29,12 +29,6 @@ namespace crosspascal.testunits
 
 			planner.LoadIncludePaths("include-paths.txt");
 
-			args = new string[2];
-            //args[0] = "d:\\code\\crosspascal\\tests\\test_constant_folding.dpr";
-			//args[0] = "d:\\code\\crosspascal\\tests\\test_function_pointers.dpr";
-			args[0] = "d:\\code\\crosspascal\\tests\\test_classes.dpr";
-			args[1] = "d:\\code\\crosspascal\\tests\\unit1.pas";		
-            //args[0] = "d:\\code\\crosspascal\\tests\\test_control_structures.dpr";
 
 			planner.LoadFiles(args);
 
@@ -81,7 +75,10 @@ namespace crosspascal.testunits
 				Processor constfolder = new ConstantFolder();
 				constfolder.StartProcessing(tree);
 
-				Processor myProcessor = new CppCodegen(resolver.nameReg);
+				DeclarationsRegistry reg = resolver.nameReg;
+				reg.InitEnvironment();
+
+				Processor myProcessor = new CppCodegen(reg);
 				Console.WriteLine("Now compiling...");
 				myProcessor.StartProcessing(tree);
 

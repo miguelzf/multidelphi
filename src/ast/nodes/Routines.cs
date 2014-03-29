@@ -396,7 +396,7 @@ namespace crosspascal.ast.nodes
 			base.Add(dirs);
 		}
 
-		public virtual bool Contains(int dir)
+		public override bool Contains(int dir)
 		{
 			if (Enum.IsDefined(typeof(ImportDirective), dir))
 				return Importdir == (ImportDirective)dir;
@@ -447,7 +447,7 @@ namespace crosspascal.ast.nodes
 				methoddirs.Add(dir);
 		}
 
-		public virtual bool Contains(int dir)
+		public override bool Contains(int dir)
 		{
 			if (Enum.IsDefined(typeof(MethodDirective), dir))
 				return methoddirs.Contains((MethodDirective)dir);
