@@ -494,7 +494,7 @@ namespace crosspascal.semantics
 
 		public override bool Visit(ClassRefType node)
 		{
-			Visit((ClassType)node);
+		//	Visit((ClassType)node);
 			//	Do not traverse this node! circular dependency
 			//	traverse(node.reftype);
 			return true;

@@ -760,14 +760,16 @@ namespace crosspascal.ast.nodes
 		public String constructor;
 		public ExpressionList args;
 
-		public ClassInstantiation(ClassRefType type, String constr, ExpressionList args)
+		public ClassInstantiation(ClassRefType type, String constr, ExpressionList args = null)
 		{
 			this.castType = type;
 			this.constructor = constr;
 			this.args = args;
+			if (args == null)
+				this.args = new ExpressionList();
 		}
 
-		public ClassInstantiation(ClassType type, String constr, ExpressionList args)
+		public ClassInstantiation(ClassType type, String constr, ExpressionList args = null)
 			: this(new ClassRefType(type.Name, type), constr, args)
 		{
 		}

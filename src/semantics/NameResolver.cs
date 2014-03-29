@@ -1304,8 +1304,8 @@ namespace crosspascal.semantics
 			if (TraverseResolve(node, node.obj))
 				node.obj = ResolvedNode<LvalueExpression>();
 
-			TypeNode ftype = node.obj.Type;
-			if (!ftype.IsFieldedType())
+			TypeNode objtype = node.obj.Type;
+			if (!objtype.IsFieldedType())
 				return Error("Attempt to access non-object type");
 
 			if (node.obj is TypeWrapper)
@@ -1314,27 +1314,42 @@ namespace crosspascal.semantics
 			}
 
 			Declaration d;
-			if (ftype is RecordType)
+			if (objtype is RecordType)
 			{
-				if ((d = (ftype as RecordType).GetField(node.field)) == null)
+				if ((d = (objtype as RecordType).GetField(node.field)) == null)
 					return Error("Field " + node.field + " not found in Record");
 			}
 
-			else if (ftype is ClassType)
+			else if (objtype is ClassType)
 			{
-				if ((d = (ftype as ClassType).GetMember(node.field)) == null)
-					return Error("Member " + node.field + " not found in Class " + (ftype as ClassType).Name);
+				if ((d = (objtype as ClassType).GetMember(node.field)) == null)
+					return Error("Member " + node.field + " not found in Class " + (objtype as ClassType).Name);
 			}
 
-			else if (ftype is InterfaceType)
+			else if (objtype is InterfaceType)
 			{
-				if ((d = (ftype as InterfaceType).GetMethod(node.field)) == null)
-					return Error("Method " + node.field + " not found in Interface " + (ftype as InterfaceType).Name);
+				if ((d = (objtype as InterfaceType).GetMethod(node.field)) == null)
+					return Error("Method " + node.field + " not found in Interface " + (objtype as InterfaceType).Name);
 			}
 			else
 				return Error("unknown object type");	// should never happen
 
 			node.Type = d.type;
+			// d can be a method or field
+			if (d is MethodDeclaration)
+			{
+				MethodType mt = node.Type as MethodType;
+				if (mt != null && mt.IsConstructor)
+				{
+					if (!(node.obj is TypeWrapper))
+						return Error("Attempt to call constructor using an instance reference");
+
+					resolved = new ClassInstantiation((node.obj as TypeWrapper).Type as ClassType, node.field);
+				}
+				else
+					resolved = new RoutineCall(node);
+			}
+
 			return true;
 		}
 		
