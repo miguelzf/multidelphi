@@ -107,21 +107,6 @@ namespace crosspascal.ast.nodes
 		// Do nothing
 	}
 
-	public class ExpressionList : ListNode<Expression>
-	{
-		public ExpressionList()
-		{
-		}
-		public ExpressionList(Expression t)
-		{
-			Add(t);
-		}
-		public ExpressionList(IEnumerable<Expression> t)
-		{
-			Add(t);
-		}
-	}
-
 
 	#region Constant and initiliazer expressions
 	//==========================================================================
@@ -180,19 +165,6 @@ namespace crosspascal.ast.nodes
 	public class RecordConst : StructuredConstant
 	{
 		public RecordConst(FieldInitList exprlist) : base(exprlist) { }
-	}
-
-	public class FieldInitList : ExpressionList
-	{
-		public void Add(FieldInit t)
-		{
-			base.Add(t);
-		}
-
-		public FieldInitList(FieldInit t)
-			: base(t)
-		{
-		}
 	}
 
 	public class FieldInit : ConstExpression

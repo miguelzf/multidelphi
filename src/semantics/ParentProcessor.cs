@@ -69,20 +69,6 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(IntegralTypeList node)
-		{
-			foreach (Node n in node.nodes)
-				TraverseSetParent(node,n);
-			return true;
-		}
-		
-		public override bool Visit(IdentifierList node)
-		{
-			foreach (Node n in node.nodes)
-				TraverseSetParent(node,n);
-			return true;
-		}
-		
 		public override bool Visit(DeclarationList node)
 		{
 			foreach (Node n in node.nodes)

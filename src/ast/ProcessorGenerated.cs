@@ -55,20 +55,6 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(IntegralTypeList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
-			return true;
-		}
-		
-		public virtual bool Visit(IdentifierList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
-			return true;
-		}
-		
 		public virtual bool Visit(DeclarationList node)
 		{
 			foreach (Node n in node.nodes)

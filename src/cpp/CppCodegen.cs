@@ -100,21 +100,7 @@ namespace crosspascal.cpp
 				traverse(n);
             return true;
 		}
-		
-		public override bool Visit(IntegralTypeList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
-            return true;
-		}
-		
-		public override bool Visit(IdentifierList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
-            return true;
-		}
-		
+				
 		public override bool Visit(DeclarationList node)
 		{
 			foreach (Node n in node.nodes)

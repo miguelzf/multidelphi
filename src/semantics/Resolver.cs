@@ -138,22 +138,20 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(TypeList node)
 		{
-			foreach (Node n in node.nodes)
+			var elist = new TypeList();
+			foreach (TypeNode n in node.nodes)
+			{
 				traverse(n);
-			return true;
-		}
-		
-		public override bool Visit(IntegralTypeList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
-			return true;
-		}
-		
-		public override bool Visit(IdentifierList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
+				if (resolved == null)
+					elist.Add(n);
+				else
+				{
+					elist.Add(resolved as TypeNode);
+					resolved = null;
+				}
+			}
+
+			node.Replace(elist);
 			return true;
 		}
 		
@@ -161,6 +159,31 @@ namespace crosspascal.semantics
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
+			return true;
+		}
+
+		public override bool Visit(ExpressionList node)
+		{
+			var elist = new ExpressionList();
+			foreach (Expression n in node.nodes)
+			{
+				traverse(n);
+				if (resolved == null)
+					elist.Add(n);
+				else
+				{
+					elist.Add(resolved as Expression);
+					resolved = null;
+				}
+			}
+
+			node.Replace(elist);
+			return true;
+		}
+
+		public override bool Visit(FieldInitList node)
+		{
+			Visit((ExpressionList)node);
 			return true;
 		}
 		
@@ -861,13 +884,6 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(ExpressionList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
-			return true;
-		}
-		
 		public override bool Visit(ConstExpression node)
 		{
 			Visit((Expression) node);
@@ -890,14 +906,6 @@ namespace crosspascal.semantics
 		public override bool Visit(RecordConst node)
 		{
 			Visit((StructuredConstant) node);
-			return true;
-		}
-		
-		public override bool Visit(FieldInitList node)
-		{
-			Visit((ExpressionList) node);
-			foreach (Node n in node.nodes)
-				traverse(n);
 			return true;
 		}
 		
@@ -1251,6 +1259,9 @@ namespace crosspascal.semantics
 		{
 			String name = node.id.name;
 
+			if (name == "s")
+				Console.WriteLine("SSSS");
+
 			Declaration d = declEnv.GetDeclaration(name);
 			if (d == null)
 				return Error("DeclarationNotFound: " + name, node);
@@ -1271,7 +1282,7 @@ namespace crosspascal.semantics
 				resolved = node.id;
 
 			else
-				Error("unexpected declaration type " + d, node);
+				return Error("unexpected declaration type " + d, node);
 
 			// Process identifier
 			node.id.Type = d.type;

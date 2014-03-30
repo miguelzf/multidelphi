@@ -241,6 +241,17 @@ namespace crosspascal.ast.nodes
 				nodes.Insert(idx, t);
 		}
 
+		public void Clear()
+		{
+			nodes.Clear();
+		}
+
+		public void Replace(IEnumerable<T> newelems)
+		{
+			nodes.Clear();
+			nodes.AddRange(newelems);
+		}
+
 		public IEnumerator<T> GetEnumerator()
 		{
 			return nodes.GetEnumerator();
@@ -288,16 +299,6 @@ namespace crosspascal.ast.nodes
 		public TypeList(TypeNode t) : base(t) { }
 	}
 
-	public class IntegralTypeList : ListNode<IntegralType>
-	{
-		public IntegralTypeList() { }
-	}
-
-	public class IdentifierList : ListNode<Identifier>
-	{
-		public IdentifierList() { }
-	}
-
 	public class DeclarationList : ListNode<Declaration>
 	{
 		public DeclarationList() : base() { }
@@ -317,6 +318,34 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+	public class ExpressionList : ListNode<Expression>
+	{
+		public ExpressionList()
+		{
+		}
+		public ExpressionList(Expression t)
+		{
+			Add(t);
+		}
+		public ExpressionList(IEnumerable<Expression> t)
+		{
+			Add(t);
+		}
+	}
+
+	public class FieldInitList : ExpressionList
+	{
+		public void Add(FieldInit t)
+		{
+			base.Add(t);
+		}
+
+		public FieldInitList(FieldInit t)
+			: base(t)
+		{
+		}
+	}
+	
 	public class EnumValueList : ListNode<EnumValue>
 	{
 		public EnumValueList() { }

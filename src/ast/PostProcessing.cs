@@ -46,9 +46,7 @@ namespace crosspascal.ast
 						//	Type genListType  = typeof(ListNode<>).MakeGenericType(genParamType);
 						//	object list = Convert.ChangeType(fi, genListType);
 
-							if (fi is IntegralTypeList)
-								SetParentsList<IntegralType>(fi, root);
-							else if (fi is DeclarationList)
+							if (fi is DeclarationList)
 								SetParentsList<Declaration>(fi, root);
 							else if (fi is ExpressionList)
 								SetParentsList<Expression>(fi, root);
@@ -58,8 +56,6 @@ namespace crosspascal.ast
 								SetParentsList<FieldInit>(fi, root);
 							else if (fi is EnumValueList)
 								SetParentsList<EnumValue>(fi, root);
-							else if (fi is IdentifierList)
-								SetParentsList<Identifier>(fi, root);
 							else if (fi is NodeList)
 								SetParentsList<Node>(fi, root);
 						}
