@@ -527,7 +527,7 @@ namespace crosspascal.cpp
 		{
 			Visit((ClassType)node);
 			//	Do not traverse this node! circular dependency
-			//	traverse(node.reftype);
+			//	traverse(node.reftype);			
 			return true;
 		}
 
@@ -1256,24 +1256,42 @@ namespace crosspascal.cpp
             outputCode("(", false, false); 
 			traverse(node.args);
             outputCode(")", false, false);
+
+			if (node.func.Type is MethodType)
+			{
+				MethodType met = (node.func.Type as MethodType);
+				if (met.IsDestructor)
+				{
+					outputCode(";", false, true);
+					ObjectAccess oa = node.func as ObjectAccess;
+					Identifier obj = oa.obj as Identifier;
+					outputCode("delete "+obj.name+";", true, true);
+				}
+			}
+			//if (DeclReg.symEnv.Lookup(node.field) is ClassDeclaration))
+			
+
 			return true;
 		}
 
 		public override bool Visit(ClassInstantiation node)
 		{
-			Visit((LvalueExpression)node);
-			traverse(node.castType);
+			Assignment ass = node.Parent as Assignment;
+			Identifier id = ass.lvalue as Identifier;
+			string objname = id.name;
+			outputCode("new " + node.castType.qualifid+"();", false, false);			
+			outputCode("", false, true);
+			outputCode(objname +"->" + node.constructor+"(", true, false);
 			traverse(node.args);
+			outputCode(")", false, false);
 			return true;
 		}
 
 		public override bool Visit(ObjectAccess node)
 		{
-			//if (node.obj is Identifier  && DeclReg.symtab.Lookup((node.obj as Identifier).name) is ClassDeclaration))
-				//outputCode("cpde", true, true);
-
 			traverse(node.obj); 
-			outputCode("." + node.field, false, false);			
+			outputCode("." + node.field, false, false);
+
 			return true;
 		}
 

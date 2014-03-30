@@ -68,14 +68,10 @@ namespace crosspascal.testunits
 				astPrinter.StartProcessing(tree);
 				Console.WriteLine(astPrinter);
 
-				NameResolver resolver = new NameResolver();
-				resolver.Reset(sf);
-				resolver.StartProcessing(tree);
-
 				Processor constfolder = new ConstantFolder();
 				constfolder.StartProcessing(tree);
 
-				DeclarationsRegistry reg = resolver.nameReg;
+				DeclarationsRegistry reg = nr.nameReg;
 				reg.InitEnvironment();
 
 				Processor myProcessor = new CppCodegen(reg);
