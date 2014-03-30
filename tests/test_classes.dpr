@@ -11,7 +11,7 @@ var
   d:animal;
 
 begin
-  d := dfd.create;
+  d := dog.create;
   d.Eat(1);
   d.destroy;
 end.
