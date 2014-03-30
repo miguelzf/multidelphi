@@ -271,8 +271,9 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(Declaration node)
 		{
-			Visit((Node) node);
+			Visit((Node) node);			
 			traverse(node.type);
+			outputCode(" " +node.name, false, false);
 			return true;
 		}
 		
@@ -380,7 +381,7 @@ namespace crosspascal.cpp
 
 		public override bool Visit(MethodDeclaration node)
 		{
-			Visit((CallableDeclaration)node);
+			//Visit((CallableDeclaration)node);
 
 			if (node.Type.funcret == null)
 				outputCode("void ", false, false);
@@ -419,12 +420,12 @@ namespace crosspascal.cpp
 				traverse(node.Type.funcret);
 			
 			String metid;
-			if (node.Type.IsDestructor)
+			/*if (node.Type.IsDestructor)
 				metid = "::~" + node.objname;
 			else if (node.Type.IsConstructor)
 				metid = "::" + node.objname;
-			else
-				metid = "::~" + node.metname;
+			else*/
+				metid = "::" + node.metname;
 
 			outputCode(node.objname + metid + "(", false, false);
 					
@@ -509,6 +510,9 @@ namespace crosspascal.cpp
 			Visit((ClassType)node);
 			//	Do not traverse this node! circular dependency
 			//	traverse(node.reftype);			
+
+			outputCode(node.qualifid+"* ", false, false);
+
 			return true;
 		}
 
@@ -1246,7 +1250,7 @@ namespace crosspascal.cpp
 					outputCode(";", false, true);
 					ObjectAccess oa = node.func as ObjectAccess;
 					Identifier obj = oa.obj as Identifier;
-					outputCode("delete "+obj.name+";", true, true);
+					outputCode("delete "+obj.name, true, false);
 				}
 			}
 			//if (DeclReg.symEnv.Lookup(node.field) is ClassDeclaration))
@@ -1255,23 +1259,25 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-/*		public override bool Visit(ClassInstantiation node)
-		{
-			Assignment ass = node.Parent as Assignment;
-			Identifier id = ass.lvalue as Identifier;
-			string objname = id.name;
-			outputCode("new " + node.castType.qualifid+"();", false, false);			
-			outputCode("", false, true);
-			outputCode(objname +"->" + node.constructor+"(", true, false);
-			traverse(node.args);
-			outputCode(")", false, false);
-			return true;
-		}
-*/
 		public override bool Visit(ObjectAccess node)
 		{
-			traverse(node.obj); 
-			outputCode("." + node.field, false, false);
+			if (node.obj is IdentifierStatic)
+			{
+				Assignment ass = node.Parent as Assignment;
+				Identifier id = ass.lvalue as Identifier;
+				IdentifierStatic stid = node.obj as IdentifierStatic;
+				string objname = id.name;
+				outputCode("new " + stid.name + "();", false, false);
+				outputCode("", false, true);
+				outputCode(objname + "->", true, false);
+			}
+			else
+			{
+				traverse(node.obj);
+				outputCode(".", false, false);
+			}
+
+			outputCode(node.field, false, false);
 
 			return true;
 		}
