@@ -729,7 +729,7 @@ stmt
 nonlbl_stmt
 	:						{ $$ = new EmptyStatement(); }
 	| inheritedexpr			{ $$ = new ExpressionStatement($1); }
-	| routinecall			{ $$ = new ExpressionStatement($1); }
+	| lvalue				{ $$ = new ExpressionStatement($1); }
 	| assign				{ $$ = $1; }
 	| goto_stmt				{ $$ = $1; }
 	| block					{ $$ = $1; }
@@ -864,14 +864,7 @@ inheritedcall
 identifier
 	: id 									{ $$ = new Identifier($1); }
 	;
-	
-	// routine call to be used as a statement
-routinecall
-	: identifier							{ $$ = new RoutineCall($1); }
-	| lvalue KW_DOT id						{ $$ = new UnresolvedCall(new ObjectAccess($1, $3)); }
-	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }
-	;
-	
+		
 lvalue	// lvalue
 	: identifier							{ $$ = new UnresolvedId($1); }
 	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }

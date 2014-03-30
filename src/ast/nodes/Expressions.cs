@@ -741,14 +741,15 @@ namespace crosspascal.ast.nodes
 		public LvalueExpression func;
 		public ExpressionList args;
 
-		public RoutineCall(LvalueExpression func)
+		public RoutineCall(LvalueExpression func, TypeNode retType = null)
 		{
 			this.func = func;
 			args = new ExpressionList();
+			this.Type = retType;
 		}
 
-		public RoutineCall(LvalueExpression func, ExpressionList args)
-			: this(func)
+		public RoutineCall(LvalueExpression func, ExpressionList args, TypeNode retType = null)
+			: this(func, retType)
 		{
 			this.args = args;
 		}
@@ -797,13 +798,30 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Declarationn refered to by this identifier. To be set by resolver
 		/// </summary>
-		public Declaration decl;
+		public Declaration decl
+		{
+			get { return _decl; }
+			set { _decl = value; Type = value.type; }
+		}
+		Declaration _decl;
 
 		public Identifier(string val)
 		{
 			this.name = val;
 		}
 	}
+
+	/// <summary>
+	/// Identifier that refers to a named class. Static access
+	/// </summary>
+	public class IdentifierStatic : Identifier
+	{
+		public IdentifierStatic(string val, CompositeDeclaration d) : base(val)
+		{
+			decl = d;
+		}
+	}
+
 
 
 	#region Unresolved Lvalue expressions

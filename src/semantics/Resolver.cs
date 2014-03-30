@@ -14,12 +14,15 @@ namespace crosspascal.semantics
 
 	class TypeWrapper : LvalueExpression
 	{
-		public TypeNode castType { get; set; }
+		public TypeNode castType;
 
-		public TypeWrapper(TypeNode vt)
+		public Declaration decl;
+
+		public TypeWrapper(Declaration d)
 		{
-			castType = vt;
-			this.Type = vt;
+			decl = d;
+			castType = d.type;
+			this.Type = d.type;
 		}
 	}
 
@@ -488,7 +491,11 @@ namespace crosspascal.semantics
 			Visit((CallableDeclaration)node);
 			declEnv.RegisterDeclaration(node.QualifiedName, node);
 			declEnv.CreateContext(node.QualifiedName + " Params");
+			node.declaringType = (declEnv.GetDeclaration(node.objname) as CompositeDeclaration).Type;
 			traverse(node.Type);
+
+			if (node.Type.kind == MethodKind.Constructor)
+				node.Type.funcret = new ClassRefType(node.declaringType as ClassType);
 			traverse(node.Directives);
 			declEnv.ExitContext();
 			return true;
@@ -504,6 +511,9 @@ namespace crosspascal.semantics
 			declEnv.CreateContext(node.QualifiedName + " Params");
 
 			traverse(node.Type);
+			if (node.Type.kind == MethodKind.Constructor)
+				node.Type.funcret = new ClassRefType(node.declaringType as ClassType);
+
 			traverse(node.Directives);
 			traverse(node.body);	// opens context
 
@@ -524,7 +534,8 @@ namespace crosspascal.semantics
 		{
 			Visit((TypeNode)node);
 			traverse(node.@params);
-			traverse(node.funcret);
+			if (TraverseResolve(node,node.funcret))
+				node.funcret = ResolvedNode<TypeNode>();
 			traverse(node.returnVar);
 			traverse(node.Directives);
 			return true;
@@ -588,6 +599,7 @@ namespace crosspascal.semantics
 			Visit((TypeNode)node);
 			declEnv.CreateInheritedContext(node);
 			traverse(node.sections);
+
 			declEnv.ExitCompositeContext(node);
 			return true;
 		}
@@ -713,6 +725,10 @@ namespace crosspascal.semantics
 			Visit((Statement) node);
 			if (TraverseResolve(node, node.expr))
 				node.expr = ResolvedNode<Expression>();
+
+			if (!(node.expr is RoutineCall))
+				return Error("Cannot use expression as Statemeny");
+
 			return true;
 		}
 		
@@ -1219,6 +1235,15 @@ namespace crosspascal.semantics
 		}
 
 
+		public override bool Visit(Identifier node)
+		{
+			Visit((LvalueExpression)node);
+
+			Declaration d = declEnv.GetDeclaration(node.name);
+			node.decl = d;
+			return true;
+		}
+
 		/// <summary>
 		/// Resolves an id, disambiguating between routines, variables and types
 		/// </summary>
@@ -1232,15 +1257,14 @@ namespace crosspascal.semantics
 				//	throw new DeclarationNotFound(name);
 
 			if (d is TypeDeclaration)
-			{	resolved = new TypeWrapper(d.type);	// type for casts and instantiations
+			{	resolved = new TypeWrapper(d);	// type for casts and static referencs
 				return true;
 			}
 
 			else if (d.type is ProceduralType)
 			{
-				var call = new RoutineCall(node.id);
-				call.Type = (d.type as ProceduralType).funcret;
-				resolved = call;
+				resolved = new RoutineCall(node.id);
+				(resolved as RoutineCall).Type = (d.type as ProceduralType).funcret;
 			}
 
 			else if (d is ValueDeclaration)
@@ -1281,12 +1305,22 @@ namespace crosspascal.semantics
 				resolved = call;
 			}
 
+			else if (node.func is ClassInstantiation)
+			{
+				var ci = (node.func as ClassInstantiation);
+				ci.args = node.args;
+				resolved = ci;
+			}
 			else
+				return Error("Attempt to call non-callable entity: " + node.func, node);
+		/*
 			{	RoutineCall call = new RoutineCall(node.func, node.args);
 				traverse(call);	// resolve if needed
 				if (resolved == null)
 					resolved = call;
+				// else use resolved node
 			}
+		 */
 
 			return true;
 		}
@@ -1301,10 +1335,13 @@ namespace crosspascal.semantics
 				node.func = ResolvedNode<LvalueExpression>();
 			traverse(node.args);
 
-			if (!(node.func.Type is ProceduralType))
+			// TODO check this. doesn't work when node.func == routinecall, type is return type
+
+			ProceduralType ptype = (node.func.Type as ProceduralType);
+			if (ptype == null)
 				return Error("Attempt to Call a non-procedural type: " + node.func.Type, node);
 
-			MethodType mt = node.func.Type as MethodType;
+			MethodType mt = ptype as MethodType;
 			if (mt != null && mt.IsConstructor)
 			{
 				if (!(node.func is ObjectAccess)
@@ -1314,6 +1351,8 @@ namespace crosspascal.semantics
 				ObjectAccess ac = (node.func as ObjectAccess);
 				resolved = new ClassInstantiation((ac.obj as TypeWrapper).Type as ClassType, ac.field, node.args);
 			}
+			else
+				node.Type = ptype.funcret;
 
 			return true;
 		}
@@ -1329,13 +1368,8 @@ namespace crosspascal.semantics
 				node.obj = ResolvedNode<LvalueExpression>();
 
 			TypeNode objtype = node.obj.Type;
-			if (!objtype.IsFieldedType())
-				return Error("Attempt to access non-object type", node);
-
-			if (node.obj is TypeWrapper)
-			{
-				// nothing, catch as a method call
-			}
+			if (objtype == null || !objtype.IsFieldedType())
+				return Error("Attempt to access non-object type: " + node.obj, node);
 
 			Declaration d;
 			if (objtype is RecordType)
@@ -1358,32 +1392,32 @@ namespace crosspascal.semantics
 			else
 				return Error("unknown object type", node);	// should never happen
 
+			if (node.obj is TypeWrapper)
+			{
+				node.obj = new IdentifierStatic((objtype as CompositeType).Name,
+									(node.obj as TypeWrapper).decl as CompositeDeclaration);
+				Console.WriteLine("IS type wrapper: " + objtype);
+			}
+
 			node.Type = d.type;
 			// d can be a method or field
 			if (d is MethodDeclaration)
 			{
-				MethodType mt = node.Type as MethodType;
-				if (mt != null && mt.IsConstructor)
+				RoutineCall call = new RoutineCall(node, (node.Type as MethodType).funcret);
+				resolved = call;
+
+				MethodType mt = d.type as MethodType;
+				if (mt.IsConstructor || (d as MethodDeclaration).isStatic)
 				{
-					if (!(node.obj is TypeWrapper))
-						return Error("Attempt to call constructor using an instance reference", node);
+					if (!(node.obj is IdentifierStatic))
+						return Error("Attempt to call static methor or constructor using an instance reference", node);
 
-					resolved = new ClassInstantiation((node.obj as TypeWrapper).Type as ClassType, node.field);
+					if (mt.IsConstructor)
+						resolved = new ClassInstantiation(call.Type as ClassType, node.field);
+					else	// static method
+						;	// do nothing
 				}
-				else
-					resolved = new RoutineCall(node);
 			}
-
-			return true;
-		}
-		
-		public override bool Visit(Identifier node)
-		{
-			Visit((LvalueExpression) node);
-			
-			Declaration d = declEnv.GetDeclaration(node.name);
-			node.Type = d.type;
-			node.decl = d;
 
 			return true;
 		}

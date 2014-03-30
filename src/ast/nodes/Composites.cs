@@ -328,6 +328,14 @@ namespace crosspascal.ast.nodes
 
 		#endregion
 
+		
+		public ClassRefType(ClassType reftype)
+			: base(new ArrayList())
+		{
+			this.qualifid = reftype.Name;
+			this.reftype = reftype;
+		}
+
 		public ClassRefType(String qualifid, ClassType reftype = null)
 			: base(new ArrayList())
 		{
