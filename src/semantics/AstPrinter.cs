@@ -57,12 +57,13 @@ namespace crosspascal.semantics
 
 			foreach (var f in ntype.GetFields(allbindings))
 			{
-				string fname = f.Name;
+				string fname = f.Name.ToLower();
 				if (f.FieldType.Name.Equals("string", scase))
 				{
-					if (fname.EndsWith("name", scase)
-					|| fname.EndsWith("id", scase)
-					|| fname.StartsWith("id", scase))
+					if(fname.Contains("name")
+					|| fname.Contains("id")
+					|| fname.Contains("val")
+					|| fname.Contains("qualif") )
 						names += " " + f.GetValue(n);
 				}
 			}
@@ -736,9 +737,14 @@ namespace crosspascal.semantics
 		public override bool Visit(Expression node)
 		{
 			Visit((Node) node);
-			TraversePrint(node.Type);
+		//	TraversePrint(node.Type);
+			builder.Remove(builder.Length - 2, 2);
+			if (node.Type == null)
+				builder.AppendLine("  (null type)");
+			else
+				builder.AppendLine("  (" + node.Type.Name() + ")");
 			TraversePrint(node.Value);
-			TraversePrint(node.ForcedType);
+		//	TraversePrint(node.ForcedType);
 			return true;
 		}
 		

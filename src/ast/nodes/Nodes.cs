@@ -62,6 +62,17 @@ namespace crosspascal.ast.nodes
 			Loc = DelphiParser.Instance.CurrentLocation();
 		}
 
+
+
+		/// <summary>
+		/// Returns type name withou qualifier part
+		/// </summary>
+		public String Name()
+		{
+			String fullname = this.ToString();
+			return fullname.Substring(fullname.LastIndexOf('.') + 1);
+		}
+
 		/// <summary>
 		/// Report and propagate errors from the syntactic and simple-semantic checks done during the creation of the AST
 		/// </summary>
