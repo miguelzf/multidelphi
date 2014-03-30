@@ -46,10 +46,14 @@ namespace crosspascal.semantics
 			declEnv = new DeclarationsEnvironment();
 		}
 
-		bool Error(string msg)
+		bool Error(string msg, Node n = null)
 		{
+			string outp = "[ERROR in Name Resolving] " + msg;
+			if (n != null)
+				outp += n.Loc.ErrorMsg();
+
 			Console.ForegroundColor = ConsoleColor.Red;
-			Console.WriteLine("[ERROR in Name Resolving] " + msg);
+			Console.WriteLine(outp);
 			Console.ResetColor();
 			return false;
 		}
@@ -62,7 +66,9 @@ namespace crosspascal.semantics
 			traverse(child);
 
 			if (resolved != null)
+			{	resolved.Loc = child.Loc;
 				resolved.Parent = child.Parent;
+			}
 
 			return (resolved != null);
 		}
@@ -77,7 +83,7 @@ namespace crosspascal.semantics
 		public override bool StartProcessing(Node n)
 		{
 			if (declEnv == null || source == null)
-			{	Error("Must initialize NameResolver before using");
+			{	Error("Must initialize NameResolver before using", n);
 				return false;
 			}
 
@@ -1222,7 +1228,7 @@ namespace crosspascal.semantics
 
 			Declaration d = declEnv.GetDeclaration(name);
 			if (d == null)
-				return Error("DeclarationNotFound: " + name);
+				return Error("DeclarationNotFound: " + name, node);
 				//	throw new DeclarationNotFound(name);
 
 			if (d is TypeDeclaration)
@@ -1241,7 +1247,7 @@ namespace crosspascal.semantics
 				resolved = node.id;
 
 			else
-				Error("unexpected declaration type " + d);
+				Error("unexpected declaration type " + d, node);
 
 			// Process identifier
 			node.id.Type = d.type;
@@ -1264,7 +1270,7 @@ namespace crosspascal.semantics
 			if (node.func is TypeWrapper)
 			{
 				if (node.args.Count() > 1)
-					return Error("Cast may take only 1 argument");
+					return Error("Cast may take only 1 argument", node);
 				resolved = new StaticCast((node.func as TypeWrapper).castType, node.args.Get(0));
 			}
 
@@ -1296,14 +1302,14 @@ namespace crosspascal.semantics
 			traverse(node.args);
 
 			if (!(node.func.Type is ProceduralType))
-				return Error("Attempt to Call a non-procedural type: " + node.func.Type);
+				return Error("Attempt to Call a non-procedural type: " + node.func.Type, node);
 
 			MethodType mt = node.func.Type as MethodType;
 			if (mt != null && mt.IsConstructor)
 			{
 				if (!(node.func is ObjectAccess)
 				|| !((node.func as ObjectAccess).obj is TypeWrapper))
-					return Error("Attempt to call constructor using an instance reference");
+					return Error("Attempt to call constructor using an instance reference", node);
 
 				ObjectAccess ac = (node.func as ObjectAccess);
 				resolved = new ClassInstantiation((ac.obj as TypeWrapper).Type as ClassType, ac.field, node.args);
@@ -1324,7 +1330,7 @@ namespace crosspascal.semantics
 
 			TypeNode objtype = node.obj.Type;
 			if (!objtype.IsFieldedType())
-				return Error("Attempt to access non-object type");
+				return Error("Attempt to access non-object type", node);
 
 			if (node.obj is TypeWrapper)
 			{
@@ -1335,22 +1341,22 @@ namespace crosspascal.semantics
 			if (objtype is RecordType)
 			{
 				if ((d = (objtype as RecordType).GetField(node.field)) == null)
-					return Error("Field " + node.field + " not found in Record");
+					return Error("Field " + node.field + " not found in Record", node);
 			}
 
 			else if (objtype is ClassType)
 			{
 				if ((d = (objtype as ClassType).GetMember(node.field)) == null)
-					return Error("Member " + node.field + " not found in Class " + (objtype as ClassType).Name);
+					return Error("Member " + node.field + " not found in Class " + (objtype as ClassType).Name, node);
 			}
 
 			else if (objtype is InterfaceType)
 			{
 				if ((d = (objtype as InterfaceType).GetMethod(node.field)) == null)
-					return Error("Method " + node.field + " not found in Interface " + (objtype as InterfaceType).Name);
+					return Error("Method " + node.field + " not found in Interface " + (objtype as InterfaceType).Name, node);
 			}
 			else
-				return Error("unknown object type");	// should never happen
+				return Error("unknown object type", node);	// should never happen
 
 			node.Type = d.type;
 			// d can be a method or field
@@ -1360,7 +1366,7 @@ namespace crosspascal.semantics
 				if (mt != null && mt.IsConstructor)
 				{
 					if (!(node.obj is TypeWrapper))
-						return Error("Attempt to call constructor using an instance reference");
+						return Error("Attempt to call constructor using an instance reference", node);
 
 					resolved = new ClassInstantiation((node.obj as TypeWrapper).Type as ClassType, node.field);
 				}
@@ -1392,7 +1398,7 @@ namespace crosspascal.semantics
 				node.array = ResolvedNode<ArrayConst>();
 
 			if (node.array != null && node.lvalue != null)
-				Error("Internal: Array access both const and var");
+				Error("Internal: Array access both const and var", node);
 
 			// const array access
 			if (node.array != null)
@@ -1404,7 +1410,7 @@ namespace crosspascal.semantics
 			if (node.lvalue != null)
 			{
 				if (!(node.lvalue.Type is ArrayType))
-					return Error("Expected array type in Array Access");
+					return Error("Expected array type in Array Access", node);
 
 				node.Type = (node.lvalue.Type as ArrayType).basetype;
 			}
@@ -1419,7 +1425,7 @@ namespace crosspascal.semantics
 				node.expr = ResolvedNode<Expression>();
 
 			if (!(node.expr.Type is PointerType))
-				return Error("Attempt to dereference non-pointer type");
+				return Error("Attempt to dereference non-pointer type", node);
 
 			node.Type = (node.expr.Type as PointerType).pointedType;
 			return true;

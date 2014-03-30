@@ -20,16 +20,20 @@ namespace crosspascal.parser
 	/// </remarks>
 	public partial class DelphiParser
 	{
-
 		//
-		// Immutable Parser state 
+		// Entry point and public interface
 		//
 
 		public static int DebugLevel;
 
-		//
-		// Entry point and public interface
-		//
+		// TODO improve/cleanup this
+		public static DelphiParser Instance { get; set; }
+		SourceFile currentFile;
+		
+		public Location CurrentLocation()
+		{
+			return new Location(yyline(), currentFile.path);
+		}
 
 		public DelphiParser(ParserDebug dgb)
 		{
@@ -39,6 +43,7 @@ namespace crosspascal.parser
 			}
 
 			eof_token = DelphiScanner.YYEOF;
+			Instance = this;
 		}
 
 		public DelphiParser(int dgbLevel)
@@ -55,6 +60,11 @@ namespace crosspascal.parser
 		}
 
 
+		public int yyline()
+		{
+			return lexer.yylineno();
+		}
+
 
 		//
 		// Per-file mutable parsing state
@@ -63,7 +73,7 @@ namespace crosspascal.parser
 		DelphiScanner lexer;
 
 		// wrapper for yyparse
-		public TranslationUnit Parse(TextReader tr, ParserDebug dgb = null)
+		public TranslationUnit Parse(TextReader tr, SourceFile file = null, ParserDebug dgb = null)
 		{
 			if (dgb != null)
 			{
@@ -71,6 +81,8 @@ namespace crosspascal.parser
 				DebugLevel = 1;
 			}
 
+			if (file != null)
+				currentFile = file;
 			lexer = new DelphiScanner(tr);
 			lexer.yyLexDebugLevel = DebugLevel;
 

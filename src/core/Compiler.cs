@@ -64,7 +64,7 @@ namespace crosspascal.core
 				TranslationUnit ast = null;
 
 				try {
-					ast = parser.Parse(sr);
+					ast = parser.Parse(sr, sf);
 				}
 				catch (ParserException e)
 				{

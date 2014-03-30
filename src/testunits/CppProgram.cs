@@ -47,7 +47,7 @@ namespace crosspascal.testunits
 
 				try
 				{
-					tree = parser.Parse(sr);
+					tree = parser.Parse(sr, sf);
 					Console.WriteLine("Parsed OK: " + tree.name + " " + tree.ToString());
 				}
 				catch (ParserException e)
@@ -71,7 +71,7 @@ namespace crosspascal.testunits
 				Processor constfolder = new ConstantFolder();
 				constfolder.StartProcessing(tree);
 
-				DeclarationsRegistry reg = nr.declEnv;
+				DeclarationsEnvironment reg = nr.declEnv;
 				reg.InitEnvironment();
 
 				Processor myProcessor = new CppCodegen(reg);

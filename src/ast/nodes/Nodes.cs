@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using crosspascal.parser;
 
 namespace crosspascal.ast.nodes
 {
@@ -32,22 +33,45 @@ namespace crosspascal.ast.nodes
 	///  </summary>
 
 
+	public struct Location
+	{
+		public int line;
+
+		public string file;
+
+		public Location(int l, string f)
+		{
+			line = l;
+			file = f;
+		}
+
+		public String ErrorMsg()
+		{
+			return " in file " + file + " line " + line;
+		}
+	}
 
 	public abstract class Node
 	{
 		public Node Parent { get; set; }
 
+		public Location Loc { get; set; }
+
+		public Node()
+		{
+			Loc = DelphiParser.Instance.CurrentLocation();
+		}
+
 		/// <summary>
 		/// Report and propagate errors from the syntactic and simple-semantic checks done during the creation of the AST
 		/// </summary>
 		/// <param name="visitor"></param>
-		static protected bool Error(string msg)
+		protected bool Error(string msg)
 		{
-			string outp = "[ERROR] " + msg;
+			string outp = "[ERROR in node creation] " + msg + Loc.ErrorMsg();
 			// throw new crosspascal.parser.AstNodeException(outp);
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine(outp);
-			Console.WriteLine("[ERROR in Name Resolving] " + msg);
 			Console.ResetColor();
 			return false;
 		}
@@ -56,12 +80,11 @@ namespace crosspascal.ast.nodes
 		/// Report internal errors
 		/// </summary>
 		/// <param name="visitor"></param>
-		static protected bool ErrorInternal(string msg)
+		protected bool ErrorInternal(string msg)
 		{
-			string outp = "[ERROR internal] " + msg;
+			string outp = "[ERROR internal] " + msg + Loc.ErrorMsg();
 			// throw new crosspascal.parser.AstNodeException(outp);
 			Console.ForegroundColor = ConsoleColor.Red;
-			Console.Error.WriteLine(outp);
 			Console.Error.WriteLine(outp);
 			Console.ResetColor();
 			return false;
