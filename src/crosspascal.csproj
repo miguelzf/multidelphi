@@ -92,17 +92,12 @@
     <Compile Include="parser\SyntacticErrors.cs" />
     <Compile Include="semantics\AstPrinter.cs" />
     <Compile Include="semantics\ConstantFolding.cs" />
-    <Compile Include="semantics\DeclarationsRegistry.cs" />
-    <Compile Include="semantics\NameResolver.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="semantics\DeclarationsEnvironment.cs" />
     <Compile Include="semantics\ParentProcessor.cs" />
+    <Compile Include="semantics\Resolver.cs" />
     <Compile Include="semantics\SemanticErrors.cs" />
-    <Compile Include="semantics\SymbolEnvironment.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="semantics\SymbolGraph.cs" />
     <Compile Include="semantics\SymbolTable.cs" />
-    <Compile Include="semantics\TypeValidator.cs" />
     <Compile Include="testunits\CppProgram.cs" />
     <Compile Include="testunits\TestDriver.cs" />
     <Compile Include="testunits\TestProgram.cs" />

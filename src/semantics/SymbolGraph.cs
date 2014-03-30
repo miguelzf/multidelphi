@@ -10,7 +10,7 @@ namespace crosspascal.semantics
 	/// <summary>
 	/// DAG-based symbol manager
 	/// </summary>
-	public class SymbolEnvironment<T> where T : class
+	public class SymbolGraph<T> where T : class
 	{
 		SymbolContextNode<T> root;
 
@@ -21,7 +21,7 @@ namespace crosspascal.semantics
 
 		int numContexts = 0;
 
-		public SymbolEnvironment()
+		public SymbolGraph()
 		{
 			root = current = new SymbolContextNode<T>("initial: empty default context");
 		}

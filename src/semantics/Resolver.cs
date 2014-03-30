@@ -23,9 +23,14 @@ namespace crosspascal.semantics
 		}
 	}
 
+
+	/// <summary>
+	/// Implements a Name/Declaration Resolver with Type Inference and Validation
+	/// </summary>
+
 	class NameResolver : Processor
 	{
-		public DeclarationsRegistry nameReg { get; set; }
+		public DeclarationsEnvironment declEnv { get; set; }
 		SourceFile source;
 
 		// =================================================
@@ -38,7 +43,7 @@ namespace crosspascal.semantics
 		public void Reset(SourceFile sf)
 		{
 			source = sf;
-			nameReg = new DeclarationsRegistry();
+			declEnv = new DeclarationsEnvironment();
 		}
 
 		bool Error(string msg)
@@ -71,7 +76,7 @@ namespace crosspascal.semantics
 		
 		public override bool StartProcessing(Node n)
 		{
-			if (nameReg == null || source == null)
+			if (declEnv == null || source == null)
 			{	Error("Must initialize NameResolver before using");
 				return false;
 			}
@@ -187,7 +192,7 @@ namespace crosspascal.semantics
 		public override bool Visit(UnitNode node)
 		{
 			// do not allow shadowing in interface section
-			nameReg.CreateContext("unit " + node.name, false);
+			declEnv.CreateContext("unit " + node.name, false);
 			Visit((TranslationUnit) node);
 			traverse(node.@interface);
 			traverse(node.implementation);
@@ -218,7 +223,7 @@ namespace crosspascal.semantics
 			string id = node.name;
 			var ctx = source.GetDependency(id).interfContext;
 			ctx.id = id;
-			nameReg.ImportContext(ctx);
+			declEnv.ImportContext(ctx);
 			return true;
 		}
 		
@@ -283,18 +288,18 @@ namespace crosspascal.semantics
 		public override bool Visit(InterfaceSection node)
 		{
 			// do not allow shadowing in the implementation section
-			nameReg.CreateContext("interface", false);
+			declEnv.CreateContext("interface", false);
 
 			Visit((DeclarationSection) node);
 			// Finalize processing of an Unit's interface section, by saving its symbol context
-			source.interfContext = nameReg.ExportContext();
+			source.interfContext = declEnv.ExportContext();
 			return true;
 		}
 		
 		public override bool Visit(ImplementationSection node)
 		{
 			// allow shadowing in main body
-			nameReg.CreateContext("implementation", true);
+			declEnv.CreateContext("implementation", true);
 			Visit((DeclarationSection) node);
 			return true;
 		}
@@ -319,7 +324,7 @@ namespace crosspascal.semantics
 			
 			// Important!! Register declaration *BEFORE* processing the type.
 			// the type may open a context for subtypes
-			nameReg.RegisterDeclaration(node.name, node);
+			declEnv.RegisterDeclaration(node.name, node);
 
 		/*	// OLD prolly won't be used
 			// all declaration types are visited
@@ -436,11 +441,11 @@ namespace crosspascal.semantics
 			Visit((CallableDeclaration)node);
 			node.declaringScope = node.Parent.Parent as Section;
 
-			nameReg.RegisterDeclaration(node.QualifiedName, node);
-			nameReg.CreateContext(node.QualifiedName + " Params");
+			declEnv.RegisterDeclaration(node.QualifiedName, node);
+			declEnv.CreateContext(node.QualifiedName + " Params");
 			traverse(node.Type);
 			traverse(node.Directives);
-			nameReg.ExitContext();
+			declEnv.ExitContext();
 
 			return true;
 		}
@@ -452,7 +457,7 @@ namespace crosspascal.semantics
 
 			bool checkRegister = true;
 			// check if current callable is an implementation of a declared callable (in the interface)
-			var decl = nameReg.GetDeclaration(node.QualifiedName);
+			var decl = declEnv.GetDeclaration(node.QualifiedName);
 			if (decl is RoutineDeclaration && node.declaringScope is ImplementationSection
 			&& (decl as RoutineDeclaration).declaringScope is InterfaceSection)
 			{	// implementation of a declared routine
@@ -460,26 +465,26 @@ namespace crosspascal.semantics
 			}
 			// 	if decl not null, will throw exception when trying to register
 
-			nameReg.RegisterDeclaration(node.QualifiedName, node, checkRegister);
+			declEnv.RegisterDeclaration(node.QualifiedName, node, checkRegister);
 
-			nameReg.CreateContext(node.QualifiedName + " Params");
+			declEnv.CreateContext(node.QualifiedName + " Params");
 
 			traverse(node.Type);
 			traverse(node.Directives);
 			traverse(node.body);
 
-			nameReg.ExitContext();
+			declEnv.ExitContext();
 			return true;
 		}
 		
 		public override bool Visit(MethodDeclaration node)
 		{
 			Visit((CallableDeclaration)node);
-			nameReg.RegisterDeclaration(node.QualifiedName, node);
-			nameReg.CreateContext(node.QualifiedName + " Params");
+			declEnv.RegisterDeclaration(node.QualifiedName, node);
+			declEnv.CreateContext(node.QualifiedName + " Params");
 			traverse(node.Type);
 			traverse(node.Directives);
-			nameReg.ExitContext();
+			declEnv.ExitContext();
 			return true;
 		}
 
@@ -487,25 +492,25 @@ namespace crosspascal.semantics
 		{
 			Visit((CallableDeclaration)node);
 
-			nameReg.RegisterDeclaration(node.objname+"."+node.QualifiedName, node);
-			CompositeType type = nameReg.CreateCompositeContext(node.objname);
+			declEnv.RegisterDeclaration(node.objname+"."+node.QualifiedName, node);
+			CompositeType type = declEnv.CreateCompositeContext(node.objname);
 			node.declaringType = type;
-			nameReg.CreateContext(node.QualifiedName + " Params");
+			declEnv.CreateContext(node.QualifiedName + " Params");
 
 			traverse(node.Type);
 			traverse(node.Directives);
 			traverse(node.body);	// opens context
 
-			nameReg.ExitContext();
-			nameReg.ExitCompositeContext(node.declaringType);
+			declEnv.ExitContext();
+			declEnv.ExitCompositeContext(node.declaringType);
 			return true;
 		}
 
 		public override bool Visit(RoutineBody node)
 		{
-			nameReg.CreateContext("routine def body");
+			declEnv.CreateContext("routine def body");
 			Visit((CodeSection)node);
-			nameReg.ExitContext();
+			declEnv.ExitContext();
 			return true;
 		}
 
@@ -575,9 +580,9 @@ namespace crosspascal.semantics
 				s.declaringType = node;
 
 			Visit((TypeNode)node);
-			nameReg.CreateInheritedContext(node);
+			declEnv.CreateInheritedContext(node);
 			traverse(node.sections);
-			nameReg.ExitCompositeContext(node);
+			declEnv.ExitCompositeContext(node);
 			return true;
 		}
 		
@@ -1200,32 +1205,35 @@ namespace crosspascal.semantics
 				node.casttype = ResolvedNode<VariableType>();
 			if (TraverseResolve(node, node.expr))
 				node.expr = ResolvedNode<Expression>();
+
+			// TODO check if cast is valid
+
+			node.Type = node.casttype;
 			return true;
 		}
 
 
 		/// <summary>
 		/// Resolves an id, disambiguating between routines, variables and types
-		/// TODO classes, units
 		/// </summary>
 		public override bool Visit(UnresolvedId node)
 		{
 			String name = node.id.name;
 
-			Declaration d = nameReg.GetDeclaration(name);
+			Declaration d = declEnv.GetDeclaration(name);
 			if (d == null)
 				return Error("DeclarationNotFound: " + name);
 				//	throw new DeclarationNotFound(name);
 
-			node.id.Type = d.type;
-
 			if (d is TypeDeclaration)
-				resolved = new TypeWrapper(d.type);	// type for casts and instantiations
+			{	resolved = new TypeWrapper(d.type);	// type for casts and instantiations
+				return true;
+			}
 
 			else if (d.type is ProceduralType)
 			{
 				var call = new RoutineCall(node.id);
-				call.Type= (d.type as ProceduralType).funcret;
+				call.Type = (d.type as ProceduralType).funcret;
 				resolved = call;
 			}
 
@@ -1235,6 +1243,9 @@ namespace crosspascal.semantics
 			else
 				Error("unexpected declaration type " + d);
 
+			// Process identifier
+			node.id.Type = d.type;
+			node.id.decl = d;
 			return true;
 		}
 		
@@ -1273,7 +1284,10 @@ namespace crosspascal.semantics
 
 			return true;
 		}
-			
+		
+		/// <summary>
+		/// Process a routine call, or a class instantiation
+		/// </summary>
 		public override bool Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
@@ -1298,6 +1312,10 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
+		/// <summary>
+		/// Process an Object Access. May be an access to a field or a method,
+		/// in which case it may be a class instantiation
+		/// </summary>
 		public override bool Visit(ObjectAccess node)
 		{
 			Visit((LvalueExpression) node);
@@ -1357,8 +1375,9 @@ namespace crosspascal.semantics
 		{
 			Visit((LvalueExpression) node);
 			
-			Declaration d = nameReg.GetDeclaration(node.name);
+			Declaration d = declEnv.GetDeclaration(node.name);
 			node.Type = d.type;
+			node.decl = d;
 
 			return true;
 		}
@@ -1398,6 +1417,11 @@ namespace crosspascal.semantics
 			Visit((LvalueExpression)node);
 			if (TraverseResolve(node, node.expr))
 				node.expr = ResolvedNode<Expression>();
+
+			if (!(node.expr.Type is PointerType))
+				return Error("Attempt to dereference non-pointer type");
+
+			node.Type = (node.expr.Type as PointerType).pointedType;
 			return true;
 		}
 
@@ -1425,7 +1449,7 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(UnresolvedType node)
 		{
-			resolved = nameReg.FetchType(node.id);
+			resolved = declEnv.FetchType(node.id);
 			if (resolved is RecordType)
 				resolved = new RecordRefType(node.id, (resolved as RecordType));
 			if (resolved is ClassType)
@@ -1436,20 +1460,20 @@ namespace crosspascal.semantics
 		public override bool Visit(ClassRefType node)
 		{
 			if (node.reftype == null)
-				node.reftype = nameReg.FetchType<ClassType>(node.qualifid);
+				node.reftype = declEnv.FetchType<ClassType>(node.qualifid);
 			return true;
 		}
 
 		public override bool Visit(RecordRefType node)
 		{
 			if (node.reftype == null)
-				node.reftype = nameReg.FetchType<RecordType>(node.qualifid);
+				node.reftype = declEnv.FetchType<RecordType>(node.qualifid);
 			return true;
 		}
 		
 		public override bool Visit(UnresolvedVariableType node)
 		{
-			resolved = nameReg.FetchType<VariableType>(node.id);
+			resolved = declEnv.FetchType<VariableType>(node.id);
 			if (resolved is RecordType)
 				resolved = new RecordRefType(node.id, (resolved as RecordType));
 			if (resolved is ClassType)
@@ -1459,14 +1483,14 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(UnresolvedIntegralType node)
 		{
-			resolved = nameReg.FetchType<IntegralType>(node.id);
+			resolved = declEnv.FetchType<IntegralType>(node.id);
 			return true;
 		}
 		
 		public override bool Visit(UnresolvedOrdinalType node)
 		{
 			// TODO drill down to a specific IOrdinalType
-			resolved = nameReg.FetchType<VariableType>(node.id);
+			resolved = declEnv.FetchType<VariableType>(node.id);
 			return true;
 		}
 		
@@ -1681,9 +1705,9 @@ namespace crosspascal.semantics
 		{
 			Visit((StructuredType) node);
 
-			nameReg.CreateContext("record");
+			declEnv.CreateContext("record");
 			traverse(node.compTypes);
-			nameReg.ExitContext();
+			declEnv.ExitContext();
 			return true;
 		}
 

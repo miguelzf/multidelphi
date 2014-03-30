@@ -71,7 +71,7 @@ namespace crosspascal.testunits
 				Processor constfolder = new ConstantFolder();
 				constfolder.StartProcessing(tree);
 
-				DeclarationsRegistry reg = nr.nameReg;
+				DeclarationsRegistry reg = nr.declEnv;
 				reg.InitEnvironment();
 
 				Processor myProcessor = new CppCodegen(reg);

@@ -794,6 +794,11 @@ namespace crosspascal.ast.nodes
 	{
 		public string name;
 
+		/// <summary>
+		/// Declarationn refered to by this identifier. To be set by resolver
+		/// </summary>
+		public Declaration decl;
+
 		public Identifier(string val)
 		{
 			this.name = val;

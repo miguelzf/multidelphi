@@ -11,9 +11,9 @@ namespace crosspascal.semantics
 	/// Registry for declarations.
 	/// Wrapper over a symbol table
 	/// </summary>
-	public class DeclarationsRegistry
+	public class DeclarationsEnvironment
 	{
-		public SymbolEnvironment<Declaration> symEnv = new SymbolEnvironment<Declaration>();
+		public SymbolGraph<Declaration> symEnv = new SymbolGraph<Declaration>();
 
 		// probably won't be needed
 		Dictionary<String, TypeDeclaration> builtinTypes = new Dictionary<String, TypeDeclaration>();
@@ -21,7 +21,7 @@ namespace crosspascal.semantics
 
 		int DebugLevel = 1;
 
-		public DeclarationsRegistry()
+		public DeclarationsEnvironment()
 		{
 			LoadRuntimeNames();
 		}

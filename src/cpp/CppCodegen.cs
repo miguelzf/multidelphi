@@ -14,9 +14,9 @@ namespace crosspascal.cpp
 	{
 		private int ident = 0;
 		private StringBuilder builder;
-		private DeclarationsRegistry DeclReg;
+		private DeclarationsEnvironment DeclReg;
 
-		public CppCodegen(DeclarationsRegistry enviroment)
+		public CppCodegen(DeclarationsEnvironment enviroment)
 		{
 			builder = new StringBuilder();
 			DeclReg = enviroment;
