@@ -14,12 +14,10 @@ namespace crosspascal.cpp
 	{
 		private int ident = 0;
 		private StringBuilder builder;
-		private DeclarationsEnvironment DeclReg;
 
 		public CppCodegen(DeclarationsEnvironment enviroment)
 		{
-			builder = new StringBuilder();
-			DeclReg = enviroment;
+			builder = new StringBuilder();			
 		}
 
 		public override string ToString()
@@ -224,9 +222,7 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(RoutineBody node)
 		{
-			DeclReg.LoadNext();
 			Visit((CodeSection) node);
-			DeclReg.LoadNext();
 			return true;
 		}
 		
@@ -257,14 +253,12 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(InterfaceSection node)
 		{
-			DeclReg.LoadNext();
 			Visit((DeclarationSection) node);
 			return true;
 		}
 		
 		public override bool Visit(ImplementationSection node)
 		{
-			DeclReg.LoadNext();
 			Visit((DeclarationSection)node);
 			return true;
 		}
@@ -380,15 +374,12 @@ namespace crosspascal.cpp
 
 		public override bool Visit(RoutineDeclaration node)
 		{
-			DeclReg.LoadNext();	// routine params params
 			Visit((CallableDeclaration) node);
-			DeclReg.LoadNext();
 			return true;
 		}
 
 		public override bool Visit(MethodDeclaration node)
 		{
-			DeclReg.LoadNext();	// method params
 			Visit((CallableDeclaration)node);
 
 			if (node.Type.funcret == null)
@@ -400,13 +391,11 @@ namespace crosspascal.cpp
 			traverse(node.Type.@params);
 			outputCode(");", false, true);
 
-			DeclReg.LoadNext();
 			return true;
 		}
 
 		public override bool Visit(RoutineDefinition node)
 		{
-			DeclReg.LoadNext();
 			Visit((CallableDeclaration)node);
 			traverse(node.body);
 
@@ -419,15 +408,11 @@ namespace crosspascal.cpp
 
 			outputCode("", false, true);
 
-			DeclReg.LoadNext();
 			return true;
 		}
 
 		public override bool Visit(MethodDefinition node)
 		{
-			DeclReg.LoadNextComposite(node.declaringType);
-			DeclReg.LoadNext();	// method params
-			
 			if (node.Type.funcret == null)
 				outputCode("void ", false, false);
 			else
@@ -456,8 +441,6 @@ namespace crosspascal.cpp
 
 			outputCode("", false, true);
 
-			DeclReg.LoadNext();
-			DeclReg.LoadNextComposite(node.declaringType);
 			return true;
 		}
 
@@ -504,9 +487,7 @@ namespace crosspascal.cpp
 		public override bool Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
-			DeclReg.LoadNextComposite(node);
 			traverse(node.sections);
-			DeclReg.LoadNextComposite(node);
 			return true;
 		}
 

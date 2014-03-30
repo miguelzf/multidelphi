@@ -1,11 +1,13 @@
 Program test7;
 
+{$APPTYPE CONSOLE}
+
 Type
   Manager = Class
     X:Integer;
     Y:Integer;
     Constructor Create;
-    Function Instance:Manager;
+    Class Function Instance:Manager;
     Procedure Write(S:String);
   End;
 
@@ -17,7 +19,7 @@ Constructor Manager.Create;
 Begin
 End;
 
-function Manager.Instance: Manager;
+class function Manager.Instance: Manager;
 begin
   If Not assigned(_Instance) Then
     _Instance := Manager.Create();

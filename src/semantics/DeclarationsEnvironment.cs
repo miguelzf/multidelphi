@@ -516,6 +516,9 @@ namespace crosspascal.semantics
 			foreach (var s in floatFuncs)
 				CreateBuiltinFunction(new RoutineDeclaration(s, new DeclarationList(p.Clone()), t));
 
+			CreateBuiltinFunction(new RoutineDeclaration("assigned",
+									new DeclarationList(new ParamDeclaration("p", PointerType.Single))));
+
 			CreateBuiltinFunction(new RoutineDeclaration("writeln", 
 									new DeclarationList(new ParamDeclaration("s", StringType.Single))));
 			CreateBuiltinFunction(new RoutineDeclaration("readln" , 
