@@ -1042,14 +1042,6 @@ namespace crosspascal.ast
 			traverse(node.args);
 			return true;
 		}
-
-		public virtual bool Visit(ClassInstantiation node)
-		{
-			Visit((LvalueExpression) node);
-			traverse(node.castType);
-			traverse(node.args);
-			return true;
-		}
 		
 		public virtual bool Visit(ObjectAccess node)
 		{

@@ -872,7 +872,6 @@ lvalue	// lvalue
 	| lvalue KW_DOT id						{ $$ = new ObjectAccess($1, $3); }
 	| lvalue KW_DEREF						{ $$ = new PointerDereference($1); }
 	| lvalue LBRAC exprlst RBRAC			{ $$ = new ArrayAccess($1, $3); }
-	| stringnonnull LBRAC expr RBRAC		{ $$ = new ArrayAccess(new ArrayConst($1), new ExpressionList($3)); }
 	| LPAR expr RPAR						{ $$ = new ExprAsLvalue($2); }
 	;
 
@@ -885,6 +884,7 @@ unaryexpr
 	| KW_SUM unaryexpr 						{ $$ = new UnaryPlus($2); }
 	| KW_SUB unaryexpr 						{ $$ = new UnaryMinus($2); }
 	| inheritedexpr							{ $$ = $1; }
+	| stringnonnull LBRAC expr RBRAC		{ $$ = new ArrayAccess(new ArrayConst($1), new ExpressionList($3)); }
 	;
 
 expr

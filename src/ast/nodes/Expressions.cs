@@ -755,27 +755,9 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class ClassInstantiation : LvalueExpression
-	{
-		public ClassRefType castType;
-		public String constructor;
-		public ExpressionList args;
-
-		public ClassInstantiation(ClassRefType type, String constr, ExpressionList args = null)
-		{
-			this.castType = type;
-			this.constructor = constr;
-			this.args = args;
-			if (args == null)
-				this.args = new ExpressionList();
-		}
-
-		public ClassInstantiation(ClassType type, String constr, ExpressionList args = null)
-			: this(new ClassRefType(type.Name, type), constr, args)
-		{
-		}
-	}
-
+	/// <summary>
+	/// An access to a member in an object (record, class or interface)
+	/// </summary>
 	public class ObjectAccess : LvalueExpression
 	{
 		public LvalueExpression obj;

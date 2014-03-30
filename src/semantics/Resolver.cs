@@ -1305,12 +1305,6 @@ namespace crosspascal.semantics
 				resolved = call;
 			}
 
-			else if (node.func is ClassInstantiation)
-			{
-				var ci = (node.func as ClassInstantiation);
-				ci.args = node.args;
-				resolved = ci;
-			}
 			else
 				return Error("Attempt to call non-callable entity: " + node.func, node);
 		/*
@@ -1325,9 +1319,8 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		/// <summary>
-		/// Process a routine call, or a class instantiation
-		/// </summary>
+
+		// TODO remove this, shouldn't be used
 		public override bool Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
@@ -1348,8 +1341,8 @@ namespace crosspascal.semantics
 				|| !((node.func as ObjectAccess).obj is TypeWrapper))
 					return Error("Attempt to call constructor using an instance reference", node);
 
-				ObjectAccess ac = (node.func as ObjectAccess);
-				resolved = new ClassInstantiation((ac.obj as TypeWrapper).Type as ClassType, ac.field, node.args);
+			//	ObjectAccess ac = (node.func as ObjectAccess);
+			//	resolved = new ClassInstantiation((ac.obj as TypeWrapper).Type as ClassType, ac.field, node.args);
 			}
 			else
 				node.Type = ptype.funcret;
@@ -1413,7 +1406,8 @@ namespace crosspascal.semantics
 						return Error("Attempt to call static methor or constructor using an instance reference", node);
 
 					if (mt.IsConstructor)
-						resolved = new ClassInstantiation(call.Type as ClassType, node.field);
+						;	// do nothing
+					//	resolved = new ClassInstantiation(call.Type as ClassType, node.field);
 					else	// static method
 						;	// do nothing
 				}

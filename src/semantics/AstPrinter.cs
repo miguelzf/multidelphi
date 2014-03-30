@@ -1141,14 +1141,6 @@ namespace crosspascal.semantics
 			TraversePrint(node.args);
 			return true;
 		}
-
-		public override bool Visit(ClassInstantiation node)
-		{
-			Visit((LvalueExpression)node);
-			TraversePrint(node.castType);
-			TraversePrint(node.args);
-			return true;
-		}
 		
 		public override bool Visit(ObjectAccess node)
 		{

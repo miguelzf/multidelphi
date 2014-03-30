@@ -1255,7 +1255,7 @@ namespace crosspascal.cpp
 			return true;
 		}
 
-		public override bool Visit(ClassInstantiation node)
+/*		public override bool Visit(ClassInstantiation node)
 		{
 			Assignment ass = node.Parent as Assignment;
 			Identifier id = ass.lvalue as Identifier;
@@ -1267,7 +1267,7 @@ namespace crosspascal.cpp
 			outputCode(")", false, false);
 			return true;
 		}
-
+*/
 		public override bool Visit(ObjectAccess node)
 		{
 			traverse(node.obj); 
