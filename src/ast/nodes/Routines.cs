@@ -129,6 +129,12 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public abstract String Fullname();
 
+		/// <summary>
+		/// Section that declares this callable. 
+		/// To be set by resolver
+		/// </summary>
+		public Section declaringSection;
+
 		public CallableDeclaration(string name, DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
 			: base(name, new ProceduralType(@params, ret, dirs))
 		{

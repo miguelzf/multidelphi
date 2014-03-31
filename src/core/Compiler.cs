@@ -84,14 +84,15 @@ namespace crosspascal.core
 				Console.WriteLine("Parsed OK: " + ast.name + " " + ast.ToString());
 				Console.ResetColor();
 
-				PostProcessing.SetParents(ast);
-			//	new ParentProcessor().StartProcessing(ast);
-				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
 				resolver.Reset(sf);
-				resolver.StartProcessing(ast);
+				resolver.Process(ast);
 				Console.WriteLine("Name Resolving OK: " + ast.name + " " + ast.ToString());
 
-				astPrinter.StartProcessing(ast);
+				PostProcessing.SetParents(ast);
+				//	new ParentProcessor().StartProcessing(ast);
+				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
+				
+				astPrinter.Process(ast);
 
 				Console.WriteLine(astPrinter);
 			//	Console.ReadLine();

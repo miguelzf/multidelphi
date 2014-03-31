@@ -1055,6 +1055,12 @@ namespace crosspascal.semantics
 			Visit((LvalueExpression) node);
 			return true;
 		}
+
+		public override bool Visit(IdentifierStatic node)
+		{
+			Visit((LvalueExpression)node);
+			return true;
+		}
 		
 		public override bool Visit(TypeNode node)
 		{

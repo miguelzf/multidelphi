@@ -170,6 +170,10 @@ namespace crosspascal.ast.nodes
 			decls = dls;
 			if (decls == null)
 				decls = new DeclarationList();
+			else
+				foreach (var d in decls)
+					if (d is CallableDeclaration)
+						(d as CallableDeclaration).declaringSection = this;
 		}
 	}
 

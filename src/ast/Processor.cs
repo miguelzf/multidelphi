@@ -54,7 +54,7 @@ namespace crosspascal.ast
 		/// <summary>
 		/// Entry point
 		/// </summary>
-		public virtual bool StartProcessing(Node n)
+		public virtual bool Process(Node n)
 		{
 			return traverse(n);
 		}

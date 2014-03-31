@@ -101,7 +101,7 @@ namespace crosspascal.semantics
 		}
 		
 
-		public override bool StartProcessing(Node n)
+		public override bool Process(Node n)
 		{
 			TraversePrint(n);
 			return true;

@@ -57,26 +57,26 @@ namespace crosspascal.testunits
 					break;
 				}
 
-				ParentProcessor pp = new ParentProcessor();
-				pp.StartProcessing(tree);
-
 				NameResolver nr = new NameResolver();
 				nr.Reset(sf);
-				nr.StartProcessing(tree);
-				
+				nr.Process(tree);
+
+				ParentProcessor pp = new ParentProcessor();
+				pp.Process(tree);
+
 				AstPrinter astPrinter = new AstPrinter();
-				astPrinter.StartProcessing(tree);
+				astPrinter.Process(tree);
 				Console.WriteLine(astPrinter);
 
 				Processor constfolder = new ConstantFolder();
-				constfolder.StartProcessing(tree);
+				constfolder.Process(tree);
 
 				DeclarationsEnvironment reg = nr.declEnv;
 				reg.InitEnvironment();
 
 				Processor myProcessor = new CppCodegen(reg);
 				Console.WriteLine("Now compiling...");
-				myProcessor.StartProcessing(tree);
+				myProcessor.Process(tree);
 
 				Console.WriteLine(myProcessor.ToString());
 			}

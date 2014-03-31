@@ -51,7 +51,7 @@ namespace crosspascal.cpp
 		// Processor interface
 		//
 
-		public override bool StartProcessing(Node n)
+		public override bool Process(Node n)
 		{
 			return traverse(n);
 		}

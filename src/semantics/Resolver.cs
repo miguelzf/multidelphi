@@ -64,15 +64,11 @@ namespace crosspascal.semantics
 
 		private Node resolved = null;
 
-		private bool TraverseResolve(Node parent, Node child)
+		private bool TraverseResolve(Node child)
 		{
 			traverse(child);
-
 			if (resolved != null)
-			{	resolved.Loc = child.Loc;
-				resolved.Parent = child.Parent;
-			}
-
+				resolved.Loc = child.Loc;
 			return (resolved != null);
 		}
 
@@ -83,14 +79,14 @@ namespace crosspascal.semantics
 			return (T) t;
 		}
 		
-		public override bool StartProcessing(Node n)
+		public override bool Process(Node n)
 		{
 			if (declEnv == null || source == null)
 			{	Error("Must initialize NameResolver before using", n);
 				return false;
 			}
 
-			TraverseResolve(null,n);
+			TraverseResolve(n);
 			return true;
 		}
 
@@ -366,7 +362,7 @@ namespace crosspascal.semantics
 				return true;
 		*/
 
-			if (TraverseResolve(node, node.type))
+			if (TraverseResolve(node.type))
 				node.type = ResolvedNode<TypeNode>();
 
 			return true;
@@ -387,7 +383,7 @@ namespace crosspascal.semantics
 		public override bool Visit(VarDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			if (TraverseResolve(node, node.init))
+			if (TraverseResolve(node.init))
 				node.init = ResolvedNode<Expression>();
 			return true;
 		}
@@ -395,7 +391,7 @@ namespace crosspascal.semantics
 		public override bool Visit(ParamDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			if (TraverseResolve(node, node.init))
+			if (TraverseResolve(node.init))
 				node.init = ResolvedNode<Expression>();
 			return true;
 		}
@@ -421,7 +417,7 @@ namespace crosspascal.semantics
 		public override bool Visit(ConstDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			if (TraverseResolve(node, node.init))
+			if (TraverseResolve(node.init))
 				node.init = ResolvedNode<Expression>();
 			return true;
 		}
@@ -452,7 +448,7 @@ namespace crosspascal.semantics
 		{
 			// first resolve the params types, in order to determine the fully qualified proc name
 			foreach (ParamDeclaration p in node.Type.@params)
-				if (TraverseResolve(p, p.type))
+				if (TraverseResolve(p.type))
 					p.type = ResolvedNode<TypeNode>();
 
 			String fullqualname = node.name;
@@ -471,7 +467,6 @@ namespace crosspascal.semantics
 		public override bool Visit(RoutineDeclaration node)
 		{
 			Visit((CallableDeclaration)node);
-			node.declaringScope = node.Parent.Parent as Section;
 
 			declEnv.RegisterDeclaration(node.QualifiedName, node);
 			declEnv.CreateContext(node.QualifiedName + " Params");
@@ -485,7 +480,6 @@ namespace crosspascal.semantics
 		public override bool Visit(RoutineDefinition node)
 		{
 			Visit((CallableDeclaration)node);
-			node.declaringScope = node.Parent.Parent as Section;
 
 			bool checkRegister = true;
 			// check if current callable is an implementation of a declared callable (in the interface)
@@ -557,7 +551,7 @@ namespace crosspascal.semantics
 		{
 			Visit((TypeNode)node);
 			traverse(node.@params);
-			if (TraverseResolve(node,node.funcret))
+			if (TraverseResolve(node.funcret))
 				node.funcret = ResolvedNode<TypeNode>();
 			traverse(node.returnVar);
 			traverse(node.Directives);
@@ -576,9 +570,9 @@ namespace crosspascal.semantics
 			if (node.External != null)
 			{
 				ExternalDirective dir = node.External;
-				if (TraverseResolve(node, dir.File))
+				if (TraverseResolve(dir.File))
 					dir.File = ResolvedNode<Expression>();
-				if (TraverseResolve(node, dir.Name))
+				if (TraverseResolve(dir.Name))
 					dir.Name = ResolvedNode<Expression>();
 			}
 			return true;
@@ -670,7 +664,7 @@ namespace crosspascal.semantics
 		public override bool Visit(VarEntryDeclaration node)
 		{
 			Visit((FieldDeclaration) node);
-			if (TraverseResolve(node, node.tagvalue))
+			if (TraverseResolve(node.tagvalue))
 				node.tagvalue = ResolvedNode<Expression>();
 			traverse(node.fields);
 			return true;
@@ -693,11 +687,11 @@ namespace crosspascal.semantics
 		public override bool Visit(PropertySpecifiers node)
 		{
 			Visit((Node) node);
-			if (TraverseResolve(node, node.index))
+			if (TraverseResolve(node.index))
 				node.index = ResolvedNode<IntLiteral>();
-			if (TraverseResolve(node, node.stored))
+			if (TraverseResolve(node.stored))
 				node.stored = ResolvedNode<ConstExpression>();
-			TraverseResolve(node,node.@default);
+			TraverseResolve(node.@default);
 			return true;
 		}
 
@@ -719,9 +713,9 @@ namespace crosspascal.semantics
 		public override bool Visit(Assignment node)
 		{
 			Visit((Statement) node);
-			if (TraverseResolve(node, node.lvalue))
+			if (TraverseResolve(node.lvalue))
 				node.lvalue = ResolvedNode<LvalueExpression>();
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
@@ -736,7 +730,7 @@ namespace crosspascal.semantics
 		public override bool Visit(IfStatement node)
 		{
 			Visit((Statement) node);
-			if (TraverseResolve(node, node.condition))
+			if (TraverseResolve(node.condition))
 				node.condition = ResolvedNode<Expression>();
 			traverse(node.thenblock);
 			traverse(node.elseblock);
@@ -746,7 +740,7 @@ namespace crosspascal.semantics
 		public override bool Visit(ExpressionStatement node)
 		{
 			Visit((Statement) node);
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
 
 			if (!(node.expr is RoutineCall))
@@ -759,7 +753,7 @@ namespace crosspascal.semantics
 		{
 			Visit((Statement) node);
 			traverse(node.list);
-			if (TraverseResolve(node, node.stmt))
+			if (TraverseResolve(node.stmt))
 				node.stmt = ResolvedNode<Statement>();
 			return true;
 		}
@@ -767,10 +761,10 @@ namespace crosspascal.semantics
 		public override bool Visit(CaseStatement node)
 		{
 			Visit((Statement) node);
-			if (TraverseResolve(node, node.condition))
+			if (TraverseResolve(node.condition))
 				node.condition = ResolvedNode<Expression>();
 			traverse(node.selectors);
-			if (TraverseResolve(node, node.caseelse))
+			if (TraverseResolve(node.caseelse))
 				node.caseelse = ResolvedNode<Statement>();
 			return true;
 		}
@@ -778,9 +772,9 @@ namespace crosspascal.semantics
 		public override bool Visit(LoopStatement node)
 		{
 			Visit((Statement) node);
-			if (TraverseResolve(node, node.condition))
+			if (TraverseResolve(node.condition))
 				node.condition = ResolvedNode<Expression>();
-			if (TraverseResolve(node, node.block))
+			if (TraverseResolve(node.block))
 				node.block = ResolvedNode<Statement>();
 			return true;
 		}
@@ -788,11 +782,11 @@ namespace crosspascal.semantics
 		public override bool Visit(ForLoop node)
 		{
 			Visit((LoopStatement) node);
-			if (TraverseResolve(node, node.var))
+			if (TraverseResolve(node.var))
 				node.var = ResolvedNode<Identifier>();
-			if (TraverseResolve(node, node.start))
+			if (TraverseResolve(node.start))
 				node.start = ResolvedNode<Expression>();
-			if (TraverseResolve(node, node.end))
+			if (TraverseResolve(node.end))
 				node.end = ResolvedNode<Expression>();
 			return true;
 		}
@@ -801,7 +795,7 @@ namespace crosspascal.semantics
 		{
 			Visit((Statement) node);
 			traverse(node.with);
-			if (TraverseResolve(node, node.body))
+			if (TraverseResolve(node.body))
 				node.body = ResolvedNode<Statement>();
 			return true;
 		}
@@ -809,9 +803,9 @@ namespace crosspascal.semantics
 		public override bool Visit(TryFinallyStatement node)
 		{
 			Visit((Statement) node);
-			if (TraverseResolve(node, node.body))
+			if (TraverseResolve(node.body))
 				node.body = ResolvedNode<BlockStatement>();
-			if (TraverseResolve(node, node.final))
+			if (TraverseResolve(node.final))
 				node.final = ResolvedNode<BlockStatement>();
 			return true;
 		}
@@ -819,9 +813,9 @@ namespace crosspascal.semantics
 		public override bool Visit(TryExceptStatement node)
 		{
 			Visit((Statement) node);
-			if (TraverseResolve(node, node.body))
+			if (TraverseResolve(node.body))
 				node.body = ResolvedNode<BlockStatement>();
-			if (TraverseResolve(node, node.final))
+			if (TraverseResolve(node.final))
 				node.final = ResolvedNode<ExceptionBlock>();
 			return true;
 		}
@@ -830,16 +824,16 @@ namespace crosspascal.semantics
 		{
 			Visit((Statement) node);
 			traverse(node.onList);
-			TraverseResolve(node,node.@default);
+			traverse(node.@default);
 			return true;
 		}
 		
 		public override bool Visit(RaiseStatement node)
 		{
 			Visit((Statement) node);
-			if (TraverseResolve(node, node.lvalue))
+			if (TraverseResolve(node.lvalue))
 				node.lvalue = ResolvedNode<LvalueExpression>();
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
@@ -847,7 +841,7 @@ namespace crosspascal.semantics
 		public override bool Visit(OnStatement node)
 		{
 			Visit((Statement) node);
-			if (TraverseResolve(node, node.body))
+			if (TraverseResolve(node.body))
 				node.body = ResolvedNode<Statement>();
 			return true;
 		}
@@ -869,11 +863,11 @@ namespace crosspascal.semantics
 		public override bool Visit(Expression node)
 		{
 			Visit((Node) node);
-			if (TraverseResolve(node, node.Type))
+			if (TraverseResolve(node.Type))
 				node.Type = ResolvedNode<TypeNode>();
-			if (TraverseResolve(node, node.Value))
+			if (TraverseResolve(node.Value))
 				node.Value = ResolvedNode<ConstantValue>();
-			if (TraverseResolve(node, node.ForcedType))
+			if (TraverseResolve(node.ForcedType))
 				node.ForcedType = ResolvedNode<TypeNode>();
 			return true;
 		}
@@ -912,7 +906,7 @@ namespace crosspascal.semantics
 		public override bool Visit(FieldInit node)
 		{
 			Visit((ConstExpression) node);
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
@@ -1004,9 +998,9 @@ namespace crosspascal.semantics
 		public override bool Visit(SetIn node)
 		{
 			Visit((BinaryExpression) node);
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
-			if (TraverseResolve(node, node.set))
+			if (TraverseResolve(node.set))
 				node.set = ResolvedNode<Expression>();
 			return true;
 		}
@@ -1020,9 +1014,9 @@ namespace crosspascal.semantics
 		public override bool Visit(ArithmethicBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			if (TraverseResolve(node, node.left))
+			if (TraverseResolve(node.left))
 				node.left = ResolvedNode<Expression>();
-			if (TraverseResolve(node, node.right))
+			if (TraverseResolve(node.right))
 				node.right = ResolvedNode<Expression>();
 			return true;
 		}
@@ -1078,9 +1072,9 @@ namespace crosspascal.semantics
 		public override bool Visit(LogicalBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			if (TraverseResolve(node, node.left))
+			if (TraverseResolve(node.left))
 				node.left = ResolvedNode<Expression>();
-			if (TraverseResolve(node, node.right))
+			if (TraverseResolve(node.right))
 				node.right = ResolvedNode<Expression>();
 			return true;
 		}
@@ -1142,9 +1136,9 @@ namespace crosspascal.semantics
 		public override bool Visit(TypeBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
-			if (TraverseResolve(node, node.types))
+			if (TraverseResolve(node.types))
 				node.types = ResolvedNode<TypeNode>();
 			return true;
 		}
@@ -1170,7 +1164,7 @@ namespace crosspascal.semantics
 		public override bool Visit(SimpleUnaryExpression node)
 		{
 			Visit((Expression) node);
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
@@ -1221,7 +1215,7 @@ namespace crosspascal.semantics
 		public override bool Visit(ExprAsLvalue node)
 		{
 			Visit((LvalueExpression) node);
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
 
 			node.Type = node.expr.Type;
@@ -1231,9 +1225,9 @@ namespace crosspascal.semantics
 		public override bool Visit(StaticCast node)
 		{
 			Visit((LvalueExpression) node);
-			if (TraverseResolve(node, node.casttype))
+			if (TraverseResolve(node.casttype))
 				node.casttype = ResolvedNode<VariableType>();
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
 
 			// TODO check if cast is valid
@@ -1258,9 +1252,6 @@ namespace crosspascal.semantics
 		public override bool Visit(UnresolvedId node)
 		{
 			String name = node.id.name;
-
-			if (name == "s")
-				Console.WriteLine("SSSS");
 
 			Declaration d = declEnv.GetDeclaration(name);
 			if (d == null)
@@ -1298,7 +1289,7 @@ namespace crosspascal.semantics
 		/// </summary>
 		public override bool Visit(UnresolvedCall node)
 		{
-			if (TraverseResolve(node, node.func))
+			if (TraverseResolve(node.func))
 				node.func = ResolvedNode<LvalueExpression>();
 			traverse(node.args);
 
@@ -1335,7 +1326,7 @@ namespace crosspascal.semantics
 		public override bool Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
-			if (TraverseResolve(node, node.func))
+			if (TraverseResolve(node.func))
 				node.func = ResolvedNode<LvalueExpression>();
 			traverse(node.args);
 
@@ -1368,7 +1359,7 @@ namespace crosspascal.semantics
 		public override bool Visit(ObjectAccess node)
 		{
 			Visit((LvalueExpression) node);
-			if (TraverseResolve(node, node.obj))
+			if (TraverseResolve(node.obj))
 				node.obj = ResolvedNode<LvalueExpression>();
 
 			TypeNode objtype = node.obj.Type;
@@ -1415,12 +1406,13 @@ namespace crosspascal.semantics
 				{
 					if (!(node.obj is IdentifierStatic))
 						return Error("Attempt to call static methor or constructor using an instance reference", node);
-
+				/*
 					if (mt.IsConstructor)
 						;	// do nothing
 					//	resolved = new ClassInstantiation(call.Type as ClassType, node.field);
 					else	// static method
 						;	// do nothing
+				 */
 				}
 			}
 
@@ -1430,10 +1422,10 @@ namespace crosspascal.semantics
 		public override bool Visit(ArrayAccess node)
 		{
 			Visit((LvalueExpression)node);
-			if (TraverseResolve(node, node.lvalue))
+			if (TraverseResolve(node.lvalue))
 				node.lvalue = ResolvedNode<LvalueExpression>();
 			traverse(node.acessors);
-			if (TraverseResolve(node, node.array))
+			if (TraverseResolve(node.array))
 				node.array = ResolvedNode<ArrayConst>();
 
 			if (node.array != null && node.lvalue != null)
@@ -1460,7 +1452,7 @@ namespace crosspascal.semantics
 		public override bool Visit(PointerDereference node)
 		{
 			Visit((LvalueExpression)node);
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
 
 			if (!(node.expr.Type is PointerType))
@@ -1473,7 +1465,7 @@ namespace crosspascal.semantics
 		public override bool Visit(InheritedCall node)
 		{
 			Visit((LvalueExpression)node);
-			if (TraverseResolve(node, node.call))
+			if (TraverseResolve(node.call))
 				node.call = ResolvedNode<RoutineCall>();
 			return true;
 		}
@@ -1548,7 +1540,7 @@ namespace crosspascal.semantics
 		public override bool Visit(MetaclassType node)
 		{
 			Visit((VariableType) node);
-			if (TraverseResolve(node, node.baseType))
+			if (TraverseResolve(node.baseType))
 				node.baseType = ResolvedNode<TypeNode>();
 			return true;
 		}
@@ -1563,9 +1555,9 @@ namespace crosspascal.semantics
 		public override bool Visit(RangeType node)
 		{
 			Visit((VariableType) node);
-			if (TraverseResolve(node, node.min))
+			if (TraverseResolve(node.min))
 				node.min = ResolvedNode<Expression>();
-			if (TraverseResolve(node, node.max))
+			if (TraverseResolve(node.max))
 				node.max = ResolvedNode<Expression>();
 			return true;
 		}
@@ -1699,7 +1691,7 @@ namespace crosspascal.semantics
 		public override bool Visit(FixedStringType node)
 		{
 			Visit((StringType) node);
-			if (TraverseResolve(node, node.expr))
+			if (TraverseResolve(node.expr))
 				node.expr = ResolvedNode<Expression>();
 			return true;
 		}
@@ -1707,7 +1699,7 @@ namespace crosspascal.semantics
 		public override bool Visit(VariantType node)
 		{
 			Visit((VariableType) node);
-			if (TraverseResolve(node, node.actualtype))
+			if (TraverseResolve(node.actualtype))
 				node.actualtype = ResolvedNode<VariableType>();
 			return true;
 		}
@@ -1715,7 +1707,7 @@ namespace crosspascal.semantics
 		public override bool Visit(PointerType node)
 		{
 			Visit((ScalarType) node);
-			if (TraverseResolve(node, node.pointedType))
+			if (TraverseResolve(node.pointedType))
 				node.pointedType = ResolvedNode<TypeNode>();
 			return true;
 		}
@@ -1723,7 +1715,7 @@ namespace crosspascal.semantics
 		public override bool Visit(StructuredType node)
 		{
 			Visit((VariableType) node);
-			if (TraverseResolve(node, node.basetype))
+			if (TraverseResolve(node.basetype))
 				node.basetype = ResolvedNode<TypeNode>();
 			return true;
 		}

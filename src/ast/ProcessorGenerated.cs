@@ -1041,7 +1041,13 @@ namespace crosspascal.ast
 			Visit((LvalueExpression) node);
 			return true;
 		}
-		
+
+		public virtual bool Visit(IdentifierStatic node)
+		{
+			Visit((LvalueExpression)node);
+			return true;
+		}
+
 		public virtual bool Visit(TypeNode node)
 		{
 			Visit((Node) node);
