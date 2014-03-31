@@ -202,7 +202,14 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(ProgramBody node)
 		{
-			Visit((CodeSection) node);
+			Visit((Section) node);
+			outputCode("int main( int argc, const char* argv[] )", false, true);
+			outputCode("{", false, true);
+			PushIdent();
+			traverse(node.block);
+			outputCode("return 0;", true, true);
+			PopIdent();
+			outputCode("}", false, true);
 			return true;
 		}
 		
@@ -211,11 +218,6 @@ namespace crosspascal.cpp
 			if (node.Parent is MethodDefinition)
 			{
 				MethodDefinition def = node.Parent as MethodDefinition;
-
-				string ss = def.metname;
-				if (ss.Equals("gettype"))
-					ss = "SS";
-
 				
 				MethodType t = def.type as MethodType;
 				if (t.IsConstructor)
@@ -234,6 +236,8 @@ namespace crosspascal.cpp
 					Visit((CodeSection)node);
 			} else
 				Visit((CodeSection) node);
+
+			outputCode("", false, true);
 			return true;
 		}
 		
@@ -401,8 +405,7 @@ namespace crosspascal.cpp
 				
 			outputCode(node.metname + "(", false, false);
 			traverse(node.Type.@params);
-			outputCode(");", false, true);
-
+			outputCode(");", false, true);			
 			return true;
 		}
 
@@ -467,6 +470,7 @@ namespace crosspascal.cpp
 			PopIdent();
 			outputCode("}", false, true);
 
+			outputCode("", false, true);
 			return true;
 		}
 
