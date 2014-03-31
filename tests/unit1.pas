@@ -27,8 +27,11 @@ Begin
 End;
 
 Class function Animal.GetType: String;
+Var
+  S:String;
 Begin
-  Result := 'type';
+  S := 'type';
+  Result := S;
 End;
 
 Initialization

@@ -207,8 +207,33 @@ namespace crosspascal.cpp
 		}
 		
 		public override bool Visit(RoutineBody node)
-		{
-			Visit((CodeSection) node);
+		{			
+			if (node.Parent is MethodDefinition)
+			{
+				MethodDefinition def = node.Parent as MethodDefinition;
+
+				string ss = def.metname;
+				if (ss.Equals("gettype"))
+					ss = "SS";
+
+				
+				MethodType t = def.type as MethodType;
+				if (t.IsConstructor)
+				{
+					ClassRefType r = t.funcret as ClassRefType;
+					string classid = r.qualifid;
+					outputCode("{", true, true);					
+					PushIdent();
+					outputCode("result = new "+classid+"();", true, true);
+					Visit((CodeSection)node);
+					PopIdent();
+					outputCode("}", true, true);
+					//outputCode("	result ", true, true);
+				}
+				else
+					Visit((CodeSection)node);
+			} else
+				Visit((CodeSection) node);
 			return true;
 		}
 		
@@ -383,13 +408,18 @@ namespace crosspascal.cpp
 
 		public override bool Visit(RoutineDefinition node)
 		{
+			if (node.IsFunction)
+			{
+				node.body.decls.Add(new VarDeclaration("result", node.type));
+			}
+
 			Visit((CallableDeclaration)node);
 			traverse(node.body);
 
 			if (node.IsFunction)
 			{
 				builder.Remove(builder.Length - 3, 3);
-				outputCode("	return result;", true, true);
+				outputCode("return result;", true, true);
 				outputCode("}", true, true);
 			}
 
@@ -400,6 +430,12 @@ namespace crosspascal.cpp
 
 		public override bool Visit(MethodDefinition node)
 		{
+			if (node.IsFunction)
+			{
+				ProceduralType pp = node.type as ProceduralType;
+				node.body.decls.Add(new VarDeclaration("result", pp.funcret));
+			}
+
 			if (node.Type.funcret == null)
 				outputCode("void ", false, false);
 			else
@@ -417,16 +453,19 @@ namespace crosspascal.cpp
 					
 			traverse(node.Type.@params);
 			outputCode(")", false, true);
-		
+
+			outputCode("{", false, true);
+			PushIdent();
 			traverse(node.body);
 			if (node.IsFunction)
 			{
 				builder.Remove(builder.Length - 3, 3);
-				outputCode("	return result;", true, true);
+				outputCode("return result;", true, true);
 				outputCode("}", true, true);
 			}
 
-			outputCode("", false, true);
+			PopIdent();
+			outputCode("}", false, true);
 
 			return true;
 		}
@@ -633,9 +672,15 @@ namespace crosspascal.cpp
 		public override bool Visit(IfStatement node)
 		{
 			Visit((Statement) node);
+			outputCode("if (", true, false);
 			traverse(node.condition);
+			outputCode(")", false, true);
 			traverse(node.thenblock);
-			traverse(node.elseblock);
+			if (node.elseblock != null)
+			{
+				outputCode("else", true, true);
+				traverse(node.elseblock);
+			}
 			return true;
 		}
 
@@ -1247,7 +1292,7 @@ namespace crosspascal.cpp
 
 		public override bool Visit(ObjectAccess node)
 		{
-			if (node.obj is IdentifierStatic)
+			if (node.obj is IdentifierStatic && node.Parent is Assignment)
 			{
 				Assignment ass = node.Parent as Assignment;
 				Identifier id = ass.lvalue as Identifier;
@@ -1259,7 +1304,13 @@ namespace crosspascal.cpp
 			}
 			else
 			{
-				traverse(node.obj);
+				if (node.obj is IdentifierStatic)
+				{
+					IdentifierStatic stid = node.obj as IdentifierStatic;
+					outputCode(stid.name, false, false);
+				}
+				else
+					traverse(node.obj);
 				outputCode(".", false, false);
 			}
 
@@ -1268,11 +1319,33 @@ namespace crosspascal.cpp
 			return true;
 		}
 
+		private bool isConstructor(Node node)
+		{
+			if (node == null)
+				return false;
+
+			if (node is MethodDefinition)
+			{
+				MethodDefinition def = node as MethodDefinition;
+				MethodType t = def.type as MethodType;
+				return t.IsConstructor;
+			}
+			else
+			{
+				return isConstructor(node.Parent);
+			}
+		}
+
 		public override bool Visit(Identifier node)
 		{
 			//Visit((LvalueExpression) node);
 			if (node.name.Equals("self"))
-				outputCode("this", false, false);
+			{
+				if (isConstructor(node))
+					outputCode("result", false, false);
+				else
+					outputCode("this", false, false);
+			}
 			else
 				outputCode(node.name, false, false);
 			return true;
