@@ -32,6 +32,10 @@ namespace crosspascal.ast
 				if (typeof(Node).IsAssignableFrom(f.FieldType))
 				{
 					Node fi = (Node) f.GetValue(root);
+
+					if (fi == null || fi.Parent != null)
+						continue;
+
 					if (fi != null)
 					{
 						Type bt = f.FieldType;
