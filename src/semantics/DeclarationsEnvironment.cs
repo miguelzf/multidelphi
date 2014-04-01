@@ -13,7 +13,7 @@ namespace crosspascal.semantics
 	/// </summary>
 	public class DeclarationsEnvironment
 	{
-		public SymbolGraph<Declaration> symEnv = new SymbolGraph<Declaration>();
+		public SymbolGraph<Declaration, Section> symEnv = new SymbolGraph<Declaration, Section>();
 
 		// probably won't be needed
 		Dictionary<String, TypeDeclaration> builtinTypes = new Dictionary<String, TypeDeclaration>();
@@ -70,10 +70,10 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Import external context. To load used/imported units
 		/// </summary>
-		internal void ImportContext(SymbolContextNode<Declaration> ctx)
+		internal void ImportContext(SymbolContext<Declaration,Section> ctx)
 		{
 			ctx.allowShadowing = true;
-			Debug("IMPORT CONTEXT " + ctx.id);
+			Debug("IMPORT CONTEXT " + ctx.Id);
 			symEnv.ImportParentContext(ctx);
 		}
 
@@ -81,10 +81,10 @@ namespace crosspascal.semantics
 		/// Export current context. Should be a unit interface context,
 		/// to later be able to load used/import this unit
 		/// </summary>
-		internal SymbolContextNode<Declaration> ExportContext()
+		internal SymbolContext<Declaration, Section> ExportContext()
 		{
 			var ctx = symEnv.ExportContext();
-			Debug("EXPORT CONTEXT " + ctx.id);
+			Debug("EXPORT CONTEXT " + ctx.Id);
 			return ctx;
 		}
 
@@ -117,15 +117,26 @@ namespace crosspascal.semantics
 			return symEnv.Lookup(name);
 		}
 
-		public void CreateContext(string id = null, bool allowShadowing = true)
+
+		/// <summary>
+		/// Fetch declaration denoted by a given name, starting the search in the parent class
+		/// </summary>
+		public Declaration GetInheritedDeclaration(String name)
 		{
-			symEnv.CreateContext(id, allowShadowing);
+
+			return symEnv.Lookup(name);
+		}
+
+
+		public void CreateContext(string id = null, Section sec = null, bool allowShadowing = true)
+		{
+			symEnv.CreateContext(id, sec, allowShadowing);
 			Debug("CREATE CONTEXT " + id);
 		}
 
-		public void CreateParentContext(string id = null)
+		public void CreateParentContext(string id = null, Section sec = null, bool allowShadowing = true)
 		{
-			symEnv.CreateParentContext(id);
+			symEnv.CreateParentContext(id, sec, allowShadowing);
 			Debug("CREATE PARENT CONTEXT " + id);
 		}
 
@@ -514,15 +525,15 @@ namespace crosspascal.semantics
 
 			string[] floatFuncs = { "cos", "sin", "trunc", "round", "frac", "exp" };
 			foreach (var s in floatFuncs)
-				CreateBuiltinFunction(new RoutineDeclaration(s, new DeclarationList(p.Clone()), t));
+				CreateBuiltinFunction(new RoutineDeclaration(s, new ParametersSection(new DeclarationList(p.Clone())), t));
 
-			CreateBuiltinFunction(new RoutineDeclaration("assigned",
-									new DeclarationList(new ParamDeclaration("p", PointerType.Single))));
+			CreateBuiltinFunction(new RoutineDeclaration("assigned", new ParametersSection(
+									new DeclarationList(new ParamDeclaration("p", PointerType.Single)))));
 
-			CreateBuiltinFunction(new RoutineDeclaration("writeln", 
-									new DeclarationList(new ParamDeclaration("s", StringType.Single))));
-			CreateBuiltinFunction(new RoutineDeclaration("readln" , 
-									new DeclarationList(new ParamDeclaration("s", StringType.Single))));
+			CreateBuiltinFunction(new RoutineDeclaration("writeln", new ParametersSection(
+									new DeclarationList(new ParamDeclaration("s", StringType.Single)))));
+			CreateBuiltinFunction(new RoutineDeclaration("readln" , new ParametersSection(
+									new DeclarationList(new ParamDeclaration("s", StringType.Single)))));
 		}
 
 		#endregion

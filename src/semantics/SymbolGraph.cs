@@ -10,20 +10,22 @@ namespace crosspascal.semantics
 	/// <summary>
 	/// DAG-based symbol manager
 	/// </summary>
-	public class SymbolGraph<T> where T : class
+	public class SymbolGraph<SymbolT, CtxKey> 
+		where SymbolT : class
+		where CtxKey : class
 	{
-		SymbolContextNode<T> root;
+		SymbolContext<SymbolT,CtxKey> root;
 
-		SymbolContextNode<T> current;
+		SymbolContext<SymbolT,CtxKey> current;
 
 		// Context path taken, excluding current context
-		Stack<SymbolContextNode<T>> path = new Stack<SymbolContextNode<T>>(1024);
+		Stack<SymbolContext<SymbolT,CtxKey>> path = new Stack<SymbolContext<SymbolT,CtxKey>>(1024);
 
 		int numContexts = 0;
 
 		public SymbolGraph()
 		{
-			root = current = new SymbolContextNode<T>("initial: empty default context");
+			root = current = new SymbolContext<SymbolT,CtxKey>("initial: empty default context");
 		}
 
 
@@ -46,15 +48,20 @@ namespace crosspascal.semantics
 			}
 		}
 
+		public CtxKey CurrentCtxKey()
+		{
+			return current.Key;
+		}
+
 
 		#region Creating and Importing contexts
 
 		/// <summary>
 		/// Create a new child Symbol context and enters it
 		/// </summary>
-		public void CreateContext(string id = null, bool shadowing = true)
+		public void CreateContext(string id = null, CtxKey key = default(CtxKey), bool shadowing = true)
 		{
-			var ctx = new SymbolContextNode<T>(id, shadowing);
+			var ctx = new SymbolContext<SymbolT,CtxKey>(id, key, shadowing);
 			ctx.AddParent(current);
 			numContexts++;
 			EnterContext(ctx);
@@ -63,9 +70,9 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Create a new child Symbol context and enters it
 		/// </summary>
-		public void CreateParentContext(string id = null, bool shadowing = true)
+		public void CreateParentContext(string id = null, CtxKey key = default(CtxKey), bool shadowing = true)
 		{
-			var ctx = new SymbolContextNode<T>(id, shadowing);
+			var ctx = new SymbolContext<SymbolT,CtxKey>(id, key, shadowing);
 			current.AddParent(ctx);
 			numContexts++;
 			EnterContext(ctx);
@@ -74,7 +81,7 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Import external chuld context and enter it
 		/// </summary>
-		internal void ImportContext(SymbolContextNode<T> ctx)
+		internal void ImportContext(SymbolContext<SymbolT,CtxKey> ctx)
 		{
 			ctx.AddParent(current);
 			current = ctx;
@@ -85,7 +92,7 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Import external parent context and enter it
 		/// </summary>
-		internal void ImportParentContext(SymbolContextNode<T> ctx)
+		internal void ImportParentContext(SymbolContext<SymbolT,CtxKey> ctx)
 		{
 			current.AddParent(ctx);
 			numContexts++;
@@ -94,7 +101,7 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Export current context by cloning
 		/// </summary>
-		internal SymbolContextNode<T> ExportContext()
+		internal SymbolContext<SymbolT,CtxKey> ExportContext()
 		{
 			return current.Clone();
 		}
@@ -102,7 +109,7 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Get current context. Useful for re-using contetxs. Use with caution
 		/// </summary>
-		internal SymbolContextNode<T> GetCurrentContext()
+		internal SymbolContext<SymbolT,CtxKey> GetCurrentContext()
 		{
 			return current;
 		}
@@ -139,11 +146,11 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Enters the context passed as argument
 		/// </summary>
-		internal string EnterContext(SymbolContextNode<T> ctx)
+		internal string EnterContext(SymbolContext<SymbolT,CtxKey> ctx)
 		{
 			path.Push(current);
 			current = ctx;
-			return ctx.id;
+			return ctx.Id;
 		}
 
 
@@ -152,7 +159,7 @@ namespace crosspascal.semantics
 		/// </summary>
 		public String ExitContext()
 		{
-			string currid = current.id;
+			string currid = current.Id;
 			current = path.Pop();
 			return currid;
 		}
@@ -162,9 +169,9 @@ namespace crosspascal.semantics
 
 		#region Management of symbols, Insertions and Lookups
 
-		bool CheckValidKey(String key)
+		bool CheckValidId(String id)
 		{
-			if (key == null || key == "")
+			if (id == null || id == "")
 				return false;
 			return true;
 		}
@@ -173,32 +180,49 @@ namespace crosspascal.semantics
 		/// Recursive DFS from bottom to top (children to parents).
 		/// (takes the each parent in depth)
 		/// </summary>
-		T LookupRec(SymbolContextNode<T> ctx,  String key)
+		SymbolT LookupRec(SymbolContext<SymbolT,CtxKey> ctx,  String symbName)
 		{
-			T t = ctx.Lookup(key);
+			SymbolT t = ctx.Lookup(symbName);
 			if (t != null)
 				return t;
 
 			foreach (var p in ctx.parents)
-				if ((t = LookupRec(p, key)) != null)
+				if ((t = LookupRec(p, symbName)) != null)
 					return t;
 
 			return null;
 		}
 
-		public T Lookup(String key)
+		SymbolT LookupRec(SymbolContext<SymbolT, CtxKey> ctx, String symbName, CtxKey key)
 		{
-			if (!CheckValidKey(key))
-				return null;
+			SymbolT t;
+			if (ReferenceEquals(ctx.Key,key))
+				if ((t = ctx.Lookup(symbName)) != null)
+					return t;
 
-			return LookupRec(current, key);
+			foreach (var p in ctx.parents)
+				if ((t = LookupRec(p, symbName)) != null)
+					return t;
+
+			return null;
 		}
 
-		public T LookupCurrent(String key)
+		public SymbolT Lookup(String symbName, CtxKey key = null)
 		{
-			if (!CheckValidKey(key))
+			if (!CheckValidId(symbName))
 				return null;
-			return current.Lookup(key);
+
+			if (key == null)
+				return LookupRec(current, symbName);
+			else
+				return LookupRec(current, symbName, key);
+		}
+
+		public SymbolT LookupCurrent(String symbName)
+		{
+			if (!CheckValidId(symbName))
+				return null;
+			return current.Lookup(symbName);
 		}
 
 		/// <summary>
@@ -208,7 +232,7 @@ namespace crosspascal.semantics
 		/// </summary>
 		public bool CanAddSymbol(String key)
 		{
-			if (!CheckValidKey(key))
+			if (!CheckValidId(key))
 				return false;
 
 			if (current.Lookup(key) != null)
@@ -225,9 +249,9 @@ namespace crosspascal.semantics
 		/// Add symbol to current context. Checks that the symbol has not been defined 
 		/// in any previous context that does allow shadowing
 		/// </summary>
-		public bool Add(String key, T symbol)
+		public bool Add(String key, SymbolT symbol)
 		{
-			if (!CheckValidKey(key))
+			if (!CheckValidId(key))
 				return false;
 
 			if (!CanAddSymbol(key))
@@ -239,9 +263,9 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Replaces (redefines) a symbol in the current context
 		/// </summary>
-		public bool Replace(String key, T symbol)
+		public bool Replace(String key, SymbolT symbol)
 		{
-			if (!CheckValidKey(key))
+			if (!CheckValidId(key))
 				return false;
 
 			return current.Replace(key, symbol);
@@ -260,7 +284,7 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Recursively traverse the whole DAG, in a DFS from bottom to top, up to a height limit
 		/// </summary>
-		String OutputGraph(SymbolContextNode<T> ctx,  int maxheight)
+		String OutputGraph(SymbolContext<SymbolT,CtxKey> ctx,  int maxheight)
 		{
 			string text = ctx.ListContext() + Environment.NewLine;
 			if (maxheight > 0)
@@ -284,70 +308,73 @@ namespace crosspascal.semantics
 	/// Context of declared symbols.
 	/// Implemented as a node of a DAG
 	/// </summary>
-	class SymbolContextNode<T> where T : class
+	class SymbolContext<T,CtxKey> where T : class
 	{
-		internal List<SymbolContextNode<T>> parents;
-		internal List<SymbolContextNode<T>> children;
+		internal List<SymbolContext<T,CtxKey>> parents;
+		internal List<SymbolContext<T,CtxKey>> children;
 
 		Dictionary<String, T> symbols;
 		internal T lastInserted;
 
 		internal bool allowShadowing;
-		internal string id;
 
-		internal SymbolContextNode(List<SymbolContextNode<T>> parents,
-								String id = null, bool allowShadowing = true)
+		public CtxKey Key { get; set; }
+		public String Id  { get; set; }
+
+		internal SymbolContext(List<SymbolContext<T,CtxKey>> parents, String id = null, 
+									CtxKey key = default(CtxKey), bool allowShadowing = true)
 		{
-			this.id = id;
+			this.Id = id;
 			this.allowShadowing = allowShadowing;
 			this.lastInserted = null;
 			this.parents = parents;
-			children = new List<SymbolContextNode<T>>(16);
+			this.Key = key;
+			children = new List<SymbolContext<T,CtxKey>>(16);
 			symbols = new Dictionary<String, T>(32);
 		}
 
-		internal SymbolContextNode(String id = null, bool allowShadowing = true)
-			: this(new List<SymbolContextNode<T>>(4), id, allowShadowing)
+		internal SymbolContext(String id = null, CtxKey key = default(CtxKey), bool allowShadowing = true)
+			: this(new List<SymbolContext<T,CtxKey>>(4), id, key, allowShadowing)
 		{
 		}
 
 
 		#region Access to Parents and Children
 
-		internal void AddParent(SymbolContextNode<T> parent)
+		internal void AddParent(SymbolContext<T,CtxKey> parent)
 		{
 			parents.Add(parent);
 			parent.children.Add(this);
 		}
 
-		internal void AddChild(SymbolContextNode<T> child)
+		internal void AddChild(SymbolContext<T,CtxKey> child)
 		{
 			child.parents.Add(this);
 			children.Add(child);
 		}
 
-		internal SymbolContextNode<T> GetParent(int idx)
+		internal SymbolContext<T,CtxKey> GetParent(int idx)
 		{
 			return parents.ElementAt(idx);
 		}
 
-		internal SymbolContextNode<T> GetParent(String id)
+		internal SymbolContext<T,CtxKey> GetParent(String id)
 		{
 			foreach (var c in parents)
-				if (c.id == id)
+				if (c.Id == id)
 					return c;
 			return null;
 		}
 
-		internal SymbolContextNode<T> GetChild(int idx)
+		internal SymbolContext<T,CtxKey> GetChild(int idx)
 		{
 			return children.ElementAt(idx);
 		}
 
-		internal SymbolContextNode<T> GetChild(String id)
+		internal SymbolContext<T,CtxKey> GetChild(String id)
 		{
 			foreach (var c in children)
-				if (c.id == id)
+				if (c.Id == id)
 					return c;
 			return null;
 		}
@@ -392,18 +419,17 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// clones without the parents or children
 		/// </summary>
-		internal SymbolContextNode<T> Clone()
+		internal SymbolContext<T,CtxKey> Clone()
 		{
-			var ctx = new SymbolContextNode<T>(id, allowShadowing);
+			var ctx = new SymbolContext<T,CtxKey>(Id, Key, allowShadowing);
 			ctx.lastInserted = lastInserted;
 			ctx.symbols = new Dictionary<String, T>(symbols);
 			return ctx;
 		}
 
-
 		public override string ToString()
 		{
-			return "Context " + id + " with " + symbols.Count + " symbols";
+			return "Context " + Id + " with " + symbols.Count + " symbols";
 		}
 
 		internal String ListContext()

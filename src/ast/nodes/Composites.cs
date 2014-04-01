@@ -32,7 +32,8 @@ namespace crosspascal.ast.nodes
 			: base(name, ctype)
 		{
 			ctype.self = new FieldDeclaration("self", new ClassRefType(name, ctype));
-			ctype.sections.Add(new ScopedSection(Scope.Protected, new DeclarationList(ctype.self), null));
+			ctype.self.scope = Scope.Protected;
+			ctype.section.fields.Add(ctype.self);
 		}
 	}
 
@@ -58,7 +59,7 @@ namespace crosspascal.ast.nodes
 	{
 		public List<String> heritage;
 
-		public ScopedSectionList sections;
+		public ObjectSection section;
 
 		public bool IsPacked { get; set; }
 
@@ -71,13 +72,11 @@ namespace crosspascal.ast.nodes
 		public List<CompositeType> ancestors;
 
 
-		public CompositeType(ArrayList heritage, ScopedSectionList seclist)
+		public CompositeType(ArrayList heritage, ObjectSection sec)
 		{
 			this.heritage = new List<String>(heritage.Cast<String>());
 
-			sections = seclist;
-			if (sections == null)
-				sections = new ScopedSectionList();
+			section = sec;
 
 			// to be filled during resolving
 			ancestors = new List<CompositeType>(heritage.Count);
@@ -123,7 +122,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public virtual IEnumerable<Declaration> GetAllMembers(Scope s = (Scope) 0xffffff)
 		{
-			foreach (var d in sections.Where(x => (x.scope & s) != 0).SelectMany(x => x.Decls()))
+			foreach (var d in section.Decls(s))
 				yield return d;
 
 			foreach (var a in ancestors)
@@ -136,9 +135,9 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public virtual IEnumerable<MethodDeclaration> GetAllMethods(Scope s = (Scope) 0xffffff)
 		{
-			foreach (var f in sections.Where(x => (x.scope & s) != 0).
-								SelectMany(x => x.decls).Cast<MethodDeclaration>())
-				yield return f;
+			foreach (var f in section.decls.Cast<MethodDeclaration>())
+				if ((f.scope & s) != 0)
+					yield return f;
 
 			foreach (var a in ancestors)
 				foreach (var d in a.GetAllMethods(s))
@@ -150,9 +149,9 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public virtual IEnumerable<FieldDeclaration> GetAllFields(Scope s = (Scope) 0xffffff)
 		{
-			foreach (var f in sections.Where(x => (x.scope & s) != 0).
-								SelectMany(x => x.fields).Cast<FieldDeclaration>())
-				yield return f;
+			foreach (var f in section.fields.Cast<FieldDeclaration>())
+				if ((f.scope & s) != 0)
+					yield return f;
 
 			foreach (var a in ancestors)
 				foreach (var d in a.GetAllFields(s))
@@ -165,9 +164,8 @@ namespace crosspascal.ast.nodes
 		public virtual Declaration GetMember(String id)
 		{
 			Declaration d;
-			foreach (var s in sections)
-				if ((d = s.GetMember(id)) != null)
-					return d;
+			if ((d = section.GetMember(id)) != null)
+				return d;
 
 			foreach (var a in ancestors)
 				if ((d = a.GetMember(id)) != null)
@@ -182,9 +180,8 @@ namespace crosspascal.ast.nodes
 		public virtual MethodDeclaration GetMethod(String id)
 		{
 			MethodDeclaration d;
-			foreach (var s in sections)
-				if ((d = s.GetMethod(id)) != null)
-					return d;
+			if ((d = section.GetMethod(id)) != null)
+				return d;
 
 			foreach (var a in ancestors)
 				if ((d = a.GetMethod(id)) != null)
@@ -199,9 +196,8 @@ namespace crosspascal.ast.nodes
 		public virtual FieldDeclaration GetField(String id)
 		{
 			FieldDeclaration d;
-			foreach (var s in sections)
-				if ((d = s.GetField(id)) != null)
-					return d;
+			if ((d = section.GetField(id)) != null)
+				return d;
 
 			foreach (var a in ancestors)
 				if ((d = a.GetField(id)) != null)
@@ -218,7 +214,7 @@ namespace crosspascal.ast.nodes
 	{
 		public FieldDeclaration self;
 
-		public ClassType(ArrayList heritage, ScopedSectionList seclist = null)
+		public ClassType(ArrayList heritage, ObjectSection seclist = null)
 			: base(heritage, seclist)
 		{
 		}
@@ -228,7 +224,7 @@ namespace crosspascal.ast.nodes
 	{
 		public UnaryExpression guid;
 
-		public InterfaceType(ArrayList heritage, ScopedSectionList ssec = null, UnaryExpression guid = null)
+		public InterfaceType(ArrayList heritage, ObjectSection ssec = null, UnaryExpression guid = null)
 			: base(heritage, ssec)
 		{
 			this.guid = guid;
@@ -243,6 +239,7 @@ namespace crosspascal.ast.nodes
 	{
 		public String qualifid;
 		public ClassType reftype;
+
 
 		#region Accessors to declared Members
 
@@ -361,30 +358,115 @@ namespace crosspascal.ast.nodes
 		Published
 	}
 
-	public class ScopedSection : Section
+	public interface IScopedDeclaration
 	{
-		public Scope scope;
+		void SetScope(Scope s);
 
+		Scope GetScope();
+	}
+
+	public class ObjectSection : Section
+	{
 		public DeclarationList fields;
 
-		public ScopedSection(Scope scope, DeclarationList fs, DeclarationList cs)
-			: base(cs)
+		public DeclarationList properties;
+
+		// In the baseclass, 'decls' field
+	//	public DeclarationList methods;
+
+		public ObjectSection(DeclarationList fs = null, DeclarationList decls = null, Scope s = Scope.Published)
+			: base(new DeclarationList())
  		{
-			this.scope	= scope;
-			this.fields = fs;
+			fields = fs;
 			if (fields == null)
 				fields = new DeclarationList();
+			properties = new DeclarationList();
+
+			if (Enum.IsDefined(typeof(Scope), s))
+				AddDecls(decls, s);	// methods and properties
+
+			if (Enum.IsDefined(typeof(Scope), s))
+				foreach (FieldDeclaration d in fields)
+					d.scope = s;
 		}
+
+
+		#region Adders
+
+		//
+		// Utilities: add declarations with a given scope
+		//
+
+		public void Add(ObjectSection sec)
+		{
+			if (sec == null)
+				return;
+
+			fields.Add(sec.fields);
+			decls.Add(sec.decls);
+			properties.Add(sec.properties);
+		}
+
+		public void AddFields(DeclarationList fs, Scope s)
+		{
+			if (fs != null)
+				foreach (FieldDeclaration d in fs)
+					d.scope = s;
+			fields.Add(fs);
+		}
+
+		public void AddMethods(DeclarationList fs, Scope s)
+		{
+			if (fs != null)
+				foreach (MethodDeclaration d in fs)
+					d.scope = s;
+			decls.Add(fs);
+		}
+
+		public void AddProperties(DeclarationList fs, Scope s)
+		{
+			if (fs != null)
+				foreach (PropertyDeclaration d in fs)
+					d.scope = s;
+			properties.Add(fs);
+		}
+
+		/// <summary>
+		/// Add unknown-type declarations
+		/// </summary>
+		public void AddDecls(DeclarationList fs, Scope s)
+		{
+			if (fs == null)
+				return;
+
+			foreach (IScopedDeclaration d in fs)
+				d.SetScope(s);
+
+			foreach (var d in fs)
+			{
+				if (d is MethodDeclaration)
+					decls.Add(d);
+				else if (d is FieldDeclaration)	// a property is a field too
+					fields.Add(d);
+			}
+		}
+
+		#endregion
+
+
+		#region Accessors
 
 		/// <summary>
 		/// Fields, Methods and Properties
 		/// </summary>
-		public IEnumerable<Declaration> Decls()
+		public IEnumerable<Declaration> Decls(Scope s = (Scope) 0xffffff)
 		{
-			foreach (var f in fields)
+			foreach (var f in fields.Cast<FieldDeclaration>().Where(f => (f.scope & s) != 0))
 				yield return f;
-			foreach (var d in decls)
+			foreach (var d in decls.Cast<MethodDeclaration>().Where(d => (d.scope & s) != 0))
 				yield return d;
+			foreach (var p in properties.Cast<PropertyDeclaration>().Where(p => (p.scope & s) != 0))
+				yield return p;
 		}
 
 
@@ -397,6 +479,8 @@ namespace crosspascal.ast.nodes
 			if ((d = fields.GetDeclaration(id)) != null)
 				return d;
 			if ((d = decls.GetDeclaration(id)) != null)
+				return d;
+			if ((d = properties.GetDeclaration(id)) != null)
 				return d;
 			return null;
 		}
@@ -417,14 +501,15 @@ namespace crosspascal.ast.nodes
 			return fields.GetDeclaration(id) as FieldDeclaration;
 		}
 
+		/// <summary>
+		/// Returns a property with the given name
+		/// </summary>
+		public PropertyDeclaration GetProperty(String id)
+		{
+			return properties.GetDeclaration(id) as PropertyDeclaration;
+		}
 
-	}
-
-	public class ScopedSectionList : ListNode<ScopedSection>
-	{
-		public ScopedSectionList() : base() { }
-
-		public ScopedSectionList(ScopedSection s) : base(s) { }
+		#endregion
 	}
 
 	#endregion
@@ -439,9 +524,21 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// Composite or record field declaration
 	/// </summary>
-	public class FieldDeclaration : ValueDeclaration
+	public class FieldDeclaration : ValueDeclaration, IScopedDeclaration
 	{
 		public bool isStatic;
+
+		public Scope scope;
+
+		public void SetScope(Scope s)
+		{
+			scope = s;
+		}
+
+		public Scope GetScope()
+		{
+			return scope;
+		}
 
 		public FieldDeclaration(String id, TypeNode t = null, bool isStatic =false)
 			: base(id, t)

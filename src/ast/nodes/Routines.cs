@@ -23,13 +23,12 @@ namespace crosspascal.ast.nodes
 	/// </remarks>
 	public partial class ProceduralType : TypeNode
 	{
-		public DeclarationList @params;
+		public ParametersSection @params;
 
 		/// <summary>
 		/// Function's return type. Must be null for every non-function routine.
 		/// </summary>
 		public TypeNode funcret { get; set; }
-		public OutParamDeclaration returnVar;
 
 		RoutineDirectives _directives;
 		public RoutineDirectives Directives
@@ -43,7 +42,7 @@ namespace crosspascal.ast.nodes
 			}
 		}
 
-		public ProceduralType(DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
+		public ProceduralType(ParametersSection @params, TypeNode ret = null, RoutineDirectives dirs = null)
 		{
 			this.@params = @params;
 			this.funcret = ret;
@@ -51,7 +50,7 @@ namespace crosspascal.ast.nodes
 				Directives = dirs;
 			if (ret != null)
 				// TODO check and emit error if any parameter is named 'Result'
-				returnVar = new OutParamDeclaration("result", ret);
+				@params.returnVar = new OutParamDeclaration("result", ret);
 		}
 
 		public override bool Equals(Object o)
@@ -61,8 +60,7 @@ namespace crosspascal.ast.nodes
 
 			ProceduralType ft = (ProceduralType)o;
 
-			return funcret.Equals(ft.funcret) && Directives.Equals(ft.Directives)
-				&& @params.SequenceEqual(ft.@params);
+			return funcret.Equals(ft.funcret) && Directives.Equals(ft.Directives) && @params.Equals(ft.@params);
 		}
 	}
 
@@ -74,7 +72,7 @@ namespace crosspascal.ast.nodes
 		public bool IsConstructor { get { return kind == MethodKind.Constructor; } }
 		public bool IsDestructor { get { return kind == MethodKind.Destructor; } }
 
-		public MethodType(DeclarationList @params, TypeNode ret = null,
+		public MethodType(ParametersSection @params, TypeNode ret = null,
 						RoutineDirectives dirs = null, MethodKind kind = MethodKind.Default )
 			: base(@params, ret, dirs)
 		{
@@ -135,7 +133,8 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public Section declaringSection;
 
-		public CallableDeclaration(string name, DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
+		public CallableDeclaration(string name, ParametersSection @params, TypeNode ret = null,
+									RoutineDirectives dirs = null)
 			: base(name, new ProceduralType(@params, ret, dirs))
 		{
 		}
@@ -163,7 +162,8 @@ namespace crosspascal.ast.nodes
 		// to be set by the resolver. 
 		public Section declaringScope;
 
-		public RoutineDeclaration(string name, DeclarationList @params, TypeNode ret = null, RoutineDirectives dirs = null)
+		public RoutineDeclaration(string name, ParametersSection @params, TypeNode ret = null, 
+									RoutineDirectives dirs = null)
 			: base(name, @params, ret, dirs)
 		{
 			if (Directives == null)
@@ -184,7 +184,7 @@ namespace crosspascal.ast.nodes
 	/// <summary>
 	/// Declaration of a Method
 	/// </summary>
-	public class MethodDeclaration : CallableDeclaration
+	public class MethodDeclaration : CallableDeclaration, IScopedDeclaration
 	{
 		public bool isStatic { get; set; }
 		public String objname;
@@ -201,10 +201,22 @@ namespace crosspascal.ast.nodes
 			get { return (MethodType)this.type; }
 		}
 
+		public Scope scope;
+
+		public void SetScope(Scope s)
+		{
+			scope = s;
+		}
+
+		public Scope GetScope()
+		{
+			return scope;
+		}
+
 		// to be set by the resolver
 		public CompositeType declaringType;
 
-		public MethodDeclaration(string objname, string name, DeclarationList @params, TypeNode ret = null,
+		public MethodDeclaration(string objname, string name, ParametersSection @params, TypeNode ret = null,
 								RoutineDirectives dirs = null, MethodKind kind = MethodKind.Default)
 			: base(name, new MethodType(@params, ret, dirs, kind))
 		{
@@ -216,7 +228,7 @@ namespace crosspascal.ast.nodes
 			if (Directives == null)
 				Directives = new MethodDirectives();
 
-			foreach (var param in @params)
+			foreach (var param in @params.decls)
 				if (param.name == "self")
 					throw new IdentifierRedeclared("Method parameter cannot shadow 'self' reference");
 		}
@@ -235,10 +247,10 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class RoutineDefinition : RoutineDeclaration
 	{
-		public RoutineBody body;
+		public RoutineSection body;
 
-		public RoutineDefinition(string name, DeclarationList @params, TypeNode ret = null,
-								RoutineDirectives dirs = null,  RoutineBody body = null)
+		public RoutineDefinition(string name, ParametersSection @params, TypeNode ret = null,
+								RoutineDirectives dirs = null,  RoutineSection body = null)
 			: base(name, @params, ret, dirs)
 		{
 			this.body = body;
@@ -247,7 +259,8 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Construct from a procedural type
 		/// </summary>
-		public RoutineDefinition(string name, ProceduralType type, RoutineDirectives dirs = null,  RoutineBody body = null)
+		public RoutineDefinition(string name, ProceduralType type,
+								RoutineDirectives dirs = null, RoutineSection body = null)
 			: base(name, type)
 		{
 			this.Directives.Add(dirs);
@@ -260,11 +273,11 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class MethodDefinition : MethodDeclaration
 	{
-		public RoutineBody body;
+		public RoutineSection body;
 
-		public MethodDefinition(string objname, string name, DeclarationList @params,
+		public MethodDefinition(string objname, string name, ParametersSection @params,
 								TypeNode ret = null,  RoutineDirectives dirs = null,
-								MethodKind kind = MethodKind.Default, RoutineBody body = null)
+								MethodKind kind = MethodKind.Default, RoutineSection body = null)
 			: base(objname, name, @params, ret, dirs, kind)
 		{
 			this.body = body;

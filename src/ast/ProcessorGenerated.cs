@@ -78,16 +78,21 @@ namespace crosspascal.ast
 		public virtual bool Visit(ProgramNode node)
 		{
 			Visit((TranslationUnit) node);
-			traverse(node.uses);
-			traverse(node.body);
+			traverse(node.section);
 			return true;
 		}
 		
 		public virtual bool Visit(LibraryNode node)
 		{
 			Visit((TranslationUnit) node);
-			traverse(node.uses);
-			traverse(node.body);
+			traverse(node.section);
+			return true;
+		}
+
+		public virtual bool Visit(ProgramSection node)
+		{
+			Visit((TopLevelDeclarationSection)node);
+			traverse(node.block);
 			return true;
 		}
 		
@@ -147,38 +152,21 @@ namespace crosspascal.ast
 			return true;
 		}
 		
-		public virtual bool Visit(CodeSection node)
+		public virtual bool Visit(RoutineSection node)
 		{
 			Visit((Section) node);
 			traverse(node.block);
 			return true;
 		}
 		
-		public virtual bool Visit(ProgramBody node)
+		public virtual bool Visit(ParametersSection node)
 		{
-			Visit((CodeSection) node);
+			Visit((Section) node);
+			traverse(node.returnVar);
 			return true;
 		}
-		
-		public virtual bool Visit(RoutineBody node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(InitializationSection node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(FinalizationSection node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(DeclarationSection node)
+				
+		public virtual bool Visit(TopLevelDeclarationSection node)
 		{
 			traverse(node.uses);
 			Visit((Section)node);
@@ -187,19 +175,13 @@ namespace crosspascal.ast
 		
 		public virtual bool Visit(InterfaceSection node)
 		{
-			Visit((DeclarationSection) node);
+			Visit((TopLevelDeclarationSection) node);
 			return true;
 		}
 		
 		public virtual bool Visit(ImplementationSection node)
 		{
-			Visit((DeclarationSection) node);
-			return true;
-		}
-		
-		public virtual bool Visit(AssemblerRoutineBody node)
-		{
-			Visit((RoutineBody) node);
+			Visit((TopLevelDeclarationSection) node);
 			return true;
 		}
 		
@@ -278,7 +260,6 @@ namespace crosspascal.ast
 			Visit((TypeNode) node);
 			traverse(node.@params);
 			traverse(node.funcret);
-			traverse(node.returnVar);
 			traverse(node.Directives);
 			return true;
 		}
@@ -363,7 +344,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
-			traverse(node.sections);
+			traverse(node.section);
 			return true;
 		}
 		
@@ -395,17 +376,10 @@ namespace crosspascal.ast
 			return true;
 		}
 
-		public virtual bool Visit(ScopedSection node)
+		public virtual bool Visit(ObjectSection node)
 		{
 			Visit((Section) node);
 			traverse(node.fields);
-			return true;
-		}
-		
-		public virtual bool Visit(ScopedSectionList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
 			return true;
 		}
 		
@@ -1016,8 +990,7 @@ namespace crosspascal.ast
 		
 		public virtual bool Visit(InheritedCall node)
 		{
-			Visit((LvalueExpression) node);
-			traverse(node.call);
+			Visit((RoutineCall)node);
 			return true;
 		}
 		

@@ -38,7 +38,7 @@ namespace crosspascal.parser
 	// =========================================================================
 
 %start goal
-%type<string> id qualifid idtypeopt labelid stringconst stringorchar stringnonnull conststr expid
+%type<string> id qualifid idtypeopt labelid stringconst stringorchar stringnonnull conststr expid programid
 %type<ArrayList> labelidlst idlst
 
 	// sections and declarations
@@ -50,24 +50,23 @@ namespace crosspascal.parser
 %type<DeclarationList> typesec varsec rscstringlst vardecl objfield
 %type<ImplementationSection> implsec
 %type<InterfaceSection> interfsec
-%type<InitializationSection> initsec
-%type<FinalizationSection> finalsec
-%type<ProgramBody> mainblock
+%type<BlockStatement> initsec finalsec
 %type<ConstDeclaration> constdecl rscstring
 %type<TypeDeclaration> typedecl
+%type<RoutineSection> funcdefine
 
 	// functions
 %type<CallableDeclaration> routinedeclmain
 %type<RoutineDeclaration> routineproto routinedeclinterf
 %type<MethodDeclaration> methoddecl classmetdecl interfmetdecl 
 %type<MethodDefinition> methoddef metdefproto
-%type<ImportDirectives> funcdirectlst funcdir_noterm_opt funcdiropt importdiropt importdirforced 
+%type<ImportDirectives> funcdirectlst funcdir_noterm_opt funcdiropt importdirforced 
 %type<MethodDirectives> metdirectopt metdirectlst smetdirs smetdirslst
 %type<int> funcdirective  funcqualif funcdeprecated metdirective metqualif routinecallconv smetqualif 
 %type<MethodKind> kwmetspec
-%type<RoutineBody> funcdefine
-%type<DeclarationList> formalparams formalparamslst formalparm formalparm
-%type<ExternalDirective>  externarg
+%type<DeclarationList> formalparamslst formalparm
+%type<ParametersSection> formalparams
+%type<ExternalDirective> externarg
 %type<string> kwfunction kwprocedure
 
 	// statements
@@ -87,11 +86,10 @@ namespace crosspascal.parser
 %type<bool>   constbool
 %type<double> constreal
 %type<char>   constchar
-%type<LvalueExpression> routinecall lvalue 
-%type<RoutineCall> inheritedcall
+%type<LvalueExpression> lvalue 
 %type<Identifier> identifier
-%type<Expression> unaryexpr expr rangestart set inheritedexpr setelem constexpr constinit paraminitopt
-%type<ExpressionList> caselabellst exprlst constexprlst exprlstopt setelemlst arrayexprlst 
+%type<Expression> unaryexpr expr rangestart set setelem constexpr constinit paraminitopt
+%type<ExpressionList> caselabellst exprlst constexprlst exprlstopt setelemlst arrayexprlst callparams
 %type<TypeList> arrayszlst
 %type<FieldInitList> fieldconstlst 
 %type<FieldInit> fieldconst
@@ -100,17 +98,16 @@ namespace crosspascal.parser
 %type<ConstExpression> functypeinit arrayconst recordconst
 
 	// Composites
-%type<DeclarationList> recvariant recfield recvarfield recfieldlst propfield recvarlst
-%type<DeclarationList> classcomplstopt fieldlst cfieldlst classcomplst interfcomplst arrayprops
+%type<DeclarationList> recvariant recfield recvarfield recfieldlst propfield recvarlst 
+%type<DeclarationList> ccomplstopt fieldlst cfieldlst classcomplst interfcomplst arrayprops
 %type<ArrayList> heritage 
 %type<Declaration> classcomp property interfcomp
 %type<InterfaceType> packinterftype interftype
 %type<ClassType> classtype packclasstype
 %type<UnaryExpression> guid
-%type<Scope> scopedecl
+%type<Scope> scope
 %type<bool> staticopt defaultdiropt
-%type<ScopedSection> scopesec class1stsec
-%type<ScopedSectionList> scopeseclst classbody interfbody
+%type<ObjectSection> classbody interfbody class1stsec scopeseclst
 %type<String> implopt readopt writeopt
 %type<IntLiteral> indexopt 
 %type<Literal> defaultopt 
@@ -235,12 +232,18 @@ scolopt
 	// =========================================================================
 
 program
-	: KW_PROGRAM id SCOL	usesopt mainblock	{ $$ = new ProgramNode($2, $4, $5); }
-	| 						usesopt mainblock	{ $$ = new ProgramNode("$untitled$", $1, $2); }
+	: programid	usesopt	maindecllst block	{ $$ = new ProgramNode($1, $2,   $3, $4); }
+	| programid	usesopt             block	{ $$ = new ProgramNode($1, $2, null, $3); }
 	;
-
+	
+programid
+	: 							{ $$ = null; }
+	| KW_PROGRAM id SCOL		{ $$ = $2;   }
+	; 
+	
 library
-	: KW_LIBRARY id SCOL usesopt mainblock		{ $$ = new LibraryNode($2, $4, $5); }
+	: KW_LIBRARY id SCOL usesopt maindecllst block		{ $$ = new LibraryNode($2, $4, $5  , $6); }
+	| KW_LIBRARY id SCOL usesopt             block		{ $$ = new LibraryNode($2, $4, null, $5); }
 	;
 	
 package
@@ -309,19 +312,14 @@ interfdecllst
 	;
 
 initsec
-	: KW_INIT  blockstmt		{ $$ = new InitializationSection($2);}
-	| KW_BEGIN blockstmt		{ $$ = new InitializationSection($2);}
+	: KW_INIT  blockstmt		{ $$ = $2;}
+	| KW_BEGIN blockstmt		{ $$ = $2;}
 	;
 	
 finalsec
-	: KW_FINALIZ blockstmt 		{ $$ = new FinalizationSection($2);}
+	: KW_FINALIZ blockstmt 		{ $$ = $2;}
 	;
-	
-mainblock
-	: maindecllst block			{ $$ = new ProgramBody($1, $2);}
-	|			  block			{ $$ = new ProgramBody(null, $1);}
-	;
-	
+		
 maindecllst
 	: maindeclsec				{ $$ = $1; }
 	| maindecllst maindeclsec	{ $$ = ListAddRange<DeclarationList,Declaration>($1, $2); }
@@ -552,8 +550,8 @@ funcret
 	// Function blocks and parameters
 
 funcdefine
-	: declseclst funcblock				{ $$ = new RoutineBody($1, $2); }
-	| 			 funcblock				{ $$ = new RoutineBody(null, $1); }
+	: declseclst funcblock				{ $$ = new RoutineSection($1, $2); }
+	| 			 funcblock				{ $$ = new RoutineSection(null, $1); }
 	;
 
 funcblock
@@ -562,9 +560,9 @@ funcblock
 	;
 
 formalparams
-	:									{ $$ = new DeclarationList(); }
-	| LPAR RPAR							{ $$ = new DeclarationList(); }
-	| LPAR formalparamslst RPAR			{ $$ = $2; }
+	:									{ $$ = new ParametersSection(); }
+	| LPAR RPAR							{ $$ = new ParametersSection(); }
+	| LPAR formalparamslst RPAR			{ $$ = new ParametersSection($2); }
 	;
 
 formalparamslst
@@ -602,11 +600,6 @@ functypeinit
 	
 	// Function directives
 
-importdiropt
-	: funcdiropt						{ $$ = $1; }
-	| importdirforced					{ $$ = $1; }
-	;	
-	
 importdirforced
 	: funcdiropt KW_EXTERNAL externarg SCOL funcdiropt	{ $$ = JoinImportDirectives($1, $5, $3); }
 	| funcdiropt KW_FORWARD SCOL funcdiropt				{ $$ = JoinImportDirectives($1, $4, ImportDirective.Forward); }
@@ -728,7 +721,6 @@ stmt
 
 nonlbl_stmt
 	:						{ $$ = new EmptyStatement(); }
-	| inheritedexpr			{ $$ = new ExpressionStatement($1); }
 	| lvalue				{ $$ = new ExpressionStatement($1); }
 	| assign				{ $$ = $1; }
 	| goto_stmt				{ $$ = $1; }
@@ -851,20 +843,10 @@ asmcode
 	// Expressions
 	// =========================================================================
 
-inheritedexpr
-	: KW_INHERITED inheritedcall			{ $$ = new InheritedCall($2); }
-	;
-	
-inheritedcall
-	: 										{ $$ = null; }
-	| identifier							{ $$ = new RoutineCall($1); }
-	| identifier LPAR exprlstopt RPAR		{ $$ = new RoutineCall($1,$3); }
-	;
-	
 identifier
 	: id 									{ $$ = new Identifier($1); }
 	;
-		
+
 lvalue	// lvalue
 	: identifier							{ $$ = new UnresolvedId($1); }
 	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }
@@ -883,8 +865,14 @@ unaryexpr
 	| KW_NOT unaryexpr						{ $$ = new LogicalNot($2); }
 	| KW_SUM unaryexpr 						{ $$ = new UnaryPlus($2); }
 	| KW_SUB unaryexpr 						{ $$ = new UnaryMinus($2); }
-	| inheritedexpr							{ $$ = $1; }
+	| KW_INHERITED							{ $$ = new InheritedCall(null); }
+	| KW_INHERITED id callparams			{ $$ = new InheritedCall($2, $3); }
 	| stringnonnull LBRAC expr RBRAC		{ $$ = new ArrayAccess(new ArrayConst($1), new ExpressionList($3)); }
+	;
+
+callparams
+	:										{ $$ = new ExpressionList(); }
+	| LPAR exprlstopt RPAR					{ $$ = $2; }
 	;
 
 expr
@@ -932,6 +920,7 @@ exprlstopt
 	;
 	
 
+	
 
 	// =========================================================================
 	// Literals
@@ -1170,25 +1159,21 @@ heritage
 	;
 
 classbody
-	: class1stsec scopeseclst			{ $$ = ListAdd<ScopedSectionList,ScopedSection>($2, $1);  }
+	: class1stsec scopeseclst			{ $$ = $1; $1.Add($2); }
 	;
 
 class1stsec
-	: cfieldlst classcomplstopt 		{ $$ = new ScopedSection(Scope.Published, $1, $2); }
-	|			classcomplstopt 		{ $$ = ($1 == null)? null : new ScopedSection(Scope.Published, null, $1); }
+	: cfieldlst ccomplstopt 			{ $$ = new ObjectSection($1, $2); }
+	|			ccomplstopt 			{ $$ = new ObjectSection(null, $1); }
 	;
 	
 scopeseclst
-	:									{ $$ = new ScopedSectionList(); }
-	| scopeseclst scopesec				{ $$ = ListAdd<ScopedSectionList,ScopedSection>($1, $2); }
-	;
-
-scopesec
-	: scopedecl cfieldlst classcomplstopt	{ $$ = new ScopedSection($1, $2, $3); }
-	| scopedecl			  classcomplstopt	{ $$ = new ScopedSection($1, null, $2); }
+	:											{ $$ = new ObjectSection(); }
+	| scopeseclst scope ccomplstopt				{ $$ = $1; $1.AddDecls($3, $2); } 
+	| scopeseclst scope cfieldlst ccomplstopt	{ $$ = $1; $1.AddDecls($4, $2); $1.AddFields($3, $2); } 
 	;
 	
-scopedecl
+scope
 	: KW_PUBLISHED				{ $$ = Scope.Published; }
 	| KW_PUBLIC					{ $$ = Scope.Public; }
 	| KW_PROTECTED				{ $$ = Scope.Protected; }
@@ -1213,7 +1198,7 @@ objfield
 										$3.Directives = $5; }
 	;
 	
-classcomplstopt
+ccomplstopt
 	:							{ $$ = new DeclarationList(); }
 	| classcomplst				{ $$ = $1; }
 	;
@@ -1239,7 +1224,7 @@ interftype
 	;
 
 interfbody
-	: interfcomplst				{ $$ = new ScopedSectionList(new ScopedSection(Scope.Public, null, $1)); }
+	: interfcomplst				{ $$ = new ObjectSection(null, $1, Scope.Public); }
 	;
 	
 interfcomplst

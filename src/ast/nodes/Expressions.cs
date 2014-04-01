@@ -698,13 +698,14 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
-	public class InheritedCall : LvalueExpression
+	public class InheritedCall : RoutineCall
 	{
-		public RoutineCall call;
+		public String funcname;
 
-		public InheritedCall(RoutineCall call)
+		public InheritedCall(String funcname, ExpressionList args = null)
+			: base(null, args)
 		{
-			this.call = call;
+			this.funcname = funcname;
 		}
 	}
 
@@ -724,6 +725,8 @@ namespace crosspascal.ast.nodes
 			: this(func, retType)
 		{
 			this.args = args;
+			if (this.args == null)
+				this.args = new ExpressionList();
 		}
 	}
 

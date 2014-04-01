@@ -204,23 +204,36 @@ namespace crosspascal.semantics
 		public override bool Visit(ProgramNode node)
 		{
 			Visit((TranslationUnit) node);
-			traverse(node.uses);
-			traverse(node.body);
+			traverse(node.section);
 			return true;
 		}
 		
 		public override bool Visit(LibraryNode node)
 		{
 			Visit((TranslationUnit) node);
-			traverse(node.uses);
-			traverse(node.body);
+			traverse(node.section);
+			return true;
+		}
+		
+		public override bool Visit(ProgramSection node)
+		{
+			Visit((TopLevelDeclarationSection)node);
+			traverse(node.block);
+			return true;
+		}
+
+		public override bool Visit(ParametersSection node)
+		{
+			Visit((Section)node);
+			traverse(node.returnVar);
 			return true;
 		}
 		
 		public override bool Visit(UnitNode node)
 		{
-			// do not allow shadowing in interface section
-			declEnv.CreateContext("unit " + node.name, false);
+			// declEnv.CreateContext("unit " + node.name, null, false);
+			// do not create context, use top-level global. Create 1 for each subsection
+
 			Visit((TranslationUnit) node);
 			traverse(node.@interface);
 			traverse(node.implementation);
@@ -250,7 +263,7 @@ namespace crosspascal.semantics
 			// Import dependency from a Unit SourceFile already parsed, by loading its interface context
 			string id = node.name;
 			var ctx = source.GetDependency(id).interfContext;
-			ctx.id = id;
+			ctx.Id = id;
 			declEnv.ImportContext(ctx);
 			return true;
 		}
@@ -281,32 +294,7 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-		public override bool Visit(CodeSection node)
-		{
-			Visit((Section) node);
-			traverse(node.block);
-			return true;
-		}
-		
-		public override bool Visit(ProgramBody node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public override bool Visit(InitializationSection node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public override bool Visit(FinalizationSection node)
-		{
-			Visit((CodeSection) node);
-			return true;
-		}
-		
-		public override bool Visit(DeclarationSection node)
+		public override bool Visit(TopLevelDeclarationSection node)
 		{
 			traverse(node.uses);
 			Visit((Section)node);
@@ -316,9 +304,9 @@ namespace crosspascal.semantics
 		public override bool Visit(InterfaceSection node)
 		{
 			// do not allow shadowing in the implementation section
-			declEnv.CreateContext("interface", false);
+			declEnv.CreateContext("interface", node, false);
 
-			Visit((DeclarationSection) node);
+			Visit((TopLevelDeclarationSection) node);
 			// Finalize processing of an Unit's interface section, by saving its symbol context
 			source.interfContext = declEnv.ExportContext();
 			return true;
@@ -327,17 +315,11 @@ namespace crosspascal.semantics
 		public override bool Visit(ImplementationSection node)
 		{
 			// allow shadowing in main body
-			declEnv.CreateContext("implementation", true);
-			Visit((DeclarationSection) node);
+			declEnv.CreateContext("implementation", node, true);
+			Visit((TopLevelDeclarationSection) node);
 			return true;
 		}
 		
-		public override bool Visit(AssemblerRoutineBody node)
-		{
-			Visit((RoutineBody) node);
-			return true;
-		}
-
 		#endregion Sections
 
 
@@ -447,13 +429,13 @@ namespace crosspascal.semantics
 		public override bool Visit(CallableDeclaration node)
 		{
 			// first resolve the params types, in order to determine the fully qualified proc name
-			foreach (ParamDeclaration p in node.Type.@params)
+			foreach (ParamDeclaration p in node.Type.@params.decls)
 				if (TraverseResolve(p.type))
 					p.type = ResolvedNode<TypeNode>();
 
 			String fullqualname = node.name;
 			if (node.Directives.Contains((int) GeneralDirective.Overload))
-				foreach (ParamDeclaration p in node.Type.@params)
+				foreach (ParamDeclaration p in node.Type.@params.decls)
 				{
 					String qualname = p.type.ToString();
 					fullqualname += "$" + qualname.Substring(qualname.LastIndexOf('.') + 1);
@@ -539,10 +521,11 @@ namespace crosspascal.semantics
 			return true;
 		}
 
-		public override bool Visit(RoutineBody node)
+		public override bool Visit(RoutineSection node)
 		{
 			declEnv.CreateContext("routine def body");
-			Visit((CodeSection)node);
+			Visit((Section) node);
+			traverse(node.block);
 			declEnv.ExitContext();
 			return true;
 		}
@@ -553,7 +536,6 @@ namespace crosspascal.semantics
 			traverse(node.@params);
 			if (TraverseResolve(node.funcret))
 				node.funcret = ResolvedNode<TypeNode>();
-			traverse(node.returnVar);
 			traverse(node.Directives);
 			return true;
 		}
@@ -615,7 +597,7 @@ namespace crosspascal.semantics
 
 			Visit((TypeNode)node);
 			declEnv.CreateInheritedContext(node);
-			traverse(node.sections);
+			traverse(node.section);
 
 			declEnv.ExitCompositeContext(node);
 			return true;
@@ -634,20 +616,13 @@ namespace crosspascal.semantics
 			return true;
 		}
 
-		public override bool Visit(ScopedSection node)
+		public override bool Visit(ObjectSection node)
 		{
 			Visit((Section) node);
 			traverse(node.fields);
 			return true;
 		}
-		
-		public override bool Visit(ScopedSectionList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
-			return true;
-		}
-		
+				
 		public override bool Visit(FieldDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
@@ -1321,36 +1296,6 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
-
-		// TODO remove this, shouldn't be used
-		public override bool Visit(RoutineCall node)
-		{
-			Visit((LvalueExpression) node);
-			if (TraverseResolve(node.func))
-				node.func = ResolvedNode<LvalueExpression>();
-			traverse(node.args);
-
-			// TODO check this. doesn't work when node.func == routinecall, type is return type
-
-			ProceduralType ptype = (node.func.Type as ProceduralType);
-			if (ptype == null)
-				return Error("Attempt to Call a non-procedural type: " + node.func.Type, node);
-
-			MethodType mt = ptype as MethodType;
-			if (mt != null && mt.IsConstructor)
-			{
-				if (!(node.func is ObjectAccess)
-				|| !((node.func as ObjectAccess).obj is TypeWrapper))
-					return Error("Attempt to call constructor using an instance reference", node);
-
-			//	ObjectAccess ac = (node.func as ObjectAccess);
-			//	resolved = new ClassInstantiation((ac.obj as TypeWrapper).Type as ClassType, ac.field, node.args);
-			}
-			else
-				node.Type = ptype.funcret;
-
-			return true;
-		}
 		
 		/// <summary>
 		/// Process an Object Access. May be an access to a field or a method,
@@ -1465,12 +1410,52 @@ namespace crosspascal.semantics
 		public override bool Visit(InheritedCall node)
 		{
 			Visit((LvalueExpression)node);
-			if (TraverseResolve(node.call))
-				node.call = ResolvedNode<RoutineCall>();
+			traverse(node.args);
+
+			if (node.funcname == null)
+			{	// call to same method
+
+			}
+			else
+			{	// parent method
+
+
+			}
+
+			return true;
+		}
+
+		public override bool Visit(RoutineCall node)
+		{
+			Visit((LvalueExpression)node);
+			if (TraverseResolve(node.func))
+				node.func = ResolvedNode<LvalueExpression>();
+			traverse(node.args);
+
+			// TODO check this. doesn't work when node.func == routinecall, type is return type
+
+			ProceduralType ptype = (node.func.Type as ProceduralType);
+			if (ptype == null)
+				return Error("Attempt to Call a non-procedural type: " + node.func.Type, node);
+
+			MethodType mt = ptype as MethodType;
+			if (mt != null && mt.IsConstructor)
+			{
+				if (!(node.func is ObjectAccess)
+				|| !((node.func as ObjectAccess).obj is TypeWrapper))
+					return Error("Attempt to call constructor using an instance reference", node);
+
+				//	ObjectAccess ac = (node.func as ObjectAccess);
+				//	resolved = new ClassInstantiation((ac.obj as TypeWrapper).Type as ClassType, ac.field, node.args);
+			}
+			else
+				node.Type = ptype.funcret;
+
 			return true;
 		}
 
 		#endregion	// lvalues
+
 
 
 		#region	Types

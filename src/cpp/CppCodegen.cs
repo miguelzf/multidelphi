@@ -124,26 +124,33 @@ namespace crosspascal.cpp
 		public override bool Visit(ProgramNode node)
 		{
 			Visit((TranslationUnit) node);
-            traverse(node.uses);
-			traverse(node.body);			
+            traverse(node.section);
 			return true;
 		}
 		
 		public override bool Visit(LibraryNode node)
 		{
 			Visit((TranslationUnit) node);
-            traverse(node.uses);
-			traverse(node.body);			
+			traverse(node.section);
 			return true;
 		}
 		
+
 		public override bool Visit(UnitNode node)
 		{
 			Visit((TranslationUnit) node);
 			traverse(node.@interface);
 			traverse(node.implementation);
-			traverse(node.initialization);
-			traverse(node.finalization);
+
+			if (node.initialization != null)
+			{	outputCode(node.name+"_init()", false, true);
+				traverse(node.initialization);
+			}
+
+			if (node.finalization != null)
+			{	outputCode(node.name+"_finish()", false, true);
+				traverse(node.finalization);
+			}
 			return true;
 		}
 		
@@ -192,17 +199,11 @@ namespace crosspascal.cpp
 			traverse(node.decls);
 			return true;
 		}
-		
-		public override bool Visit(CodeSection node)
+				
+		public override bool Visit(ProgramSection node)
 		{
-			Visit((Section) node);
-			traverse(node.block);
-			return true;
-		}
-		
-		public override bool Visit(ProgramBody node)
-		{
-			Visit((Section) node);
+			Visit((TopLevelDeclarationSection)node);
+
 			outputCode("int main( int argc, const char* argv[] )", false, true);
 			outputCode("{", false, true);
 			PushIdent();
@@ -213,7 +214,7 @@ namespace crosspascal.cpp
 			return true;
 		}
 		
-		public override bool Visit(RoutineBody node)
+		public override bool Visit(RoutineSection node)
 		{			
 			if (node.Parent is MethodDefinition)
 			{
@@ -227,39 +228,24 @@ namespace crosspascal.cpp
 					outputCode("{", true, true);					
 					PushIdent();
 					outputCode("result = new "+classid+"();", true, true);
-					Visit((CodeSection)node);
+					Visit((Section) node);
+					traverse(node.block);
 					PopIdent();
 					outputCode("}", true, true);
 					//outputCode("	result ", true, true);
+					outputCode("", false, true);
+					return true;
 				}
-				else
-					Visit((CodeSection)node);
-			} else
-				Visit((CodeSection) node);
+			}
+
+			Visit((Section) node);
+			traverse(node.block);
 
 			outputCode("", false, true);
 			return true;
 		}
 		
-		public override bool Visit(InitializationSection node)
-		{
-			traverse(node.decls);
-			outputCode((node.Parent as UnitNode).name+"_init()", false, true);
-			Visit((CodeSection) node);
-			outputCode("", false, true);
-			return true;
-		}
-		
-		public override bool Visit(FinalizationSection node)
-		{
-			traverse(node.decls);
-			outputCode((node.Parent as UnitNode).name + "_finish()", false, true);
-			Visit((CodeSection)node);
-			outputCode("", false, true);
-			return true;
-		}
-		
-		public override bool Visit(DeclarationSection node)
+		public override bool Visit(TopLevelDeclarationSection node)
 		{
 			traverse(node.uses);
 			Visit((Section)node);
@@ -268,22 +254,16 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(InterfaceSection node)
 		{
-			Visit((DeclarationSection) node);
+			Visit((TopLevelDeclarationSection) node);
 			return true;
 		}
 		
 		public override bool Visit(ImplementationSection node)
 		{
-			Visit((DeclarationSection)node);
+			Visit((TopLevelDeclarationSection)node);
 			return true;
 		}
-		
-		public override bool Visit(AssemblerRoutineBody node)
-		{
-			Visit((RoutineBody) node);
-			return true;
-		}
-		
+				
 		public override bool Visit(Declaration node)
 		{
 			Visit((Node) node);			
@@ -378,7 +358,7 @@ namespace crosspascal.cpp
             outputCode(name, false, false);
             outputCode("(", false, false);
             ProceduralType pp = node.type as ProceduralType;
-            DeclarationList p = pp.@params;
+            DeclarationList p = pp.@params.decls;
             foreach (ParamDeclaration pd in p)
             {
                 traverse(pd);
@@ -397,6 +377,7 @@ namespace crosspascal.cpp
 		public override bool Visit(MethodDeclaration node)
 		{
 			//Visit((CallableDeclaration)node);
+			outputCode(Enum.GetName(typeof(Scope), node.scope).ToLower() + ":", false, true);
 
 			if (node.Type.funcret == null)
 				outputCode("void ", false, false);
@@ -517,7 +498,7 @@ namespace crosspascal.cpp
 		public override bool Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
-			traverse(node.sections);
+			traverse(node.section);
 			return true;
 		}
 
@@ -553,26 +534,12 @@ namespace crosspascal.cpp
 			return true;
 		}
 		
-		public override bool Visit(ScopedSection node)
+		public override bool Visit(ObjectSection node)
 		{
-			if (node.scope == Scope.Private)
-				outputCode("private:", false, true);
-			else
-			if (node.scope == Scope.Protected)
-				outputCode("protected:", false, true);
-			else
-				outputCode("public:", false, true);
-
+			Visit((Section)node);
 			traverse(node.fields);
 			traverse(node.decls);
 			
-			return true;
-		}
-
-		public override bool Visit(ScopedSectionList node)
-		{
-			foreach (Node n in node.nodes)
-				traverse(n);
 			return true;
 		}
 
@@ -581,6 +548,7 @@ namespace crosspascal.cpp
 			if (node.name.Equals("self"))
 				return false;
 
+			outputCode(Enum.GetName(typeof(Scope), node.scope).ToLower()+":", false, true);
 			//Visit((ValueDeclaration)node);
 			traverse(node.type);
 			outputCode(node.name+";", false, true);
@@ -1263,8 +1231,7 @@ namespace crosspascal.cpp
 
 		public override bool Visit(InheritedCall node)
 		{
-			Visit((LvalueExpression) node);
-			traverse(node.call);
+			Visit((RoutineCall)node);
 			return true;
 		}
 

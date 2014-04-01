@@ -15,9 +15,9 @@ namespace crosspascal.semantics
 	public class SymbolTable<T> where T : class
 	{
 		Stack<SymbolContext<T>> contexts = new Stack<SymbolContext<T>>();
-		internal SymbolContext<T> current;
+		SymbolContext<T> current;
 		bool allAllowShadowing = true;	// optimization: typically all contexts allow shadowing
-										// no test to test them all then
+		// no test to test them all then
 		public SymbolTable()
 		{
 			Push("initial: empty default context");
@@ -105,6 +105,7 @@ namespace crosspascal.semantics
 			return current.Add(key, symbol);
 		}
 
+		/*
 		/// <summary>
 		/// Import external context
 		/// </summary>
@@ -119,10 +120,11 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Export current context
 		/// </summary>
-		internal SymbolContext<T> ExportCurrentContext()
+		SymbolContext<T> ExportCurrentContext()
 		{
 			return current.Clone();
 		}
+		 */
 
 		public override string ToString()
 		{
@@ -143,84 +145,81 @@ namespace crosspascal.semantics
 			}
 			return outp;
 		}
+
+		/// <summary>
+		/// Context of declared symbols
+		/// </summary>
+		class SymbolContext<iT>
+			where iT : class
+		{
+			Dictionary<String, iT> symbols;
+			internal iT lastInserted;
+
+			internal bool allowShadowing;
+			internal string id;
+
+			internal SymbolContext(String id = null, bool allowShadowing = true)
+			{
+				this.id = id;
+				this.allowShadowing = allowShadowing;
+				this.lastInserted = null;
+				symbols = new Dictionary<String, iT>();
+			}
+
+			internal SymbolContext<iT> Clone()
+			{
+				var ctx = new SymbolContext<iT>(id, allowShadowing);
+				ctx.lastInserted = lastInserted;
+				ctx.symbols = new Dictionary<String, iT>(symbols);
+				return ctx;
+			}
+
+			internal iT Lookup(String key)
+			{
+				return (symbols.ContainsKey(key) ? symbols[key] : null);
+			}
+
+			internal bool Add(String key, iT symbol)
+			{
+				if (symbols.ContainsKey(key))
+					return false;
+
+				lastInserted = symbol;
+				symbols[key] = symbol;
+				return true;
+			}
+
+			internal bool Replace(String key, iT symbol)
+			{
+				if (!symbols.ContainsKey(key))
+					return false;
+
+				symbols[key] = symbol;
+				return true;
+			}
+
+			internal bool Remove(String key, iT symbol)
+			{
+				return symbols.Remove(key);
+			}
+
+			public override string ToString()
+			{
+				return "Context " + id + " with " + symbols.Count + " symbols";
+			}
+
+			internal String ListContext()
+			{
+				string sep = Environment.NewLine;
+				string output = ToString() + ":" + sep;
+
+				foreach (var k in symbols)
+					output += "\t" + k.Key + " - " + k.Value.ToString() + sep;
+				return output;
+			}
+		}
+		// end Symbol Context
 	}
-
-
-
-	/// <summary>
-	/// Context of declared symbols
-	/// </summary>
-	class SymbolContext<iT>
-		where iT : class
-	{
-		Dictionary<String, iT> symbols;
-		internal iT lastInserted;
-
-		internal bool allowShadowing;
-		internal string id;
-
-		internal SymbolContext(String id = null, bool allowShadowing = true)
-		{
-			this.id = id;
-			this.allowShadowing = allowShadowing;
-			this.lastInserted = null;
-			symbols = new Dictionary<String, iT>();
-		}
-
-		internal SymbolContext<iT> Clone()
-		{
-			var ctx = new SymbolContext<iT>(id, allowShadowing);
-			ctx.lastInserted = lastInserted;
-			ctx.symbols = new Dictionary<String, iT>(symbols);
-			return ctx;
-		}
-
-		internal iT Lookup(String key)
-		{
-			return (symbols.ContainsKey(key) ? symbols[key] : null);
-		}
-
-		internal bool Add(String key, iT symbol)
-		{
-			if (symbols.ContainsKey(key))
-				return false;
-
-			lastInserted = symbol;
-			symbols[key] = symbol;
-			return true;
-		}
-
-		internal bool Replace(String key, iT symbol)
-		{
-			if (!symbols.ContainsKey(key))
-				return false;
-
-			symbols[key] = symbol;
-			return true;
-		}
-
-		internal bool Remove(String key, iT symbol)
-		{
-			return symbols.Remove(key);
-		}
-
-		public override string ToString()
-		{
-			return "Context " + id + " with " + symbols.Count + " symbols";
-		}
-
-		internal String ListContext()
-		{
-			string sep = Environment.NewLine;
-			string output = ToString() + ":" +sep;
-
-			foreach (var k in symbols)
-				output += "\t" + k.Key + " - " + k.Value.ToString() + sep;
-			return output;
-		}
-	}
-	// end Symbol Context
-
 }
 
 
