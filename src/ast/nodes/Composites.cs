@@ -31,9 +31,6 @@ namespace crosspascal.ast.nodes
 		public ClassDeclaration(String name, ClassType ctype)
 			: base(name, ctype)
 		{
-			ctype.self = new FieldDeclaration("self", new ClassRefType(name, ctype));
-			ctype.self.scope = Scope.Protected;
-			ctype.section.fields.Add(ctype.self);
 		}
 	}
 
@@ -63,6 +60,8 @@ namespace crosspascal.ast.nodes
 
 		public bool IsPacked { get; set; }
 
+		public bool IsForward { get { return section == null; } }
+
 		// optional
 		public String Name { get; set; }
 		
@@ -72,9 +71,12 @@ namespace crosspascal.ast.nodes
 		public List<CompositeType> ancestors;
 
 
-		public CompositeType(ArrayList heritage, ObjectSection sec)
+		public CompositeType(ArrayList inherits, ObjectSection sec)
 		{
-			this.heritage = new List<String>(heritage.Cast<String>());
+			if (inherits == null)
+				heritage = new List<String>();
+			else
+				heritage = new List<String>(inherits.Cast<String>());
 
 			section = sec;
 
@@ -122,8 +124,9 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public virtual IEnumerable<Declaration> GetAllMembers(Scope s = (Scope) 0xffffff)
 		{
-			foreach (var d in section.Decls(s))
-				yield return d;
+			if (!IsForward)
+				foreach (var d in section.Decls(s))
+					yield return d;
 
 			foreach (var a in ancestors)
 				foreach (var d in a.GetAllMembers(s))
@@ -135,9 +138,10 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public virtual IEnumerable<MethodDeclaration> GetAllMethods(Scope s = (Scope) 0xffffff)
 		{
-			foreach (var f in section.decls.Cast<MethodDeclaration>())
-				if ((f.scope & s) != 0)
-					yield return f;
+			if (!IsForward)
+				foreach (var f in section.decls.Cast<MethodDeclaration>())
+					if ((f.scope & s) != 0)
+						yield return f;
 
 			foreach (var a in ancestors)
 				foreach (var d in a.GetAllMethods(s))
@@ -149,9 +153,10 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public virtual IEnumerable<FieldDeclaration> GetAllFields(Scope s = (Scope) 0xffffff)
 		{
-			foreach (var f in section.fields.Cast<FieldDeclaration>())
-				if ((f.scope & s) != 0)
-					yield return f;
+			if (!IsForward)
+				foreach (var f in section.fields.Cast<FieldDeclaration>())
+					if ((f.scope & s) != 0)
+						yield return f;
 
 			foreach (var a in ancestors)
 				foreach (var d in a.GetAllFields(s))
@@ -164,8 +169,9 @@ namespace crosspascal.ast.nodes
 		public virtual Declaration GetMember(String id)
 		{
 			Declaration d;
-			if ((d = section.GetMember(id)) != null)
-				return d;
+			if (!IsForward)
+				if ((d = section.GetMember(id)) != null)
+					return d;
 
 			foreach (var a in ancestors)
 				if ((d = a.GetMember(id)) != null)
@@ -180,8 +186,9 @@ namespace crosspascal.ast.nodes
 		public virtual MethodDeclaration GetMethod(String id)
 		{
 			MethodDeclaration d;
-			if ((d = section.GetMethod(id)) != null)
-				return d;
+			if (!IsForward)
+				if ((d = section.GetMethod(id)) != null)
+					return d;
 
 			foreach (var a in ancestors)
 				if ((d = a.GetMethod(id)) != null)
@@ -196,8 +203,9 @@ namespace crosspascal.ast.nodes
 		public virtual FieldDeclaration GetField(String id)
 		{
 			FieldDeclaration d;
-			if ((d = section.GetField(id)) != null)
-				return d;
+			if (!IsForward)
+				if ((d = section.GetField(id)) != null)
+					return d;
 
 			foreach (var a in ancestors)
 				if ((d = a.GetField(id)) != null)
@@ -214,9 +222,15 @@ namespace crosspascal.ast.nodes
 	{
 		public FieldDeclaration self;
 
-		public ClassType(ArrayList heritage, ObjectSection seclist = null)
-			: base(heritage, seclist)
+		public ClassType(ArrayList heritage, ObjectSection sec = null)
+			: base(heritage, sec)
 		{
+			if (!IsForward)
+			{
+				self = new FieldDeclaration("self", new ClassRefType(this.Name, this));
+				self.scope = Scope.Protected;
+				section.fields.Add(self);
+			}
 		}
 	}
 

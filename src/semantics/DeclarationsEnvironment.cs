@@ -16,8 +16,7 @@ namespace crosspascal.semantics
 		public SymbolGraph<Declaration, Section> symEnv = new SymbolGraph<Declaration, Section>();
 
 		// probably won't be needed
-		Dictionary<String, TypeDeclaration> builtinTypes = new Dictionary<String, TypeDeclaration>();
-		Dictionary<String, RoutineDeclaration> builtinFunctions = new Dictionary<String, RoutineDeclaration>();
+		Dictionary<String, Declaration> builtinDecls = new Dictionary<String, Declaration>();
 
 		int DebugLevel = 1;
 
@@ -62,7 +61,8 @@ namespace crosspascal.semantics
 			LoadBuiltinTypesBasic();
 			LoadBuiltinTypesPointer();
 			LoadBuiltinTypesWindows();	// test
-			LoadBuiltinFunctions();
+			LoadbuiltinDecls();
+			LoadBuiltinComposites();
 			symEnv.CreateContext("global");
 		}
 
@@ -102,8 +102,16 @@ namespace crosspascal.semantics
 		/// </summary>
 		public void RegisterDeclaration(String name, Declaration decl, bool checkCanAdd = true)
 		{
-			if (checkCanAdd && !symEnv.Add(name, decl))
-				throw new IdentifierRedeclared(name);
+			if (name == null || decl == null)
+				throw new InternalSemanticError("trying to register null declaration");
+			
+			if (checkCanAdd)
+			{
+				if (!symEnv.Add(name, decl))
+					throw new IdentifierRedeclared(name);
+			}
+			else	// add without checking
+				symEnv.GetCurrentContext().Add(name, decl);
 
 			Debug("Register Decl " + name); // + Environment.NewLine + symtab.ListTable(3));
 		}
@@ -465,31 +473,15 @@ namespace crosspascal.semantics
 		void CreateBuiltinType(String name, VariableType type)
 		{
 			var decl = new TypeDeclaration(name, type);
-			builtinTypes.Add(name, decl);
+			builtinDecls.Add(name, decl);
 			if (!symEnv.Add(name, decl))
 				throw new IdentifierRedeclared(name);
 		}
 
 		void CreateBuiltinFunction(RoutineDeclaration routine)
 		{
-			builtinFunctions.Add(routine.name, routine);
+			builtinDecls.Add(routine.name, routine);
 			RegisterDeclaration(routine);
-
-			return;
-		/*	// do not create context for args, just leave the func name declared
-			var rtype = routine.Type;
-			if (rtype.funcret != null || rtype.@params != null)
-			{
-				symEnv.CreateContext("builtin func " + routine.name);
-				
-				foreach (var p in rtype.@params)
-					RegisterDeclaration(p);
-				if (rtype.returnVar != null)
-					RegisterDeclaration(rtype.returnVar);
-
-				symEnv.ExitContext();
-			}
-		 */
 		}
 
 		/// <summary>
@@ -558,22 +550,48 @@ namespace crosspascal.semantics
 			CreateBuiltinType("thandle", IntegerType.Single);
 		}
 
-		public void LoadBuiltinFunctions()
+		public void LoadbuiltinDecls()
 		{
-			var t = FloatType.Single;
-			var p = new ParamDeclaration("x", t);
+			var tfloat	= FloatType.Single;
+			var tint	= IntegerType.Single;
+			var tstring = StringType.Single;
+			var tarray  = ArrayType.Single;
+			var p = new ParamDeclaration("x", tfloat);
 
 			string[] floatFuncs = { "cos", "sin", "trunc", "round", "frac", "exp" };
+			string[] intordFuncs  = { "succ", "pred"};
+			string[] stringsFuncs = { "writeln", "readln"};
+
 			foreach (var s in floatFuncs)
-				CreateBuiltinFunction(new RoutineDeclaration(s, new ParametersSection(new DeclarationList(p.Clone())), t));
+				CreateBuiltinFunction(new RoutineDeclaration(s, new ParametersSection(
+										new DeclarationList(new ParamDeclaration("x", tfloat))), tfloat));
+
+			foreach (var s in intordFuncs)
+				CreateBuiltinFunction(new RoutineDeclaration(s, new ParametersSection(
+										new DeclarationList(new ParamDeclaration("x", null))), tint));
+
+			foreach (var s in stringsFuncs)
+				CreateBuiltinFunction(new RoutineDeclaration(s, new ParametersSection(
+										new DeclarationList(new ParamDeclaration("x", tstring)))));
 
 			CreateBuiltinFunction(new RoutineDeclaration("assigned", new ParametersSection(
-									new DeclarationList(new ParamDeclaration("p", PointerType.Single)))));
+									new DeclarationList(new ParamDeclaration("p", PointerType.Single))), BoolType.Single));
 
-			CreateBuiltinFunction(new RoutineDeclaration("writeln", new ParametersSection(
-									new DeclarationList(new ParamDeclaration("s", StringType.Single)))));
-			CreateBuiltinFunction(new RoutineDeclaration("readln" , new ParametersSection(
-									new DeclarationList(new ParamDeclaration("s", StringType.Single)))));
+			CreateBuiltinFunction(new RoutineDeclaration("length", new ParametersSection(
+									new DeclarationList(new ParamDeclaration("x", tarray))), tint));
+
+			var decls = new DeclarationList(new ParamDeclaration("arr", tarray));
+			decls.Add(new ParamDeclaration("len", tint));
+			CreateBuiltinFunction(new RoutineDeclaration("setlength", new ParametersSection(decls)));
+		}
+
+		public void LoadBuiltinComposites()
+		{
+			var decl = new InterfaceDeclaration("tinterfacedobject", new InterfaceType(null, new ObjectSection()));
+			builtinDecls.Add(decl.name, decl);
+			if (!symEnv.Add(decl.name, decl))
+				throw new IdentifierRedeclared(decl.name);
+			
 		}
 
 		#endregion

@@ -15,6 +15,14 @@ namespace crosspascal.semantics
 		public SemanticException(string message = DefaultMsg) : base(message) { }
 	}
 
+	internal class InternalSemanticError : CrossPascalException
+	{
+		const string DefaultMsg = "Internal Semantic Error";
+
+		internal InternalSemanticError(int lineno, string message = DefaultMsg) : base(lineno, message) { }
+
+		internal InternalSemanticError(string message = DefaultMsg) : base(message) { }
+	}
 
 	public class IdentifierRedeclared : SemanticException
 	{

@@ -45,19 +45,10 @@ namespace crosspascal.ast.nodes
 		public String name;
 		public TypeNode type;
 
-		public void AddName(String name)
+		public Declaration(String name, TypeNode t = null)
 		{
+			this.type = t;
 			this.name = name;
-		}
-
-		protected Declaration(TypeNode t = null)
-		{
-			type = t;
-		}
-
-		public Declaration(String name, TypeNode t = null) : this(t)
-		{
-			AddName(name);
 		}
 
 		public override string ToString()
@@ -181,8 +172,6 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class TypeDeclaration : Declaration
 	{
-		protected TypeDeclaration() { }
-
 		public TypeDeclaration(String name, TypeNode type) : base(name, type) { }
 	}
 

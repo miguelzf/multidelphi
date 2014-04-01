@@ -20,6 +20,7 @@ Type
   Creature = Class(TInterfacedObject, EatingBehavior, TalkingBehavior)
     Procedure Talk(); Virtual; Abstract;
     Procedure Eat(Food:String); Virtual; Abstract;
+	constructor Create();
   End;
 
   Dog = Class(Creature)
@@ -41,12 +42,12 @@ End;
 
 Var
   P:Creature;
+ 
 { House }
-
 procedure House.Add(P: Creature);
 begin
-  SetLength(Inhabitants, Succ(Length(Inhabitants)));
-  Inhabitants[Pred(Length(Inhabitants))] := P;
+    SetLength(Inhabitants, Succ(Length(Inhabitants)));
+    Inhabitants[Pred(Length(Inhabitants))] := P;
 end;
 
 Begin

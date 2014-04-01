@@ -693,6 +693,9 @@ namespace crosspascal.ast.nodes
 	{
 		public List<int> dimensions = new List<int>();
 
+		// generic array type
+		public static new readonly ArrayType Single = new ArrayType(null);
+
 		void AddDimension(uint size)
 		{
 			// TODO

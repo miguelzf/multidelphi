@@ -336,14 +336,6 @@ namespace crosspascal.semantics
 			// the type may open a context for subtypes
 			declEnv.RegisterDeclaration(node.name, node);
 
-		/*	// OLD prolly won't be used
-			// all declaration types are visited
-			if ((node.type is CompositeType && !(node is CompositeDeclaration))
-			||	(node.type is RecordType	&& !(node is RecordDeclaration)))
-				// do not traverse, avoid circular deps
-				return true;
-		*/
-
 			if (TraverseResolve(node.type))
 				node.type = ResolvedNode<TypeNode>();
 
@@ -570,7 +562,25 @@ namespace crosspascal.semantics
 
 		public override bool Visit(CompositeDeclaration node)
 		{
-			Visit((TypeDeclaration) node);
+		//	Visit((TypeDeclaration) node);
+
+			Visit((Node)node);
+			// Register declaration BEFORE processing the type, which may open a context for subtypes
+
+			// check if current composite has been declared before with a forward declarations
+			var decl = declEnv.GetDeclaration(node.name);
+
+			if (decl == null)
+				declEnv.RegisterDeclaration(node.name, node);
+			else if (!(decl is CompositeDeclaration) || !decl.GetType().Equals(node.GetType()))
+				throw new IdentifierRedeclared(node.name);
+			else	// forward declaration
+				// register it again and hide previous declaration
+				declEnv.RegisterDeclaration(node.name, node, false);
+			
+			if (TraverseResolve(node.type))
+				node.type = ResolvedNode<CompositeType>();
+
 			return true;
 		}
 		
@@ -1506,7 +1516,7 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(UnresolvedVariableType node)
 		{
-			resolved = declEnv.FetchType<VariableType>(node.id);
+			resolved = declEnv.FetchType<TypeNode>(node.id);
 			if (resolved is RecordType)
 				resolved = new RecordRefType(node.id, (resolved as RecordType));
 			if (resolved is ClassType)

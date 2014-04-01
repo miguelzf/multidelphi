@@ -394,10 +394,12 @@ namespace crosspascal.semantics
 			return (symbols.ContainsKey(key) ? symbols[key] : null);
 		}
 
+		/// <summary>
+		/// Adds new or resets already added symbol
+		/// </summary>
 		internal bool Add(String key, T symbol)
 		{
-			if (symbols.ContainsKey(key))
-				return false;
+			// if (symbols.ContainsKey(key)) return false;
 
 			lastInserted = symbol;
 			symbols[key] = symbol;
