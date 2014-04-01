@@ -451,7 +451,7 @@ namespace crosspascal.semantics
 			Visit((CallableDeclaration)node);
 
 			declEnv.RegisterDeclaration(node.QualifiedName, node);
-			declEnv.CreateContext(node.QualifiedName + " Params");
+			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
 			traverse(node.Type);
 			traverse(node.Directives);
 			declEnv.ExitContext();
@@ -466,8 +466,8 @@ namespace crosspascal.semantics
 			bool checkRegister = true;
 			// check if current callable is an implementation of a declared callable (in the interface)
 			var decl = declEnv.GetDeclaration(node.QualifiedName);
-			if (decl is RoutineDeclaration && node.declaringScope is ImplementationSection
-			&& (decl as RoutineDeclaration).declaringScope is InterfaceSection)
+			if (decl is RoutineDeclaration && node.declaringSection is ImplementationSection
+			&& (decl as RoutineDeclaration).declaringSection is InterfaceSection)
 			{	// implementation of a declared routine
 				checkRegister = false;	// declare it, ignoring the interface shadowing
 			}
@@ -475,7 +475,7 @@ namespace crosspascal.semantics
 
 			declEnv.RegisterDeclaration(node.QualifiedName, node, checkRegister);
 
-			declEnv.CreateContext(node.QualifiedName + " Params");
+			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
 
 			traverse(node.Type);
 			traverse(node.Directives);
@@ -489,7 +489,7 @@ namespace crosspascal.semantics
 		{
 			Visit((CallableDeclaration)node);
 			declEnv.RegisterDeclaration(node.QualifiedName, node);
-			declEnv.CreateContext(node.QualifiedName + " Params");
+			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
 			node.declaringType = (declEnv.GetDeclaration(node.objname) as CompositeDeclaration).Type;
 			traverse(node.Type);
 
@@ -507,7 +507,7 @@ namespace crosspascal.semantics
 			declEnv.RegisterDeclaration(node.objname+"."+node.QualifiedName, node);
 			CompositeType type = declEnv.CreateCompositeContext(node.objname);
 			node.declaringType = type;
-			declEnv.CreateContext(node.QualifiedName + " Params");
+			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
 
 			traverse(node.Type);
 			if (node.Type.kind == MethodKind.Constructor)
@@ -523,7 +523,7 @@ namespace crosspascal.semantics
 
 		public override bool Visit(RoutineSection node)
 		{
-			declEnv.CreateContext("routine def body");
+			declEnv.CreateContext("routine def body", node);
 			Visit((Section) node);
 			traverse(node.block);
 			declEnv.ExitContext();
@@ -1409,17 +1409,28 @@ namespace crosspascal.semantics
 
 		public override bool Visit(InheritedCall node)
 		{
-			Visit((LvalueExpression)node);
 			traverse(node.args);
+			String name = node.funcname;
 
-			if (node.funcname == null)
+			if (name == null)
 			{	// call to same method
-
+				CallableDeclaration decl = declEnv.GetDeclaringRoutine();
+				if (!(decl is MethodDeclaration))
+					return Error("Attempt to call inherited on non-method routine", node);
+				name = decl.name;
 			}
-			else
+
+			// name is set, now use the general case
 			{	// parent method
+				var decl = declEnv.GetInheritedDeclaration(name);
+				if (!(decl is IScopedDeclaration))
+					return Error("Inherited member " + name + " not found", node);
 
-
+				// Set func to call
+				var id = new Identifier(name);
+				id.decl = decl;
+				id.Loc = node.Loc;
+				node.func = id;			
 			}
 
 			return true;
@@ -1728,7 +1739,7 @@ namespace crosspascal.semantics
 			Visit((StructuredType) node);
 
 			declEnv.CreateContext("record");
-			traverse(node.compTypes);
+			traverse(node.section);
 			declEnv.ExitContext();
 			return true;
 		}

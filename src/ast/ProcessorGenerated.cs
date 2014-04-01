@@ -1254,7 +1254,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			traverse(node.compTypes);
+			traverse(node.section);
 			return true;
 		}
 	}

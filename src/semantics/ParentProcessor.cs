@@ -1268,7 +1268,7 @@ namespace crosspascal.semantics
 		public override bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			traverse(node.compTypes);
+			traverse(node.section);
 			return true;
 		}
 

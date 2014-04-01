@@ -702,7 +702,7 @@ namespace crosspascal.semantics
 			if (node.Type == null)
 				builder.AppendLine("  (null type)");
 			else
-				builder.AppendLine("  (" + node.Type.Name() + ")");
+				builder.AppendLine("  (" + node.Type.NodeName() + ")");
 			TraversePrint(node.Value);
 		//	TraversePrint(node.ForcedType);
 			return true;
@@ -1353,7 +1353,7 @@ namespace crosspascal.semantics
 		public override bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			TraversePrint(node.compTypes);
+			TraversePrint(node.section);
 			return true;
 		}
 

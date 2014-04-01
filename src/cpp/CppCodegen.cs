@@ -1231,6 +1231,7 @@ namespace crosspascal.cpp
 
 		public override bool Visit(InheritedCall node)
 		{
+			// Has been already resolved, treat as standard RoutineCall
 			Visit((RoutineCall)node);
 			return true;
 		}
@@ -1552,7 +1553,7 @@ namespace crosspascal.cpp
 		public override bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			traverse(node.compTypes);
+			traverse(node.section);
 			return true;
 		}
 

@@ -153,14 +153,10 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class RoutineDeclaration : CallableDeclaration
 	{
-		private string fullname;
 		public override string Fullname()
 		{
 			return name;
 		}
-
-		// to be set by the resolver. 
-		public Section declaringScope;
 
 		public RoutineDeclaration(string name, ParametersSection @params, TypeNode ret = null, 
 									RoutineDirectives dirs = null)

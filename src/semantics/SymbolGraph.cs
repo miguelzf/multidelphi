@@ -178,9 +178,9 @@ namespace crosspascal.semantics
 
 		/// <summary>
 		/// Recursive DFS from bottom to top (children to parents).
-		/// (takes the each parent in depth)
+		/// (takes each parent in depth)
 		/// </summary>
-		SymbolT LookupRec(SymbolContext<SymbolT,CtxKey> ctx,  String symbName)
+		internal SymbolT LookupRec(SymbolContext<SymbolT, CtxKey> ctx, String symbName)
 		{
 			SymbolT t = ctx.Lookup(symbName);
 			if (t != null)
@@ -310,8 +310,8 @@ namespace crosspascal.semantics
 	/// </summary>
 	class SymbolContext<T,CtxKey> where T : class
 	{
-		internal List<SymbolContext<T,CtxKey>> parents;
-		internal List<SymbolContext<T,CtxKey>> children;
+		internal List<SymbolContext<T, CtxKey>> parents;
+		internal List<SymbolContext<T, CtxKey>> children;
 
 		Dictionary<String, T> symbols;
 		internal T lastInserted;
@@ -340,6 +340,11 @@ namespace crosspascal.semantics
 
 
 		#region Access to Parents and Children
+
+		internal SymbolContext<T, CtxKey> GetFirstParent()
+		{
+			return parents[0];
+		}
 
 		internal void AddParent(SymbolContext<T,CtxKey> parent)
 		{

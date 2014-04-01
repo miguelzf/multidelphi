@@ -116,17 +116,57 @@ namespace crosspascal.semantics
 		{
 			return symEnv.Lookup(name);
 		}
-
-
+		
 		/// <summary>
 		/// Fetch declaration denoted by a given name, starting the search in the parent class
 		/// </summary>
 		public Declaration GetInheritedDeclaration(String name)
 		{
+			var ctx = symEnv.GetCurrentContext();
 
-			return symEnv.Lookup(name);
+			while (ctx != null && !(ctx.Key is ObjectSection))
+				ctx = ctx.GetFirstParent();
+
+			if (ctx == null || name == null)
+				return null;
+
+			// ctx has the declaring class section
+			// search starting in immediate parent
+			return symEnv.LookupRec(ctx.GetFirstParent(), name);
+		}
+		
+		/// <summary>
+		/// Fetch declaration denoted by a given name in the given section
+		/// </summary>
+		public Declaration GetDeclarationInScope(String name, Section sec)
+		{
+			return symEnv.Lookup(name, sec);
 		}
 
+
+		/// <summary>
+		/// Fetch declaration of the current context's declaring routine
+		/// </summary>
+		public CallableDeclaration GetDeclaringRoutine()
+		{
+			var ctx = symEnv.GetCurrentContext();
+
+			while (ctx != null && !(ctx.Key is RoutineSection))
+				ctx = ctx.GetFirstParent();
+
+			if (ctx == null)
+				return null;
+
+			// ctx has the declaring routine section
+			// get encolsing context of the routine decl
+			ctx = ctx.GetFirstParent().GetFirstParent();
+			// routine that opened the context must be the last declared in the encolsing context
+			return ctx.lastInserted as CallableDeclaration;
+		}
+
+
+
+		#region Context Management
 
 		public void CreateContext(string id = null, Section sec = null, bool allowShadowing = true)
 		{
@@ -153,13 +193,14 @@ namespace crosspascal.semantics
 			return id;
 		}
 
+		#endregion	// Context Management
 
 
 		#region Loading of Class/Interface Contexts
 
 		void LoadAncestorContext(CompositeType type)
 		{
-			CreateContext(type.Name);
+			CreateContext(type.Name, type.section);
 			foreach (var decl in type.GetInheritableMembers())
 				symEnv.Add(decl.name, decl);
 		//	ExitContext();
@@ -167,7 +208,7 @@ namespace crosspascal.semantics
 
 		void LoadMultipleHeritageContext(InterfaceType type)
 		{
-			CreateParentContext(type.Name);
+			CreateParentContext(type.Name, type.section);
 			foreach (var decl in type.GetInheritableMembers())
 				symEnv.Add(decl.name, decl);
 			ExitContext();
@@ -183,7 +224,7 @@ namespace crosspascal.semantics
 
 			// Load the inherited interfaces as parallel contexts
 			for (int i = 1; i < type.ancestors.Count; i++)
-				LoadMultipleHeritageContext(type.ancestors[0] as InterfaceType);
+				LoadMultipleHeritageContext(type.ancestors[i] as InterfaceType);
 
 			return type;
 		}
@@ -218,7 +259,6 @@ namespace crosspascal.semantics
 				throw new CompositeNotFound(cname);
 			CompositeType type = decl.Type;
 
-			SetAncestors(type);
 			LoadAncestors(type);
 			return type;
 		}
@@ -227,7 +267,7 @@ namespace crosspascal.semantics
 		/// Loads all herited ancestor contexts, and creates in its own context
 		/// </summary>
 		public void CreateInheritedContext(CompositeType type)
-		{		
+		{
 			SetAncestors(type);
 
 			// No real multiple inheritance in Delphi. Load recursively only the 1st inherit

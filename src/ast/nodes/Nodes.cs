@@ -67,7 +67,7 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Returns type name withou qualifier part
 		/// </summary>
-		public String Name()
+		public String NodeName()
 		{
 			String fullname = this.ToString();
 			return fullname.Substring(fullname.LastIndexOf('.') + 1);

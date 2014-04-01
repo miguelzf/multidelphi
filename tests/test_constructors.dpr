@@ -23,7 +23,9 @@ end;
 
 constructor dog.create;
 begin
-  inherited create(4);
+  
+  self.legs := 3 + inherited create(4) *4;
+  
 end;
 
 begin

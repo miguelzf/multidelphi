@@ -785,11 +785,11 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class RecordType : StructuredType
 	{
-		public DeclarationList compTypes;
+		public ObjectSection section;
 
 		public RecordType(DeclarationList compTypes)
 		{
-			this.compTypes = compTypes;
+			this.section = new ObjectSection(compTypes);
 		}
 
 		/// <summary>
@@ -797,16 +797,13 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public virtual FieldDeclaration GetField(String id)
 		{
-			foreach (var s in compTypes.Cast<FieldDeclaration>())
-				if (s.name == id)
-					return s;
-			return null;
+			return section.GetField(id);
 		}
 
 		public override bool Equals(Object o)
 		{
 			return base.Equals(o) && (o is RecordType)
-				&& compTypes.SequenceEqual((o as RecordType).compTypes);
+				&& section.fields.SequenceEqual((o as RecordType).section.fields);
 		}
 	}
 

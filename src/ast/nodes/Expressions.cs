@@ -39,6 +39,8 @@ namespace crosspascal.ast.nodes
 	/// </remarks>
 	#endregion
 
+	#pragma warning disable 659
+
 	//==========================================================================
 	// Expressions' base classes
 	//==========================================================================
@@ -284,7 +286,6 @@ namespace crosspascal.ast.nodes
 
 
 	#region Compile-time computed values
-	#pragma warning disable 659
 
 	public abstract class ConstantValue : Node
 	{
