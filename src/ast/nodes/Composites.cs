@@ -65,10 +65,25 @@ namespace crosspascal.ast.nodes
 		// optional
 		public String Name { get; set; }
 		
-		// to be set by the Resolver
+
+		//
+		// Resolving data
+		// To be set and used by the resolver
+		// 
+
 		public int numAncestors { get; set; }
-		// to be set by the Resolver
+
 		public List<CompositeType> ancestors;
+	
+		/// <summary>
+		/// Context with inheritable members (non-private)
+		/// </summary>
+		internal SymbolContext<Declaration, Section> inheritableContext { get; set; }
+		
+		/// <summary>
+		/// Context with all members (including private)
+		/// </summary>
+		internal SymbolContext<Declaration, Section> privateContext { get; set; }
 
 
 		public CompositeType(ArrayList inherits, ObjectSection sec)
@@ -79,21 +94,15 @@ namespace crosspascal.ast.nodes
 				heritage = new List<String>(inherits.Cast<String>());
 
 			section = sec;
+			if (!IsForward)
+				section.declaringObject = this;
 
 			// to be filled during resolving
 			ancestors = new List<CompositeType>(heritage.Count);
 		}
 
 
-		#region Accessors to declared Members
-
-		/// <summary>
-		/// Returns public and published methods
-		/// </summary>
-		public virtual IEnumerable<MethodDeclaration> GetPublicMethods()
-		{
-			return GetAllMethods(Scope.Public | Scope.Published);
-		}
+		#region Accessors of Public Members
 
 		/// <summary>
 		/// Returns public and published members
@@ -104,64 +113,254 @@ namespace crosspascal.ast.nodes
 		}
 
 		/// <summary>
-		/// Returns public, protected and published methods
+		/// Returns public and published methods
 		/// </summary>
-		public virtual IEnumerable<MethodDeclaration> GetInheritableMethods()
+		public virtual IEnumerable<MethodDeclaration> GetPublicMethods()
 		{
-			return GetAllMethods(Scope.Public | Scope.Published | Scope.Protected);
+			return GetAllMethods(Scope.Public | Scope.Published);
 		}
 
 		/// <summary>
-		/// Returns public, protected and published members
+		/// Returns public and published methods
 		/// </summary>
-		public virtual IEnumerable<Declaration> GetInheritableMembers()
+		public virtual IEnumerable<FieldDeclaration> GetPublicFields()
 		{
-			return GetAllMembers(Scope.Public | Scope.Published | Scope.Protected);
+			return GetAllFields(Scope.Public | Scope.Published);
 		}
 
 		/// <summary>
-		/// Returns all members with given scope
+		/// Returns public and published methods
+		/// </summary>
+		public virtual IEnumerable<PropertyDeclaration> GetPublicProperties()
+		{
+			return GetAllProperties(Scope.Public | Scope.Published);
+		}
+
+		#endregion	// Accessors of Public Members
+
+
+		#region Accessors of Own Members
+
+		/// <summary>
+		/// Returns all own members with the given scope
+		/// </summary>
+		public virtual IEnumerable<Declaration> GetOwnMembers(Scope s = (Scope) 0xffffff)
+		{
+			if (!IsForward)
+				return section.Decls(s);
+			else
+				return DeclarationList.Empty.Cast<MethodDeclaration>();
+		}
+
+		/// <summary>
+		/// Returns all own methods with the given scope
+		/// </summary>
+		public virtual IEnumerable<MethodDeclaration> GetOwnMethods(Scope s = (Scope) 0xffffff)
+		{
+			if (!IsForward)
+				return section.fields.Cast<MethodDeclaration>().Where(f => (f.scope & s) != 0);
+			else
+				return DeclarationList.Empty.Cast<MethodDeclaration>();
+		}
+
+		/// <summary>
+		/// Returns all own fields with the given scope
+		/// </summary>
+		public virtual IEnumerable<FieldDeclaration> GetOwnFields(Scope s = (Scope) 0xffffff)
+		{
+			if (!IsForward)
+				return section.fields.Cast<FieldDeclaration>().Where(f => (f.scope & s) != 0);
+			else
+				return DeclarationList.Empty.Cast<FieldDeclaration>();
+		}
+
+		/// <summary>
+		/// Returns all own fields with the given scope
+		/// </summary>
+		public virtual IEnumerable<PropertyDeclaration> GetOwnProperties(Scope s = (Scope) 0xffffff)
+		{
+			if (!IsForward)
+				return section.fields.Cast<PropertyDeclaration>().Where(f => (f.scope & s) != 0);
+			else
+				return DeclarationList.Empty.Cast<PropertyDeclaration>();
+		}
+
+		#endregion	// own members
+
+
+		#region Accessors of Inherited Members
+
+		const Scope nonPrivateScope = Scope.Protected | Scope.Public | Scope.Published;
+
+		/// <summary>
+		/// Returns inherited (public, protected and published) members
+		/// </summary>
+		public virtual IEnumerable<Declaration> GetInheritedMembers()
+		{
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllMembers(nonPrivateScope))
+					yield return d;
+		}
+
+		/// <summary>
+		/// Returns inherited (public, protected and published) methods
+		/// </summary>
+		public virtual IEnumerable<MethodDeclaration> GetInheritedMethods()
+		{
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllMethods(nonPrivateScope))
+					yield return d;
+		}
+
+		/// <summary>
+		/// Returns inherited (public, protected and published) methods
+		/// </summary>
+		public virtual IEnumerable<FieldDeclaration> GetInheritedFields()
+		{
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllFields(nonPrivateScope))
+					yield return d;
+		}
+
+		/// <summary>
+		/// Returns inherited (public, protected and published) properties
+		/// </summary>
+		public virtual IEnumerable<PropertyDeclaration> GetInheritedProperties()
+		{
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllProperties(nonPrivateScope))
+					yield return d;
+		}
+
+		#endregion	// Accessors of Inherited Members
+
+
+		#region Accessors of Accessible Members
+
+		// Iterate over inherited members first, then own members
+
+		/// <summary>
+		/// Returns own and inherited (public, protected and published) members
+		/// </summary>
+		public virtual IEnumerable<Declaration> GetAccessibleMembers()
+		{
+			foreach (var d in GetInheritedMembers())
+				yield return d;
+
+			if (!IsForward)
+				foreach (var d in GetOwnMembers())
+					yield return d;
+		}
+
+		/// <summary>
+		/// Returns own and inherited (public, protected and published) methods
+		/// </summary>
+		public virtual IEnumerable<MethodDeclaration> GetAccessibleMethods()
+		{
+			foreach (var d in GetInheritedMethods())
+				yield return d;
+
+			if (!IsForward)
+				foreach (var d in GetOwnMethods())
+					yield return d;
+		}
+
+		/// <summary>
+		/// Returns own and inherited (public, protected and published) fields
+		/// </summary>
+		public virtual IEnumerable<FieldDeclaration> GetAccessibleFields()
+		{
+			foreach (var d in GetInheritedFields())
+				yield return d;
+
+			if (!IsForward)
+				foreach (var d in GetOwnFields())
+					yield return d;
+		}
+
+		/// <summary>
+		/// Returns own and inherited (public, protected and published) members
+		/// </summary>
+		public virtual IEnumerable<PropertyDeclaration> GetAccessibleProperties()
+		{
+			foreach (var d in GetInheritedProperties())
+				yield return d;
+
+			if (!IsForward)
+				foreach (var d in GetOwnProperties())
+					yield return d;
+		}
+
+		#endregion	// Accessible members
+
+
+		#region Accessors of All Members
+
+		// Iterate over inherited members first, then own members
+
+		/// <summary>
+		/// Returns all members with given scope, including inherited
 		/// </summary>
 		public virtual IEnumerable<Declaration> GetAllMembers(Scope s = (Scope) 0xffffff)
 		{
-			if (!IsForward)
-				foreach (var d in section.Decls(s))
-					yield return d;
-
 			foreach (var a in ancestors)
 				foreach (var d in a.GetAllMembers(s))
 					yield return d;
+
+			if (!IsForward)
+				foreach (var f in section.Decls(s))
+					yield return f;
 		}
 
 		/// <summary>
-		/// Returns all methods in the given scopes
+		/// Returns all methods in the given scopes, including inherited
 		/// </summary>
 		public virtual IEnumerable<MethodDeclaration> GetAllMethods(Scope s = (Scope) 0xffffff)
 		{
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllMethods(s))
+					yield return d;
+
 			if (!IsForward)
 				foreach (var f in section.decls.Cast<MethodDeclaration>())
 					if ((f.scope & s) != 0)
 						yield return f;
-
-			foreach (var a in ancestors)
-				foreach (var d in a.GetAllMethods(s))
-					yield return d;
 		}
 
 		/// <summary>
-		/// Returns all fields in the given scopes
+		/// Returns all fields in the given scopes, including inherited
 		/// </summary>
 		public virtual IEnumerable<FieldDeclaration> GetAllFields(Scope s = (Scope) 0xffffff)
 		{
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllFields(s))
+					yield return d;
+
 			if (!IsForward)
 				foreach (var f in section.fields.Cast<FieldDeclaration>())
 					if ((f.scope & s) != 0)
 						yield return f;
-
-			foreach (var a in ancestors)
-				foreach (var d in a.GetAllFields(s))
-					yield return d;
 		}
+
+		/// <summary>
+		/// Returns all fields in the given scopes, including inherited
+		/// </summary>
+		public virtual IEnumerable<PropertyDeclaration> GetAllProperties(Scope s = (Scope) 0xffffff)
+		{
+			foreach (var a in ancestors)
+				foreach (var d in a.GetAllProperties(s))
+					yield return d;
+
+			if (!IsForward)
+				foreach (var f in section.properties.Cast<PropertyDeclaration>())
+					if ((f.scope & s) != 0)
+						yield return f;
+		}
+
+		#endregion		// Accessors of All Members
+
+
+		#region Accessors of individual Members
 
 		/// <summary>
 		/// Returns a member with the given name
@@ -214,7 +413,41 @@ namespace crosspascal.ast.nodes
 			return null;
 		}
 
-		#endregion
+		/// <summary>
+		/// Returns a member with the given name
+		/// </summary>
+		public virtual Declaration GetInheritableMember(String id)
+		{
+			var decl = GetMember(id) as IScopedDeclaration;
+			if (decl == null || decl.GetScope() == Scope.Private)
+				return null;
+			return decl as Declaration;
+		}
+
+		/// <summary>
+		/// Returns a method with the given name
+		/// </summary>
+		public virtual MethodDeclaration GetInheritableethod(String id)
+		{
+			var decl = GetMethod(id) as MethodDeclaration;
+			if (decl == null || decl.GetScope() == Scope.Private)
+				return null;
+			return decl;
+		}
+
+		/// <summary>
+		/// Returns a field with the given name
+		/// </summary>
+		public virtual FieldDeclaration GetInheritableField(String id)
+		{
+			var decl = GetField(id) as FieldDeclaration;
+			if (decl == null || decl.GetScope() == Scope.Private)
+				return null;
+			return decl;
+		}
+
+		#endregion	// Accessors of individual Members
+
 	}
 
 
@@ -254,71 +487,198 @@ namespace crosspascal.ast.nodes
 		public String qualifid;
 		public ClassType reftype;
 
-
-		#region Accessors to declared Members
-
-		/// <summary>
-		/// Returns public and published methods
-		/// </summary>
-		public override IEnumerable<MethodDeclaration> GetPublicMethods()
-		{
-			return reftype.GetPublicMethods();
-		}
+		#region Accessors of Public Members
 
 		/// <summary>
 		/// Returns public and published members
 		/// </summary>
 		public override IEnumerable<Declaration> GetPublicMembers()
 		{
-			return reftype.GetPublicMembers();
+			return base.GetAllMembers(Scope.Public | Scope.Published);
 		}
 
 		/// <summary>
-		/// Returns public, protected and published methods
+		/// Returns public and published methods
 		/// </summary>
-		public override IEnumerable<MethodDeclaration> GetInheritableMethods()
+		public override IEnumerable<MethodDeclaration> GetPublicMethods()
 		{
-			return reftype.GetInheritableMethods();
+			return base.GetAllMethods(Scope.Public | Scope.Published);
 		}
 
 		/// <summary>
-		/// Returns public, protected and published members
+		/// Returns public and published methods
 		/// </summary>
-		public override IEnumerable<Declaration> GetInheritableMembers()
+		public override IEnumerable<FieldDeclaration> GetPublicFields()
 		{
-			return reftype.GetInheritableMembers();
+			return base.GetAllFields(Scope.Public | Scope.Published);
 		}
 
 		/// <summary>
-		/// Returns all methods
+		/// Returns public and published methods
 		/// </summary>
-		public override IEnumerable<MethodDeclaration> GetAllMethods(Scope s = (Scope) 0xffffff)
+		public override IEnumerable<PropertyDeclaration> GetPublicProperties()
 		{
-			return reftype.GetAllMethods(s);
+			return base.GetAllProperties(Scope.Public | Scope.Published);
 		}
 
+		#endregion	// Accessors of Public Members
+
+		#region Accessors of Own Members
+
 		/// <summary>
-		/// Returns all fields
+		/// Returns all own members with the given scope
 		/// </summary>
-		public override IEnumerable<FieldDeclaration> GetAllFields(Scope s = (Scope) 0xffffff)
+		public override IEnumerable<Declaration> GetOwnMembers(Scope s = (Scope) 0xffffff)
 		{
-			return reftype.GetAllFields(s);
+			return base.GetOwnMembers(s);
 		}
 
 		/// <summary>
-		/// Returns all members
+		/// Returns all own methods with the given scope
+		/// </summary>
+		public override IEnumerable<MethodDeclaration> GetOwnMethods(Scope s = (Scope) 0xffffff)
+		{
+			return base.GetOwnMethods(s);
+		}
+
+		/// <summary>
+		/// Returns all own fields with the given scope
+		/// </summary>
+		public override IEnumerable<FieldDeclaration> GetOwnFields(Scope s = (Scope) 0xffffff)
+		{
+			return base.GetOwnFields(s);
+		}
+
+		/// <summary>
+		/// Returns all own fields with the given scope
+		/// </summary>
+		public override IEnumerable<PropertyDeclaration> GetOwnProperties(Scope s = (Scope) 0xffffff)
+		{
+			return base.GetOwnProperties(s);
+		}
+
+		#endregion	// own members
+		
+		#region Accessors of Inherited Members
+
+		/// <summary>
+		/// Returns inherited (public, protected and published) members
+		/// </summary>
+		public override IEnumerable<Declaration> GetInheritedMembers()
+		{
+			return base.GetInheritedMembers();
+		}
+
+		/// <summary>
+		/// Returns inherited (public, protected and published) methods
+		/// </summary>
+		public override IEnumerable<MethodDeclaration> GetInheritedMethods()
+		{
+			return base.GetInheritedMethods();
+		}
+
+		/// <summary>
+		/// Returns inherited (public, protected and published) methods
+		/// </summary>
+		public override IEnumerable<FieldDeclaration> GetInheritedFields()
+		{
+			return base.GetInheritedFields();
+		}
+
+		/// <summary>
+		/// Returns inherited (public, protected and published) properties
+		/// </summary>
+		public override IEnumerable<PropertyDeclaration> GetInheritedProperties()
+		{
+			return base.GetInheritedProperties();
+		}
+
+		#endregion	// Accessors of Inherited Members
+
+		#region Accessors of Accessible Members
+
+		// Iterate over inherited members first, then own members
+
+		/// <summary>
+		/// Returns own and inherited (public, protected and published) members
+		/// </summary>
+		public override IEnumerable<Declaration> GetAccessibleMembers()
+		{
+			return base.GetAccessibleProperties();
+		}
+
+		/// <summary>
+		/// Returns own and inherited (public, protected and published) methods
+		/// </summary>
+		public override IEnumerable<MethodDeclaration> GetAccessibleMethods()
+		{
+			return base.GetAccessibleMethods();
+		}
+
+		/// <summary>
+		/// Returns own and inherited (public, protected and published) fields
+		/// </summary>
+		public override IEnumerable<FieldDeclaration> GetAccessibleFields()
+		{
+			return base.GetAccessibleFields();
+		}
+
+		/// <summary>
+		/// Returns own and inherited (public, protected and published) members
+		/// </summary>
+		public override IEnumerable<PropertyDeclaration> GetAccessibleProperties()
+		{
+			return base.GetAccessibleProperties();
+		}
+
+		#endregion	// Accessible members
+
+		#region Accessors of All Members
+
+		// Iterate over inherited members first, then own members
+
+		/// <summary>
+		/// Returns all members with given scope, including inherited
 		/// </summary>
 		public override IEnumerable<Declaration> GetAllMembers(Scope s = (Scope) 0xffffff)
 		{
-			return reftype.GetAllMembers(s);
+			return base.GetAllMembers(s);
 		}
+
+		/// <summary>
+		/// Returns all methods in the given scopes, including inherited
+		/// </summary>
+		public override IEnumerable<MethodDeclaration> GetAllMethods(Scope s = (Scope) 0xffffff)
+		{
+			return base.GetAllMethods(s);
+		}
+
+		/// <summary>
+		/// Returns all fields in the given scopes, including inherited
+		/// </summary>
+		public override IEnumerable<FieldDeclaration> GetAllFields(Scope s = (Scope) 0xffffff)
+		{
+			return base.GetAccessibleProperties();
+		}
+
+		/// <summary>
+		/// Returns all fields in the given scopes, including inherited
+		/// </summary>
+		public override IEnumerable<PropertyDeclaration> GetAllProperties(Scope s = (Scope) 0xffffff)
+		{
+			return base.GetAllProperties(s);
+		}
+
+		#endregion		// Accessors of All Members
+
+		#region Accessors of individual Members
 
 		/// <summary>
 		/// Returns a member with the given name
 		/// </summary>
 		public override Declaration GetMember(String id)
 		{
-			return reftype.GetMember(id);
+			return base.GetMember(id);
 		}
 
 		/// <summary>
@@ -326,7 +686,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override MethodDeclaration GetMethod(String id)
 		{
-			return reftype.GetMethod(id);
+			return base.GetMethod(id);
 		}
 
 		/// <summary>
@@ -334,12 +694,12 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override FieldDeclaration GetField(String id)
 		{
-			return reftype.GetField(id);
+			return base.GetField(id);
 		}
 
-		#endregion
+		#endregion	// Accessors of individual Members
 
-		
+
 		public ClassRefType(ClassType reftype)
 			: base(new ArrayList())
 		{
@@ -385,10 +745,12 @@ namespace crosspascal.ast.nodes
 
 		public DeclarationList properties;
 
+		public TypeNode declaringObject;
+
 		// In the baseclass, 'decls' field
 	//	public DeclarationList methods;
 
-		public ObjectSection(DeclarationList fs = null, DeclarationList decls = null, Scope s = Scope.Published)
+		public ObjectSection(DeclarationList fs = null, DeclarationList ds = null, Scope s = Scope.Published)
 			: base(new DeclarationList())
  		{
 			fields = fs;
@@ -396,8 +758,7 @@ namespace crosspascal.ast.nodes
 				fields = new DeclarationList();
 			properties = new DeclarationList();
 
-			if (Enum.IsDefined(typeof(Scope), s))
-				AddDecls(decls, s);	// methods and properties
+			AddDecls(ds, s);	// methods and properties
 
 			if (Enum.IsDefined(typeof(Scope), s))
 				foreach (FieldDeclaration d in fields)
@@ -448,20 +809,25 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Add unknown-type declarations
 		/// </summary>
-		public void AddDecls(DeclarationList fs, Scope s)
+		public void AddDecls(DeclarationList fs, Scope s = 0)
 		{
 			if (fs == null)
 				return;
 
-			foreach (IScopedDeclaration d in fs)
-				d.SetScope(s);
+			if (s != 0)
+				foreach (IScopedDeclaration d in fs)
+					d.SetScope(s);
 
 			foreach (var d in fs)
 			{
 				if (d is MethodDeclaration)
 					decls.Add(d);
+				else if (d is PropertyDeclaration)	// a property is a field too
+					properties.Add(d);
 				else if (d is FieldDeclaration)	// a property is a field too
 					fields.Add(d);
+				else
+					ErrorInternal("Unknown Declaration in ObjectSection AddDecls");
 			}
 		}
 

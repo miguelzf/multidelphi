@@ -763,9 +763,10 @@ namespace crosspascal.ast.nodes
 		}
 		Declaration _decl;
 
-		public Identifier(string val)
+		public Identifier(string val, TypeNode t = null)
 		{
 			this.name = val;
+			Type = t;
 		}
 	}
 
@@ -774,9 +775,16 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class IdentifierStatic : Identifier
 	{
-		public IdentifierStatic(string val, CompositeDeclaration d) : base(val)
+		public IdentifierStatic(string val, CompositeType t) 
+			: base(val)
 		{
-			decl = d;
+			Type = t;
+		}
+
+		public IdentifierStatic(CompositeType t)
+			: base(t.Name)
+		{
+			Type = t;
 		}
 	}
 

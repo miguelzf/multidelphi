@@ -38,6 +38,7 @@ End;
 Procedure Dog.Talk;
 Begin
   WriteLn('miau!');
+  Eat('comida');
 End;
 
 Var

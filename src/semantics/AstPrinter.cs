@@ -28,7 +28,7 @@ namespace crosspascal.semantics
 		public AstPrinter(TreeTraverse t = null) : base(t) { }
 
 
-		public override string ToString()
+		public string Output()
 		{
 			return builder.ToString();
 		}
@@ -48,8 +48,8 @@ namespace crosspascal.semantics
 
 		private String GetNodeNames(Node n)
 		{
-			BindingFlags allbindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public 
-									 | BindingFlags.NonPublic| BindingFlags.FlattenHierarchy;
+			BindingFlags allbindings = BindingFlags.Instance| BindingFlags.Public
+									|  BindingFlags.Static	| BindingFlags.FlattenHierarchy;
 			StringComparison scase = StringComparison.OrdinalIgnoreCase;
 
 			Type ntype = n.GetType();
@@ -60,10 +60,11 @@ namespace crosspascal.semantics
 				string fname = f.Name.ToLower();
 				if (f.FieldType.Name.Equals("string", scase))
 				{
-					if(fname.Contains("name")
+					if (fname.Contains("name")
 					|| fname.Contains("id")
 					|| fname.Contains("val")
-					|| fname.Contains("qualif") )
+					|| fname.Contains("qualif")
+					|| fname.Contains("field"))
 						names += " " + f.GetValue(n);
 				}
 			}
@@ -72,7 +73,6 @@ namespace crosspascal.semantics
 				names = ":" + names;
 			return names;
 		}
-
 
 		// Printing helper
 		private void EnterNode(Node n)
@@ -478,8 +478,9 @@ namespace crosspascal.semantics
 
 		public override bool Visit(ObjectSection node)
 		{
-			Visit((Section) node);
 			traverse(node.fields);	// do not print
+			Visit((Section)node);
+			traverse(node.properties);	// do not print
 			return true;
 		}
 		
@@ -700,7 +701,7 @@ namespace crosspascal.semantics
 		//	TraversePrint(node.Type);
 			builder.Remove(builder.Length - 2, 2);
 			if (node.Type == null)
-				builder.AppendLine("  (null type)");
+				builder.AppendLine("  (nulltype)");
 			else
 				builder.AppendLine("  (" + node.Type.NodeName() + ")");
 			TraversePrint(node.Value);

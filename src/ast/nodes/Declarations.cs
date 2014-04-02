@@ -68,7 +68,9 @@ namespace crosspascal.ast.nodes
 
 	public abstract class ValueDeclaration : Declaration
 	{
-		public ValueDeclaration(String name, TypeNode t = null) : base(name, t) { }
+		public ValueDeclaration(String name, TypeNode t = null) : base(name, t)
+		{
+		}
 	}
 
 

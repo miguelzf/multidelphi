@@ -184,7 +184,6 @@ namespace crosspascal.ast.nodes
 	{
 		public bool isStatic { get; set; }
 		public String objname;
-		public String metname;
 
 		private string fullname;
 		public override string Fullname()
@@ -216,7 +215,6 @@ namespace crosspascal.ast.nodes
 								RoutineDirectives dirs = null, MethodKind kind = MethodKind.Default)
 			: base(name, new MethodType(@params, ret, dirs, kind))
 		{
-			this.metname = name;
 			this.objname = objname;
 			isStatic = false;
 			fullname = objname + "." + name;
@@ -250,6 +248,7 @@ namespace crosspascal.ast.nodes
 			: base(name, @params, ret, dirs)
 		{
 			this.body = body;
+			body.declaringCallable = this;
 		}
 
 		/// <summary>
@@ -269,7 +268,16 @@ namespace crosspascal.ast.nodes
 	/// </summary>
 	public class MethodDefinition : MethodDeclaration
 	{
-		public RoutineSection body;
+		private RoutineSection _body;
+		public RoutineSection body
+		{
+			get { return _body; }
+			set
+			{	_body = value;
+				if (value != null)
+					_body.declaringCallable = this;
+			}
+		}
 
 		public MethodDefinition(string objname, string name, ParametersSection @params,
 								TypeNode ret = null,  RoutineDirectives dirs = null,

@@ -35,6 +35,11 @@ namespace crosspascal.parser
 			return new Location(yyline(), currentFile.path);
 		}
 
+		public bool IsParsing()
+		{
+			return lexer != null;
+		}
+
 		public DelphiParser(ParserDebug dgb)
 		{
 			if (dgb != null)
@@ -75,7 +80,7 @@ namespace crosspascal.parser
 		// wrapper for yyparse
 		public TranslationUnit Parse(TextReader tr, SourceFile file = null, ParserDebug dgb = null)
 		{
-			if (dgb != null)
+			//if (dgb != null)
 			{
 				this.debug = (ParserDebug)dgb;
 				DebugLevel = 1;
@@ -91,9 +96,9 @@ namespace crosspascal.parser
 			{
 				parserRet = yyparse(lexer);
 			}
-			catch (ParserException yye)
+			catch (CrossPascalException yye)
 			{
-				ErrorOutput.WriteLine(yye.Message);
+				yyerror(yye.Message);
 				return null;
 			}
 			catch (Exception e)
@@ -101,6 +106,9 @@ namespace crosspascal.parser
 				ErrorOutput.WriteLine(e.Message + " in line " + lexer.yylineno());
 				ErrorOutput.WriteLine(e.StackTrace);
 				return null;
+			}
+			finally {
+				lexer = null;
 			}
 
 			if (!(parserRet is TranslationUnit))

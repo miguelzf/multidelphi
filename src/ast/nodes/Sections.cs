@@ -145,6 +145,9 @@ namespace crosspascal.ast.nodes
 	{
 		public Statement block;
 
+		// to be set by resolver
+		public CallableDeclaration declaringCallable;
+
 		public RoutineSection(DeclarationList decls, Statement block)
 			: base(decls)
 		{

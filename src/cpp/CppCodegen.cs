@@ -15,17 +15,17 @@ namespace crosspascal.cpp
 		private int ident = 0;
 		private StringBuilder builder;
 
-		public CppCodegen(DeclarationsEnvironment enviroment)
+		public CppCodegen()
 		{
 			builder = new StringBuilder();			
 		}
 
-		public override string ToString()
+		public string Output()
 		{
 			return builder.ToString();
 		}
 
-		public void outputCode(string s, bool hasident, bool newline)
+		void outputCode(string s, bool hasident, bool newline)
 		{
 			if (hasident)
 				for(int i=0; i<ident; i++)
@@ -384,7 +384,7 @@ namespace crosspascal.cpp
 			else
 				traverse(node.Type.funcret);
 				
-			outputCode(node.metname + "(", false, false);
+			outputCode(node.name + "(", false, false);
 			traverse(node.Type.@params);
 			outputCode(");", false, true);			
 			return true;
@@ -431,7 +431,7 @@ namespace crosspascal.cpp
 			else if (node.Type.IsConstructor)
 				metid = "::" + node.objname;
 			else*/
-				metid = "::" + node.metname;
+				metid = "::" + node.name;
 
 			outputCode(node.objname + metid + "(", false, false);
 					

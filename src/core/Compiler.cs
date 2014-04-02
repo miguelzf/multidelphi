@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
+using System.IO;
+
 using crosspascal.parser;
 using crosspascal.semantics;
 using crosspascal.ast;
 using crosspascal.ast.nodes;
-using System.Diagnostics;
-using System.IO;
+using crosspascal.cpp;
 
 namespace crosspascal.core
 {
@@ -93,9 +95,15 @@ namespace crosspascal.core
 				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
 				
 				astPrinter.Process(ast);
+				Console.WriteLine(astPrinter.Output());
 
-				Console.WriteLine(astPrinter);
-			//	Console.ReadLine();
+				Processor constfolder = new ConstantFolder();
+				constfolder.Process(ast);
+
+				CppCodegen cppGen = new CppCodegen();
+				Console.WriteLine("Now compiling...");
+				cppGen.Process(ast);
+				Console.WriteLine(cppGen.Output());
 			}
 
 			return success;

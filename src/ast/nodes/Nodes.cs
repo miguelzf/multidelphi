@@ -59,7 +59,10 @@ namespace crosspascal.ast.nodes
 
 		public Node()
 		{
-			Loc = DelphiParser.Instance.CurrentLocation();
+			if (DelphiParser.Instance.IsParsing())
+				Loc = DelphiParser.Instance.CurrentLocation();
+			else
+				Loc = new Location(0, "runtime");
 		}
 
 
@@ -301,6 +304,8 @@ namespace crosspascal.ast.nodes
 
 	public class DeclarationList : ListNode<Declaration>
 	{
+		public static DeclarationList Empty = new DeclarationList();
+
 		public DeclarationList() : base() { }
 
 		public DeclarationList(Declaration t) : base(t) { }

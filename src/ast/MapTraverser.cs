@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Runtime.Serialization;
 using crosspascal.utils;
 using crosspascal.ast.nodes;
-using System.Runtime.Serialization;
+using crosspascal.core;
+
 
 namespace crosspascal.ast
 {
@@ -99,7 +101,13 @@ namespace crosspascal.ast
 			}
 			catch (TargetInvocationException e)	// wrapper for an exception occurring in the invocation
 			{
-				throw new Exception("wrapper", e.InnerException);
+				var realExc = e.InnerException;
+
+				if (realExc is CrossPascalException)
+					throw realExc;
+				else
+					throw new Exception("wrapper", e.InnerException);
+
 
 				// TODO
 			/*

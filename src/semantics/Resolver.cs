@@ -39,14 +39,20 @@ namespace crosspascal.semantics
 		// =================================================
 		// Public interface
 		
-		public NameResolver(Traverser t) : base(t) { }
+		public NameResolver(Traverser t) : base(t)
+		{
+			declEnv = new DeclarationsEnvironment();
+		}
 
-		public NameResolver(TreeTraverse t = null) : base(t) { }
+		public NameResolver(TreeTraverse t = null) : base(t)
+		{
+			declEnv = new DeclarationsEnvironment();
+		}
 		
 		public void Reset(SourceFile sf)
 		{
 			source = sf;
-			declEnv = new DeclarationsEnvironment();
+			declEnv.InitEnvironment();
 		}
 
 		bool Error(string msg, Node n = null)
@@ -86,7 +92,13 @@ namespace crosspascal.semantics
 				return false;
 			}
 
-			TraverseResolve(n);
+			try	{
+				TraverseResolve(n);
+			}
+			catch (SemanticException e) {
+				Error(e.Message);
+			}
+
 			return true;
 		}
 
@@ -203,6 +215,7 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(ProgramNode node)
 		{
+			declEnv.CreateContext(node.name, node.section);
 			Visit((TranslationUnit) node);
 			traverse(node.section);
 			return true;
@@ -210,7 +223,8 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(LibraryNode node)
 		{
-			Visit((TranslationUnit) node);
+			declEnv.CreateContext(node.name, node.section);
+			Visit((TranslationUnit)node);
 			traverse(node.section);
 			return true;
 		}
@@ -231,8 +245,7 @@ namespace crosspascal.semantics
 		
 		public override bool Visit(UnitNode node)
 		{
-			// declEnv.CreateContext("unit " + node.name, null, false);
-			// do not create context, use top-level global. Create 1 for each subsection
+			declEnv.CreateContext(node.name, null);
 
 			Visit((TranslationUnit) node);
 			traverse(node.@interface);
@@ -264,7 +277,7 @@ namespace crosspascal.semantics
 			string id = node.name;
 			var ctx = source.GetDependency(id).interfContext;
 			ctx.Id = id;
-			declEnv.ImportContext(ctx);
+			declEnv.ImportUsedContext(ctx);
 			return true;
 		}
 		
@@ -308,7 +321,7 @@ namespace crosspascal.semantics
 
 			Visit((TopLevelDeclarationSection) node);
 			// Finalize processing of an Unit's interface section, by saving its symbol context
-			source.interfContext = declEnv.ExportContext();
+			source.interfContext = declEnv.ExportInterfaceContext();
 			return true;
 		}
 		
@@ -609,7 +622,8 @@ namespace crosspascal.semantics
 			declEnv.CreateInheritedContext(node);
 			traverse(node.section);
 
-			declEnv.ExitCompositeContext(node);
+			declEnv.ExitInheritedContext(node);
+
 			return true;
 		}
 		
@@ -1222,12 +1236,38 @@ namespace crosspascal.semantics
 		}
 
 
+		/// <summary>
+		/// convert references to instances variables to explicit 'self' references
+		/// </summary>
+		LvalueExpression CheckObjectIdentifier(Identifier node, Declaration d)
+		{
+			if (node.name != "self")
+				if (d is IScopedDeclaration)		// field, method or property
+				// no need: ISopedDecls are only fetched inside its own object's ctx
+				//	&&	declEnv.IsContextInObject())	// currently inside an object
+				{
+					var idself = new Identifier("self");
+					idself.Loc = node.Loc;
+					idself.Type = declEnv.GetDeclaringObject();
+					var oa = new ObjectAccess(idself, node.name);
+					oa.Loc = node.Loc;
+					oa.Type = d.type;
+					return oa;
+				}
+
+			return node;
+		}
+
 		public override bool Visit(Identifier node)
 		{
 			Visit((LvalueExpression)node);
 
 			Declaration d = declEnv.GetDeclaration(node.name);
-			node.decl = d;
+			node.Type = d.type;
+
+			var ret = CheckObjectIdentifier(node, d);
+			if (ret != node)	// node changed
+				resolved = ret;
 			return true;
 		}
 
@@ -1243,6 +1283,8 @@ namespace crosspascal.semantics
 				return Error("DeclarationNotFound: " + name, node);
 				//	throw new DeclarationNotFound(name);
 
+			node.id.Type = d.type;
+
 			if (d is TypeDeclaration)
 			{	resolved = new TypeWrapper(d);	// type for casts and static referencs
 				return true;
@@ -1250,19 +1292,17 @@ namespace crosspascal.semantics
 
 			else if (d.type is ProceduralType)
 			{
-				resolved = new RoutineCall(node.id);
+				var id = CheckObjectIdentifier(node.id, d);
+				resolved = new RoutineCall(id);
 				(resolved as RoutineCall).Type = (d.type as ProceduralType).funcret;
 			}
 
 			else if (d is ValueDeclaration)
-				resolved = node.id;
+				resolved = CheckObjectIdentifier(node.id, d);
 
 			else
 				return Error("unexpected declaration type " + d, node);
 
-			// Process identifier
-			node.id.Type = d.type;
-			node.id.decl = d;
 			return true;
 		}
 		
@@ -1344,8 +1384,7 @@ namespace crosspascal.semantics
 
 			if (node.obj is TypeWrapper)
 			{
-				node.obj = new IdentifierStatic((objtype as CompositeType).Name,
-									(node.obj as TypeWrapper).decl as CompositeDeclaration);
+				node.obj = new IdentifierStatic(objtype as CompositeType);
 				Console.WriteLine("IS type wrapper: " + objtype);
 			}
 
@@ -1437,8 +1476,7 @@ namespace crosspascal.semantics
 					return Error("Inherited member " + name + " not found", node);
 
 				// Set func to call
-				var id = new Identifier(name);
-				id.decl = decl;
+				var id = new Identifier(name, decl.type);
 				id.Loc = node.Loc;
 				node.func = id;			
 			}

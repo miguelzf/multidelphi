@@ -19,13 +19,14 @@ namespace crosspascal.semantics
 		SymbolContext<SymbolT,CtxKey> current;
 
 		// Context path taken, excluding current context
-		Stack<SymbolContext<SymbolT,CtxKey>> path = new Stack<SymbolContext<SymbolT,CtxKey>>(1024);
+		Stack<SymbolContext<SymbolT, CtxKey>> path;
 
 		int numContexts = 0;
 
 		public SymbolGraph()
 		{
-			root = current = new SymbolContext<SymbolT,CtxKey>("initial: empty default context");
+			root = new SymbolContext<SymbolT,CtxKey>("initial: empty default context");
+			Reset();
 		}
 
 
@@ -34,17 +35,36 @@ namespace crosspascal.semantics
 		public void Reset()
 		{
 			current = root;
+			path = new Stack<SymbolContext<SymbolT, CtxKey>>(1024); 
 		}
 
 		/// <summary>
-		/// Traverse the whole DAG, in BFS order, from top to down, and enter each context
+		/// Enters in the next context after the current one.
+		/// Can be called repeatedly to continue from context to context
 		/// </summary>
 		public IEnumerable<bool> LoadNextContext()
 		{
-			for (int i = path.Count; i >= 0; i--)
+			foreach (var c in GetAllContexts(current))
 			{
-				current = path.ElementAt(i);
+				EnterContext(c);
+				Console.WriteLine("ENTERED context " + c.Id);
 				yield return true;
+			}
+		}
+
+		/// <summary>
+		/// Traverse the whole DAG, in BFS order, from top to down
+		/// </summary>
+		internal IEnumerable<SymbolContext<SymbolT, CtxKey>> 
+				GetAllContexts(SymbolContext<SymbolT, CtxKey> ctx)
+		{
+			yield return ctx;
+
+			for (int i = ctx.children.Count-1; i >= 0; i--)
+			{
+				var child = ctx.children[i];
+				foreach (var c in GetAllContexts(child))
+					yield return c;
 			}
 		}
 
@@ -62,7 +82,7 @@ namespace crosspascal.semantics
 		public void CreateContext(string id = null, CtxKey key = default(CtxKey), bool shadowing = true)
 		{
 			var ctx = new SymbolContext<SymbolT,CtxKey>(id, key, shadowing);
-			ctx.AddParent(current);
+			current.AddChild(ctx);
 			numContexts++;
 			EnterContext(ctx);
 		}
@@ -79,37 +99,58 @@ namespace crosspascal.semantics
 		}
 
 		/// <summary>
-		/// Import external chuld context and enter it
+		/// Import external child context and enters it
 		/// </summary>
 		internal void ImportContext(SymbolContext<SymbolT,CtxKey> ctx)
 		{
-			ctx.AddParent(current);
-			current = ctx;
+			current.AddChild(ctx);
 			numContexts++;
 			EnterContext(0);
 		}
 
 		/// <summary>
-		/// Import external parent context and enter it
+		/// Import external parent context to maximum precedence, and enters it
 		/// </summary>
-		internal void ImportParentContext(SymbolContext<SymbolT,CtxKey> ctx)
+		internal void ImportParentCtxToFirst(SymbolContext<SymbolT,CtxKey> ctx)
+		{
+			current.parents.Insert(0, ctx);
+			numContexts++;
+			EnterContext(ctx);
+		}
+
+		/// <summary>
+		/// Import external parent context to lowest precedence, and enters it
+		/// </summary>
+		internal void ImportParentCtxToLast(SymbolContext<SymbolT, CtxKey> ctx)
 		{
 			current.AddParent(ctx);
 			numContexts++;
+			EnterContext(ctx);
 		}
 
+
 		/// <summary>
-		/// Export current context by cloning
+		/// Export current context by clonning: creates new context structures
 		/// </summary>
-		internal SymbolContext<SymbolT,CtxKey> ExportContext()
+		internal SymbolContext<SymbolT,CtxKey> ExportCloneContext(Func<SymbolT,bool> pred = null)
 		{
-			return current.Clone();
+			if (pred == null)
+				pred = new Func<SymbolT, bool>(x => true);
+			return current.Clone(pred);
 		}
 
 		/// <summary>
-		/// Get current context. Useful for re-using contetxs. Use with caution
+		/// Export current context by copying: keeps the context structures
 		/// </summary>
-		internal SymbolContext<SymbolT,CtxKey> GetCurrentContext()
+		internal SymbolContext<SymbolT, CtxKey> ExportCopyContext()
+		{
+			return current.Copy();
+		}
+
+		/// <summary>
+		/// Get current context.  Should only be used for querying. Use with caution
+		/// </summary>
+		internal SymbolContext<SymbolT,CtxKey> GetContext()
 		{
 			return current;
 		}
@@ -282,21 +323,40 @@ namespace crosspascal.semantics
 		}
 
 		/// <summary>
+		/// Recursively traverse the whole DAG, in a DFS from top to bottom, up to a height limit
+		/// </summary>
+		String OutputGraphTopDown(SymbolContext<SymbolT,CtxKey> ctx,  int maxheight)
+		{
+			string text = ctx.ListContext() + Environment.NewLine;
+			if (maxheight > 0)
+				foreach (var p in ctx.children)
+					text += OutputGraphTopDown(p, maxheight - 1);
+			return text;
+		}
+
+		internal String ListGraphFromRoot(int maxdepth = Int32.MaxValue)
+		{
+			string sep = Environment.NewLine;
+			return ToString() + sep + OutputGraphTopDown(root, maxdepth) + sep;
+		}
+
+
+		/// <summary>
 		/// Recursively traverse the whole DAG, in a DFS from bottom to top, up to a height limit
 		/// </summary>
-		String OutputGraph(SymbolContext<SymbolT,CtxKey> ctx,  int maxheight)
+		String OutputGraphBottomUp(SymbolContext<SymbolT, CtxKey> ctx, int maxheight)
 		{
 			string text = ctx.ListContext() + Environment.NewLine;
 			if (maxheight > 0)
 				foreach (var p in ctx.parents)
-					text += OutputGraph(p, maxheight - 1);
+					text += OutputGraphBottomUp(p, maxheight - 1);
 			return text;
 		}
 
-		internal String ListGraph(int maxdepth = Int32.MaxValue)
+		internal String ListGraphFromCurrent(int maxdepth = Int32.MaxValue)
 		{
 			string sep = Environment.NewLine;
-			return ToString() + sep + OutputGraph(current, maxdepth) + sep;
+			return ToString() + sep + OutputGraphBottomUp(current, maxdepth) + sep;
 		}
 
 		#endregion
@@ -313,13 +373,15 @@ namespace crosspascal.semantics
 		internal List<SymbolContext<T, CtxKey>> parents;
 		internal List<SymbolContext<T, CtxKey>> children;
 
-		Dictionary<String, T> symbols;
+		internal Dictionary<String, T> symbols;
 		internal T lastInserted;
 
 		internal bool allowShadowing;
 
 		public CtxKey Key { get; set; }
 		public String Id  { get; set; }
+
+		const int DefaultAllocNLinks = 16;
 
 		internal SymbolContext(List<SymbolContext<T,CtxKey>> parents, String id = null, 
 									CtxKey key = default(CtxKey), bool allowShadowing = true)
@@ -329,12 +391,12 @@ namespace crosspascal.semantics
 			this.lastInserted = null;
 			this.parents = parents;
 			this.Key = key;
-			children = new List<SymbolContext<T,CtxKey>>(16);
+			children = new List<SymbolContext<T, CtxKey>>(DefaultAllocNLinks);
 			symbols = new Dictionary<String, T>(32);
 		}
 
 		internal SymbolContext(String id = null, CtxKey key = default(CtxKey), bool allowShadowing = true)
-			: this(new List<SymbolContext<T,CtxKey>>(4), id, key, allowShadowing)
+			: this(new List<SymbolContext<T, CtxKey>>(DefaultAllocNLinks), id, key, allowShadowing)
 		{
 		}
 
@@ -424,13 +486,28 @@ namespace crosspascal.semantics
 
 
 		/// <summary>
-		/// clones without the parents or children
+		/// Clones context without the parents or children
 		/// </summary>
-		internal SymbolContext<T,CtxKey> Clone()
+		internal SymbolContext<T,CtxKey> Clone(Func<T,bool> pred)
 		{
 			var ctx = new SymbolContext<T,CtxKey>(Id, Key, allowShadowing);
 			ctx.lastInserted = lastInserted;
-			ctx.symbols = new Dictionary<String, T>(symbols);
+
+			ctx.symbols = new Dictionary<string, T>(symbols.Count);
+			foreach (var s in symbols)
+				if (pred(s.Value))
+					ctx.symbols.Add(s.Key, s.Value);
+			return ctx;
+		}
+
+		/// <summary>
+		/// Returns shallow copy of context without the parents or children
+		/// </summary>
+		internal SymbolContext<T, CtxKey> Copy()
+		{
+			var ctx = new SymbolContext<T, CtxKey>(Id, Key, allowShadowing);
+			ctx.lastInserted = lastInserted;
+			ctx.symbols = symbols;
 			return ctx;
 		}
 

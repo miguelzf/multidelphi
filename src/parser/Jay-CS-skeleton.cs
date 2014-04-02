@@ -34,6 +34,7 @@
 .      @param expected vector of acceptable tokens, if available.
 .    */
 .  public void yyerror (string message, string[] expected) {
+.    Console.ForegroundColor = ConsoleColor.Red;
 .	 ErrorCount++;
 .    if ((DebugLevel > 0) && (expected != null) && (expected.Length  > 0)) {
 .      ErrorOutput.Write (message+", expecting");
@@ -42,6 +43,7 @@
 .        ErrorOutput.WriteLine ();
 .    } else
 .      ErrorOutput.WriteLine (message);
+.      Console.ResetColor();
 .  }
 .
 .  /** debugging support, requires the package jay.yydebug.

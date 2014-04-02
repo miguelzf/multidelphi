@@ -1228,7 +1228,7 @@ interfbody
 	;
 	
 interfcomplst
-	: interfcomp				{ $$ = new DeclarationList(); }
+	: interfcomp				{ $$ = new DeclarationList($1); }
 	| interfcomplst interfcomp	{ $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
 	;
 	
