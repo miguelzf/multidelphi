@@ -58,6 +58,7 @@ namespace crosspascal.core
 
 				if (sf.preprocText == null)		// preprocessing failed
 				{	success = false;
+					Console.Error.WriteLine("Preprocessing failed");
 					break;
 				}
 
