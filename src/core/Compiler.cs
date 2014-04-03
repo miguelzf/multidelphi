@@ -44,6 +44,10 @@ namespace crosspascal.core
 
 			// Load, preprocess and order them
 			planner.LoadFiles(filenames);
+
+			if (planner.GetNumFiles() == 0)
+				return false;
+
 			Console.WriteLine(planner.ListFiles());
 
 			AstPrinter astPrinter = new AstPrinter();
@@ -58,7 +62,7 @@ namespace crosspascal.core
 
 				if (sf.preprocText == null)		// preprocessing failed
 				{	success = false;
-					Console.Error.WriteLine("Preprocessing failed");
+					Console.Error.WriteLine("preprocessing failed");
 					break;
 				}
 

@@ -45,9 +45,10 @@ namespace crosspascal.core
 			preprocessor.AddDefine(def);
 		}
 
-		void Error(String msg)
+		SourceFile Error(String msg)
 		{
 			Console.Error.WriteLine("[ERROR planner] " + msg);
+			return null;
 		}
 
 
@@ -70,6 +71,10 @@ namespace crosspascal.core
 				yield return f;
 		}
 
+		public int GetNumFiles()
+		{
+			return filesOrdered.Count;
+		}
 
 		/// <summary>
 		/// Lists filesin topological order to a string output
@@ -150,8 +155,11 @@ namespace crosspascal.core
 			foreach (string s in filepaths)
 			{
 				var file = LoadFileFromPath(s);
-				cfiles.Enqueue(file);
-				files.Add(file.name, file);
+				if (file != null)
+				{
+					cfiles.Enqueue(file);
+					files.Add(file.name, file);
+				}
 			}
 
 			while (cfiles.Count > 0)
@@ -163,7 +171,7 @@ namespace crosspascal.core
 					if (!files.ContainsKey(s))
 					{
 						var file = LoadFile(s);
-						if (file.type == null)	// file could not be found/preprocessed
+						if (file == null)	// file could not be found/preprocessed
 						{	Error("File " + file.name + " imported from " + cf.name + " failed to load");
 							continue;
 						}
@@ -192,9 +200,7 @@ namespace crosspascal.core
 			string fname = Path.GetFileNameWithoutExtension(fpath);
 
 			if (!File.Exists(fpath))
-			{
-				return new SourceFile(fname, fpath, null, null, null); ;
-			}
+				return Error("File " + fpath + " not found.");
 
 			return LoadFile(fname, fpath);
 		}
@@ -205,9 +211,7 @@ namespace crosspascal.core
 			fpath = preprocessor.SearchFile(fname + ".pas");
 
 			if (fpath == null)
-			{	Error("File " + fname + " does not exist");
-				return new SourceFile(fname, fpath, null, null, null);
-			}
+				return Error("File " + fname + " does not exist");
 
 			return LoadFile(fname, fpath);
 		}
@@ -224,12 +228,12 @@ namespace crosspascal.core
 			preprocessor.ResetPreprocessor(fpath);
 			preprocessor.AddDefines(defaultDefines);
 
-			try	{
+			try {
 				preprocessor.Preprocess();
 			}
 			catch (PreprocessorException)
-			{	Error("Preprocessing failed");
-				return new SourceFile(fname, fpath, null, null, null);
+			{
+				return Error("Preprocessing of file " + fpath + " failed");
 			}
 
 			String text = preprocessor.GetOutput();
@@ -248,9 +252,7 @@ namespace crosspascal.core
 			{
 				Match minterf = rgxInterfUses.Match(usetext);
 				if (!minterf.Success)
-				{	Error("Missing Interface section in Unit " + fpath);
-					return new SourceFile(fname, fpath, null, null, null);
-				}
+					return Error("Missing Interface section in Unit " + fpath);
 
 				string mitext = minterf.Value.Substring("_interface".Length).TrimStart();
 				if (mitext.Length > 0)	// else, no uses in interface

@@ -476,7 +476,6 @@ namespace crosspascal.cpp
 		public override bool Visit(CompositeDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
-			traverse(node.Type);
 			return true;
 		}
 

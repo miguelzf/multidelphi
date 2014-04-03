@@ -13,8 +13,8 @@ namespace crosspascal.parser
 	{
 		Dictionary<String, String> IncludesCache = new Dictionary<string, string>();
 
-		//Encoding.Default;	// typically Single-Bye char set
 		// TODO change charset to unicode, use %unicode in flex
+														// Latin1 windows single-byte
 		public static readonly Encoding DefaultEncoding = Encoding.GetEncoding("iso-8859-1");
 
 		void ResetPreprocessor()

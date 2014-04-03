@@ -371,7 +371,6 @@ namespace crosspascal.semantics
 		public override bool Visit(CallableDeclaration node)
 		{
 			Visit((Declaration) node);
-			TraversePrint(node.Type);
 			TraversePrint(node.Directives);
 			return true;
 		}
@@ -423,7 +422,6 @@ namespace crosspascal.semantics
 		public override bool Visit(CompositeDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
-			TraversePrint(node.Type);
 			return true;
 		}
 		
