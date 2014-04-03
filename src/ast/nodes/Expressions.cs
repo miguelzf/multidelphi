@@ -358,7 +358,7 @@ namespace crosspascal.ast.nodes
 
 				public override ulong range(OrdinalLiteral l1)
 				{
-					if (base.range(l1) == 0)
+					if (reftype.range(l1) == 0)
 						return 0;
 
 					if ((long)Value - (long)l1.Value)

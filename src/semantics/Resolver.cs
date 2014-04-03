@@ -1370,7 +1370,7 @@ namespace crosspascal.semantics
 			Declaration d;
 			if (objtype is RecordType)
 			{
-				if ((d = (objtype as RecordType).GetField(node.field)) == null)
+				if ((d = (objtype as RecordRefType).GetField(node.field)) == null)
 					return Error("Field " + node.field + " not found in Record", node);
 			}
 

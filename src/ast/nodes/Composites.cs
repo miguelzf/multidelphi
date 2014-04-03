@@ -513,7 +513,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<Declaration> GetPublicMembers()
 		{
-			return base.GetAllMembers(Scope.Public | Scope.Published);
+			return reftype.GetAllMembers(Scope.Public | Scope.Published);
 		}
 
 		/// <summary>
@@ -521,7 +521,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<MethodDeclaration> GetPublicMethods()
 		{
-			return base.GetAllMethods(Scope.Public | Scope.Published);
+			return reftype.GetAllMethods(Scope.Public | Scope.Published);
 		}
 
 		/// <summary>
@@ -529,7 +529,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<FieldDeclaration> GetPublicFields()
 		{
-			return base.GetAllFields(Scope.Public | Scope.Published);
+			return reftype.GetAllFields(Scope.Public | Scope.Published);
 		}
 
 		/// <summary>
@@ -537,7 +537,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<PropertyDeclaration> GetPublicProperties()
 		{
-			return base.GetAllProperties(Scope.Public | Scope.Published);
+			return reftype.GetAllProperties(Scope.Public | Scope.Published);
 		}
 
 		#endregion	// Accessors of Public Members
@@ -549,7 +549,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<Declaration> GetOwnMembers(Scope s = (Scope) 0xffffff)
 		{
-			return base.GetOwnMembers(s);
+			return reftype.GetOwnMembers(s);
 		}
 
 		/// <summary>
@@ -557,7 +557,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<MethodDeclaration> GetOwnMethods(Scope s = (Scope) 0xffffff)
 		{
-			return base.GetOwnMethods(s);
+			return reftype.GetOwnMethods(s);
 		}
 
 		/// <summary>
@@ -565,7 +565,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<FieldDeclaration> GetOwnFields(Scope s = (Scope) 0xffffff)
 		{
-			return base.GetOwnFields(s);
+			return reftype.GetOwnFields(s);
 		}
 
 		/// <summary>
@@ -573,7 +573,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<PropertyDeclaration> GetOwnProperties(Scope s = (Scope) 0xffffff)
 		{
-			return base.GetOwnProperties(s);
+			return reftype.GetOwnProperties(s);
 		}
 
 		#endregion	// own members
@@ -585,7 +585,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<Declaration> GetInheritedMembers()
 		{
-			return base.GetInheritedMembers();
+			return reftype.GetInheritedMembers();
 		}
 
 		/// <summary>
@@ -593,7 +593,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<MethodDeclaration> GetInheritedMethods()
 		{
-			return base.GetInheritedMethods();
+			return reftype.GetInheritedMethods();
 		}
 
 		/// <summary>
@@ -601,7 +601,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<FieldDeclaration> GetInheritedFields()
 		{
-			return base.GetInheritedFields();
+			return reftype.GetInheritedFields();
 		}
 
 		/// <summary>
@@ -609,7 +609,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<PropertyDeclaration> GetInheritedProperties()
 		{
-			return base.GetInheritedProperties();
+			return reftype.GetInheritedProperties();
 		}
 
 		#endregion	// Accessors of Inherited Members
@@ -623,7 +623,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<Declaration> GetAccessibleMembers()
 		{
-			return base.GetAccessibleProperties();
+			return reftype.GetAccessibleProperties();
 		}
 
 		/// <summary>
@@ -631,7 +631,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<MethodDeclaration> GetAccessibleMethods()
 		{
-			return base.GetAccessibleMethods();
+			return reftype.GetAccessibleMethods();
 		}
 
 		/// <summary>
@@ -639,7 +639,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<FieldDeclaration> GetAccessibleFields()
 		{
-			return base.GetAccessibleFields();
+			return reftype.GetAccessibleFields();
 		}
 
 		/// <summary>
@@ -647,7 +647,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<PropertyDeclaration> GetAccessibleProperties()
 		{
-			return base.GetAccessibleProperties();
+			return reftype.GetAccessibleProperties();
 		}
 
 		#endregion	// Accessible members
@@ -661,7 +661,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<Declaration> GetAllMembers(Scope s = (Scope) 0xffffff)
 		{
-			return base.GetAllMembers(s);
+			return reftype.GetAllMembers(s);
 		}
 
 		/// <summary>
@@ -669,7 +669,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<MethodDeclaration> GetAllMethods(Scope s = (Scope) 0xffffff)
 		{
-			return base.GetAllMethods(s);
+			return reftype.GetAllMethods(s);
 		}
 
 		/// <summary>
@@ -677,7 +677,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<FieldDeclaration> GetAllFields(Scope s = (Scope) 0xffffff)
 		{
-			return base.GetAccessibleProperties();
+			return reftype.GetAccessibleProperties();
 		}
 
 		/// <summary>
@@ -685,7 +685,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override IEnumerable<PropertyDeclaration> GetAllProperties(Scope s = (Scope) 0xffffff)
 		{
-			return base.GetAllProperties(s);
+			return reftype.GetAllProperties(s);
 		}
 
 		#endregion		// Accessors of All Members
@@ -697,7 +697,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override Declaration GetMember(String id)
 		{
-			return base.GetMember(id);
+			return reftype.GetMember(id);
 		}
 
 		/// <summary>
@@ -705,7 +705,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override MethodDeclaration GetMethod(String id)
 		{
-			return base.GetMethod(id);
+			return reftype.GetMethod(id);
 		}
 
 		/// <summary>
@@ -713,7 +713,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public override FieldDeclaration GetField(String id)
 		{
-			return base.GetField(id);
+			return reftype.GetField(id);
 		}
 
 		#endregion	// Accessors of individual Members
