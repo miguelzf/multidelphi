@@ -782,31 +782,34 @@ namespace crosspascal.ast.nodes
 		}
 	}
 
+
+	#region Records
+
 	/// <summary>
 	/// RecordType, structure with a list of declared fields.
 	/// Records can only have fields, not methods
 	/// </summary>
 	public class RecordType : StructuredType
 	{
-		public ObjectSection section;
+		public DeclarationList compTypes;
 
 		public RecordType(DeclarationList compTypes)
 		{
-			this.section = new ObjectSection(compTypes);
+			this.compTypes = compTypes;
 		}
 
 		/// <summary>
 		/// Returns a field with the given name
 		/// </summary>
-		public virtual FieldDeclaration GetField(String id)
+		public virtual RecordFieldDeclaration GetField(String id)
 		{
-			return section.GetField(id);
+			return compTypes.GetDeclaration(id) as RecordFieldDeclaration;
 		}
 
 		public override bool Equals(Object o)
 		{
 			return base.Equals(o) && (o is RecordType)
-				&& section.fields.SequenceEqual((o as RecordType).section.fields);
+				&& compTypes.SequenceEqual((o as RecordType).compTypes);
 		}
 	}
 
@@ -825,11 +828,66 @@ namespace crosspascal.ast.nodes
 			this.reftype = reftype;
 		}
 
-		public override FieldDeclaration GetField(String id)
+		public override RecordFieldDeclaration GetField(String id)
 		{
 			return reftype.GetField(id);
 		}
 	}
+
+	/// <summary>
+	/// Composite or record field declaration
+	/// </summary>
+	public class RecordFieldDeclaration : ValueDeclaration
+	{
+		public RecordFieldDeclaration(String id, TypeNode t = null)
+			: base(id, t)
+		{
+		}
+	}
+
+	/// <summary>
+	/// Variant record field declaration
+	/// </summary>
+	public class VariantDeclaration : RecordFieldDeclaration
+	{
+		public DeclarationList varfields;
+
+		public VariantDeclaration(String id, VariableType t, DeclarationList varfields)
+			: base(id, t)
+		{
+			// TODO
+			///	if (!(t is IOrdinalType))
+			//		throw new TypeRequiredException("Ordinal");
+			this.varfields = varfields;
+		}
+
+		public VariantDeclaration(String id, IntegralType t, DeclarationList varfields)
+			: this(id, (VariableType)t, varfields) { }
+
+		public VariantDeclaration(String id, EnumType t, DeclarationList varfields)
+			: this(id, (VariableType)t, varfields) { }
+
+		public VariantDeclaration(String id, RangeType t, DeclarationList varfields)
+			: this(id, (VariableType)t, varfields) { }
+	}
+
+	/// <summary>
+	/// Variant case entry declaration
+	/// </summary>
+	public class VarEntryDeclaration : RecordFieldDeclaration
+	{
+		public Expression tagvalue;
+		public RecordType fields;
+
+		public VarEntryDeclaration(Expression tagvalue, DeclarationList fields)
+			: base(null, null)	// type must be later set to the variant type
+		{
+			this.tagvalue = tagvalue;
+			this.fields = new RecordType(fields);
+		}
+	}
+
+	#endregion	// records
 	
 	#endregion
 

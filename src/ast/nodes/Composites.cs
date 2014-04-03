@@ -95,7 +95,11 @@ namespace crosspascal.ast.nodes
 
 			section = sec;
 			if (!IsForward)
+			{
 				section.declaringObject = this;
+				foreach (var d in section.Decls().Cast<IScopedDeclaration>())
+					d.SetDeclaringObject(this);
+			}
 
 			// to be filled during resolving
 			ancestors = new List<CompositeType>(heritage.Count);
@@ -461,7 +465,7 @@ namespace crosspascal.ast.nodes
 			if (!IsForward)
 			{
 				self = new FieldDeclaration("self", new ClassRefType(this.Name, this));
-				self.scope = Scope.Protected;
+				self.SetScope(Scope.Protected);
 				section.fields.Add(self);
 			}
 		}
@@ -486,6 +490,21 @@ namespace crosspascal.ast.nodes
 	{
 		public String qualifid;
 		public ClassType reftype;
+
+		public ClassRefType(ClassType reftype)
+			: base(new ArrayList())
+		{
+			this.qualifid = reftype.Name;
+			this.reftype = reftype;
+		}
+
+		public ClassRefType(String qualifid, ClassType reftype = null)
+			: base(new ArrayList())
+		{
+			this.qualifid = qualifid;
+			this.reftype = reftype;
+		}
+
 
 		#region Accessors of Public Members
 
@@ -699,20 +718,6 @@ namespace crosspascal.ast.nodes
 
 		#endregion	// Accessors of individual Members
 
-
-		public ClassRefType(ClassType reftype)
-			: base(new ArrayList())
-		{
-			this.qualifid = reftype.Name;
-			this.reftype = reftype;
-		}
-
-		public ClassRefType(String qualifid, ClassType reftype = null)
-			: base(new ArrayList())
-		{
-			this.qualifid = qualifid;
-			this.reftype = reftype;
-		}
 	}
 
 	#endregion
@@ -737,6 +742,10 @@ namespace crosspascal.ast.nodes
 		void SetScope(Scope s);
 
 		Scope GetScope();
+
+		CompositeType GetDeclaringObject();
+
+		void SetDeclaringObject(CompositeType d);
 	}
 
 	public class ObjectSection : Section
@@ -745,7 +754,7 @@ namespace crosspascal.ast.nodes
 
 		public DeclarationList properties;
 
-		public TypeNode declaringObject;
+		public CompositeType declaringObject;
 
 		// In the baseclass, 'decls' field
 	//	public DeclarationList methods;
@@ -762,7 +771,7 @@ namespace crosspascal.ast.nodes
 
 			if (Enum.IsDefined(typeof(Scope), s))
 				foreach (FieldDeclaration d in fields)
-					d.scope = s;
+					d.SetScope(s);
 		}
 
 
@@ -786,7 +795,7 @@ namespace crosspascal.ast.nodes
 		{
 			if (fs != null)
 				foreach (FieldDeclaration d in fs)
-					d.scope = s;
+					d.SetScope(s);
 			fields.Add(fs);
 		}
 
@@ -794,7 +803,7 @@ namespace crosspascal.ast.nodes
 		{
 			if (fs != null)
 				foreach (MethodDeclaration d in fs)
-					d.scope = s;
+					d.SetScope(s);
 			decls.Add(fs);
 		}
 
@@ -802,7 +811,7 @@ namespace crosspascal.ast.nodes
 		{
 			if (fs != null)
 				foreach (PropertyDeclaration d in fs)
-					d.scope = s;
+					d.SetScope(s);
 			properties.Add(fs);
 		}
 
@@ -908,64 +917,34 @@ namespace crosspascal.ast.nodes
 	{
 		public bool isStatic;
 
-		public Scope scope;
+		#region IScopedDeclaration implementation
 
+		public Scope scope;
 		public void SetScope(Scope s)
 		{
 			scope = s;
 		}
-
 		public Scope GetScope()
 		{
 			return scope;
 		}
 
+		public CompositeType declaringObject;
+		public CompositeType GetDeclaringObject()
+		{
+			return declaringObject;
+		}
+		public void SetDeclaringObject(CompositeType t)
+		{
+			declaringObject = t;
+		}
+
+		#endregion
+
 		public FieldDeclaration(String id, TypeNode t = null, bool isStatic =false)
 			: base(id, t)
 		{
 			this.isStatic = false;
-		}
-	}
-
-	/// <summary>
-	/// Variant record field declaration
-	/// </summary>
-	public class VariantDeclaration : FieldDeclaration
-	{
-		public DeclarationList varfields;
-
-		public VariantDeclaration(String id, VariableType t, DeclarationList varfields)
-			: base(id, t)
-		{
-			// TODO
-		///	if (!(t is IOrdinalType))
-		//		throw new TypeRequiredException("Ordinal");
-			this.varfields = varfields;
-		}
-
-		public VariantDeclaration(String id, IntegralType t, DeclarationList varfields)
-			: this(id, (VariableType)t, varfields) { }
-
-		public VariantDeclaration(String id, EnumType t, DeclarationList varfields)
-			: this(id, (VariableType)t, varfields) { }
-
-		public VariantDeclaration(String id, RangeType t, DeclarationList varfields)
-			: this(id, (VariableType)t, varfields) { }
-	}
-
-	/// <summary>
-	/// Variant case entry declaration
-	/// </summary>
-	public class VarEntryDeclaration : FieldDeclaration
-	{
-		public Expression tagvalue;
-		public RecordType fields;
-
-		public VarEntryDeclaration(Expression tagvalue, DeclarationList fields)
-			: base(null, null)	// type must be later set to the variant type
-		{
-			this.tagvalue = tagvalue;
-			this.fields = new RecordType(fields);
 		}
 	}
 

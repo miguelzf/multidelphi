@@ -144,7 +144,7 @@ namespace crosspascal.semantics
 		/// <summary>
 		/// Gets the object (class, interface or record) that encloses the current context, if any
 		/// </summary>
-		public TypeNode GetDeclaringObject()
+		public CompositeType GetDeclaringObject()
 		{
 			var sec = GetDeclaringObjectSection();
 			if (sec == null)
@@ -178,7 +178,7 @@ namespace crosspascal.semantics
 		/// </summary>
 		public Declaration GetInheritedDeclaration(String name)
 		{
-			CompositeType obj = GetDeclaringObject() as CompositeType;
+			CompositeType obj = GetDeclaringObject();
 			if (obj == null)
 				return null;
 			return obj.GetInheritableMember(name);

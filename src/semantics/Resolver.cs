@@ -653,16 +653,22 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
+		public override bool Visit(RecordFieldDeclaration node)
+		{
+			Visit((ValueDeclaration) node);
+			return true;
+		}
+
 		public override bool Visit(VariantDeclaration node)
 		{
-			Visit((FieldDeclaration) node);
+			Visit((RecordFieldDeclaration) node);
 			traverse(node.varfields);
 			return true;
 		}
 		
 		public override bool Visit(VarEntryDeclaration node)
 		{
-			Visit((FieldDeclaration) node);
+			Visit((RecordFieldDeclaration) node);
 			if (TraverseResolve(node.tagvalue))
 				node.tagvalue = ResolvedNode<Expression>();
 			traverse(node.fields);
@@ -1474,7 +1480,9 @@ namespace crosspascal.semantics
 				var decl = declEnv.GetInheritedDeclaration(name);
 				if (!(decl is IScopedDeclaration))
 					return Error("Inherited member " + name + " not found", node);
-
+				
+				// set object typethat declares the inherited method to be called
+				node.declaringObject = (decl as IScopedDeclaration).GetDeclaringObject();
 				// Set func to call
 				var id = new Identifier(name, decl.type);
 				id.Loc = node.Loc;
@@ -1787,7 +1795,7 @@ namespace crosspascal.semantics
 			Visit((StructuredType) node);
 
 			declEnv.CreateContext("record");
-			traverse(node.section);
+			traverse(node.compTypes);
 			declEnv.ExitContext();
 			return true;
 		}

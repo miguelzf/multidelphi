@@ -487,17 +487,23 @@ namespace crosspascal.semantics
 			Visit((ValueDeclaration) node);
 			return true;
 		}
-		
+
+		public override bool Visit(RecordFieldDeclaration node)
+		{
+			Visit((ValueDeclaration)node);
+			return true;
+		}
+
 		public override bool Visit(VariantDeclaration node)
 		{
-			Visit((FieldDeclaration) node);
+			Visit((RecordFieldDeclaration) node);
 			TraversePrint(node.varfields);
 			return true;
 		}
 		
 		public override bool Visit(VarEntryDeclaration node)
 		{
-			Visit((FieldDeclaration) node);
+			Visit((RecordFieldDeclaration) node);
 			TraversePrint(node.tagvalue);
 			TraversePrint(node.fields);
 			return true;
@@ -1352,7 +1358,7 @@ namespace crosspascal.semantics
 		public override bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			TraversePrint(node.section);
+			traverse(node.compTypes);
 			return true;
 		}
 

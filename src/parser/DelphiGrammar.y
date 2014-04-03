@@ -86,7 +86,7 @@ namespace crosspascal.parser
 %type<bool>   constbool
 %type<double> constreal
 %type<char>   constchar
-%type<LvalueExpression> lvalue 
+%type<LvalueExpression> lvalue lvalstmt
 %type<Identifier> identifier
 %type<Expression> unaryexpr expr rangestart set setelem constexpr constinit paraminitopt
 %type<ExpressionList> caselabellst exprlst constexprlst exprlstopt setelemlst arrayexprlst callparams
@@ -721,7 +721,7 @@ stmt
 
 nonlbl_stmt
 	:						{ $$ = new EmptyStatement(); }
-	| lvalue				{ $$ = new ExpressionStatement($1); }
+	| lvalstmt				{ $$ = new ExpressionStatement($1); }
 	| assign				{ $$ = $1; }
 	| goto_stmt				{ $$ = $1; }
 	| block					{ $$ = $1; }
@@ -846,7 +846,16 @@ asmcode
 identifier
 	: id 									{ $$ = new Identifier($1); }
 	;
-
+	
+lvalstmt
+	: identifier							{ $$ = new UnresolvedId($1); }
+	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }
+	| TYPE_PTR LPAR expr RPAR				{ $$ = new StaticCast(PointerType.Single, $3); }
+	| lvalue KW_DOT id						{ $$ = new ObjectAccess($1, $3); }
+	| KW_INHERITED							{ $$ = new InheritedCall(null); }
+	| KW_INHERITED id callparams			{ $$ = new InheritedCall($2, $3); }
+	;
+	
 lvalue	// lvalue
 	: identifier							{ $$ = new UnresolvedId($1); }
 	| lvalue LPAR exprlstopt RPAR			{ $$ = new UnresolvedCall($1, $3); }

@@ -388,17 +388,23 @@ namespace crosspascal.ast
 			Visit((ValueDeclaration) node);
 			return true;
 		}
+
+		public virtual bool Visit(RecordFieldDeclaration node)
+		{
+			Visit((ValueDeclaration)node);
+			return true;
+		}
 		
 		public virtual bool Visit(VariantDeclaration node)
 		{
-			Visit((FieldDeclaration) node);
+			Visit((RecordFieldDeclaration) node);
 			traverse(node.varfields);
 			return true;
 		}
 		
 		public virtual bool Visit(VarEntryDeclaration node)
 		{
-			Visit((FieldDeclaration) node);
+			Visit((RecordFieldDeclaration) node);
 			traverse(node.tagvalue);
 			traverse(node.fields);
 			return true;
@@ -1254,7 +1260,7 @@ namespace crosspascal.ast
 		public virtual bool Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			traverse(node.section);
+			traverse(node.compTypes);
 			return true;
 		}
 	}

@@ -703,6 +703,9 @@ namespace crosspascal.ast.nodes
 	{
 		public String funcname;
 
+		// to be set by resolver
+		public CompositeType declaringObject;
+
 		public InheritedCall(String funcname, ExpressionList args = null)
 			: base(null, args)
 		{

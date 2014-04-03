@@ -196,17 +196,29 @@ namespace crosspascal.ast.nodes
 			get { return (MethodType)this.type; }
 		}
 
-		public Scope scope;
+		#region IScopedDeclaration implementation
 
+		public Scope scope;
 		public void SetScope(Scope s)
 		{
 			scope = s;
 		}
-
 		public Scope GetScope()
 		{
 			return scope;
 		}
+
+		public CompositeType declaringObject;
+		public CompositeType GetDeclaringObject()
+		{
+			return declaringObject;
+		}
+		public void SetDeclaringObject(CompositeType t)
+		{
+			declaringObject = t;
+		}
+
+		#endregion
 
 		// to be set by the resolver
 		public CompositeType declaringType;
