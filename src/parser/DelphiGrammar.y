@@ -60,6 +60,7 @@ namespace crosspascal.parser
 %type<RoutineDeclaration> routineproto routinedeclinterf
 %type<MethodDeclaration> methoddecl classmetdecl interfmetdecl 
 %type<MethodDefinition> methoddef metdefproto
+%type<RoutineDefinition> routinedef
 %type<ImportDirectives> funcdirectlst funcdir_noterm_opt funcdiropt importdirforced 
 %type<MethodDirectives> metdirectopt metdirectlst smetdirs smetdirslst
 %type<int> funcdirective  funcqualif funcdeprecated metdirective metqualif routinecallconv smetqualif 
@@ -355,7 +356,7 @@ maindeclsec
 funcdeclsec
 	: basicdeclsec			{ $$ = $1;}
 	| labeldeclsec			{ $$ = $1;}
-///	| routinedefunqualif	{ $$ = new DeclarationList($1);}
+	| routinedef			{ $$ = new DeclarationList($1);}
 	;
 
 basicdeclsec
@@ -479,9 +480,13 @@ kwclass
 		
 	// global routine decl or finition
 routinedeclmain											// create defintion from type created in declaration rule
-	: routineproto funcdiropt funcdefine SCOL			{ $$ = new RoutineDefinition($1.name, $1.Type, $2, $3); }
+	: routinedef										{ $$ = $1; }
 	| routineproto importdirforced						{ $$ = $1; $1.Directives = $2; }
 	| methoddef funcdefine SCOL							{ $$ = $1; $1.body = $2; }
+	;
+
+routinedef
+	: routineproto funcdiropt funcdefine SCOL			{ $$ = new RoutineDefinition($1.name, $1.Type, $2, $3); }
 	;
 
 methoddecl
