@@ -359,9 +359,13 @@ namespace crosspascal.cpp
             outputCode("(", false, false);
             ProceduralType pp = node.type as ProceduralType;
             DeclarationList p = pp.@params.decls;
+			int i = 0;
             foreach (ParamDeclaration pd in p)
             {
+				if (i > 0)
+					outputCode(", ", false, false);
                 traverse(pd);
+				i++;
             }
             outputCode(")", false, true);
 			traverse(node.Directives);
@@ -376,17 +380,40 @@ namespace crosspascal.cpp
 
 		public override bool Visit(MethodDeclaration node)
 		{
-			//Visit((CallableDeclaration)node);
+			if (node.scope == Scope.Published)
+				node.scope = Scope.Public;
 			outputCode(Enum.GetName(typeof(Scope), node.scope).ToLower() + ":", false, true);
+
+			if (node.isStatic)
+				outputCode("static ", false, false);
+
+			if (node.Directives.Contains((int)MethodDirective.Virtual))
+			{
+				outputCode("virtual ", false, false);
+			}
 
 			if (node.Type.funcret == null)
 				outputCode("void ", false, false);
 			else
 				traverse(node.Type.funcret);
-				
+							
 			outputCode(node.name + "(", false, false);
 			traverse(node.Type.@params);
-			outputCode(");", false, true);			
+			outputCode(")", false, false);
+
+			if (node.Directives.Contains((int)MethodDirective.Abstract))
+			{
+				outputCode(" = 0", false, false);
+			}
+
+			outputCode(";", false, true);
+
+			MethodType tt = node.type as MethodType;
+			if (tt.IsConstructor)
+			{
+				outputCode(node.Parent.ToString(), false, false);
+			}
+
 			return true;
 		}
 
@@ -403,7 +430,7 @@ namespace crosspascal.cpp
 			if (node.IsFunction)
 			{
 				builder.Remove(builder.Length - 3, 3);
-				outputCode("return result;", true, true);
+				outputCode("	return result;", true, true);
 				outputCode("}", true, true);
 			}
 
@@ -444,7 +471,7 @@ namespace crosspascal.cpp
 			if (node.IsFunction)
 			{
 				builder.Remove(builder.Length - 3, 3);
-				outputCode("return result;", true, true);
+				outputCode("	return result;", true, true);
 				outputCode("}", true, true);
 			}
 
@@ -485,6 +512,7 @@ namespace crosspascal.cpp
 			outputCode("{", false, true);
 			traverse(node.type);
 			outputCode("};", false, true);
+			outputCode("", false, true);
 			return true;
 		}
 
@@ -496,7 +524,7 @@ namespace crosspascal.cpp
 
 		public override bool Visit(CompositeType node)
 		{
-			Visit((TypeNode) node);
+			//Visit((TypeNode) node);
 			traverse(node.section);
 			return true;
 		}
@@ -535,7 +563,6 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(ObjectSection node)
 		{
-			Visit((Section)node);
 			traverse(node.fields);
 			traverse(node.decls);
 			
@@ -546,6 +573,9 @@ namespace crosspascal.cpp
 		{
 			if (node.name.Equals("self"))
 				return false;
+
+			if (node.scope == Scope.Published)
+				node.scope = Scope.Public;
 
 			outputCode(Enum.GetName(typeof(Scope), node.scope).ToLower()+":", false, true);
 			//Visit((ValueDeclaration)node);
@@ -1221,8 +1251,18 @@ namespace crosspascal.cpp
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.lvalue);
-			traverse(node.acessors);
-			traverse(node.array);
+			outputCode("[", false, false);
+			int i = 0;
+			foreach (Expression n in node.acessors)
+			{
+				if (i > 0)
+					outputCode(", ", false, false);
+				traverse(n);
+				i++;
+			}
+
+			outputCode("]", false, false);
+			//traverse(node.array);
 			return true;
 		}
 
@@ -1236,6 +1276,19 @@ namespace crosspascal.cpp
 		public override bool Visit(InheritedCall node)
 		{
 			// Has been already resolved, treat as standard RoutineCall
+			ClassType anc = null;
+			foreach (CompositeType n in node.declaringObject.ancestors)
+			{
+				if (n is ClassType)
+				{
+					anc = n as ClassType;
+					break;
+				}
+			}
+			
+			if (anc!=null)
+				outputCode(anc.Name + "::", false, false);
+			
 			Visit((RoutineCall)node);
 			return true;
 		}
@@ -1245,8 +1298,17 @@ namespace crosspascal.cpp
 			//Visit((LvalueExpression) node);
 
 			traverse(node.func);
-            outputCode("(", false, false); 
-			traverse(node.args);
+            outputCode("(", false, false);
+			int i = 0;
+			foreach (Expression n in node.args)
+			{
+				if (i > 0)
+				{
+					outputCode(", ", false, false);
+				}
+				traverse(n);
+				i++;
+			}
             outputCode(")", false, false);
 
 			if (node.func.Type is MethodType)

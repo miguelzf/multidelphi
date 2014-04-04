@@ -4,10 +4,12 @@ type
   animal = class
     legs:integer;
     constructor create(legs:integer);
+    procedure eat; virtual; abstract;
   end;
 
   dog = class(animal)
     constructor create();
+    procedure eat; override;
   end;
 
 var
@@ -23,10 +25,12 @@ end;
 
 constructor dog.create;
 begin
-  
-  self.legs := 3 + inherited create(4) *4;
-  inherited create(1);
-  
+  inherited create(4);
+end;
+
+procedure dog.eat;
+begin
+  writeln('lol');
 end;
 
 begin
