@@ -47,7 +47,9 @@ namespace crosspascal.core
 
 		SourceFile Error(String msg)
 		{
+			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine("[ERROR planner] " + msg);
+			Console.ResetColor();
 			return null;
 		}
 

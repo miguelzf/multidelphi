@@ -465,9 +465,10 @@ nil					{ return CONST_NIL; }
 	
 	/* literals: Alphanumeric */
 '.'					{ yylval = (UInt64) yytext()[1]; return CONST_CHAR; }
-	// check that num < 255
+					// check that num < 255
 \#{DEC}+			{ yylval = GetInt(yytext().Substring(1), 10); return CONST_CHAR; }
 \#\${HEXA}+			{ yylval = GetInt(yytext().Substring(2), 16); return CONST_CHAR; }
+					// unterminated strings have been purged during preprocessing
 '[^']*'				{ yylval = yytext().Substring(1, yylength()-2); return CONST_STR; }
 
 true				{ yylval = true;  return CONST_BOOL; }

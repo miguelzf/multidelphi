@@ -58,6 +58,10 @@ namespace crosspascal.parser
 		// **********************************************
 		// Creation and control
 	
+		String FileName;
+		
+		int countErrors;
+
 		public DelphiPreprocessor()
 		{
 			zzReader = null;
@@ -66,6 +70,7 @@ namespace crosspascal.parser
 		public void ResetPreprocessor(string fname)
 		{
 			FileName = fname;
+			countErrors = 0;
 			StreamReader sr = new StreamReader(fname, DefaultEncoding);
 			ResetPreprocessor(sr);
 		}
@@ -80,13 +85,13 @@ namespace crosspascal.parser
 			stateNames = new string[] {"INITIAL", "XCOMMENT1", "XCOMMENT2", "XNOTDEF" };
 			stateStack.Push(INITIAL);
 		}
-				
-		String FileName;
 		
 		void pperror(String msg = "Unknown preprocessing error")
 		{
-			//	throw new PreprocessorException(yyline, msg);
+			countErrors++;
+			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine("[ERROR preprocessor] " + msg + " in File " + FileName  + " line " + yyline);
+			Console.ResetColor();
 		}
 
 
@@ -246,7 +251,11 @@ NL      = (\r|\n|\r\n)
 
 {ANYCHAR}+			{ outBuilder.Append(zzBuffer, zzStartRead, zzMarkedPos-zzStartRead); }
 
-'[^']*'				{ outBuilder.Append(zzBuffer, zzStartRead, zzMarkedPos-zzStartRead); }
+'[^\n\r']*('|{NL})	{	if (zzBuffer[zzMarkedPos-1] != '\'')	// if last char not quote
+							pperror("Unterminated string");
+						else
+							outBuilder.Append(zzBuffer, zzStartRead, zzMarkedPos-zzStartRead);
+					}
 
 \/|\(|\)			{ outBuilder.Append(yycharat(0)); }
 {NL}				{ CheckSourceNewline(); }
@@ -260,8 +269,11 @@ NL      = (\r|\n|\r\n)
 						{
 							if (defines.Count > 0)
 								throw new PreprocessorException(yyline, "Unterminated #ifdef");
-							else
-								return Accept(); /* top-level yyclose() */
+							
+							if (countErrors > 0)
+								throw new PreprocessorException(yyline, "Errors during preprocessing");
+							
+							return Accept(); /* top-level yyclose() */						
 						}
 					}
 
