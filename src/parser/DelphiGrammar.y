@@ -61,7 +61,7 @@ namespace crosspascal.parser
 %type<MethodDeclaration> methoddecl classmetdecl interfmetdecl 
 %type<MethodDefinition> methoddef metdefproto
 %type<RoutineDefinition> routinedef
-%type<ImportDirectives> funcdirectlst funcdir_noterm_opt funcdiropt importdirforced 
+%type<RoutineDirectives> funcdirectlst funcdir_noterm_opt funcdiropt importdirforced 
 %type<MethodDirectives> metdirectopt metdirectlst smetdirs smetdirslst
 %type<int> funcdirective  funcqualif funcdeprecated metdirective metqualif routinecallconv smetqualif 
 %type<MethodKind> kwmetspec

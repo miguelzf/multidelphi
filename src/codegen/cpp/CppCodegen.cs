@@ -238,10 +238,12 @@ namespace crosspascal.cpp
 				}
 			}
 
+			outputCode("{", true, true);
+			PushIdent();
 			Visit((Section) node);
 			traverse(node.block);
-
-			outputCode("", false, true);
+			PopIdent();
+			outputCode("}", true, true);
 			return true;
 		}
 		
@@ -286,6 +288,7 @@ namespace crosspascal.cpp
 		
 		public override bool Visit(VarDeclaration node)
 		{
+			outputCode("", true, false);
             traverse(node.type);
             int i = 0;
             string name = node.name;
@@ -353,11 +356,12 @@ namespace crosspascal.cpp
 
 		public override bool Visit(CallableDeclaration node)
 		{
-			traverse(node.Type);
+			ProceduralType pp = node.type as ProceduralType;
+			traverse(pp.funcret);
             string name = node.name as string;
             outputCode(name, false, false);
             outputCode("(", false, false);
-            ProceduralType pp = node.type as ProceduralType;
+            
             DeclarationList p = pp.@params.decls;
 			int i = 0;
             foreach (ParamDeclaration pd in p)
@@ -421,7 +425,8 @@ namespace crosspascal.cpp
 		{
 			if (node.IsFunction)
 			{
-				node.body.decls.Add(new VarDeclaration("result", node.type));
+				ProceduralType p = node.type as ProceduralType;
+				node.body.decls.Add(new VarDeclaration("result", p.funcret));
 			}
 
 			Visit((CallableDeclaration)node);
@@ -555,9 +560,10 @@ namespace crosspascal.cpp
 
 		public override bool Visit(RecordRefType node)
 		{
-			Visit((RecordType)node);
+			//Visit((RecordType)node);
 			//	Do not traverse this node! circular dependency
 			//	traverse(node.reftype);
+			outputCode(node.qualifid + " ", false, false);
 			return true;
 		}
 		
