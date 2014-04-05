@@ -76,6 +76,7 @@
     <Compile Include="ast\MapTraverser.cs" />
     <Compile Include="ast\Traverser.cs" />
     <Compile Include="codegen\cpp\CppCodegen.cs" />
+    <Compile Include="semantics\NestingProcessor.cs" />
     <Compile Include="utils\OutputStream.cs" />
     <Compile Include="core\Compiler.cs" />
     <Compile Include="core\SourceFile.cs" />

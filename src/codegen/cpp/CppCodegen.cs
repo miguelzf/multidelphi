@@ -1303,8 +1303,9 @@ namespace crosspascal.codegen.cpp
 		{
 			//Visit((LvalueExpression) node);
 
-			traverse(node.func);
-            outputCode("(", false, false);
+			string name = (node.func as Identifier).name;
+			//traverse(node.func);
+            outputCode(name + "(", false, false);
 			int i = 0;
 			foreach (Expression n in node.args)
 			{
