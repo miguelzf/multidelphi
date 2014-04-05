@@ -8,7 +8,7 @@ using crosspascal.ast.nodes;
 using crosspascal.semantics;
 
 
-namespace crosspascal.cpp
+namespace crosspascal.codegen.cpp
 {
 	class CppCodegen : Processor
 	{

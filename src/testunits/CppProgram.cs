@@ -7,7 +7,7 @@ using crosspascal.core;
 using crosspascal.ast;
 using crosspascal.ast.nodes;
 using crosspascal.parser;
-using crosspascal.cpp;
+using crosspascal.codegen.cpp;
 using crosspascal.semantics;
 
 namespace crosspascal.testunits

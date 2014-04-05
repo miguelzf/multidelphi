@@ -75,13 +75,12 @@
     <Compile Include="ast\VisitorTraverser.cs" />
     <Compile Include="ast\MapTraverser.cs" />
     <Compile Include="ast\Traverser.cs" />
+    <Compile Include="codegen\cpp\CppCodegen.cs" />
+    <Compile Include="utils\OutputStream.cs" />
     <Compile Include="core\Compiler.cs" />
     <Compile Include="core\SourceFile.cs" />
     <Compile Include="core\TranslationPlanner.cs" />
     <Compile Include="core\ErrorHandling.cs" />
-    <Compile Include="cpp\DelphiToCpp.cs" />
-    <Compile Include="cpp\CppCodegen.cs" />
-    <Compile Include="cpp\OutputStream.cs" />
     <Compile Include="parser\DelphiParser.cs" />
     <Compile Include="parser\DelphiParserSupport.cs" />
     <Compile Include="parser\DelphiPreprocessor.cs" />
