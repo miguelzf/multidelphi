@@ -44,27 +44,25 @@ namespace crosspascal.semantics
 		/// </summary>
 		public IEnumerable<bool> LoadNextContext()
 		{
-			foreach (var c in GetAllContexts(current))
-			{
-				EnterContext(c);
-				Console.WriteLine("ENTERED context " + c.Id);
-				yield return true;
-			}
+			return LoadNextContext(current);
 		}
 
 		/// <summary>
 		/// Traverse the whole DAG, in BFS order, from top to down
 		/// </summary>
-		internal IEnumerable<SymbolContext<SymbolT, CtxKey>> 
-				GetAllContexts(SymbolContext<SymbolT, CtxKey> ctx)
+		internal IEnumerable<bool> LoadNextContext(SymbolContext<SymbolT, CtxKey> ctx)
 		{
-			yield return ctx;
-
-			for (int i = ctx.children.Count-1; i >= 0; i--)
+			for (int i = ctx.children.Count - 1; i >= 0; i--)
 			{
 				var child = ctx.children[i];
-				foreach (var c in GetAllContexts(child))
+				EnterContext(child);
+				yield return true;
+
+				foreach (var c in LoadNextContext(child))
 					yield return c;
+
+				ExitContext();
+				yield return false;
 			}
 		}
 
