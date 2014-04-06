@@ -438,10 +438,19 @@ namespace crosspascal.ast.nodes
 
 	#region Arithmetic Binary Expressions
 
+	public enum ArithmeticBinaryOp
+	{
+		ADD, SUB,
+		DIV, MUL,
+		QUOT /* integer quotient */, MOD,
+		SHR, SHL,
+	}
+
 	public abstract class ArithmethicBinaryExpression : BinaryExpression
 	{
 		public Expression left;
 		public Expression right;
+		public ArithmeticBinaryOp op;
 
 		public ArithmethicBinaryExpression(Expression e1, Expression e2)
 		{
@@ -452,51 +461,61 @@ namespace crosspascal.ast.nodes
 
 	public class Subtraction : ArithmethicBinaryExpression
 	{
-		public Subtraction(Expression e1, Expression e2) : base(e1, e2) { }
+		public Subtraction	(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.SUB; }
 	}
 
 	public class Addition : ArithmethicBinaryExpression
 	{
-		public Addition(Expression e1, Expression e2) : base(e1, e2) { }
+		public Addition		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.ADD; }
 	}
 
 	public class Product : ArithmethicBinaryExpression
 	{
-		public Product(Expression e1, Expression e2) : base(e1, e2) { }
+		public Product		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.MUL; }
 	}
 
 	public class Division: ArithmethicBinaryExpression
 	{
-		public Division(Expression e1, Expression e2) : base(e1, e2) { }
+		public Division		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.DIV; }
 	}
 
 	public class Quotient: ArithmethicBinaryExpression
 	{
-		public Quotient(Expression e1, Expression e2) : base(e1, e2) { }
+		public Quotient		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.QUOT; }
 	}
 
 	public class Modulus: ArithmethicBinaryExpression
 	{
-		public Modulus(Expression e1, Expression e2) : base(e1, e2) { }
+		public Modulus		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.MOD; }
 	}
 
 	public class ShiftRight: ArithmethicBinaryExpression
 	{
-		public ShiftRight(Expression e1, Expression e2) : base(e1, e2) { }
+		public ShiftRight	(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.SHR; }
 	}
 
 	public class ShiftLeft: ArithmethicBinaryExpression
 	{
-		public ShiftLeft(Expression e1, Expression e2) : base(e1, e2) { }
+		public ShiftLeft	(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.SHL; }
 	}
 	#endregion
 
+
 	#region Logical Binary Expressions
+
+	public enum LogicalBinaryOp
+	{
+		AND, OR, XOR,
+		EQ, NE,
+		LT, LE,
+		GT, GE,
+	}
 
 	public abstract class LogicalBinaryExpression : BinaryExpression
 	{
 		public Expression left;
 		public Expression right;
+		public LogicalBinaryOp op;
 
 		public LogicalBinaryExpression(Expression e1, Expression e2)
 		{
@@ -507,50 +526,51 @@ namespace crosspascal.ast.nodes
 
 	public class LogicalAnd : LogicalBinaryExpression
 	{
-		public LogicalAnd(Expression e1, Expression e2) : base(e1, e2) { }
+		public LogicalAnd	(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.AND; }
 	}
 
 	public class LogicalOr : LogicalBinaryExpression
 	{
-		public LogicalOr(Expression e1, Expression e2) : base(e1, e2) { }
+		public LogicalOr	(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.OR; }
 	}
 
 	public class LogicalXor : LogicalBinaryExpression
 	{
-		public LogicalXor(Expression e1, Expression e2) : base(e1, e2) { }
+		public LogicalXor	(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.XOR; }
 	}
 
 	public class Equal : LogicalBinaryExpression
 	{
-		public Equal(Expression e1, Expression e2) : base(e1, e2) { }
+		public Equal		(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.EQ; }
 	}
 
 	public class NotEqual : LogicalBinaryExpression
 	{
-		public NotEqual(Expression e1, Expression e2) : base(e1, e2) { }
+		public NotEqual		(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.NE; }
 	}
 
 	public class LessThan : LogicalBinaryExpression
 	{
-		public LessThan(Expression e1, Expression e2) : base(e1, e2) { }
+		public LessThan		(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.LT; }
 	}
 
 	public class LessOrEqual : LogicalBinaryExpression
 	{
-		public LessOrEqual(Expression e1, Expression e2) : base(e1, e2) { }
+		public LessOrEqual	(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.LE; }
 	}
 
 	public class GreaterThan : LogicalBinaryExpression
 	{
-		public GreaterThan(Expression e1, Expression e2) : base(e1, e2) { }
+		public GreaterThan	(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.GT; }
 	}
 
 	public class GreaterOrEqual : LogicalBinaryExpression
 	{
-		public GreaterOrEqual(Expression e1, Expression e2) : base(e1, e2) { }
+		public GreaterOrEqual(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.GE; }
 	}
 
 	#endregion
+
 
 	#region Typing Binary Expressions
 

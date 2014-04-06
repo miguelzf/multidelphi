@@ -37,7 +37,7 @@ namespace crosspascal.codegen.llvm
     }
 
 
-	class LlvmILGen : Processor<Value>
+	class LlvmILGen : Processor<LLVM.Value>
 	{
 		private int ident = 0;
 
@@ -77,13 +77,41 @@ namespace crosspascal.codegen.llvm
 
 			return default(Value);
 		}
-		
-		/// NumberExprAST - Expression class for numeric literals like "1.0".
+
+
+
+		#region Load literals
+
 		public override Value Visit(RealLiteral node)
 		{
-			return Value.CreateConstReal(TypeRef.CreateDouble(), node.Value.Val<double>());
+			return Value.CreateConstDouble(node.Value.Val<double>());
 		}
-	
+
+		public override Value Visit(BoolLiteral node)
+		{
+			return Value.CreateConstBool(node.Value.Val<bool>());
+		}
+
+		public override Value Visit(IntLiteral node)
+		{
+			return Value.CreateConstUInt64(node.Value.Val<ulong>());
+		}
+
+		public override Value Visit(CharLiteral node)
+		{
+			return Value.CreateConstInt8((sbyte) node.Value.Val<char>());
+		}
+
+		public override Value Visit(PointerLiteral node)
+		{
+			return Value.CreateConstUInt64(node.Value.Val<ulong>());
+		}
+
+		// TODO strings
+
+		#endregion
+
+
 		/// VariableExprAST - Expression class for referencing a variable, like "a".
 
 		public override Value Visit(Identifier node)
@@ -96,7 +124,30 @@ namespace crosspascal.codegen.llvm
 			return builder.BuildLoad(value, node.name);
 		}
 
+		public override Value Visit(ArithmethicBinaryExpression node)
+		{
+			Value l = traverse(node.left);
+			Value r = traverse(node.right);
+			if (l.IsNull || r.IsNull) return Value.Null;
+
+
+			switch(node.op)
+			{
+				case ArithmeticBinaryOp.SHR:
+					return builder.BuildFAdd(l, r);
+				default:
+					return Value.Null;
+			}
+		}
+
 /*
+				case '<':
+					// Convert bool 0/1 to double 0.0 or 1.0
+					return builder.BuildFCmpAndPromote(l, LLVMRealPredicate.RealULT, 
+													   r, TypeRef.CreateDouble());
+
+			}
+ * 
 		/// BinaryExprAST - Expression class for a binary operator.
 		public override Value Visit(BinaryExpression node)
 		{
