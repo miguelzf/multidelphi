@@ -551,9 +551,16 @@ namespace crosspascal.semantics
 			return true;
 		}
 		
+		public override bool Visit(RoutineDirectives node)
+		{
+			Visit((Node) node);
+			node.CheckDirectives();
+		}
+		
 		public override bool Visit(ImportDirectives node)
 		{
 			Visit((RoutineDirectives) node);
+			
 			if (node.External != null)
 			{
 				ExternalDirective dir = node.External;

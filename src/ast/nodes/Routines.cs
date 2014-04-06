@@ -30,17 +30,7 @@ namespace crosspascal.ast.nodes
 		/// </summary>
 		public TypeNode funcret { get; set; }
 
-		RoutineDirectives _directives;
-		public RoutineDirectives Directives
-		{
-			get { return _directives; }
-			set
-			{
-				if (value != null)
-					value.CheckDirectives();
-				_directives = value;
-			}
-		}
+		public RoutineDirectives Directives { get; set; }
 
 		public ProceduralType(ParametersSection @params, TypeNode ret = null, RoutineDirectives dirs = null)
 		{
@@ -316,8 +306,12 @@ namespace crosspascal.ast.nodes
 		{
 			get { return _callconv ; }
 			set {
-				if (_callconv != 0) Error("Cannot specify more than one Call convention");
-				else				_callconv = value; 
+				if (_callconv != 0)
+					Error("Cannot specify more than one Call convention (previous: " 
+						+ Enum.GetName(typeof(CallConvention), _callconv) + ", new: "
+						+  Enum.GetName(typeof(CallConvention), value) +")");
+				else
+					_callconv = value; 
 			}
 		}
 

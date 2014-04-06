@@ -34,7 +34,6 @@ x64/
 *.meta
 *.obj
 *.pch
-*.pdb
 *.pgc
 *.pgd
 *.rsp
@@ -127,3 +126,4 @@ UpgradeLog*.XML
 /src/CppProgram.cs
 /deps/cs-jflex/csflex.vshost.exe
 /deps/cs-jflex/csflex.vshost.exe.manifest
+/deps/cs-jflex/csflex.pdb
