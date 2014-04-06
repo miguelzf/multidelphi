@@ -16,8 +16,15 @@ namespace Kaleidoscope
             LLVM.Native.InitializeX86Target();
             LLVM.Native.InitializeX86TargetMC();
 
-            IDriver driver = new Kaleidoscope.Chapter7.Driver();
-            driver.Run();
+			var drivers = new List<IDriver>();
+			drivers.Add(new Kaleidoscope.Chapter3.Driver());
+			drivers.Add(new Kaleidoscope.Chapter4.Driver());
+			drivers.Add(new Kaleidoscope.Chapter5.Driver());
+			drivers.Add(new Kaleidoscope.Chapter6.Driver());
+			drivers.Add(new Kaleidoscope.Chapter7.Driver());
+
+			foreach (var driver in drivers)
+				driver.Run();
 
             Console.ReadLine();
         }

@@ -125,8 +125,10 @@ namespace crosspascal.ast.nodes
 		/// TODO make abstract
 		/// </summary>
 		/// <param name="visitor"></param>
-		public virtual bool Accept(Processor visitor)
+		public virtual T Accept<T>(Processor<T> visitor)
 		{
+			// TODO create 1 accept for each specific node to implement the visitor pattern
+			// so much hassle...
 			return visitor.Visit(this);
 		}
 	}
@@ -135,7 +137,7 @@ namespace crosspascal.ast.nodes
 	{
 		public FixmeNode()
 		{
-			Console.WriteLine("This a development temporary node that should never be used. FIX ME!!\n");
+			Error("This a development temporary node that should never be used. FIX ME!!\n");
 		}
 	}
 
@@ -143,10 +145,13 @@ namespace crosspascal.ast.nodes
 	{
 		public NotSupportedNode()
 		{
-			Console.WriteLine("This feature is not yet supported.\n");
+			Error("This feature is not yet supported.\n");
 		}
 	}
 
+	/// <summary>
+	/// Useful to avoid nulls
+	/// </summary>
 	public class EmptyNode : Node
 	{
 		public EmptyNode()
@@ -265,12 +270,11 @@ namespace crosspascal.ast.nodes
 			return nodes.GetEnumerator();
 		}
 
-		public override bool Accept(Processor visitor)
+		public override VT Accept<VT>(Processor<VT> visitor)
 		{
-			bool ret = true;
 			foreach (T node in nodes)
-				ret &= node.Accept(visitor);
-			return ret;
+				node.Accept(visitor);
+			return default(VT);
 		}
 	}
 

@@ -31,7 +31,7 @@ namespace crosspascal.semantics
 	/// Implements a Name/Declaration Resolver with Type Inference and Validation
 	/// </summary>
 
-	class NameResolver : Processor
+	class NameResolver : Processor<bool>
 	{
 		public DeclarationsEnvironment declEnv { get; set; }
 		SourceFile source;
@@ -39,12 +39,12 @@ namespace crosspascal.semantics
 		// =================================================
 		// Public interface
 		
-		public NameResolver(Traverser t) : base(t)
+		public NameResolver(Traverser<bool> t) : base(t)
 		{
 			declEnv = new DeclarationsEnvironment();
 		}
 
-		public NameResolver(TreeTraverse t = null) : base(t)
+		public NameResolver(TreeTraverse<bool> t = null) : base(t)
 		{
 			declEnv = new DeclarationsEnvironment();
 		}
@@ -555,6 +555,7 @@ namespace crosspascal.semantics
 		{
 			Visit((Node) node);
 			node.CheckDirectives();
+			return true;
 		}
 		
 		public override bool Visit(ImportDirectives node)
@@ -1261,7 +1262,7 @@ namespace crosspascal.semantics
 				{
 					var idself = new Identifier("self");
 					idself.Loc = node.Loc;
-					idself.Type = declEnv.GetDeclaringObject();
+					idself.decl = declEnv.GetDeclaringObjectDeclaration();
 					var oa = new ObjectAccess(idself, node.name);
 					oa.Loc = node.Loc;
 					oa.Type = d.type;
@@ -1275,10 +1276,8 @@ namespace crosspascal.semantics
 		{
 			Visit((LvalueExpression)node);
 
-			Declaration d = declEnv.GetDeclaration(node.name);
-			node.Type = d.type;
-
-			var ret = CheckObjectIdentifier(node, d);
+			node.decl = declEnv.GetDeclaration(node.name);
+			var ret = CheckObjectIdentifier(node, node.decl);
 			if (ret != node)	// node changed
 				resolved = ret;
 			return true;
@@ -1296,7 +1295,7 @@ namespace crosspascal.semantics
 				return Error("DeclarationNotFound: " + name, node);
 				//	throw new DeclarationNotFound(name);
 
-			node.id.Type = d.type;
+			node.id.decl = d;
 
 			if (d is TypeDeclaration)
 			{	resolved = new TypeWrapper(d);	// type for casts and static referencs

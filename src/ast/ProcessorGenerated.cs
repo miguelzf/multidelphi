@@ -11,1257 +11,1257 @@ using crosspascal.ast.nodes;
 
 namespace crosspascal.ast
 {
-	public abstract partial class Processor
+	public abstract partial class Processor<T>
 	{
 		//	Complete interface to be implemented by any specific AST processor	
 
 		
-		public virtual bool Visit(FixmeNode node)
+		public virtual T Visit(FixmeNode node)
 		{
 			Visit((Node) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(NotSupportedNode node)
+		public virtual T Visit(NotSupportedNode node)
 		{
 			Visit((Node) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(EmptyNode node)
+		public virtual T Visit(EmptyNode node)
 		{
 			Visit((Node) node);
-			return true;
+			return default(T);
 		}
 				
-		public virtual bool Visit(NodeList node)
+		public virtual T Visit(NodeList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(StatementList node)
+		public virtual T Visit(StatementList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(TypeList node)
+		public virtual T Visit(TypeList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(DeclarationList node)
+		public virtual T Visit(DeclarationList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(EnumValueList node)
+		public virtual T Visit(EnumValueList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(TranslationUnit node)
+		public virtual T Visit(TranslationUnit node)
 		{
 			Visit((Declaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ProgramNode node)
+		public virtual T Visit(ProgramNode node)
 		{
 			Visit((TranslationUnit) node);
 			traverse(node.section);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LibraryNode node)
+		public virtual T Visit(LibraryNode node)
 		{
 			Visit((TranslationUnit) node);
 			traverse(node.section);
-			return true;
+			return default(T);
 		}
 
-		public virtual bool Visit(ProgramSection node)
+		public virtual T Visit(ProgramSection node)
 		{
 			Visit((TopLevelDeclarationSection)node);
 			traverse(node.block);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnitNode node)
+		public virtual T Visit(UnitNode node)
 		{
 			Visit((TranslationUnit) node);
 			traverse(node.@interface);
 			traverse(node.implementation);
 			traverse(node.initialization);
 			traverse(node.finalization);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(PackageNode node)
+		public virtual T Visit(PackageNode node)
 		{
 			Visit((TranslationUnit) node);
 			traverse(node.requires);
 			traverse(node.contains);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnitItem node)
+		public virtual T Visit(UnitItem node)
 		{
 			Visit((Node) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UsesItem node)
+		public virtual T Visit(UsesItem node)
 		{
 			Visit((UnitItem) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RequiresItem node)
+		public virtual T Visit(RequiresItem node)
 		{
 			Visit((UnitItem) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ContainsItem node)
+		public virtual T Visit(ContainsItem node)
 		{
 			Visit((UnitItem) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ExportItem node)
+		public virtual T Visit(ExportItem node)
 		{
 			Visit((UnitItem) node);
 			traverse(node.formalparams);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(Section node)
+		public virtual T Visit(Section node)
 		{
 			Visit((Node) node);
 			traverse(node.decls);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RoutineSection node)
+		public virtual T Visit(RoutineSection node)
 		{
 			Visit((Section) node);
 			traverse(node.block);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ParametersSection node)
+		public virtual T Visit(ParametersSection node)
 		{
 			Visit((Section) node);
 			traverse(node.returnVar);
-			return true;
+			return default(T);
 		}
 				
-		public virtual bool Visit(TopLevelDeclarationSection node)
+		public virtual T Visit(TopLevelDeclarationSection node)
 		{
 			traverse(node.uses);
 			Visit((Section)node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(InterfaceSection node)
+		public virtual T Visit(InterfaceSection node)
 		{
 			Visit((TopLevelDeclarationSection) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ImplementationSection node)
+		public virtual T Visit(ImplementationSection node)
 		{
 			Visit((TopLevelDeclarationSection) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(Declaration node)
+		public virtual T Visit(Declaration node)
 		{
 			Visit((Node) node);
 			traverse(node.type);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LabelDeclaration node)
+		public virtual T Visit(LabelDeclaration node)
 		{
 			Visit((Declaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ValueDeclaration node)
+		public virtual T Visit(ValueDeclaration node)
 		{
 			Visit((Declaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(VarDeclaration node)
+		public virtual T Visit(VarDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
 			traverse(node.init);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ParamDeclaration node)
+		public virtual T Visit(ParamDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
 			traverse(node.init);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(VarParamDeclaration node)
+		public virtual T Visit(VarParamDeclaration node)
 		{
 			Visit((ParamDeclaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ConstParamDeclaration node)
+		public virtual T Visit(ConstParamDeclaration node)
 		{
 			Visit((ParamDeclaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(OutParamDeclaration node)
+		public virtual T Visit(OutParamDeclaration node)
 		{
 			Visit((ParamDeclaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ConstDeclaration node)
+		public virtual T Visit(ConstDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
 			traverse(node.init);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(EnumValue node)
+		public virtual T Visit(EnumValue node)
 		{
 			Visit((ConstDeclaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(TypeDeclaration node)
+		public virtual T Visit(TypeDeclaration node)
 		{
 			Visit((Declaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ProceduralType node)
+		public virtual T Visit(ProceduralType node)
 		{
 			Visit((TypeNode) node);
 			traverse(node.@params);
 			traverse(node.funcret);
 			traverse(node.Directives);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(MethodType node)
+		public virtual T Visit(MethodType node)
 		{
 			Visit((ProceduralType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(CallableDeclaration node)
+		public virtual T Visit(CallableDeclaration node)
 		{
 			Visit((Declaration) node);
 			traverse(node.Type);
 			traverse(node.Directives);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RoutineDeclaration node)
+		public virtual T Visit(RoutineDeclaration node)
 		{
 			Visit((CallableDeclaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(MethodDeclaration node)
+		public virtual T Visit(MethodDeclaration node)
 		{
 			Visit((CallableDeclaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RoutineDefinition node)
+		public virtual T Visit(RoutineDefinition node)
 		{
 			Visit((RoutineDeclaration)node);
 			traverse(node.body); 
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(MethodDefinition node)
+		public virtual T Visit(MethodDefinition node)
 		{
 			Visit((MethodDeclaration)node);
 			traverse(node.body);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RoutineDirectives node)
+		public virtual T Visit(RoutineDirectives node)
 		{
 			Visit((Node) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ImportDirectives node)
+		public virtual T Visit(ImportDirectives node)
 		{
 			Visit((RoutineDirectives) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(MethodDirectives node)
+		public virtual T Visit(MethodDirectives node)
 		{
 			Visit((RoutineDirectives) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(CompositeDeclaration node)
+		public virtual T Visit(CompositeDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
 			traverse(node.Type);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ClassDeclaration node)
+		public virtual T Visit(ClassDeclaration node)
 		{
 			Visit((CompositeDeclaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(InterfaceDeclaration node)
+		public virtual T Visit(InterfaceDeclaration node)
 		{
 			Visit((CompositeDeclaration) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(CompositeType node)
+		public virtual T Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
 			traverse(node.section);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ClassType node)
+		public virtual T Visit(ClassType node)
 		{
 			Visit((CompositeType) node);
 			traverse(node.self);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(InterfaceType node)
+		public virtual T Visit(InterfaceType node)
 		{
 			Visit((CompositeType) node);
 			traverse(node.guid);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ClassRefType node)
+		public virtual T Visit(ClassRefType node)
 		{
 		//	Do not traverse this node! circular dependency
 		//	traverse(node.reftype);
-			return true;
+			return default(T);
 		}
 
-		public virtual bool Visit(RecordRefType node)
+		public virtual T Visit(RecordRefType node)
 		{
 			//	Do not traverse this node! circular dependency
 			//	traverse(node.reftype);
-			return true;
+			return default(T);
 		}
 
-		public virtual bool Visit(ObjectSection node)
+		public virtual T Visit(ObjectSection node)
 		{
 			Visit((Section) node);
 			traverse(node.fields);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(FieldDeclaration node)
+		public virtual T Visit(FieldDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			return true;
+			return default(T);
 		}
 
-		public virtual bool Visit(RecordFieldDeclaration node)
+		public virtual T Visit(RecordFieldDeclaration node)
 		{
 			Visit((ValueDeclaration)node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(VariantDeclaration node)
+		public virtual T Visit(VariantDeclaration node)
 		{
 			Visit((RecordFieldDeclaration) node);
 			traverse(node.varfields);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(VarEntryDeclaration node)
+		public virtual T Visit(VarEntryDeclaration node)
 		{
 			Visit((RecordFieldDeclaration) node);
 			traverse(node.tagvalue);
 			traverse(node.fields);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(PropertyDeclaration node)
+		public virtual T Visit(PropertyDeclaration node)
 		{
 			Visit((FieldDeclaration) node);
 			traverse(node.specifiers);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ArrayProperty node)
+		public virtual T Visit(ArrayProperty node)
 		{
 			Visit((PropertyDeclaration) node);
 			traverse(node.indexes);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(PropertySpecifiers node)
+		public virtual T Visit(PropertySpecifiers node)
 		{
 			Visit((Node) node);
 			traverse(node.index);
 			traverse(node.stored);
 			traverse(node.@default);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(Statement node)
+		public virtual T Visit(Statement node)
 		{
 			Visit((Node) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LabelStatement node)
+		public virtual T Visit(LabelStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.stmt);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(EmptyStatement node)
+		public virtual T Visit(EmptyStatement node)
 		{
 			Visit((Statement) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(BreakStatement node)
+		public virtual T Visit(BreakStatement node)
 		{
 			Visit((Statement) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ContinueStatement node)
+		public virtual T Visit(ContinueStatement node)
 		{
 			Visit((Statement) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(Assignment node)
+		public virtual T Visit(Assignment node)
 		{
 			Visit((Statement) node);
 			traverse(node.lvalue);
 			traverse(node.expr);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(GotoStatement node)
+		public virtual T Visit(GotoStatement node)
 		{
 			Visit((Statement) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(IfStatement node)
+		public virtual T Visit(IfStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.condition);
 			traverse(node.thenblock);
 			traverse(node.elseblock);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ExpressionStatement node)
+		public virtual T Visit(ExpressionStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.expr);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(CaseSelector node)
+		public virtual T Visit(CaseSelector node)
 		{
 			Visit((Statement) node);
 			traverse(node.list);
 			traverse(node.stmt);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(CaseStatement node)
+		public virtual T Visit(CaseStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.condition);
 			traverse(node.selectors);
 			traverse(node.caseelse);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LoopStatement node)
+		public virtual T Visit(LoopStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.condition);
 			traverse(node.block);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RepeatLoop node)
+		public virtual T Visit(RepeatLoop node)
 		{
 			Visit((LoopStatement) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(WhileLoop node)
+		public virtual T Visit(WhileLoop node)
 		{
 			Visit((LoopStatement) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ForLoop node)
+		public virtual T Visit(ForLoop node)
 		{
 			Visit((LoopStatement) node);
 			traverse(node.var);
 			traverse(node.start);
 			traverse(node.end);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(BlockStatement node)
+		public virtual T Visit(BlockStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.stmts);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(WithStatement node)
+		public virtual T Visit(WithStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.with);
 			traverse(node.body);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(TryFinallyStatement node)
+		public virtual T Visit(TryFinallyStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.body);
 			traverse(node.final);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(TryExceptStatement node)
+		public virtual T Visit(TryExceptStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.body);
 			traverse(node.final);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ExceptionBlock node)
+		public virtual T Visit(ExceptionBlock node)
 		{
 			Visit((Statement) node);
 			traverse(node.onList);
 			traverse(node.@default);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RaiseStatement node)
+		public virtual T Visit(RaiseStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.lvalue);
 			traverse(node.expr);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(OnStatement node)
+		public virtual T Visit(OnStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.body);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(AssemblerBlock node)
+		public virtual T Visit(AssemblerBlock node)
 		{
 			Visit((BlockStatement) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(Expression node)
+		public virtual T Visit(Expression node)
 		{
 			Visit((Node) node);
 			traverse(node.Type);
 			traverse(node.Value);
 			traverse(node.ForcedType);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(EmptyExpression node)
+		public virtual T Visit(EmptyExpression node)
 		{
 			Visit((Expression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ExpressionList node)
+		public virtual T Visit(ExpressionList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ConstExpression node)
+		public virtual T Visit(ConstExpression node)
 		{
 			Visit((Expression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(StructuredConstant node)
+		public virtual T Visit(StructuredConstant node)
 		{
 			Visit((ConstExpression) node);
 			traverse(node.exprlist);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ArrayConst node)
+		public virtual T Visit(ArrayConst node)
 		{
 			Visit((StructuredConstant) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RecordConst node)
+		public virtual T Visit(RecordConst node)
 		{
 			Visit((StructuredConstant) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(FieldInitList node)
+		public virtual T Visit(FieldInitList node)
 		{
 			Visit((ExpressionList) node);
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(FieldInit node)
+		public virtual T Visit(FieldInit node)
 		{
 			Visit((ConstExpression) node);
 			traverse(node.expr);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ConstIdentifier node)
+		public virtual T Visit(ConstIdentifier node)
 		{
 			Visit((ConstExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(Literal node)
+		public virtual T Visit(Literal node)
 		{
 			Visit((ConstExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(OrdinalLiteral node)
+		public virtual T Visit(OrdinalLiteral node)
 		{
 			Visit((Literal) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(IntLiteral node)
+		public virtual T Visit(IntLiteral node)
 		{
 			Visit((OrdinalLiteral) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(CharLiteral node)
+		public virtual T Visit(CharLiteral node)
 		{
 			Visit((OrdinalLiteral) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(BoolLiteral node)
+		public virtual T Visit(BoolLiteral node)
 		{
 			Visit((OrdinalLiteral) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(StringLiteral node)
+		public virtual T Visit(StringLiteral node)
 		{
 			Visit((Literal) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RealLiteral node)
+		public virtual T Visit(RealLiteral node)
 		{
 			Visit((Literal) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(PointerLiteral node)
+		public virtual T Visit(PointerLiteral node)
 		{
 			Visit((Literal) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ConstantValue node)
+		public virtual T Visit(ConstantValue node)
 		{
 			Visit((Node) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(IntegralValue node)
+		public virtual T Visit(IntegralValue node)
 		{
 			Visit((ConstantValue) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(StringValue node)
+		public virtual T Visit(StringValue node)
 		{
 			Visit((ConstantValue) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RealValue node)
+		public virtual T Visit(RealValue node)
 		{
 			Visit((ConstantValue) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(BinaryExpression node)
+		public virtual T Visit(BinaryExpression node)
 		{
 			Visit((Expression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(SetIn node)
+		public virtual T Visit(SetIn node)
 		{
 			Visit((BinaryExpression) node);
 			traverse(node.expr);
 			traverse(node.set);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(SetRange node)
+		public virtual T Visit(SetRange node)
 		{
 			Visit((BinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ArithmethicBinaryExpression node)
-		{
-			Visit((BinaryExpression) node);
-			traverse(node.left);
-			traverse(node.right);
-			return true;
-		}
-		
-		public virtual bool Visit(Subtraction node)
-		{
-			Visit((ArithmethicBinaryExpression) node);
-			return true;
-		}
-		
-		public virtual bool Visit(Addition node)
-		{
-			Visit((ArithmethicBinaryExpression) node);
-			return true;
-		}
-		
-		public virtual bool Visit(Product node)
-		{
-			Visit((ArithmethicBinaryExpression) node);
-			return true;
-		}
-		
-		public virtual bool Visit(Division node)
-		{
-			Visit((ArithmethicBinaryExpression) node);
-			return true;
-		}
-		
-		public virtual bool Visit(Quotient node)
-		{
-			Visit((ArithmethicBinaryExpression) node);
-			return true;
-		}
-		
-		public virtual bool Visit(Modulus node)
-		{
-			Visit((ArithmethicBinaryExpression) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ShiftRight node)
-		{
-			Visit((ArithmethicBinaryExpression) node);
-			return true;
-		}
-		
-		public virtual bool Visit(ShiftLeft node)
-		{
-			Visit((ArithmethicBinaryExpression) node);
-			return true;
-		}
-		
-		public virtual bool Visit(LogicalBinaryExpression node)
+		public virtual T Visit(ArithmethicBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
 			traverse(node.left);
 			traverse(node.right);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LogicalAnd node)
+		public virtual T Visit(Subtraction node)
+		{
+			Visit((ArithmethicBinaryExpression) node);
+			return default(T);
+		}
+		
+		public virtual T Visit(Addition node)
+		{
+			Visit((ArithmethicBinaryExpression) node);
+			return default(T);
+		}
+		
+		public virtual T Visit(Product node)
+		{
+			Visit((ArithmethicBinaryExpression) node);
+			return default(T);
+		}
+		
+		public virtual T Visit(Division node)
+		{
+			Visit((ArithmethicBinaryExpression) node);
+			return default(T);
+		}
+		
+		public virtual T Visit(Quotient node)
+		{
+			Visit((ArithmethicBinaryExpression) node);
+			return default(T);
+		}
+		
+		public virtual T Visit(Modulus node)
+		{
+			Visit((ArithmethicBinaryExpression) node);
+			return default(T);
+		}
+		
+		public virtual T Visit(ShiftRight node)
+		{
+			Visit((ArithmethicBinaryExpression) node);
+			return default(T);
+		}
+		
+		public virtual T Visit(ShiftLeft node)
+		{
+			Visit((ArithmethicBinaryExpression) node);
+			return default(T);
+		}
+		
+		public virtual T Visit(LogicalBinaryExpression node)
+		{
+			Visit((BinaryExpression) node);
+			traverse(node.left);
+			traverse(node.right);
+			return default(T);
+		}
+		
+		public virtual T Visit(LogicalAnd node)
 		{
 			Visit((LogicalBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LogicalOr node)
+		public virtual T Visit(LogicalOr node)
 		{
 			Visit((LogicalBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LogicalXor node)
+		public virtual T Visit(LogicalXor node)
 		{
 			Visit((LogicalBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(Equal node)
+		public virtual T Visit(Equal node)
 		{
 			Visit((LogicalBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(NotEqual node)
+		public virtual T Visit(NotEqual node)
 		{
 			Visit((LogicalBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LessThan node)
+		public virtual T Visit(LessThan node)
 		{
 			Visit((LogicalBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LessOrEqual node)
+		public virtual T Visit(LessOrEqual node)
 		{
 			Visit((LogicalBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(GreaterThan node)
+		public virtual T Visit(GreaterThan node)
 		{
 			Visit((LogicalBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(GreaterOrEqual node)
+		public virtual T Visit(GreaterOrEqual node)
 		{
 			Visit((LogicalBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(TypeBinaryExpression node)
+		public virtual T Visit(TypeBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
 			traverse(node.expr);
 			traverse(node.types);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(TypeIs node)
+		public virtual T Visit(TypeIs node)
 		{
 			Visit((TypeBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RuntimeCast node)
+		public virtual T Visit(RuntimeCast node)
 		{
 			Visit((TypeBinaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnaryExpression node)
+		public virtual T Visit(UnaryExpression node)
 		{
 			Visit((Expression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(SimpleUnaryExpression node)
+		public virtual T Visit(SimpleUnaryExpression node)
 		{
 			Visit((Expression) node);
 			traverse(node.expr);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnaryPlus node)
+		public virtual T Visit(UnaryPlus node)
 		{
 			Visit((SimpleUnaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnaryMinus node)
+		public virtual T Visit(UnaryMinus node)
 		{
 			Visit((SimpleUnaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LogicalNot node)
+		public virtual T Visit(LogicalNot node)
 		{
 			Visit((SimpleUnaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(AddressLvalue node)
+		public virtual T Visit(AddressLvalue node)
 		{
 			Visit((SimpleUnaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(Set node)
+		public virtual T Visit(Set node)
 		{
 			Visit((UnaryExpression) node);
 			traverse(node.setelems);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(LvalueExpression node)
+		public virtual T Visit(LvalueExpression node)
 		{
 			Visit((UnaryExpression) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ExprAsLvalue node)
+		public virtual T Visit(ExprAsLvalue node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.expr);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(StaticCast node)
+		public virtual T Visit(StaticCast node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.casttype);
 			traverse(node.expr);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnresolvedId node)
+		public virtual T Visit(UnresolvedId node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.id);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnresolvedCall node)
+		public virtual T Visit(UnresolvedCall node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.func);
 			traverse(node.args);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ArrayAccess node)
+		public virtual T Visit(ArrayAccess node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.lvalue);
 			traverse(node.acessors);
 			traverse(node.array);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(PointerDereference node)
+		public virtual T Visit(PointerDereference node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.expr);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(InheritedCall node)
+		public virtual T Visit(InheritedCall node)
 		{
 			Visit((RoutineCall)node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RoutineCall node)
+		public virtual T Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.func);
 			traverse(node.args);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ObjectAccess node)
+		public virtual T Visit(ObjectAccess node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.obj);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(Identifier node)
+		public virtual T Visit(Identifier node)
 		{
 			Visit((LvalueExpression) node);
-			return true;
+			return default(T);
 		}
 
-		public virtual bool Visit(IdentifierStatic node)
+		public virtual T Visit(IdentifierStatic node)
 		{
 			Visit((LvalueExpression)node);
-			return true;
+			return default(T);
 		}
 
-		public virtual bool Visit(TypeNode node)
+		public virtual T Visit(TypeNode node)
 		{
 			Visit((Node) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnresolvedType node)
+		public virtual T Visit(UnresolvedType node)
 		{
 			Visit((TypeNode) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnresolvedVariableType node)
+		public virtual T Visit(UnresolvedVariableType node)
 		{
 			Visit((VariableType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnresolvedIntegralType node)
+		public virtual T Visit(UnresolvedIntegralType node)
 		{
 			Visit((IntegralType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnresolvedOrdinalType node)
+		public virtual T Visit(UnresolvedOrdinalType node)
 		{
 			Visit((VariableType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(VariableType node)
+		public virtual T Visit(VariableType node)
 		{
 			Visit((TypeNode) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(MetaclassType node)
+		public virtual T Visit(MetaclassType node)
 		{
 			Visit((VariableType) node);
 			traverse(node.baseType);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(EnumType node)
+		public virtual T Visit(EnumType node)
 		{
 			Visit((VariableType) node);
 			traverse(node.enumVals);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RangeType node)
+		public virtual T Visit(RangeType node)
 		{
 			Visit((VariableType) node);
 			traverse(node.min);
 			traverse(node.max);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ScalarType node)
+		public virtual T Visit(ScalarType node)
 		{
 			Visit((VariableType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(IntegralType node)
+		public virtual T Visit(IntegralType node)
 		{
 			Visit((ScalarType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(IntegerType node)
+		public virtual T Visit(IntegerType node)
 		{
 			Visit((IntegralType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(SignedIntegerType node)
+		public virtual T Visit(SignedIntegerType node)
 		{
 			Visit((IntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnsignedIntegerType node)
+		public virtual T Visit(UnsignedIntegerType node)
 		{
 			Visit((IntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnsignedInt8Type node)
+		public virtual T Visit(UnsignedInt8Type node)
 		{
 			Visit((UnsignedIntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnsignedInt16Type node)
+		public virtual T Visit(UnsignedInt16Type node)
 		{
 			Visit((UnsignedIntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnsignedInt32Type node)
+		public virtual T Visit(UnsignedInt32Type node)
 		{
 			Visit((UnsignedIntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(UnsignedInt64Type node)
+		public virtual T Visit(UnsignedInt64Type node)
 		{
 			Visit((UnsignedIntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(SignedInt8Type node)
+		public virtual T Visit(SignedInt8Type node)
 		{
 			Visit((SignedIntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(SignedInt16Type node)
+		public virtual T Visit(SignedInt16Type node)
 		{
 			Visit((SignedIntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(SignedInt32Type node)
+		public virtual T Visit(SignedInt32Type node)
 		{
 			Visit((SignedIntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(SignedInt64Type node)
+		public virtual T Visit(SignedInt64Type node)
 		{
 			Visit((IntegerType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(BoolType node)
+		public virtual T Visit(BoolType node)
 		{
 			Visit((IntegralType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(CharType node)
+		public virtual T Visit(CharType node)
 		{
 			Visit((IntegralType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RealType node)
+		public virtual T Visit(RealType node)
 		{
 			Visit((ScalarType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(FloatType node)
+		public virtual T Visit(FloatType node)
 		{
 			Visit((RealType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(DoubleType node)
+		public virtual T Visit(DoubleType node)
 		{
 			Visit((RealType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ExtendedType node)
+		public virtual T Visit(ExtendedType node)
 		{
 			Visit((RealType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(CurrencyType node)
+		public virtual T Visit(CurrencyType node)
 		{
 			Visit((RealType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(StringType node)
+		public virtual T Visit(StringType node)
 		{
 			Visit((ScalarType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(FixedStringType node)
+		public virtual T Visit(FixedStringType node)
 		{
 			Visit((StringType) node);
 			traverse(node.expr);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(VariantType node)
+		public virtual T Visit(VariantType node)
 		{
 			Visit((VariableType) node);
 			traverse(node.actualtype);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(PointerType node)
+		public virtual T Visit(PointerType node)
 		{
 			Visit((ScalarType) node);
 			traverse(node.pointedType);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(StructuredType node)
+		public virtual T Visit(StructuredType node)
 		{
 			Visit((VariableType) node);
 			traverse(node.basetype);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(ArrayType node)
+		public virtual T Visit(ArrayType node)
 		{
 			Visit((StructuredType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(SetType node)
+		public virtual T Visit(SetType node)
 		{
 			Visit((StructuredType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(FileType node)
+		public virtual T Visit(FileType node)
 		{
 			Visit((StructuredType) node);
-			return true;
+			return default(T);
 		}
 		
-		public virtual bool Visit(RecordType node)
+		public virtual T Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
 			traverse(node.compTypes);
-			return true;
+			return default(T);
 		}
 	}
 }

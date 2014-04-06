@@ -13,7 +13,7 @@ namespace crosspascal.semantics
 
 	// For debug, prints the whole tree
 
-	class AstPrinter : Processor
+	class AstPrinter : Processor<bool>
 	{
 		private int identLevel = 0;
 		private StringBuilder builder = new StringBuilder();
@@ -23,9 +23,9 @@ namespace crosspascal.semantics
 		// =================================================
 		// Public interface
 
-		public AstPrinter(Traverser t) : base(t) { }
+		public AstPrinter(Traverser<bool> t) : base(t) { }
 		
-		public AstPrinter(TreeTraverse t = null) : base(t) { }
+		public AstPrinter(TreeTraverse<bool> t = null) : base(t) { }
 
 
 		public string Output()

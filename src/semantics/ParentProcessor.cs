@@ -7,7 +7,7 @@ using crosspascal.ast.nodes;
 
 namespace crosspascal.semantics
 {
-	class ParentProcessor : Processor
+	class ParentProcessor : Processor<bool>
 	{
 		
 		private bool TraverseSetParent(Node parent, Node child)

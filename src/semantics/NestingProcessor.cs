@@ -10,7 +10,7 @@ using crosspascal.semantics;
 
 namespace crosspascal.semantics
 {
-	class NestingProcessor : Processor
+	class NestingProcessor : Processor<bool>
 	{
 		private Dictionary<string, string> replacements = new Dictionary<string, string>();
 

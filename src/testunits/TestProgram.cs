@@ -63,7 +63,7 @@ namespace crosspascal.core
 
 				// use traverser object
 				case 1:
-					Traverser vtrav = (Traverser)Activator.CreateInstance(traverserType);
+					Traverser<bool> vtrav = (Traverser<bool>)Activator.CreateInstance(traverserType);
 					proc = new AstPrinter(vtrav);
 					vtrav.Processor = proc;
 					break;
@@ -77,7 +77,7 @@ namespace crosspascal.core
 				// explicitly set traverser
 				case 3:
 					proc = new AstPrinter();
-					Traverser trav = (Traverser)Activator.CreateInstance(traverserType, proc);
+					Traverser<bool> trav = (Traverser<bool>)Activator.CreateInstance(traverserType, proc);
 					trav.Processor = proc;
 					proc.traverse = trav.traverse;
 					break;

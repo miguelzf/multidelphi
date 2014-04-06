@@ -140,7 +140,6 @@ namespace crosspascal.semantics
 			return GetDeclaringContext<RoutineSection>();
 		}
 
-
 		/// <summary>
 		/// Gets the object (class, interface or record) that encloses the current context, if any
 		/// </summary>
@@ -150,6 +149,21 @@ namespace crosspascal.semantics
 			if (sec == null)
 				return null;
 			return sec.declaringObject;
+		}
+
+		/// <summary>
+		/// Gets the declaration of the object (class, interface or record) that encloses the current context, if any
+		/// </summary>
+		public CompositeDeclaration GetDeclaringObjectDeclaration()
+		{
+			var ctx = symEnv.GetContext();
+			while (ctx != null && !(ctx.Key is ObjectSection))
+				ctx = ctx.GetFirstParent();
+
+			if (ctx == null || ctx.Key == null)
+				return null;
+			// get the last declaration of the previous context
+			return ctx.GetFirstParent().lastInserted as CompositeDeclaration;
 		}
 
 		/// <summary>

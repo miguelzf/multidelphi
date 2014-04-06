@@ -10,7 +10,7 @@ using crosspascal.semantics;
 
 namespace crosspascal.codegen.cpp
 {
-	class CppCodegen : Processor
+	class CppCodegen : Processor<bool>
 	{
 		private int ident = 0;
 		private StringBuilder builder;

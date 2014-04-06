@@ -127,3 +127,4 @@ UpgradeLog*.XML
 /deps/cs-jflex/csflex.vshost.exe
 /deps/cs-jflex/csflex.vshost.exe.manifest
 /deps/cs-jflex/csflex.pdb
+/deps/LLVM-3.2.dll

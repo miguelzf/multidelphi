@@ -289,14 +289,22 @@ namespace crosspascal.ast.nodes
 
 	public abstract class ConstantValue : Node
 	{
+		public T Val<T>()
+		{
+			return (T) Val();
+		}
 
+		public abstract Object Val();
 	}
 
 	// For ints, chars and bools
 	public class IntegralValue : ConstantValue
 	{
 		public ulong val;
+
 		public IntegralValue(ulong val) { this.val = val; }
+
+		public override Object Val() { return val; }
 
 		public override bool Equals(object obj)
 		{
@@ -373,6 +381,8 @@ namespace crosspascal.ast.nodes
 		public string val;
 		public StringValue(string val) { this.val = val; }
 
+		public override Object Val() { return val; }
+
 		public override bool Equals(object obj)
 		{
 			return (obj is StringValue) && val == ((StringValue)obj).val;
@@ -383,6 +393,8 @@ namespace crosspascal.ast.nodes
 	{
 		public double val;
 		public RealValue(double val) { this.val = val; }
+
+		public override Object Val() { return val; }
 
 		public override bool Equals(object obj)
 		{

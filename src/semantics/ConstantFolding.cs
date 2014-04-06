@@ -7,7 +7,7 @@ using crosspascal.ast;
 
 namespace crosspascal.semantics
 {
-	class ConstantFolder : Processor
+	class ConstantFolder : Processor<bool>
 	{
 		private static bool isReal(double x)
 		{

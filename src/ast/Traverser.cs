@@ -7,18 +7,18 @@ using crosspascal.ast.nodes;
 
 namespace crosspascal.ast
 {
-	public abstract class Traverser
+	public abstract class Traverser<T>
 	{
-		public virtual Processor Processor { get; set; }
+		public virtual Processor<T> Processor { get; set; }
 
 		public Traverser() { }
 
-		public Traverser(Processor processor)
+		public Traverser(Processor<T> processor)
 		{
 			Processor = processor;
 			processor.traverse = this.traverse;
 		}
 
-		public abstract bool traverse(Node n);
+		public abstract T traverse(Node n);
 	}
 }

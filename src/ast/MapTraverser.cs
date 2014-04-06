@@ -14,17 +14,16 @@ namespace crosspascal.ast
 {
 	// Delivers a Mapping with which to traverse the AST
 
-	class MapTraverser : Traverser
+	class MapTraverser<T> : Traverser<T>
 	{
 		Dictionary<System.Type, MethodInfo> methodsMapping;
 
-		private void CreateMappings(Processor proc)
+		private void CreateMappings(Processor<T> proc)
 		{
 			methodsMapping = new Dictionary<System.Type, MethodInfo>();
 
 			Type nodeType = typeof(Node);
-			Type procType = typeof(Processor);
-			Type baseProcType = Processor.GetType();
+			Type procType = typeof(Processor<T>);
 			BindingFlags bflags = BindingFlags.Public	| BindingFlags.NonPublic
 								| BindingFlags.Instance | BindingFlags.FlattenHierarchy;
 
@@ -38,20 +37,20 @@ namespace crosspascal.ast
 				}
 		}
 
-		public override Processor Processor
+		public override Processor<T> Processor
 		{
 			set { base.Processor = value; CreateMappings(value); }
 		}
 
 		public MapTraverser() : base() { }
 
-		public MapTraverser(Processor processor) : base(processor)	{}
+		public MapTraverser(Processor<T> processor) : base(processor) { }
 
 
-		public override bool traverse(Node n)
+		public override T traverse(Node n)
 		{
 			if (n == null)
-				return true;
+				return default(T);
 
 			System.Type nodeType = n.GetType();
 
@@ -85,7 +84,7 @@ namespace crosspascal.ast
 
 			MethodInfo mi;
 			if (!methodsMapping.TryGetValue(nodeType, out mi))
-				return true;		// method not mapped. Nothing to do
+				return default(T);		// method not mapped. Nothing to do
 
 			try
 			{
@@ -94,10 +93,10 @@ namespace crosspascal.ast
 				if (oret == null)
 				{
 					Logger.log.Error("Process method " + mi + " invocation failed");
-					return false;
+					return default(T);
 				}
 
-				return (bool)oret;
+				return (T) oret;
 			}
 			catch (TargetInvocationException e)	// wrapper for an exception occurring in the invocation
 			{

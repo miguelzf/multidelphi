@@ -10,6 +10,7 @@ using crosspascal.semantics;
 using crosspascal.ast;
 using crosspascal.ast.nodes;
 using crosspascal.codegen.cpp;
+using crosspascal.codegen.llvm;
 
 namespace crosspascal.core
 {
@@ -102,13 +103,16 @@ namespace crosspascal.core
 				astPrinter.Process(ast);
 				Console.WriteLine(astPrinter.Output());
 
-				Processor constfolder = new ConstantFolder();
+				ConstantFolder constfolder = new ConstantFolder();
 				constfolder.Process(ast);
 
 				CppCodegen cppGen = new CppCodegen();
 				Console.WriteLine("Now compiling...");
 				cppGen.Process(ast);
 				Console.WriteLine(cppGen.Output());
+
+				LlvmILGen llvmGen = new LlvmILGen();
+				llvmGen.Process(ast);
 			}
 
 			return success;

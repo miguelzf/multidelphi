@@ -15,21 +15,20 @@ using crosspascal.ast.nodes;
 
 namespace crosspascal.ast
 {
+	public delegate T TreeTraverse<T>(Node n);
 
-	public delegate bool TreeTraverse(Node n);
-
-	public abstract partial class Processor
+	public abstract partial class Processor<T>
 	{
-		public TreeTraverse traverse { get; set; }
+		public TreeTraverse<T> traverse { get; set; }
 
 		// dummy
-		protected bool emptyTraverse(Node n)
+		protected T emptyTraverse(Node n)
 		{
-			return true;
+			return default(T);
 		}
 
 		// Create with given traverser object
-		public Processor(Traverser trav)
+		public Processor(Traverser<T> trav)
 		{
 			traverse = trav.traverse;
 		}
@@ -37,24 +36,24 @@ namespace crosspascal.ast
 		/// <summary>
 		/// Create with given traverser function, or with default (MapTraverser)
 		/// </summary>
-		public Processor(TreeTraverse t = null)
+		public Processor(TreeTraverse<T> t = null)
 		{
 			if (t == null)
-				traverse = new MapTraverser(this).traverse;
+				traverse = new MapTraverser<T>(this).traverse;
 			else
 				traverse = t;
 		}
 
-		public virtual bool Visit(Node node)
+		public virtual T Visit(Node node)
 		{
-			return true;
+			return default(T);
 		}
 
 
 		/// <summary>
 		/// Entry point
 		/// </summary>
-		public virtual bool Process(Node n)
+		public virtual T Process(Node n)
 		{
 			return traverse(n);
 		}
