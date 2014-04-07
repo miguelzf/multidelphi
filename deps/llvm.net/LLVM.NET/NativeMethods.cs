@@ -451,7 +451,7 @@ namespace LLVM
         [DllImport(llvmLibName, EntryPoint="LLVMContextDispose", CallingConvention=CallingConvention.Cdecl)]
         public static extern void ContextDispose(LLVMContextRef* C);
 
-        [DllImport(llvmLibName, EntryPoint="LLVMGetMDKindIDInContext", CallingConvention=CallingConvention.Cdecl)]
+		[DllImport(llvmLibName, EntryPoint = "LLVMGetMDKindIBuildNotDInContext", CallingConvention = CallingConvention.Cdecl)]
         public static extern uint GetMDKindIDInContext(LLVMContextRef* C, [In][MarshalAs(UnmanagedType.LPStr)] string Name, uint SLen);
 
         [DllImport(llvmLibName, EntryPoint="LLVMGetMDKindID", CallingConvention=CallingConvention.Cdecl)]

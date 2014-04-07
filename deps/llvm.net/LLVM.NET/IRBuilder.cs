@@ -18,83 +18,167 @@ namespace LLVM
         {
             Dispose(false);
         }
-
-        public Value BuildAdd(Value lhs, Value rhs)
+	
+		#region IDisposable Members
+		
+		public void Dispose()
         {
-            return BuildAdd(lhs, rhs, "addtmp");
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        public Value BuildAdd(Value lhs, Value rhs, string varName)
+        public void Dispose(bool disposing)
+        {
+            if(m_builder != null)
+            {
+                Native.DisposeBuilder(m_builder);
+                m_builder = null;
+            }
+        }
+
+        #endregion
+
+        #region IPointerWrapper Members
+
+        IntPtr IPointerWrapper.NativePointer
+        {
+            get { return (IntPtr)m_builder; }
+        }
+
+        #endregion
+
+		
+		#region Instruction builders
+		// LLVMCCoreInstructionBuilder Instruction Builders
+		// An instruction builder represents a point within a basic block and is
+		// the exclusive means of building instructions using the C interface.
+
+
+		const string tmpvarname = "tmp";
+
+		#region Arithmetic and Logical Instructions
+		
+        public Value BuildAdd(Value lhs, Value rhs, string varName = tmpvarname)
         {
             return new Value(Native.BuildAdd(m_builder, lhs.Handle, rhs.Handle, varName));
         }
 
-        public Value BuildFAdd(Value lhs, Value rhs)
-        {
-            return BuildFAdd(lhs, rhs, "addtmp");
-        }
-
-        public Value BuildFAdd(Value lhs, Value rhs, string varName)
+        public Value BuildFAdd(Value lhs, Value rhs, string varName = tmpvarname)
         {
             return new Value(Native.BuildFAdd(m_builder, lhs.Handle, rhs.Handle, varName));
         }
 
-        public Value BuildSub(Value lhs, Value rhs)
-        {
-            return BuildSub(lhs, rhs, "subtmp");
-        }
-
-        public Value BuildSub(Value lhs, Value rhs, string varName)
+        public Value BuildSub(Value lhs, Value rhs, string varName = tmpvarname)
         {
             return new Value(Native.BuildSub(m_builder, lhs.Handle, rhs.Handle, varName));
         }
 
-        public Value BuildFSub(Value lhs, Value rhs)
-        {
-            return BuildFSub(lhs, rhs, "subtmp");
-        }
-
-        public Value BuildFSub(Value lhs, Value rhs, string varName)
+        public Value BuildFSub(Value lhs, Value rhs, string varName = tmpvarname)
         {
             return new Value(Native.BuildFSub(m_builder, lhs.Handle, rhs.Handle, varName));
         }
 
-        public Value BuildMul(Value lhs, Value rhs)
-        {
-            return BuildMul(lhs, rhs, "multmp");
-        }
-
-        public Value BuildMul(Value lhs, Value rhs, string varName)
+        public Value BuildMul(Value lhs, Value rhs, string varName = tmpvarname)
         {
             return new Value(Native.BuildMul(m_builder, lhs.Handle, rhs.Handle, varName));
         }
 
-        public Value BuildFMul(Value lhs, Value rhs)
-        {
-            return BuildFMul(lhs, rhs, "multmp");
-        }
-
-        public Value BuildFMul(Value lhs, Value rhs, string varName)
+        public Value BuildFMul(Value lhs, Value rhs, string varName = tmpvarname)
         {
             return new Value(Native.BuildFMul(m_builder, lhs.Handle, rhs.Handle, varName));
         }
 
-        public Value BuildICmp(Value lhs, LLVMIntPredicate predicate, Value rhs)
+        public Value BuildUDiv(Value lhs, Value rhs, string varName = tmpvarname)
         {
-            return BuildICmp(lhs, predicate, rhs, "cmptmp");
+            return new Value(Native.BuildUDiv(m_builder, lhs.Handle, rhs.Handle, varName));
         }
 
-        public Value BuildICmp(Value lhs, LLVMIntPredicate predicate, Value rhs, string varName)
+        public Value BuildSDiv(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildSDiv(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildExactSDiv(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildExactSDiv(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildFDiv(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildFDiv(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildURem(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildURem(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+		
+        public Value BuildSRem(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildSRem(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildFRem(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildFRem(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildShl(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildShl(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildLShr(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildLShr(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildAShr(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildAShr(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildAnd(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildAnd(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildOr(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildOr(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+
+        public Value BuildXor(Value lhs, Value rhs, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildXor(m_builder, lhs.Handle, rhs.Handle, varName));
+        }
+	
+        public Value BuildNeg(Value val, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildNeg(m_builder, val.Handle, varName));
+        }
+		
+        public Value BuildFNeg(Value val, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildFNeg(m_builder, val.Handle, varName));
+        }
+		
+        public Value BuildNot(Value val, string varName = tmpvarname)
+        {
+            return new Value(Native.BuildNot(m_builder, val.Handle, varName));
+        }
+	
+		#endregion
+		
+		
+		#region Comparing and Branching instructions
+
+		public Value BuildICmp(Value lhs, LLVMIntPredicate predicate, Value rhs, string varName = tmpvarname)
         {
             return new Value(Native.BuildICmp(m_builder, predicate, lhs.Handle, rhs.Handle, varName));
         }
 
-        public Value BuildFCmp(Value lhs, LLVMRealPredicate predicate, Value rhs)
-        {
-            return BuildFCmp(lhs, predicate, rhs, "cmptmp");
-        }
-
-        public Value BuildFCmp(Value lhs, LLVMRealPredicate predicate, Value rhs, string varName)
+        public Value BuildFCmp(Value lhs, LLVMRealPredicate predicate, Value rhs, string varName = tmpvarname)
         {
             return new Value(Native.BuildFCmp(m_builder, predicate, lhs.Handle, rhs.Handle, varName));
         }
@@ -114,7 +198,10 @@ namespace LLVM
         {
             return new Value(Native.BuildBr(m_builder, branchBlock.Handle));
         }
+		
+		#endregion
 
+		
         public Value BuildCall(Function func, IEnumerable<Value> args)
         {
             return BuildCall(func, args, "calltmp");
@@ -200,34 +287,8 @@ namespace LLVM
         public void ClearInsertPoint()
         {
             Native.ClearInsertionPosition(m_builder);
-        }
+		}
 
-        #region IDisposable Members
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        public void Dispose(bool disposing)
-        {
-            if(m_builder != null)
-            {
-                Native.DisposeBuilder(m_builder);
-                m_builder = null;
-            }
-        }
-
-        #endregion
-
-        #region IPointerWrapper Members
-
-        IntPtr IPointerWrapper.NativePointer
-        {
-            get { return (IntPtr)m_builder; }
-        }
-
-        #endregion
-    }
+		#endregion	// instructions
+	}
 }

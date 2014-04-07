@@ -49,6 +49,9 @@ namespace crosspascal.codegen.llvm
 		private PassManager passManager;
 		private ExecutionEngine execEngine;
 
+		// map of ID-declarations to LLVM values
+		Dictionary<Declaration, LLVM.Value> values = new Dictionary<Declaration, Value>(1024);
+
 		public override Value Process(Node n)
 		{
 			using(Module module = new Module("my cool jit"))
@@ -69,10 +72,9 @@ namespace crosspascal.codegen.llvm
 				module.Dump();
 
 				Function func = null;
-				func.Dump();
-
-				GenericValue val = execEngine.RunFunction(func, new GenericValue[0]);
-				Console.WriteLine("Evaluated to " + val.ToReal().ToString());
+			//	func.Dump();
+			//	GenericValue val = execEngine.RunFunction(func, new GenericValue[0]);
+			//	Console.WriteLine("Evaluated to " + val.ToReal().ToString());
 			}
 
 			return default(Value);
@@ -116,90 +118,85 @@ namespace crosspascal.codegen.llvm
 
 		public override Value Visit(Identifier node)
 		{
-			Value value = Value.Null;
-
-			if(!CodeGenManager.NamedValues.TryGetValue(node.name, out value))
-				CodeGenManager.ErrorOutput.WriteLine("Unknown variable name.");
-
-			return builder.BuildLoad(value, node.name);
+			// ID has been previously validated
+			return builder.BuildLoad(values[node.decl], node.name);
 		}
 
 		public override Value Visit(ArithmethicBinaryExpression node)
 		{
+			Visit((BinaryExpression) node);
 			Value l = traverse(node.left);
 			Value r = traverse(node.right);
-			if (l.IsNull || r.IsNull) return Value.Null;
-
+			
+			if (l.IsNull || r.IsNull)
+				return Value.Null;
 
 			switch(node.op)
 			{
+				case ArithmeticBinaryOp.ADD:
+					return builder.BuildAdd(l, r);
+				case ArithmeticBinaryOp.SUB:
+					return builder.BuildSub(l, r);
+				case ArithmeticBinaryOp.MUL:
+					return builder.BuildMul(l, r);
+				case ArithmeticBinaryOp.DIV:
+					return builder.BuildUDiv(l, r);
+				case ArithmeticBinaryOp.QUOT:
+					return builder.BuildMul(l, r);
+				case ArithmeticBinaryOp.MOD:
+					return builder.BuildURem(l, r);
 				case ArithmeticBinaryOp.SHR:
+					return builder.BuildLShr(l, r);
+				case ArithmeticBinaryOp.SHL:
 					return builder.BuildFAdd(l, r);
-				default:
+
+				default:	// never happens
 					return Value.Null;
 			}
 		}
 
-/*
-				case '<':
-					// Convert bool 0/1 to double 0.0 or 1.0
-					return builder.BuildFCmpAndPromote(l, LLVMRealPredicate.RealULT, 
-													   r, TypeRef.CreateDouble());
-
-			}
- * 
-		/// BinaryExprAST - Expression class for a binary operator.
-		public override Value Visit(BinaryExpression node)
+		public override Value Visit(LogicalBinaryExpression node)
 		{
-			Value l = traverse(node);
-			Value r = node.RHS.CodeGen(builder);
-			if(l.IsNull || r.IsNull) return Value.Null;
+			Visit((BinaryExpression)node);
+			Value l = traverse(node.left);
+			Value r = traverse(node.right);
 
-			switch(node.)
+			if (l.IsNull || r.IsNull)
+				return Value.Null;
+
+			switch (node.op)
 			{
-				case '+':
-					return builder.BuildFAdd(l, r);
-				case '-':
-					return builder.BuildFSub(l, r);
-				case '*':
-					return builder.BuildFMul(l, r);
-				case '<':
-					// Convert bool 0/1 to double 0.0 or 1.0
-					return builder.BuildFCmpAndPromote(l, LLVMRealPredicate.RealULT, 
-													   r, TypeRef.CreateDouble());
+				case LogicalBinaryOp.AND:
+					return builder.BuildAnd(l, r);
+				case LogicalBinaryOp.OR:
+					return builder.BuildOr(l, r);
+				case LogicalBinaryOp.XOR:
+					return builder.BuildXor(l, r);
+				case LogicalBinaryOp.EQ:
+				case LogicalBinaryOp.NE:
+				case LogicalBinaryOp.LE:
+				case LogicalBinaryOp.LT:
+				case LogicalBinaryOp.GE:
+				case LogicalBinaryOp.GT:
+					// LogicalBinaryOp values for comparison operands match LLVMIntPredicate values
+					return builder.BuildICmp(l, (LLVMIntPredicate)node.op, r);
+				
+				default:	// never happens
+					return Value.Null;
 			}
-
-			// If it wasn't a builtin binary operator, it must be a user defined one. Emit
-			// a call to it.
-			Function f = CodeGenManager.Module.GetFunction("binary" + node.Op);
-			Debug.Assert(f != null);
-
-			Value[] ops = new Value[] { l, r };
-			Value ret = builder.BuildCall(f, ops, "binop");
-			return true;
-		}
-	
-
-		/// UnaryExprAST - Expression class for a unary operator.
-		public char Op { get; set; }
-		public ExprAST Operand { get; set; }
-
-		public UnaryExprAST(char op, ExprAST operand)
-		{
-			node.Op = op;
-			node.Operand = operand;
 		}
 
-		public override Value Visit(UnaryExpression node)
+/*		
+		public override Value Visit(UnaryMinus node)
 		{
-			Value operandV = node.Operand.CodeGen(builder);
-			if(operandV.IsNull) return operandV;
+			Value arg = traverse(node.expr);
+			Debug.Assert(!arg.IsNull);
 
-			Function f = CodeGenManager.Module.GetFunction("unary" + node.Op);
-			Debug.Assert(f != null);
 
-			Value[] ops = new Value[] { operandV };
-			return builder.BuildCall(f, ops, "unop");
+			Value[] ops = new Value[] { arg };
+			return builder.BuildSub(
+				
+				ops, "unop");
 		}
 	
 
@@ -240,6 +237,22 @@ namespace crosspascal.codegen.llvm
 
 				args.Add(val);
 			}
+
+						// If it wasn't a builtin binary operator, it must be a user defined one. Emit a call to it.
+			Function f = CodeGenManager.Module.GetFunction("binary" + node.Op);
+			Debug.Assert(f != null);
+			Value[] ops = new Value[] { l, r };
+			Value ret = builder.BuildCall(f, ops, "binop");
+			return true;
+
+
+						// If it wasn't a builtin binary operator, it must be a user defined one. Emit a call to it.
+			Function f = CodeGenManager.Module.GetFunction("binary" + node.Op);
+			Debug.Assert(f != null);
+			Value[] ops = new Value[] { l, r };
+			Value ret = builder.BuildCall(f, ops, "binop");
+			return true;
+
 
 			return builder.BuildCall(func, args.ToArray());
 		}

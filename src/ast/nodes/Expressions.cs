@@ -505,10 +505,22 @@ namespace crosspascal.ast.nodes
 
 	public enum LogicalBinaryOp
 	{
-		AND, OR, XOR,
-		EQ, NE,
-		LT, LE,
-		GT, GE,
+		AND,
+		OR,
+		XOR,
+		// int values match LLVM's constants
+		EQ = 32,
+		NE,
+			// unsigned compare
+		LT,
+		LE,
+		GT,
+		GE,
+			// signed compare
+		SGT,
+		SGE,
+		SLT,
+		SLE,
 	}
 
 	public abstract class LogicalBinaryExpression : BinaryExpression
