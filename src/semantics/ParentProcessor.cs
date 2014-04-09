@@ -19,6 +19,11 @@ namespace crosspascal.semantics
 			return traverse(child);
 		}
 
+		public override bool DefaultReturnValue()
+		{
+			return true;
+		}
+
 
 		//
 		// Do not set parent backreference in types! 
@@ -923,12 +928,6 @@ namespace crosspascal.semantics
 		{
 			Visit((Expression) node);
 			TraverseSetParent(node,node.expr);
-			return true;
-		}
-		
-		public override bool Visit(UnaryPlus node)
-		{
-			Visit((SimpleUnaryExpression) node);
 			return true;
 		}
 		

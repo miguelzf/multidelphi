@@ -497,15 +497,15 @@ namespace LLVM
 
         /* Obtain the data layout for a module.
          *
-         * @see Module::getDataLayout()*/
-        [DllImport(llvmLibName, EntryPoint="LLVMGetDataLayout", CallingConvention=CallingConvention.Cdecl)]
-        public static extern System.IntPtr GetDataLayout(LLVMModuleRef* M);
+         * @see Module::getTargetData()*/
+        [DllImport(llvmLibName, EntryPoint="LLVMGetTargetData", CallingConvention=CallingConvention.Cdecl)]
+        public static extern System.IntPtr GetTargetData(LLVMModuleRef* M);
 
         /* Set the data layout for a module.
          *
-         * @see Module::setDataLayout()*/
-        [DllImport(llvmLibName, EntryPoint="LLVMSetDataLayout", CallingConvention=CallingConvention.Cdecl)]
-        public static extern void SetDataLayout(LLVMModuleRef* M, [In][MarshalAs(UnmanagedType.LPStr)] string Triple);
+         * @see Module::setTargetData()*/
+        [DllImport(llvmLibName, EntryPoint="LLVMSetTargetData", CallingConvention=CallingConvention.Cdecl)]
+        public static extern void SetTargetData(LLVMModuleRef* M, [In][MarshalAs(UnmanagedType.LPStr)] string Triple);
 
         /* Obtain the target triple for a module.
          *

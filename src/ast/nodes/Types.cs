@@ -9,7 +9,6 @@ using crosspascal.core;
 namespace crosspascal.ast.nodes
 {
 	// override Equals but not GetHashCode warning
-	#pragma warning disable 659
 
 	//==========================================================================
 	// Types' base classes
@@ -66,7 +65,17 @@ namespace crosspascal.ast.nodes
 		{
 			throw new InvalidAbstractException(this, "Equals");
 		}
+
+		/// <summary>
+		/// WARNING!: only works for static Single types
+		/// </summary>
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
 	}
+
+	#pragma warning disable 0659
 
 
 	#region Unresolved Type Nodes

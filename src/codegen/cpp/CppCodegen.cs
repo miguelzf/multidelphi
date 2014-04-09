@@ -20,6 +20,11 @@ namespace crosspascal.codegen.cpp
 			builder = new StringBuilder();			
 		}
 
+		public override bool DefaultReturnValue()
+		{
+			return true;
+		}
+
 		public string Output()
 		{
 			return builder.ToString();
@@ -702,6 +707,13 @@ namespace crosspascal.codegen.cpp
 			//Visit((Statement) node);
 			traverse(node.expr);
             outputCode(";", false, true);
+			return true;
+		}
+
+		public override bool Visit(LvalueAsExpr node)
+		{
+			Visit((UnaryExpression)node);
+			traverse(node.lval);
 			return true;
 		}
 

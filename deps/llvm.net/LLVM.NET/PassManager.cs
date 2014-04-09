@@ -43,9 +43,9 @@ namespace LLVM
             return Native.RunFunctionPassManager(m_handle, function.Handle) != 0;
         }
 
-        public void AddTargetData(TargetData targetData)
+        public void AddTargetData(TargetData TargetData)
         {
-            Native.AddTargetData(targetData.Handle, m_handle);
+            Native.AddTargetData(TargetData.Handle, m_handle);
         }
 
         public void AddArgumentPromotionPass()

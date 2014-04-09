@@ -14,6 +14,11 @@ namespace crosspascal.semantics
 	{
 		private Dictionary<string, string> replacements = new Dictionary<string, string>();
 
+		public override bool DefaultReturnValue()
+		{
+			return true;
+		}
+
 		private CallableDeclaration GetInsideFunction(Node node)
 		{
 			if (node == null)

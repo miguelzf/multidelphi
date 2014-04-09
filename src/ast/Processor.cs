@@ -21,6 +21,10 @@ namespace crosspascal.ast
 	{
 		public TreeTraverse<T> traverse { get; set; }
 
+		// backup of traverse function. 
+		// Useful for processors that want to implement a strategy method pattern in the traverser
+		protected TreeTraverse<T> realTraverse { get; set; }
+
 		// dummy
 		protected T emptyTraverse(Node n)
 		{
@@ -49,6 +53,8 @@ namespace crosspascal.ast
 			return default(T);
 		}
 
+
+		public abstract T DefaultReturnValue();
 
 		/// <summary>
 		/// Entry point

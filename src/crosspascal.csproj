@@ -81,6 +81,7 @@
     <Compile Include="ast\MapTraverser.cs" />
     <Compile Include="ast\Traverser.cs" />
     <Compile Include="codegen\cpp\CppCodegen.cs" />
+    <Compile Include="codegen\llvm\IRBuilder.cs" />
     <Compile Include="codegen\llvm\LlvmILGen.cs" />
     <Compile Include="semantics\NestingProcessor.cs" />
     <Compile Include="utils\OutputStream.cs" />

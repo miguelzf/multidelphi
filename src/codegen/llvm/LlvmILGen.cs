@@ -13,71 +13,242 @@ using System.Diagnostics;
 namespace crosspascal.codegen.llvm
 {
 
-	static unsafe class CodeGenManager
-    {
-        public static Module Module { get; set; }
-        public static IDictionary<string, Value> NamedValues { get; private set; }
-        public static TextWriter ErrorOutput { get; set; }
-        /// BinopPrecedence - This holds the precedence for each binary operator that is
-        /// defined.
-        public static IDictionary<char, int> BinopPrecendence = new Dictionary<char, int>();
-
-        static CodeGenManager()
-        {
-            NamedValues = new Dictionary<string, Value>();
-            ErrorOutput = Console.Out;
-
-            // Install standard binary operators.
-            // 1 is lowest precedence.
-            BinopPrecendence['<'] = 10;
-            BinopPrecendence['+'] = 20;
-            BinopPrecendence['-'] = 20;
-            BinopPrecendence['*'] = 40;  // highest.
-        }
-    }
-
-
 	class LlvmILGen : Processor<LLVM.Value>
 	{
 		private int ident = 0;
 
 		public LlvmILGen()
 		{
+			realTraverse = traverse;
+			traverse = traverseDebug;
 		}
 
-		private IRBuilder builder;
-		private PassManager passManager;
-		private ExecutionEngine execEngine;
+		public override Value DefaultReturnValue()
+		{
+			return Value.Null;
+		}
+
+
+		LlvmIRBuilder builder;
+		PassManager passManager;
+		ExecutionEngine execEngine;
+		Module module;
 
 		// map of ID-declarations to LLVM values
 		Dictionary<Declaration, LLVM.Value> values = new Dictionary<Declaration, Value>(1024);
 
+		Function main;
+
 		public override Value Process(Node n)
 		{
-			using(Module module = new Module("my cool jit"))
-			using(builder = new IRBuilder())
+			InitTypeMap();
+
+			using (module = new Module("llvm compiler"))
+			using (builder = new LlvmIRBuilder())
 			{
-				CodeGenManager.Module = module;
 				execEngine = new ExecutionEngine(module);
+
+			/*
 				passManager = new PassManager(module);
 				passManager.AddTargetData(execEngine.GetTargetData());
+			
+				// optimizations
 				passManager.AddBasicAliasAnalysisPass();
-				passManager.AddPromoteMemoryToRegisterPass();
 				passManager.AddInstructionCombiningPass();
+				passManager.AddPromoteMemoryToRegisterPass();
 				passManager.AddReassociatePass();
 				passManager.AddGVNPass();
 				passManager.AddCFGSimplificationPass();
+				
 				passManager.Initialize();
-
+			 */
+				
+				Value valRet = traverse(n);
+			
 				module.Dump();
 
-				Function func = null;
-			//	func.Dump();
-			//	GenericValue val = execEngine.RunFunction(func, new GenericValue[0]);
-			//	Console.WriteLine("Evaluated to " + val.ToReal().ToString());
+			//	if (valRet.Equals(Value.Null))
+			//		return Value.Null;
+
+				GenericValue val = execEngine.RunFunction(main, new GenericValue[0]);
+				Console.WriteLine("Evaluated to " + val.ToUInt());
 			}
 
 			return default(Value);
+		}
+
+
+		bool Error(string msg, Node n = null)
+		{
+			string outp = "[ERROR in LLVM IR generator] " + msg;
+			if (n != null)
+				outp += n.Loc.ToString();
+
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.WriteLine(outp);
+			Console.ResetColor();
+			return false;
+		}
+
+		Value traverseDebug(Node n)
+		{
+			Console.WriteLine("Visiting Node " + ((n == null) ? "null" : n.NodeName()));
+			return realTraverse(n);
+		}
+
+
+		#region Helpers
+
+		Dictionary<TypeNode, LLVM.TypeRef> typeMap;
+
+		unsafe void InitTypeMap()
+		{
+			typeMap = new Dictionary<TypeNode, TypeRef>();
+
+			// ints
+			typeMap.Add(  SignedInt8Type.Single	, TypeRef.CreateInt8 ());
+			typeMap.Add(  SignedInt16Type.Single, TypeRef.CreateInt16());
+			typeMap.Add(  SignedInt32Type.Single, TypeRef.CreateInt32());
+			typeMap.Add(  SignedInt64Type.Single, TypeRef.CreateInt64());
+			typeMap.Add(UnsignedInt8Type.Single	, TypeRef.CreateInt8 ());
+			typeMap.Add(UnsignedInt16Type.Single, TypeRef.CreateInt16());
+			typeMap.Add(UnsignedInt32Type.Single, TypeRef.CreateInt32());
+			typeMap.Add(UnsignedInt64Type.Single, TypeRef.CreateInt64());
+
+			typeMap.Add(BoolType.Single,  new TypeRef(Native.Int1Type()));
+
+			// reals
+			typeMap.Add(FloatType.Single, TypeRef.CreateFloat());
+			typeMap.Add(DoubleType.Single, TypeRef.CreateDouble());
+			typeMap.Add(ExtendedType.Single, new TypeRef(Native.X86FP80Type()));
+				// TODO change this type
+			typeMap.Add(CurrencyType.Single, TypeRef.CreateDouble());
+
+			// string with dynamic size. implemented as a char* for now
+			typeMap.Add(StringType.Single, TypeRef.CreatePointer(TypeRef.CreateInt8()));
+		}
+		
+		LLVM.TypeRef GetLLVMType(TypeNode type)
+		{
+			TypeRef llvmtype;
+
+			if (type == null)	// Debug for now
+				type = SignedInt32Type.Single;
+
+			if (typeMap.TryGetValue(type, out llvmtype))
+				return llvmtype;
+
+			if (type is FixedStringType)
+				return typeMap[StringType.Single];
+
+			if (type is PointerType)
+				return TypeRef.CreatePointer(GetLLVMType((type as PointerType).pointedType));
+
+			// TODO finish
+			Error("Non-implemented type: " + type, type);
+			return TypeRef.Null;
+		}
+
+		#endregion
+
+
+
+		public override Value Visit(UnaryMinus node)
+		{
+			Value arg = traverse(node.expr);
+			Debug.Assert(!arg.IsNull);
+			
+			// 0 - arg
+			return builder.BuildSub(Value.CreateConstInt32(0), arg);
+		}
+
+		public override Value Visit(UnaryPlus node)
+		{
+			return traverse(node.expr);
+		}
+
+		public override Value Visit(LogicalNot node)
+		{
+			Value arg = traverse(node.expr);
+
+			return builder.BuildNot(arg);
+		}
+
+
+
+		public override Value Visit(Identifier node)
+		{
+			// ID has been previously validated
+			return values[node.decl];
+		}
+
+
+		public override Value Visit(AddressLvalue node)
+		{
+			Value arg = traverse(node.expr);
+			Value alloca = builder.BuildAlloca(TypeRef.CreatePointer(GetLLVMType(node.Type)));
+			builder.BuildStore(arg, alloca);
+			return alloca;
+		}
+
+		public override Value Visit(PointerDereference node)
+		{
+			Value arg = traverse(node.expr);
+			return builder.BuildLoad(arg);
+		}
+
+		public override Value Visit(Assignment node)
+		{
+			Value rvalue = traverse(node.expr);
+			Value lvalue = traverse(node.lvalue);
+
+			if (rvalue.IsNull || lvalue.IsNull)
+				return Value.Null;
+
+			return builder.BuildStore(rvalue, lvalue);
+		}
+
+		public override Value Visit(LvalueAsExpr node)
+		{
+			Value addr = traverse(node.lval);
+			return builder.BuildLoad(addr);
+		}
+
+		// Load a value to use as address of a store
+		public override Value Visit(ExprAsLvalue node)
+		{
+			return traverse(node.expr);
+		}
+
+		public override Value Visit(VarDeclaration node)
+		{
+			var llvmtype = GetLLVMType(node.type);
+			var vdecl = builder.AddGlobal(module, llvmtype, node.name);
+			unsafe { Native.SetInitializer(vdecl.Handle, Value.CreateConstInt32(0).Handle); }
+
+			values.Add(node, vdecl);
+
+			Console.WriteLine(node.name +  " with LLVM TYpe: " + llvmtype.TypeKind);
+			return vdecl;
+		}
+
+
+		public override Value Visit(ProgramSection node)
+		{
+			Function func = new Function(module, "main", TypeRef.CreateInt32(), new TypeRef[0]);
+			main = func;
+			func.SetLinkage(LLVMLinkage.CommonLinkage);
+
+			// Create a new basic block to start insertion into.
+			BasicBlock bb = func.AppendBasicBlock("entry");
+			builder.SetInsertPoint(bb);
+
+			traverse(node.decls);
+			traverse(node.block);
+
+			builder.BuildReturn(values.ElementAt(values.Count-1).Value);
+			
+			return Value.Null;
 		}
 
 
@@ -96,12 +267,12 @@ namespace crosspascal.codegen.llvm
 
 		public override Value Visit(IntLiteral node)
 		{
-			return Value.CreateConstUInt64(node.Value.Val<ulong>());
+			return Value.CreateConstUInt32((uint)node.Value.Val<ulong>());
 		}
 
 		public override Value Visit(CharLiteral node)
 		{
-			return Value.CreateConstInt8((sbyte) node.Value.Val<char>());
+			return Value.CreateConstInt8((sbyte)node.Value.Val<char>());
 		}
 
 		public override Value Visit(PointerLiteral node)
@@ -114,24 +285,19 @@ namespace crosspascal.codegen.llvm
 		#endregion
 
 
-		/// VariableExprAST - Expression class for referencing a variable, like "a".
+		#region Arithmetic and Logical Binary Expressions
 
-		public override Value Visit(Identifier node)
-		{
-			// ID has been previously validated
-			return builder.BuildLoad(values[node.decl], node.name);
-		}
-
+		// Currently only working with ints
 		public override Value Visit(ArithmethicBinaryExpression node)
 		{
-			Visit((BinaryExpression) node);
+			Visit((BinaryExpression)node);
 			Value l = traverse(node.left);
 			Value r = traverse(node.right);
-			
+
 			if (l.IsNull || r.IsNull)
 				return Value.Null;
 
-			switch(node.op)
+			switch (node.op)
 			{
 				case ArithmeticBinaryOp.ADD:
 					return builder.BuildAdd(l, r);
@@ -151,10 +317,12 @@ namespace crosspascal.codegen.llvm
 					return builder.BuildFAdd(l, r);
 
 				default:	// never happens
+					Error("Invalid arithmetic binary operator: " + node.op, node);
 					return Value.Null;
 			}
 		}
 
+		// Currently only working with ints
 		public override Value Visit(LogicalBinaryExpression node)
 		{
 			Visit((BinaryExpression)node);
@@ -180,37 +348,16 @@ namespace crosspascal.codegen.llvm
 				case LogicalBinaryOp.GT:
 					// LogicalBinaryOp values for comparison operands match LLVMIntPredicate values
 					return builder.BuildICmp(l, (LLVMIntPredicate)node.op, r);
-				
+
 				default:	// never happens
 					return Value.Null;
 			}
 		}
 
-/*		
-		public override Value Visit(UnaryMinus node)
-		{
-			Value arg = traverse(node.expr);
-			Debug.Assert(!arg.IsNull);
+		#endregion
 
 
-			Value[] ops = new Value[] { arg };
-			return builder.BuildSub(
-				
-				ops, "unop");
-		}
-	
-
-		/// CallExprAST - Expression class for function calls.
-		/// 
-		public string Callee { get; set; }
-		public List<ExprAST> Args { get; private set; }
-
-		public CallExprAST(string callee, IEnumerable<ExprAST> args)
-		{
-			node.Callee = callee;
-			node.Args = new List<ExprAST>(args);
-		}
-
+	/*
 		public override Value Visit(RoutineCall node)
 		{
 			// Look up the name in the global module table.
@@ -539,13 +686,6 @@ namespace crosspascal.codegen.llvm
 		}
 	};
 		*/
-
-
-		//
-		// Processor interface
-		//
-
-
 
 	}
 }

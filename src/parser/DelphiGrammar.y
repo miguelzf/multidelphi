@@ -89,7 +89,7 @@ namespace crosspascal.parser
 %type<char>   constchar
 %type<LvalueExpression> lvalue lvalstmt
 %type<Identifier> identifier
-%type<Expression> unaryexpr expr rangestart set setelem constexpr constinit paraminitopt
+%type<Expression> unaryexpr expr rangestart set setelem constexpr constinit paraminitopt lvalasval
 %type<ExpressionList> caselabellst exprlst constexprlst exprlstopt setelemlst arrayexprlst callparams
 %type<TypeList> arrayszlst
 %type<FieldInitList> fieldconstlst 
@@ -871,9 +871,13 @@ lvalue	// lvalue
 	| LPAR expr RPAR						{ $$ = new ExprAsLvalue($2); }
 	;
 
+lvalasval
+	: lvalue								{ $$ = ($1 is ExprAsLvalue)? ($1 as ExprAsLvalue).expr : new LvalueAsExpr($1); }
+	;
+
 unaryexpr
 	: literal								{ $$ = $1; }
-	| lvalue								{ $$ = $1; }
+	| lvalasval								{ $$ = $1; }
 	| set									{ $$ = $1; }
 	| KW_ADDR unaryexpr						{ $$ = new AddressLvalue($2); }
 	| KW_NOT unaryexpr						{ $$ = new LogicalNot($2); }

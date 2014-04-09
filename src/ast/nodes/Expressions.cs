@@ -683,10 +683,27 @@ namespace crosspascal.ast.nodes
 	// Lvalue Expressions
 	//==========================================================================
 
+	/// <summary>
+	/// Cast an lvalue to an rvalue (Expr) 
+	/// </summary>
+	public class LvalueAsExpr : UnaryExpression
+	{
+		public LvalueExpression lval;
+
+		public LvalueAsExpr(LvalueExpression lval)
+		{
+			this.lval = lval;
+		}
+	}
+
+
 	public abstract class LvalueExpression : UnaryExpression
 	{
 	}
 
+	/// <summary>
+	/// Cast an rvalue (Expr) to an lvalue
+	/// </summary>
 	public class ExprAsLvalue : LvalueExpression
 	{
 		public Expression expr;

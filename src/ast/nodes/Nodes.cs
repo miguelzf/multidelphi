@@ -45,7 +45,7 @@ namespace crosspascal.ast.nodes
 			file = f;
 		}
 
-		public String ErrorMsg()
+		public override String ToString()
 		{
 			return " in file " + file + " line " + line;
 		}
@@ -68,12 +68,12 @@ namespace crosspascal.ast.nodes
 
 
 		/// <summary>
-		/// Returns type name withou qualifier part
+		/// Returns type name without qualifier part
 		/// </summary>
 		public String NodeName()
 		{
 			String fullname = this.ToString();
-			return fullname.Substring(fullname.LastIndexOf('.') + 1);
+			return fullname.Substring(fullname.LastIndexOf('.') + 1) + Loc.ToString();
 		}
 
 		/// <summary>
@@ -82,7 +82,7 @@ namespace crosspascal.ast.nodes
 		/// <param name="visitor"></param>
 		protected bool Error(string msg)
 		{
-			string outp = "[ERROR in node creation] " + msg + Loc.ErrorMsg();
+			string outp = "[ERROR in node creation] " + msg + Loc.ToString();
 			// throw new crosspascal.parser.AstNodeException(outp);
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine(outp);
@@ -96,7 +96,7 @@ namespace crosspascal.ast.nodes
 		/// <param name="visitor"></param>
 		protected bool ErrorInternal(string msg)
 		{
-			string outp = "[ERROR internal] " + msg + Loc.ErrorMsg();
+			string outp = "[ERROR internal] " + msg + Loc.ToString();
 			// throw new crosspascal.parser.AstNodeException(outp);
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine(outp);

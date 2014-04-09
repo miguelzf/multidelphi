@@ -7,7 +7,7 @@ namespace LLVM
 {
     public unsafe class IRBuilder : IDisposable, IPointerWrapper
     {
-        private LLVMBuilderRef* m_builder;
+        protected LLVMBuilderRef* m_builder;
 
         public IRBuilder()
         {
@@ -54,7 +54,7 @@ namespace LLVM
 		// the exclusive means of building instructions using the C interface.
 
 
-		const string tmpvarname = "tmp";
+		protected const string tmpvarname = "tmp";
 
 		#region Arithmetic and Logical Instructions
 		
@@ -201,20 +201,20 @@ namespace LLVM
 		
 		#endregion
 
-		
+
         public Value BuildCall(Function func, IEnumerable<Value> args)
         {
             return BuildCall(func, args, "calltmp");
         }
 
-        public Value BuildCall(Function func, IEnumerable<Value> args, string varName)
+		public Value BuildCall(Function func, IEnumerable<Value> args, string varName = tmpvarname)
         {
             IntPtr[] argVals = LLVMHelper.MarshallPointerArray(args);
 
             return new Value(Native.BuildCall(m_builder, func.Handle, argVals, (uint)argVals.Length, varName));
         }
 
-        public Value BuildLoad(Value value, string varName)
+        public Value BuildLoad(Value value, string varName = tmpvarname)
         {
             return new Value(Native.BuildLoad(m_builder, value.Handle, varName));
         }
@@ -224,7 +224,7 @@ namespace LLVM
             return new Value(Native.BuildStore(m_builder, src.Handle, dest.Handle));
         }
 
-        public Value BuildEntryBlockAlloca(Function function, TypeRef type, string varName)
+		public Value BuildEntryBlockAlloca(Function function, TypeRef type, string varName = tmpvarname)
         {
             LLVMBasicBlockRef* block = Native.GetInsertBlock(m_builder);
             LLVMBasicBlockRef* entry = Native.GetEntryBasicBlock(function.Handle);

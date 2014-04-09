@@ -18,82 +18,75 @@ namespace crosspascal.ast
 		
 		public virtual T Visit(FixmeNode node)
 		{
-			Visit((Node) node);
-			return default(T);
+			return Visit((Node) node);
 		}
 		
 		public virtual T Visit(NotSupportedNode node)
 		{
-			Visit((Node) node);
-			return default(T);
+			return Visit((Node)node);
 		}
 		
 		public virtual T Visit(EmptyNode node)
 		{
-			Visit((Node) node);
-			return default(T);
+			return Visit((Node)node);
 		}
 				
 		public virtual T Visit(NodeList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(StatementList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(TypeList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(DeclarationList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(EnumValueList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(TranslationUnit node)
 		{
-			Visit((Declaration) node);
-			return default(T);
+			return Visit((Declaration)node);
 		}
 		
 		public virtual T Visit(ProgramNode node)
 		{
 			Visit((TranslationUnit) node);
-			traverse(node.section);
-			return default(T);
+			return traverse(node.section);
 		}
 		
 		public virtual T Visit(LibraryNode node)
 		{
 			Visit((TranslationUnit) node);
-			traverse(node.section);
-			return default(T);
+			return traverse(node.section);
 		}
 
 		public virtual T Visit(ProgramSection node)
 		{
 			Visit((TopLevelDeclarationSection)node);
-			traverse(node.block);
-			return default(T);
+			return traverse(node.block);
 		}
 		
 		public virtual T Visit(UnitNode node)
@@ -103,7 +96,7 @@ namespace crosspascal.ast
 			traverse(node.implementation);
 			traverse(node.initialization);
 			traverse(node.finalization);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(PackageNode node)
@@ -111,317 +104,272 @@ namespace crosspascal.ast
 			Visit((TranslationUnit) node);
 			traverse(node.requires);
 			traverse(node.contains);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(UnitItem node)
 		{
-			Visit((Node) node);
-			return default(T);
+			return Visit((Node)node);
 		}
 		
 		public virtual T Visit(UsesItem node)
 		{
-			Visit((UnitItem) node);
-			return default(T);
+			return Visit((UnitItem)node);
 		}
 		
 		public virtual T Visit(RequiresItem node)
 		{
-			Visit((UnitItem) node);
-			return default(T);
+			return Visit((UnitItem)node);
 		}
 		
 		public virtual T Visit(ContainsItem node)
 		{
-			Visit((UnitItem) node);
-			return default(T);
+			return Visit((UnitItem)node);
 		}
 		
 		public virtual T Visit(ExportItem node)
 		{
 			Visit((UnitItem) node);
-			traverse(node.formalparams);
-			return default(T);
+			return traverse(node.formalparams);
 		}
 		
 		public virtual T Visit(Section node)
 		{
 			Visit((Node) node);
-			traverse(node.decls);
-			return default(T);
+			return traverse(node.decls);
 		}
 		
 		public virtual T Visit(RoutineSection node)
 		{
 			Visit((Section) node);
-			traverse(node.block);
-			return default(T);
+			return traverse(node.block);
 		}
 		
 		public virtual T Visit(ParametersSection node)
 		{
 			Visit((Section) node);
-			traverse(node.returnVar);
-			return default(T);
+			return traverse(node.returnVar);
 		}
 				
 		public virtual T Visit(TopLevelDeclarationSection node)
 		{
 			traverse(node.uses);
-			Visit((Section)node);
-			return default(T);
+			return Visit((Section)node);
 		}
 		
 		public virtual T Visit(InterfaceSection node)
 		{
-			Visit((TopLevelDeclarationSection) node);
-			return default(T);
+			return Visit((TopLevelDeclarationSection)node);
 		}
 		
 		public virtual T Visit(ImplementationSection node)
 		{
-			Visit((TopLevelDeclarationSection) node);
-			return default(T);
+			return Visit((TopLevelDeclarationSection)node);
 		}
 		
 		public virtual T Visit(Declaration node)
 		{
 			Visit((Node) node);
-			traverse(node.type);
-			return default(T);
+			return traverse(node.type);
 		}
 		
 		public virtual T Visit(LabelDeclaration node)
 		{
-			Visit((Declaration) node);
-			return default(T);
+			return Visit((Declaration)node);
 		}
 		
 		public virtual T Visit(ValueDeclaration node)
 		{
-			Visit((Declaration) node);
-			return default(T);
+			return Visit((Declaration)node);
 		}
 		
 		public virtual T Visit(VarDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			traverse(node.init);
-			return default(T);
+			return traverse(node.init);
 		}
 		
 		public virtual T Visit(ParamDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			traverse(node.init);
-			return default(T);
+			return traverse(node.init);
 		}
 		
 		public virtual T Visit(VarParamDeclaration node)
 		{
-			Visit((ParamDeclaration) node);
-			return default(T);
+			return Visit((ParamDeclaration)node);
 		}
 		
 		public virtual T Visit(ConstParamDeclaration node)
 		{
-			Visit((ParamDeclaration) node);
-			return default(T);
+			return Visit((ParamDeclaration)node);
 		}
 		
 		public virtual T Visit(OutParamDeclaration node)
 		{
-			Visit((ParamDeclaration) node);
-			return default(T);
+			return Visit((ParamDeclaration)node);
 		}
 		
 		public virtual T Visit(ConstDeclaration node)
 		{
 			Visit((ValueDeclaration) node);
-			traverse(node.init);
-			return default(T);
+			return traverse(node.init);
 		}
 		
 		public virtual T Visit(EnumValue node)
 		{
-			Visit((ConstDeclaration) node);
-			return default(T);
+			return Visit((ConstDeclaration)node);
 		}
 		
 		public virtual T Visit(TypeDeclaration node)
 		{
-			Visit((Declaration) node);
-			return default(T);
+			return Visit((Declaration)node);
 		}
 		
 		public virtual T Visit(ProceduralType node)
 		{
 			Visit((TypeNode) node);
 			traverse(node.@params);
-			traverse(node.funcret);
 			traverse(node.Directives);
-			return default(T);
+			return traverse(node.funcret);
 		}
 		
 		public virtual T Visit(MethodType node)
 		{
-			Visit((ProceduralType) node);
-			return default(T);
+			return Visit((ProceduralType)node);
 		}
 		
 		public virtual T Visit(CallableDeclaration node)
 		{
 			Visit((Declaration) node);
-			traverse(node.Type);
 			traverse(node.Directives);
-			return default(T);
+			return traverse(node.Type);
 		}
 		
 		public virtual T Visit(RoutineDeclaration node)
 		{
-			Visit((CallableDeclaration) node);
-			return default(T);
+			return Visit((CallableDeclaration)node);
 		}
 		
 		public virtual T Visit(MethodDeclaration node)
 		{
-			Visit((CallableDeclaration) node);
-			return default(T);
+			return Visit((CallableDeclaration)node);
 		}
 		
 		public virtual T Visit(RoutineDefinition node)
 		{
 			Visit((RoutineDeclaration)node);
-			traverse(node.body); 
-			return default(T);
+			return traverse(node.body); 
 		}
 		
 		public virtual T Visit(MethodDefinition node)
 		{
 			Visit((MethodDeclaration)node);
-			traverse(node.body);
-			return default(T);
+			return traverse(node.body);
 		}
 		
 		public virtual T Visit(RoutineDirectives node)
 		{
-			Visit((Node) node);
-			return default(T);
+			return Visit((Node)node);
 		}
 		
 		public virtual T Visit(ImportDirectives node)
 		{
-			Visit((RoutineDirectives) node);
-			return default(T);
+			return Visit((RoutineDirectives)node);
 		}
 		
 		public virtual T Visit(MethodDirectives node)
 		{
-			Visit((RoutineDirectives) node);
-			return default(T);
+			return Visit((RoutineDirectives)node);
 		}
 		
 		public virtual T Visit(CompositeDeclaration node)
 		{
 			Visit((TypeDeclaration) node);
-			traverse(node.Type);
-			return default(T);
+			return traverse(node.Type);
 		}
 		
 		public virtual T Visit(ClassDeclaration node)
 		{
-			Visit((CompositeDeclaration) node);
-			return default(T);
+			return Visit((CompositeDeclaration)node);
 		}
 		
 		public virtual T Visit(InterfaceDeclaration node)
 		{
-			Visit((CompositeDeclaration) node);
-			return default(T);
+			return Visit((CompositeDeclaration)node);
 		}
 		
 		public virtual T Visit(CompositeType node)
 		{
 			Visit((TypeNode) node);
-			traverse(node.section);
-			return default(T);
+			return traverse(node.section);
 		}
 		
 		public virtual T Visit(ClassType node)
 		{
 			Visit((CompositeType) node);
-			traverse(node.self);
-			return default(T);
+			return traverse(node.self);
 		}
 		
 		public virtual T Visit(InterfaceType node)
 		{
 			Visit((CompositeType) node);
-			traverse(node.guid);
-			return default(T);
+			return traverse(node.guid);
 		}
 		
 		public virtual T Visit(ClassRefType node)
 		{
 		//	Do not traverse this node! circular dependency
 		//	traverse(node.reftype);
-			return default(T);
+			return DefaultReturnValue();
 		}
 
 		public virtual T Visit(RecordRefType node)
 		{
 			//	Do not traverse this node! circular dependency
 			//	traverse(node.reftype);
-			return default(T);
+			return DefaultReturnValue();
 		}
 
 		public virtual T Visit(ObjectSection node)
 		{
 			Visit((Section) node);
-			traverse(node.fields);
-			return default(T);
+			return traverse(node.fields);
 		}
 		
 		public virtual T Visit(FieldDeclaration node)
 		{
-			Visit((ValueDeclaration) node);
-			return default(T);
+			return Visit((ValueDeclaration)node);
 		}
 
 		public virtual T Visit(RecordFieldDeclaration node)
 		{
-			Visit((ValueDeclaration)node);
-			return default(T);
+			return Visit((ValueDeclaration)node);
 		}
 		
 		public virtual T Visit(VariantDeclaration node)
 		{
 			Visit((RecordFieldDeclaration) node);
-			traverse(node.varfields);
-			return default(T);
+			return traverse(node.varfields);
 		}
 		
 		public virtual T Visit(VarEntryDeclaration node)
 		{
 			Visit((RecordFieldDeclaration) node);
 			traverse(node.tagvalue);
-			traverse(node.fields);
-			return default(T);
+			return traverse(node.fields);
 		}
 		
 		public virtual T Visit(PropertyDeclaration node)
 		{
 			Visit((FieldDeclaration) node);
-			traverse(node.specifiers);
-			return default(T);
+			return traverse(node.specifiers);
 		}
 		
 		public virtual T Visit(ArrayProperty node)
 		{
 			Visit((PropertyDeclaration) node);
-			traverse(node.indexes);
-			return default(T);
+			return traverse(node.indexes);
 		}
 		
 		public virtual T Visit(PropertySpecifiers node)
@@ -430,52 +378,45 @@ namespace crosspascal.ast
 			traverse(node.index);
 			traverse(node.stored);
 			traverse(node.@default);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(Statement node)
 		{
-			Visit((Node) node);
-			return default(T);
+			return Visit((Node)node);
 		}
 		
 		public virtual T Visit(LabelStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.stmt);
-			return default(T);
+			return traverse(node.stmt);
 		}
 		
 		public virtual T Visit(EmptyStatement node)
 		{
-			Visit((Statement) node);
-			return default(T);
+			return Visit((Statement)node);
 		}
 		
 		public virtual T Visit(BreakStatement node)
 		{
-			Visit((Statement) node);
-			return default(T);
+			return Visit((Statement)node);
 		}
 		
 		public virtual T Visit(ContinueStatement node)
 		{
-			Visit((Statement) node);
-			return default(T);
+			return Visit((Statement)node);
 		}
 		
 		public virtual T Visit(Assignment node)
 		{
-			Visit((Statement) node);
+			return Visit((Statement)node);
 			traverse(node.lvalue);
-			traverse(node.expr);
-			return default(T);
+			return traverse(node.expr);
 		}
 		
 		public virtual T Visit(GotoStatement node)
 		{
-			Visit((Statement) node);
-			return default(T);
+			return Visit((Statement)node);
 		}
 		
 		public virtual T Visit(IfStatement node)
@@ -484,14 +425,13 @@ namespace crosspascal.ast
 			traverse(node.condition);
 			traverse(node.thenblock);
 			traverse(node.elseblock);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(ExpressionStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.expr);
-			return default(T);
+			return traverse(node.expr);
 		}
 		
 		public virtual T Visit(CaseSelector node)
@@ -499,7 +439,7 @@ namespace crosspascal.ast
 			Visit((Statement) node);
 			traverse(node.list);
 			traverse(node.stmt);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(CaseStatement node)
@@ -508,7 +448,7 @@ namespace crosspascal.ast
 			traverse(node.condition);
 			traverse(node.selectors);
 			traverse(node.caseelse);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(LoopStatement node)
@@ -516,19 +456,17 @@ namespace crosspascal.ast
 			Visit((Statement) node);
 			traverse(node.condition);
 			traverse(node.block);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(RepeatLoop node)
 		{
-			Visit((LoopStatement) node);
-			return default(T);
+			return Visit((LoopStatement) node);
 		}
 		
 		public virtual T Visit(WhileLoop node)
 		{
-			Visit((LoopStatement) node);
-			return default(T);
+			return Visit((LoopStatement)node);
 		}
 		
 		public virtual T Visit(ForLoop node)
@@ -537,67 +475,59 @@ namespace crosspascal.ast
 			traverse(node.var);
 			traverse(node.start);
 			traverse(node.end);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(BlockStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.stmts);
-			return default(T);
+			return traverse(node.stmts);
 		}
 		
 		public virtual T Visit(WithStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.with);
-			traverse(node.body);
-			return default(T);
+			return traverse(node.body);
 		}
 		
 		public virtual T Visit(TryFinallyStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.body);
-			traverse(node.final);
-			return default(T);
+			return traverse(node.final);
 		}
 		
 		public virtual T Visit(TryExceptStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.body);
-			traverse(node.final);
-			return default(T);
+			return traverse(node.final);
 		}
 		
 		public virtual T Visit(ExceptionBlock node)
 		{
 			Visit((Statement) node);
 			traverse(node.onList);
-			traverse(node.@default);
-			return default(T);
+			return traverse(node.@default);
 		}
 		
 		public virtual T Visit(RaiseStatement node)
 		{
 			Visit((Statement) node);
 			traverse(node.lvalue);
-			traverse(node.expr);
-			return default(T);
+			return traverse(node.expr);
 		}
 		
 		public virtual T Visit(OnStatement node)
 		{
 			Visit((Statement) node);
-			traverse(node.body);
-			return default(T);
+			return traverse(node.body);
 		}
 		
 		public virtual T Visit(AssemblerBlock node)
 		{
-			Visit((BlockStatement) node);
-			return default(T);
+			return Visit((BlockStatement)node);
 		}
 		
 		public virtual T Visit(Expression node)
@@ -606,45 +536,40 @@ namespace crosspascal.ast
 			traverse(node.Type);
 			traverse(node.Value);
 			traverse(node.ForcedType);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(EmptyExpression node)
 		{
-			Visit((Expression) node);
-			return default(T);
+			return Visit((Expression)node);
 		}
 		
 		public virtual T Visit(ExpressionList node)
 		{
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(ConstExpression node)
 		{
-			Visit((Expression) node);
-			return default(T);
+			return Visit((Expression)node);
 		}
 		
 		public virtual T Visit(StructuredConstant node)
 		{
 			Visit((ConstExpression) node);
-			traverse(node.exprlist);
-			return default(T);
+			return traverse(node.exprlist);
 		}
 		
 		public virtual T Visit(ArrayConst node)
 		{
-			Visit((StructuredConstant) node);
-			return default(T);
+			return Visit((StructuredConstant)node);
 		}
 		
 		public virtual T Visit(RecordConst node)
 		{
-			Visit((StructuredConstant) node);
-			return default(T);
+			return Visit((StructuredConstant)node);
 		}
 		
 		public virtual T Visit(FieldInitList node)
@@ -652,98 +577,83 @@ namespace crosspascal.ast
 			Visit((ExpressionList) node);
 			foreach (Node n in node.nodes)
 				traverse(n);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(FieldInit node)
 		{
 			Visit((ConstExpression) node);
-			traverse(node.expr);
-			return default(T);
+			return traverse(node.expr);
 		}
 		
 		public virtual T Visit(ConstIdentifier node)
 		{
-			Visit((ConstExpression) node);
-			return default(T);
+			return Visit((ConstExpression)node);
 		}
 		
 		public virtual T Visit(Literal node)
 		{
-			Visit((ConstExpression) node);
-			return default(T);
+			return Visit((ConstExpression) node);
 		}
 		
 		public virtual T Visit(OrdinalLiteral node)
 		{
-			Visit((Literal) node);
-			return default(T);
+			return Visit((Literal) node);
 		}
 		
 		public virtual T Visit(IntLiteral node)
 		{
-			Visit((OrdinalLiteral) node);
-			return default(T);
+			return Visit((OrdinalLiteral) node);
 		}
 		
 		public virtual T Visit(CharLiteral node)
 		{
-			Visit((OrdinalLiteral) node);
-			return default(T);
+			return Visit((OrdinalLiteral) node);
 		}
 		
 		public virtual T Visit(BoolLiteral node)
 		{
-			Visit((OrdinalLiteral) node);
-			return default(T);
+			return Visit((OrdinalLiteral) node);
 		}
 		
 		public virtual T Visit(StringLiteral node)
 		{
-			Visit((Literal) node);
-			return default(T);
+			return Visit((Literal) node);
 		}
 		
 		public virtual T Visit(RealLiteral node)
 		{
-			Visit((Literal) node);
-			return default(T);
+			return Visit((Literal) node);
 		}
 		
 		public virtual T Visit(PointerLiteral node)
 		{
-			Visit((Literal) node);
-			return default(T);
+			return Visit((Literal) node);
 		}
 		
 		public virtual T Visit(ConstantValue node)
 		{
-			Visit((Node) node);
-			return default(T);
+			return Visit((Node) node);
 		}
 		
 		public virtual T Visit(IntegralValue node)
 		{
-			Visit((ConstantValue) node);
-			return default(T);
+			return Visit((ConstantValue) node);
 		}
 		
 		public virtual T Visit(StringValue node)
 		{
-			Visit((ConstantValue) node);
-			return default(T);
+			return Visit((ConstantValue) node);
 		}
 		
 		public virtual T Visit(RealValue node)
 		{
-			Visit((ConstantValue) node);
-			return default(T);
+			return Visit((ConstantValue) node);
 		}
 		
 		public virtual T Visit(BinaryExpression node)
 		{
-			Visit((Expression) node);
-			return default(T);
+			return Visit((Expression) node);
 		}
 		
 		public virtual T Visit(SetIn node)
@@ -751,13 +661,12 @@ namespace crosspascal.ast
 			Visit((BinaryExpression) node);
 			traverse(node.expr);
 			traverse(node.set);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(SetRange node)
 		{
-			Visit((BinaryExpression) node);
-			return default(T);
+			return Visit((BinaryExpression) node);
 		}
 		
 		public virtual T Visit(ArithmethicBinaryExpression node)
@@ -765,55 +674,47 @@ namespace crosspascal.ast
 			Visit((BinaryExpression) node);
 			traverse(node.left);
 			traverse(node.right);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(Subtraction node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
-			return default(T);
+			return Visit((ArithmethicBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Addition node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
-			return default(T);
+			return Visit((ArithmethicBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Product node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
-			return default(T);
+			return Visit((ArithmethicBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Division node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
-			return default(T);
+			return Visit((ArithmethicBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Quotient node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
-			return default(T);
+			return Visit((ArithmethicBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Modulus node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
-			return default(T);
+			return Visit((ArithmethicBinaryExpression) node);
 		}
 		
 		public virtual T Visit(ShiftRight node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
-			return default(T);
+			return Visit((ArithmethicBinaryExpression) node);
 		}
 		
 		public virtual T Visit(ShiftLeft node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
-			return default(T);
+			return Visit((ArithmethicBinaryExpression) node);
 		}
 		
 		public virtual T Visit(LogicalBinaryExpression node)
@@ -821,61 +722,52 @@ namespace crosspascal.ast
 			Visit((BinaryExpression) node);
 			traverse(node.left);
 			traverse(node.right);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(LogicalAnd node)
 		{
-			Visit((LogicalBinaryExpression) node);
-			return default(T);
+			return Visit((LogicalBinaryExpression) node);
 		}
 		
 		public virtual T Visit(LogicalOr node)
 		{
-			Visit((LogicalBinaryExpression) node);
-			return default(T);
+			return Visit((LogicalBinaryExpression) node);
 		}
 		
 		public virtual T Visit(LogicalXor node)
 		{
-			Visit((LogicalBinaryExpression) node);
-			return default(T);
+			return Visit((LogicalBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Equal node)
 		{
-			Visit((LogicalBinaryExpression) node);
-			return default(T);
+			return Visit((LogicalBinaryExpression) node);
 		}
 		
 		public virtual T Visit(NotEqual node)
 		{
-			Visit((LogicalBinaryExpression) node);
-			return default(T);
+			return Visit((LogicalBinaryExpression) node);
 		}
 		
 		public virtual T Visit(LessThan node)
 		{
-			Visit((LogicalBinaryExpression) node);
-			return default(T);
+			return Visit((LogicalBinaryExpression) node);
 		}
 		
 		public virtual T Visit(LessOrEqual node)
 		{
-			Visit((LogicalBinaryExpression) node);
-			return default(T);
+			return Visit((LogicalBinaryExpression) node);
 		}
 		
 		public virtual T Visit(GreaterThan node)
 		{
-			Visit((LogicalBinaryExpression) node);
-			return default(T);
+			return Visit((LogicalBinaryExpression) node);
 		}
 		
 		public virtual T Visit(GreaterOrEqual node)
 		{
-			Visit((LogicalBinaryExpression) node);
-			return default(T);
+			return Visit((LogicalBinaryExpression) node);
 		}
 		
 		public virtual T Visit(TypeBinaryExpression node)
@@ -883,91 +775,84 @@ namespace crosspascal.ast
 			Visit((BinaryExpression) node);
 			traverse(node.expr);
 			traverse(node.types);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(TypeIs node)
 		{
-			Visit((TypeBinaryExpression) node);
-			return default(T);
+			return Visit((TypeBinaryExpression) node);
 		}
 		
 		public virtual T Visit(RuntimeCast node)
 		{
-			Visit((TypeBinaryExpression) node);
-			return default(T);
+			return Visit((TypeBinaryExpression) node);
 		}
 		
 		public virtual T Visit(UnaryExpression node)
 		{
-			Visit((Expression) node);
-			return default(T);
+			return Visit((Expression) node);
 		}
 		
 		public virtual T Visit(SimpleUnaryExpression node)
 		{
 			Visit((Expression) node);
-			traverse(node.expr);
-			return default(T);
+			return traverse(node.expr);
 		}
 		
 		public virtual T Visit(UnaryPlus node)
 		{
-			Visit((SimpleUnaryExpression) node);
-			return default(T);
+			return Visit((SimpleUnaryExpression) node);
 		}
 		
 		public virtual T Visit(UnaryMinus node)
 		{
-			Visit((SimpleUnaryExpression) node);
-			return default(T);
+			return Visit((SimpleUnaryExpression) node);
 		}
 		
 		public virtual T Visit(LogicalNot node)
 		{
-			Visit((SimpleUnaryExpression) node);
-			return default(T);
+			return Visit((SimpleUnaryExpression) node);
 		}
 		
 		public virtual T Visit(AddressLvalue node)
 		{
-			Visit((SimpleUnaryExpression) node);
-			return default(T);
+			return Visit((SimpleUnaryExpression) node);
 		}
 		
 		public virtual T Visit(Set node)
 		{
 			Visit((UnaryExpression) node);
-			traverse(node.setelems);
-			return default(T);
+			return traverse(node.setelems);
 		}
-		
-		public virtual T Visit(LvalueExpression node)
+
+		public virtual T Visit(LvalueAsExpr node)
 		{
 			Visit((UnaryExpression) node);
-			return default(T);
+			return traverse(node.lval);
+		}
+
+		public virtual T Visit(LvalueExpression node)
+		{
+			return Visit((UnaryExpression) node);
 		}
 		
 		public virtual T Visit(ExprAsLvalue node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.expr);
-			return default(T);
+			return traverse(node.expr);
 		}
 		
 		public virtual T Visit(StaticCast node)
 		{
 			Visit((LvalueExpression) node);
 			traverse(node.casttype);
-			traverse(node.expr);
-			return default(T);
+			return traverse(node.expr);
 		}
 		
 		public virtual T Visit(UnresolvedId node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.id);
-			return default(T);
+			return traverse(node.id);
 		}
 		
 		public virtual T Visit(UnresolvedCall node)
@@ -975,7 +860,7 @@ namespace crosspascal.ast
 			Visit((LvalueExpression) node);
 			traverse(node.func);
 			traverse(node.args);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(ArrayAccess node)
@@ -984,97 +869,84 @@ namespace crosspascal.ast
 			traverse(node.lvalue);
 			traverse(node.acessors);
 			traverse(node.array);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(PointerDereference node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.expr);
-			return default(T);
+			return traverse(node.expr);
 		}
 		
 		public virtual T Visit(InheritedCall node)
 		{
-			Visit((RoutineCall)node);
-			return default(T);
+			return Visit((RoutineCall)node);
 		}
 		
 		public virtual T Visit(RoutineCall node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.func);
+			T t = traverse(node.func);
 			traverse(node.args);
-			return default(T);
+			return t;
 		}
 		
 		public virtual T Visit(ObjectAccess node)
 		{
 			Visit((LvalueExpression) node);
-			traverse(node.obj);
-			return default(T);
+			return traverse(node.obj);
 		}
 		
 		public virtual T Visit(Identifier node)
 		{
-			Visit((LvalueExpression) node);
-			return default(T);
+			return Visit((LvalueExpression) node);
 		}
 
 		public virtual T Visit(IdentifierStatic node)
 		{
-			Visit((LvalueExpression)node);
-			return default(T);
+			return Visit((LvalueExpression)node);
 		}
 
 		public virtual T Visit(TypeNode node)
 		{
-			Visit((Node) node);
-			return default(T);
+			return Visit((Node) node);
 		}
 		
 		public virtual T Visit(UnresolvedType node)
 		{
-			Visit((TypeNode) node);
-			return default(T);
+			return Visit((TypeNode) node);
 		}
 		
 		public virtual T Visit(UnresolvedVariableType node)
 		{
-			Visit((VariableType) node);
-			return default(T);
+			return Visit((VariableType) node);
 		}
 		
 		public virtual T Visit(UnresolvedIntegralType node)
 		{
-			Visit((IntegralType) node);
-			return default(T);
+			return Visit((IntegralType) node);
 		}
 		
 		public virtual T Visit(UnresolvedOrdinalType node)
 		{
-			Visit((VariableType) node);
-			return default(T);
+			return Visit((VariableType) node);
 		}
 		
 		public virtual T Visit(VariableType node)
 		{
-			Visit((TypeNode) node);
-			return default(T);
+			return Visit((TypeNode) node);
 		}
 		
 		public virtual T Visit(MetaclassType node)
 		{
 			Visit((VariableType) node);
-			traverse(node.baseType);
-			return default(T);
+			return traverse(node.baseType);
 		}
 		
 		public virtual T Visit(EnumType node)
 		{
 			Visit((VariableType) node);
-			traverse(node.enumVals);
-			return default(T);
+			return traverse(node.enumVals);
 		}
 		
 		public virtual T Visit(RangeType node)
@@ -1082,186 +954,157 @@ namespace crosspascal.ast
 			Visit((VariableType) node);
 			traverse(node.min);
 			traverse(node.max);
-			return default(T);
+			return DefaultReturnValue();
 		}
 		
 		public virtual T Visit(ScalarType node)
 		{
-			Visit((VariableType) node);
-			return default(T);
+			return Visit((VariableType) node);
 		}
 		
 		public virtual T Visit(IntegralType node)
 		{
-			Visit((ScalarType) node);
-			return default(T);
+			return Visit((ScalarType) node);
 		}
 		
 		public virtual T Visit(IntegerType node)
 		{
-			Visit((IntegralType) node);
-			return default(T);
+			return Visit((IntegralType) node);
 		}
 		
 		public virtual T Visit(SignedIntegerType node)
 		{
-			Visit((IntegerType) node);
-			return default(T);
+			return Visit((IntegerType) node);
 		}
 		
 		public virtual T Visit(UnsignedIntegerType node)
 		{
-			Visit((IntegerType) node);
-			return default(T);
+			return Visit((IntegerType) node);
 		}
 		
 		public virtual T Visit(UnsignedInt8Type node)
 		{
-			Visit((UnsignedIntegerType) node);
-			return default(T);
+			return Visit((UnsignedIntegerType) node);
 		}
 		
 		public virtual T Visit(UnsignedInt16Type node)
 		{
-			Visit((UnsignedIntegerType) node);
-			return default(T);
+			return Visit((UnsignedIntegerType) node);
 		}
 		
 		public virtual T Visit(UnsignedInt32Type node)
 		{
-			Visit((UnsignedIntegerType) node);
-			return default(T);
+			return Visit((UnsignedIntegerType) node);
 		}
 		
 		public virtual T Visit(UnsignedInt64Type node)
 		{
-			Visit((UnsignedIntegerType) node);
-			return default(T);
+			return Visit((UnsignedIntegerType) node);
 		}
 		
 		public virtual T Visit(SignedInt8Type node)
 		{
-			Visit((SignedIntegerType) node);
-			return default(T);
+			return Visit((SignedIntegerType) node);
 		}
 		
 		public virtual T Visit(SignedInt16Type node)
 		{
-			Visit((SignedIntegerType) node);
-			return default(T);
+			return Visit((SignedIntegerType) node);
 		}
 		
 		public virtual T Visit(SignedInt32Type node)
 		{
-			Visit((SignedIntegerType) node);
-			return default(T);
+			return Visit((SignedIntegerType) node);
 		}
 		
 		public virtual T Visit(SignedInt64Type node)
 		{
-			Visit((IntegerType) node);
-			return default(T);
+			return Visit((IntegerType) node);
 		}
 		
 		public virtual T Visit(BoolType node)
 		{
-			Visit((IntegralType) node);
-			return default(T);
+			return Visit((IntegralType) node);
 		}
 		
 		public virtual T Visit(CharType node)
 		{
-			Visit((IntegralType) node);
-			return default(T);
+			return Visit((IntegralType) node);
 		}
 		
 		public virtual T Visit(RealType node)
 		{
-			Visit((ScalarType) node);
-			return default(T);
+			return Visit((ScalarType) node);
 		}
 		
 		public virtual T Visit(FloatType node)
 		{
-			Visit((RealType) node);
-			return default(T);
+			return Visit((RealType) node);
 		}
 		
 		public virtual T Visit(DoubleType node)
 		{
-			Visit((RealType) node);
-			return default(T);
+			return Visit((RealType) node);
 		}
 		
 		public virtual T Visit(ExtendedType node)
 		{
-			Visit((RealType) node);
-			return default(T);
+			return Visit((RealType) node);
 		}
 		
 		public virtual T Visit(CurrencyType node)
 		{
-			Visit((RealType) node);
-			return default(T);
+			return Visit((RealType) node);
 		}
 		
 		public virtual T Visit(StringType node)
 		{
-			Visit((ScalarType) node);
-			return default(T);
+			return Visit((ScalarType) node);
 		}
 		
 		public virtual T Visit(FixedStringType node)
 		{
 			Visit((StringType) node);
-			traverse(node.expr);
-			return default(T);
+			return traverse(node.expr);
 		}
 		
 		public virtual T Visit(VariantType node)
 		{
 			Visit((VariableType) node);
-			traverse(node.actualtype);
-			return default(T);
+			return traverse(node.actualtype);
 		}
 		
 		public virtual T Visit(PointerType node)
 		{
 			Visit((ScalarType) node);
-			traverse(node.pointedType);
-			return default(T);
+			return traverse(node.pointedType);
 		}
 		
 		public virtual T Visit(StructuredType node)
 		{
 			Visit((VariableType) node);
-			traverse(node.basetype);
-			return default(T);
+			return traverse(node.basetype);
 		}
 		
 		public virtual T Visit(ArrayType node)
 		{
-			Visit((StructuredType) node);
-			return default(T);
+			return Visit((StructuredType) node);
 		}
 		
 		public virtual T Visit(SetType node)
 		{
-			Visit((StructuredType) node);
-			return default(T);
+			return Visit((StructuredType) node);
 		}
 		
 		public virtual T Visit(FileType node)
 		{
-			Visit((StructuredType) node);
-			return default(T);
+			return Visit((StructuredType) node);
 		}
 		
 		public virtual T Visit(RecordType node)
 		{
 			Visit((StructuredType) node);
-			traverse(node.compTypes);
-			return default(T);
+			return traverse(node.compTypes);
 		}
 	}
 }

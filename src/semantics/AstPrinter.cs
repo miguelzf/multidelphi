@@ -23,10 +23,22 @@ namespace crosspascal.semantics
 		// =================================================
 		// Public interface
 
-		public AstPrinter(Traverser<bool> t) : base(t) { }
+		public AstPrinter(Traverser<bool> t) : base(t) 
+		{
+			realTraverse = traverse;
+			traverse = TraversePrint;
+		}
 		
-		public AstPrinter(TreeTraverse<bool> t = null) : base(t) { }
+		public AstPrinter(TreeTraverse<bool> t = null) : base(t)
+		{
+			realTraverse = traverse;
+			traverse = TraversePrint;
+		}
 
+		public override bool DefaultReturnValue()
+		{
+			return true;
+		}
 
 		public string Output()
 		{
@@ -89,15 +101,16 @@ namespace crosspascal.semantics
 		}
 
 		
-		private void TraversePrint(Node n)
+		private bool TraversePrint(Node n)
 		{
 			if (n == null)
-				return;
+				return false;
 
 		//	Console.WriteLine("[DEBUG] Traverse node " + n);
 			EnterNode(n);
-			traverse(n);
+			bool ret = realTraverse(n);
 			LeaveNode(n);
+			return ret;
 		}
 		
 
@@ -1045,7 +1058,14 @@ namespace crosspascal.semantics
 			TraversePrint(node.setelems);
 			return true;
 		}
-		
+
+		public override bool Visit(LvalueAsExpr node)
+		{
+			Visit((UnaryExpression)node);
+			TraversePrint(node.lval);
+			return true;
+		}
+
 		public override bool Visit(LvalueExpression node)
 		{
 			Visit((UnaryExpression) node);

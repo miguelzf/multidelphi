@@ -20,5 +20,10 @@ namespace crosspascal.ast
 		}
 
 		public abstract T traverse(Node n);
+
+		public T DefaultReturnValue()
+		{
+			return Processor.DefaultReturnValue();
+		}
 	}
 }

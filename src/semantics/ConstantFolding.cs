@@ -9,6 +9,12 @@ namespace crosspascal.semantics
 {
 	class ConstantFolder : Processor<bool>
 	{
+
+		public override bool DefaultReturnValue()
+		{
+			return true;
+		}
+
 		private static bool isReal(double x)
 		{
 			double frac = x - Math.Floor(x);

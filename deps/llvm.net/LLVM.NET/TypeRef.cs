@@ -88,10 +88,9 @@ namespace LLVM
             return new TypeRef(Native.VoidType());
         }
 
-        public static TypeRef CreatePointer(TargetData target)
+        public static TypeRef CreatePointer(TypeRef elType)
         {
-            Guard.ArgumentNull(target, "target");
-            return new TypeRef(Native.IntPtrType(target.Handle));
+            return new TypeRef(Native.PointerType(elType.Handle, 0));
         }
 
         #region IPointerWrapper Members

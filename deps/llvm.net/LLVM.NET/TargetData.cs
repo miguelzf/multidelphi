@@ -31,7 +31,7 @@ namespace LLVM
             get { return m_handle; }
         }
 
-        public static TargetData Create(string triple)
+		public static TargetData Create(string triple = Targets.Win32TargetTriple)
         {
             LLVMTargetDataRef* handle = Native.CreateTargetData(triple);
             if(handle == null)

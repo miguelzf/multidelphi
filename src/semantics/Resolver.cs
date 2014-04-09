@@ -55,11 +55,16 @@ namespace crosspascal.semantics
 			declEnv.InitEnvironment();
 		}
 
+		public override bool DefaultReturnValue()
+		{
+			return true;
+		}
+
 		bool Error(string msg, Node n = null)
 		{
 			string outp = "[ERROR in Name Resolving] " + msg;
 			if (n != null)
-				outp += n.Loc.ErrorMsg();
+				outp += n.Loc.ToString();
 
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.WriteLine(outp);
@@ -1218,6 +1223,14 @@ namespace crosspascal.semantics
 
 
 		#region Lvalues
+
+		public override bool Visit(LvalueAsExpr node)
+		{
+			Visit((UnaryExpression)node);
+			if (TraverseResolve(node.lval))
+				node.lval = ResolvedNode<LvalueExpression>();
+			return true;
+		}
 
 		public override bool Visit(LvalueExpression node)
 		{
