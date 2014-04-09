@@ -29,47 +29,112 @@ namespace crosspascal.semantics
 			Reset();
 		}
 
+		String ident;
+		ContextEnumerator DefaultContextTraverser;
 
 		/// <summary>
 		/// </summary>
 		public void Reset()
 		{
 			current = root;
-			path = new Stack<SymbolContext<SymbolT, CtxKey>>(1024); 
-		}
-
-		/// <summary>
-		/// Enters in the next context after the current one.
-		/// Can be called repeatedly to continue from context to context
-		/// </summary>
-		public IEnumerable<bool> LoadNextContext()
-		{
-			return LoadNextContext(current);
-		}
-
-		/// <summary>
-		/// Traverse the whole DAG, in BFS order, from top to down
-		/// </summary>
-		internal IEnumerable<bool> LoadNextContext(SymbolContext<SymbolT, CtxKey> ctx)
-		{
-			for (int i = ctx.children.Count - 1; i >= 0; i--)
-			{
-				var child = ctx.children[i];
-				EnterContext(child);
-				yield return true;
-
-				foreach (var c in LoadNextContext(child))
-					yield return c;
-
-				ExitContext();
-				yield return false;
-			}
+			path = new Stack<SymbolContext<SymbolT, CtxKey>>(1024);
+			DefaultContextTraverser = null;
+			ident = "";
 		}
 
 		public CtxKey CurrentCtxKey()
 		{
 			return current.Key;
 		}
+
+		void Debug(String msg)
+		{
+			Console.WriteLine(msg);
+		}
+
+
+		#region Context Tree Traversing
+		//
+		// Traverse the whole Context Tree, from the current context to the bottom,
+		// entering and exiting each context in turn
+		//
+
+		/// <summary>
+		/// Restart context iteration
+		/// </summary>
+		public bool RestartContextIterator()
+		{
+			DefaultContextTraverser = null;
+			return EnterNextContext();
+		}
+
+		/// <summary>
+		/// Enter next context, starting from the current if the traversing has not been started
+		/// </summary>
+		public bool EnterNextContext()
+		{
+			if (DefaultContextTraverser == null)
+				DefaultContextTraverser = GetContextEnumerator();
+			return DefaultContextTraverser.MoveToNextContext();
+		}
+
+		/// <summary>
+		/// Wrapper to emulate a co-routine to load each context in turn
+		/// </summary>
+		public class ContextEnumerator
+		{
+			IEnumerator<bool> contextsEnum;
+
+			public ContextEnumerator(SymbolGraph<SymbolT, CtxKey> graph)
+			{
+				contextsEnum = graph.GenEnterContexts().GetEnumerator();
+			}
+
+			public bool MoveToNextContext()
+			{
+				return contextsEnum.MoveNext();
+			}
+		}
+
+		internal ContextEnumerator GetContextEnumerator()
+		{
+			return new ContextEnumerator(this);
+		}
+
+		/// <summary>
+		/// Co-routine/generator to enter each context in each, by enumerating all.
+		/// Starts in current context.
+		/// Return value should be discarded.
+		/// </summary>
+		internal IEnumerable<bool> GenEnterContexts()
+		{
+			return GenEnterContexts(current);
+		}
+
+		/// <summary>
+		/// Co-routine/generator to enter each context in each, by enumerating all
+		/// Return value should be discarded
+		/// </summary>
+		internal IEnumerable<bool> GenEnterContexts(SymbolContext<SymbolT, CtxKey> ctx)
+		{
+			foreach (var child in ctx.children)
+			{
+				ident += "  ";
+				Debug(ident + "Loaded " + child);
+				EnterContext(child);
+				yield return true;
+
+				foreach (var c in GenEnterContexts(child))
+					yield return c;
+
+				ExitContext();
+ 				Debug(ident + "Exited " + child + " back to " + current);
+				ident = ident.Substring(0, ident.Length - 2);
+				yield return false;
+			}
+		}
+
+		#endregion
 
 
 		#region Creating and Importing contexts
@@ -320,41 +385,38 @@ namespace crosspascal.semantics
 			return "SymTab with " + numContexts + " contexts";
 		}
 
+		delegate IEnumerable<SymbolContext<SymbolT, CtxKey>> TraverseFunc(SymbolContext<SymbolT, CtxKey> ctx);
+
+		String OutputGraph(TraverseFunc traverseFunc, SymbolContext<SymbolT, CtxKey> ctx,
+									int depth, int maxh, bool symbs)
+		{
+			string text = (symbs ? ctx.ListContext() : ctx.ToString());
+			text = String.Concat(Enumerable.Repeat("  ", depth)) + text + Environment.NewLine;
+			if (maxh > 0)
+				foreach (var p in traverseFunc(ctx))
+					text += OutputGraph(traverseFunc, p, depth + 1, maxh - 1, symbs);
+			return text;
+		}
+
 		/// <summary>
 		/// Recursively traverse the whole DAG, in a DFS from top to bottom, up to a height limit
 		/// </summary>
-		String OutputGraphTopDown(SymbolContext<SymbolT,CtxKey> ctx,  int maxheight)
-		{
-			string text = ctx.ListContext() + Environment.NewLine;
-			if (maxheight > 0)
-				foreach (var p in ctx.children)
-					text += OutputGraphTopDown(p, maxheight - 1);
-			return text;
-		}
-
-		internal String ListGraphFromRoot(int maxdepth = Int32.MaxValue)
+		internal String ListTreeFromRoot(int maxdepth = Int32.MaxValue, bool symbs = true)
 		{
 			string sep = Environment.NewLine;
-			return ToString() + sep + OutputGraphTopDown(root, maxdepth) + sep;
+			string graph = OutputGraph(new TraverseFunc((ctx) => { return ctx.children; }),
+										root, 0, maxdepth, symbs);
+			return this + sep + graph + sep;
 		}
-
-
 		/// <summary>
 		/// Recursively traverse the whole DAG, in a DFS from bottom to top, up to a height limit
 		/// </summary>
-		String OutputGraphBottomUp(SymbolContext<SymbolT, CtxKey> ctx, int maxheight)
-		{
-			string text = ctx.ListContext() + Environment.NewLine;
-			if (maxheight > 0)
-				foreach (var p in ctx.parents)
-					text += OutputGraphBottomUp(p, maxheight - 1);
-			return text;
-		}
-
-		internal String ListGraphFromCurrent(int maxdepth = Int32.MaxValue)
+		internal String ListTreeFromCurrent(int maxdepth = Int32.MaxValue, bool symbs = true)
 		{
 			string sep = Environment.NewLine;
-			return ToString() + sep + OutputGraphBottomUp(current, maxdepth) + sep;
+			string graph = OutputGraph(new TraverseFunc((ctx) => { return ctx.parents; }),
+										current, 0, maxdepth, symbs);
+			return this + sep + graph + sep;
 		}
 
 		#endregion
@@ -511,7 +573,14 @@ namespace crosspascal.semantics
 
 		public override string ToString()
 		{
-			return "Context " + Id + " with " + symbols.Count + " symbols";
+			string keyname = "";
+			if (Key != null)
+			{
+				keyname = Key.ToString();
+				keyname = keyname.Substring(keyname.LastIndexOf('.')+1);
+			}
+
+			return "Context " + Id + ", key " + keyname + " with " + symbols.Count + " symbols";
 		}
 
 		internal String ListContext()

@@ -4,7 +4,7 @@ Interface
 Uses unit4;
 
 Implementation
-//Uses unit1, unit2;
+Uses unit1, unit2;
 
 Initialization
   WriteLn('Started!');

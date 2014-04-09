@@ -7,6 +7,7 @@ using crosspascal.ast.nodes;
 
 namespace crosspascal.semantics
 {
+
 	/// <summary>
 	/// Registry for declarations.
 	/// Wrapper over a symbol table
@@ -39,16 +40,13 @@ namespace crosspascal.semantics
 		public void InitEnvironment()
 		{
 			symEnv.Reset();
-			LoadNext();	// runtime
-			LoadNext();	// global
+			EnterNextContext();	// runtime
+			EnterNextContext();	// global
 		}
 
-		public void LoadNext()
+		public bool EnterNextContext()
 		{
-			foreach (var b in symEnv.LoadNextContext())
-				// force running of enumerator..
-				if (!b)
-					return;
+			return symEnv.EnterNextContext();
 		}
 
 		void LoadRuntimeNames()
@@ -215,6 +213,7 @@ namespace crosspascal.semantics
 		{
 			symEnv.CreateContext(id, sec, allowShadowing);
 			Debug("CREATE CONTEXT " + id);
+		//	Debug(symEnv.ListGraphFromCurrent(3));
 		}
 
 		public void CreateParentContext(string id = null, Section sec = null, bool allowShadowing = true)
@@ -316,7 +315,6 @@ namespace crosspascal.semantics
 			CompositeType type = decl.Type;
 
 			// create context of its own class
-			CreateContext(type.Name, null);
 			symEnv.ImportContext(type.privateContext);
 			// load inheritable contexts
 			LoadAncestors(type);

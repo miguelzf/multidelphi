@@ -83,7 +83,16 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Context with all members (including private)
 		/// </summary>
-		internal SymbolContext<Declaration, Section> privateContext { get; set; }
+		private SymbolContext<Declaration, Section> _privateContext;
+		internal SymbolContext<Declaration, Section> privateContext
+		{
+			get { return _privateContext; }
+			set
+			{
+				_privateContext = value;
+				_privateContext.Id = _privateContext.Id + " private";
+			}
+		}
 
 
 		public CompositeType(ArrayList inherits, ObjectSection sec)
