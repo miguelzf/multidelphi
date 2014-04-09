@@ -7,9 +7,11 @@ using crosspascal.ast.nodes;
 
 namespace crosspascal.semantics
 {
+	/// <summary>
+	/// Processor to set the backward pointer-to-parent in each node
+	/// </summary>
 	class ParentProcessor : Processor<bool>
 	{
-		
 		private bool TraverseSetParent(Node parent, Node child)
 		{
 			if (child == null)

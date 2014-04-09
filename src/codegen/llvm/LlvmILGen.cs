@@ -90,12 +90,6 @@ namespace crosspascal.codegen.llvm
 			return false;
 		}
 
-		Value traverseDebug(Node n)
-		{
-			Console.WriteLine("Visiting Node " + ((n == null) ? "null" : n.NodeName()));
-			return realTraverse(n);
-		}
-
 
 		#region Helpers
 

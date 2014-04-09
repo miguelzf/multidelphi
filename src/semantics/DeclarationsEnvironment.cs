@@ -35,7 +35,7 @@ namespace crosspascal.semantics
 
 		/// <summary>
 		/// Call this method before using the environment.
-		/// Resets the current context to the start
+		/// Resets the current context to the beginning
 		/// </summary>
 		public void InitEnvironment()
 		{
@@ -46,8 +46,11 @@ namespace crosspascal.semantics
 
 		public bool EnterNextContext()
 		{
-			return symEnv.EnterNextContext();
+			bool ret = symEnv.EnterNextContext();
+		//	Debug("IN context " + symEnv.GetContext());
+			return ret;
 		}
+
 
 		void LoadRuntimeNames()
 		{
@@ -222,12 +225,6 @@ namespace crosspascal.semantics
 			Debug("CREATE PARENT CONTEXT " + id);
 		}
 
-		public void EnterContext()
-		{
-			string id = symEnv.EnterContext();
-			Debug("ENTER CONTEXT " + id);
-		}
-
 		public String ExitContext()
 		{
 			string id = symEnv.ExitContext();
@@ -315,9 +312,10 @@ namespace crosspascal.semantics
 			CompositeType type = decl.Type;
 
 			// create context of its own class
-			symEnv.ImportContext(type.privateContext);
+			Debug("ENTER CONTEXT " + cname);
+			symEnv.ImportContext(type.privateContext.Copy());
 			// load inheritable contexts
-			LoadAncestors(type);
+		//	LoadAncestors(type);
 			return type;
 		}
 
@@ -345,7 +343,7 @@ namespace crosspascal.semantics
 			type.inheritableContext = symEnv.ExportCloneContext(pred);
 			type.privateContext = symEnv.ExportCopyContext();
 
-			ExitContext();	// exit own class context
+			symEnv.ExitContext();	// exit own class context
 		}
 
 		/// <summary>
@@ -353,7 +351,7 @@ namespace crosspascal.semantics
 		/// </summary>
 		public void EnterCompositeContext(CompositeType type)
 		{
-			EnterContext();		// enter class context
+			symEnv.EnterContext();		// enter class context
 		}
 
 		/// <summary>
@@ -361,7 +359,7 @@ namespace crosspascal.semantics
 		/// </summary>
 		public void ExitCompositeContext(CompositeType type)
 		{
-			ExitContext();	// exit own class context
+			symEnv.ExitContext();	// exit own class context
 		}
 
 		#endregion

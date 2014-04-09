@@ -97,19 +97,14 @@ namespace crosspascal.core
 				Console.WriteLine("Name Resolving OK: " + ast.name + " " + ast.ToString());
 
 				DeclarationsEnvironment env = resolver.declEnv;
-
-				Console.WriteLine(env.symEnv.ListTreeFromRoot(10000, false));
-				Console.ReadLine();
-
 				env.InitEnvironment();
-				while (env.EnterNextContext());
-
-				Console.ReadLine();
+			//	Console.WriteLine(env.symEnv.ListTreeFromRoot(Int32.Max, false));
 
 				PostProcessing.SetParents(ast);
-				//	new ParentProcessor().StartProcessing(ast);
+			//	new ParentProcessor().StartProcessing(ast);
 				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
-				
+
+				Console.ReadLine();
 				astPrinter.Process(ast);
 				Console.WriteLine(astPrinter.Output());
 

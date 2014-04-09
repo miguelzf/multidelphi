@@ -210,9 +210,6 @@ namespace crosspascal.ast.nodes
 
 		#endregion
 
-		// to be set by the resolver
-		public CompositeType declaringType;
-
 		public MethodDeclaration(string objname, string name, ParametersSection @params, TypeNode ret = null,
 								RoutineDirectives dirs = null, MethodKind kind = MethodKind.Default)
 			: base(name, new MethodType(@params, ret, dirs, kind))

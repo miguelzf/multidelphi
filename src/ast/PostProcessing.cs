@@ -7,77 +7,101 @@ using System.Reflection;
 
 namespace crosspascal.ast
 {
+	/// <summary>
+	/// Static methods that process the AST
+	/// </summary>
+
 	class PostProcessing
 	{
-		/// <summary>
-		/// Sets parent back reference in each AST node through the reflection API
-		/// </summary>
-		public static void SetParents(Node root)
-		{
-			SetParents(root, root.GetType());
-		}
 
-		/// <summary>
-		/// Internal implementation of SetParents
-		/// </summary>
-		static void SetParents(Node root, Type ntype)
-		{
-			BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
+		static int count = 0;
 
+		static public void GenericTraverse(Node node, Func<Node, Node, bool> evalFunc)
+		{
 			// do not recurse on Refs to classes or records, avoid circular deps
+			if (node == null)
+				return;
+
+			Type ntype = node.GetType();
 			if (ntype == typeof(ClassRefType) || ntype == typeof(RecordRefType))
 				return;
+
+			BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
 			foreach (FieldInfo f in ntype.GetFields(flags))
 				if (typeof(Node).IsAssignableFrom(f.FieldType))
 				{
-					Node fi = (Node) f.GetValue(root);
-
-					if (fi == null || fi.Parent != null)
-						continue;
+					Node fi = (Node) f.GetValue(node);
 
 					if (fi != null)
 					{
 						Type bt = f.FieldType;
 
-						// ignore VariableType nodes, that may be reused. no single parent
-						if (!typeof(VariableType).IsAssignableFrom(bt))
-							fi.Parent = root;
+						if (!evalFunc(node, fi))
+							continue;
 
+						// Lists
 						if (bt.BaseType.IsGenericType && bt.BaseType.Name.StartsWith("ListNode"))
 						{
-						//	Type genParamType = bt.BaseType.GetGenericArguments()[0];
-						//	Type genListType  = typeof(ListNode<>).MakeGenericType(genParamType);
-						//	object list = Convert.ChangeType(fi, genListType);
-
-							if (fi is DeclarationList)
-								SetParentsList<Declaration>(fi, root);
-							else if (fi is ExpressionList)
-								SetParentsList<Expression>(fi, root);
-							else if (fi is StatementList)
-								SetParentsList<Statement>(fi, root);
-							else if (fi is FieldInitList)
-								SetParentsList<FieldInit>(fi, root);
-							else if (fi is EnumValueList)
-								SetParentsList<EnumValue>(fi, root);
-							else if (fi is NodeList)
-								SetParentsList<Node>(fi, root);
+							var nodeslist = (IEnumerable<Node>)bt.GetField("nodes").GetValue(fi);
+							foreach (Node n in nodeslist)
+								if (evalFunc(fi, n))
+									GenericTraverse(n, evalFunc);
 						}
+
+						// Non-lists
 						else
-							SetParents(fi, bt);
+							GenericTraverse(fi, evalFunc);
 					}
 				}
 		}
 
-		static void SetParentsList<T>(Node nlist, Node par) where T : Node
-		{
-			ListNode<T> list = (ListNode<T>) nlist;
 
-			foreach (Node n in list)
-			{
-				SetParents(n, n.GetType());
-				n.Parent = par;
-			}
+		/// <summary>
+		/// Sets parent back reference in each AST node through the reflection API
+		/// </summary>
+		public static void SetParents(Node root)
+		{
+			GenericTraverse(root,
+				new Func<Node, Node, bool>(
+					(par, node) => 
+					{
+						if (node is VariableType || node.Parent != null)
+							return false;
+						if (node is CompositeType && !(par is CompositeDeclaration))
+							return false;
+						if (node is Section && par is CallableDeclaration)
+							return false;
+						node.Parent = par;
+						return true;
+					} ));
+
+			TestSetParents(root);
 		}
+
+
+		/// <summary>
+		/// Sets parent back reference in each AST node through the reflection API
+		/// </summary>
+		public static void TestSetParents(Node root)
+		{
+			GenericTraverse(root, 
+				new Func<Node, Node, bool>(
+					(par, node) =>
+					{
+						if (node is CompositeType && !(par is CompositeDeclaration))
+							return false;
+						if (node is VariableType || par.Parent == node)		// called with parent ptr
+							return false;
+						if (node is Section && par is CallableDeclaration)
+							return false;
+						if (node.Parent == null)
+							Console.Error.WriteLine("[ERROR testsetparents] parent "
+													+ par.NodeName() + " is null in " + node);
+						return true;
+					}));
+		}
+
+
 	}
 }

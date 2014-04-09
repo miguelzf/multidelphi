@@ -500,11 +500,10 @@ namespace crosspascal.semantics
 			Visit((CallableDeclaration)node);
 			declEnv.RegisterDeclaration(node.QualifiedName, node);
 			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
-			node.declaringType = (declEnv.GetDeclaration(node.objname) as CompositeDeclaration).Type;
 			traverse(node.Type);
 
 			if (node.Type.kind == MethodKind.Constructor)
-				node.Type.funcret = new ClassRefType(node.declaringType as ClassType);
+				node.Type.funcret = new ClassRefType(node.declaringObject as ClassType);
 			traverse(node.Directives);
 			declEnv.ExitContext();
 			return true;
@@ -515,19 +514,18 @@ namespace crosspascal.semantics
 			Visit((CallableDeclaration)node);
 
 			declEnv.RegisterDeclaration(node.objname+"."+node.QualifiedName, node);
-			CompositeType type = declEnv.CreateCompositeContext(node.objname);
-			node.declaringType = type;
+			node.declaringObject = declEnv.CreateCompositeContext(node.objname);
 			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
 
 			traverse(node.Type);
 			if (node.Type.kind == MethodKind.Constructor)
-				node.Type.funcret = new ClassRefType(node.declaringType as ClassType);
+				node.Type.funcret = new ClassRefType(node.declaringObject as ClassType);
 
 			traverse(node.Directives);
 			traverse(node.body);	// opens context
 
 			declEnv.ExitContext();
-			declEnv.ExitCompositeContext(node.declaringType);
+			declEnv.ExitCompositeContext(node.declaringObject);
 			return true;
 		}
 
@@ -623,13 +621,14 @@ namespace crosspascal.semantics
 		}
 		
 		/// <remarks>
-		/// ATTENTION!! Should only be used in declarations of composites.
+		/// CAUTION: Should only be used in declarations of composites.
 		/// For references/ids, use Class/InterfRefType
 		/// </remarks>
 		public override bool Visit(CompositeType node)
 		{
 			foreach (var s in node.GetAllMethods())
-				s.declaringType = node;
+				if (s.declaringObject != node)
+					Error("DeclaringObject not set for " + s);
 
 			Visit((TypeNode)node);
 			declEnv.CreateInheritedContext(node);

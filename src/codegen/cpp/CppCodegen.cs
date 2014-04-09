@@ -218,31 +218,30 @@ namespace crosspascal.codegen.cpp
 			outputCode("}", false, true);
 			return true;
 		}
-		
+
+		private bool insideConstructor = false;
+
+		bool ProcessConstructor(RoutineSection node, MethodType t)
+		{
+			insideConstructor = true;
+			ClassRefType r = t.funcret as ClassRefType;
+			string classid = r.qualifid;
+			outputCode("{", true, true);
+			PushIdent();
+			outputCode("result = new " + classid + "();", true, true);
+			Visit((Section)node);
+			traverse(node.block);
+			PopIdent();
+			outputCode("}", true, true);
+			//outputCode("	result ", true, true);
+			outputCode("", false, true);
+			insideConstructor = false;
+			return true;
+		}
+
+		// non-constructor method
 		public override bool Visit(RoutineSection node)
 		{			
-			if (node.Parent is MethodDefinition)
-			{
-				MethodDefinition def = node.Parent as MethodDefinition;
-				
-				MethodType t = def.type as MethodType;
-				if (t.IsConstructor)
-				{
-					ClassRefType r = t.funcret as ClassRefType;
-					string classid = r.qualifid;
-					outputCode("{", true, true);					
-					PushIdent();
-					outputCode("result = new "+classid+"();", true, true);
-					Visit((Section) node);
-					traverse(node.block);
-					PopIdent();
-					outputCode("}", true, true);
-					//outputCode("	result ", true, true);
-					outputCode("", false, true);
-					return true;
-				}
-			}
-
 			outputCode("{", true, true);
 			PushIdent();
 			Visit((Section) node);
@@ -420,7 +419,7 @@ namespace crosspascal.codegen.cpp
 			MethodType tt = node.type as MethodType;
 			if (tt.IsConstructor)
 			{
-				outputCode(node.Parent.ToString(), false, false);
+				outputCode(node.declaringObject.Name, false, false);
 			}
 
 			return true;
@@ -477,7 +476,12 @@ namespace crosspascal.codegen.cpp
 
 			outputCode("{", false, true);
 			PushIdent();
-			traverse(node.body);
+
+			if (node.Type.IsConstructor)
+				ProcessConstructor(node.body, node.Type);
+			else
+				traverse(node.body);
+
 			if (node.IsFunction)
 			{
 				builder.Remove(builder.Length - 3, 3);
@@ -1349,6 +1353,7 @@ namespace crosspascal.codegen.cpp
 
 		public override bool Visit(ObjectAccess node)
 		{
+			/*
 			if (node.obj is IdentifierStatic && node.Parent is Assignment)
 			{
 				Assignment ass = node.Parent as Assignment;
@@ -1360,6 +1365,7 @@ namespace crosspascal.codegen.cpp
 				outputCode(objname + "->", true, false);
 			}
 			else
+			 */
 			{
 				if (node.obj is IdentifierStatic)
 				{
@@ -1376,29 +1382,12 @@ namespace crosspascal.codegen.cpp
 			return true;
 		}
 
-		private bool isConstructor(Node node)
-		{
-			if (node == null)
-				return false;
-
-			if (node is MethodDefinition)
-			{
-				MethodDefinition def = node as MethodDefinition;
-				MethodType t = def.type as MethodType;
-				return t.IsConstructor;
-			}
-			else
-			{
-				return isConstructor(node.Parent);
-			}
-		}
-
 		public override bool Visit(Identifier node)
 		{
 			//Visit((LvalueExpression) node);
 			if (node.name.Equals("self"))
 			{
-				if (isConstructor(node))
+				if (insideConstructor)
 					outputCode("result", false, false);
 				else
 					outputCode("this", false, false);

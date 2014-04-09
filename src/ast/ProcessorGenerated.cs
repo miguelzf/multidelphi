@@ -241,9 +241,7 @@ namespace crosspascal.ast
 		
 		public virtual T Visit(CallableDeclaration node)
 		{
-			Visit((Declaration) node);
-			traverse(node.Directives);
-			return traverse(node.Type);
+			return Visit((Declaration) node);
 		}
 		
 		public virtual T Visit(RoutineDeclaration node)
@@ -285,8 +283,7 @@ namespace crosspascal.ast
 		
 		public virtual T Visit(CompositeDeclaration node)
 		{
-			Visit((TypeDeclaration) node);
-			return traverse(node.Type);
+			return Visit((TypeDeclaration) node);
 		}
 		
 		public virtual T Visit(ClassDeclaration node)

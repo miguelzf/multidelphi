@@ -49,7 +49,7 @@ namespace crosspascal.semantics
 
 		void Debug(String msg)
 		{
-			Console.WriteLine(msg);
+		//	Console.WriteLine(msg);
 		}
 
 
@@ -168,7 +168,7 @@ namespace crosspascal.semantics
 		{
 			current.AddChild(ctx);
 			numContexts++;
-			EnterContext(0);
+			EnterContext(ctx);
 		}
 
 		/// <summary>

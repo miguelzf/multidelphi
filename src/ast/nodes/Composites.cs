@@ -763,9 +763,9 @@ namespace crosspascal.ast.nodes
 
 		public DeclarationList properties;
 
-		public CompositeType declaringObject;
+		public CompositeType declaringObject { get; set; }
 
-		// In the baseclass, 'decls' field
+		// Kept in the baseclass, 'decls' list
 	//	public DeclarationList methods;
 
 		public ObjectSection(DeclarationList fs = null, DeclarationList ds = null, Scope s = Scope.Published)
@@ -928,7 +928,7 @@ namespace crosspascal.ast.nodes
 
 		#region IScopedDeclaration implementation
 
-		public Scope scope;
+		internal Scope scope;
 		public void SetScope(Scope s)
 		{
 			scope = s;
@@ -938,7 +938,7 @@ namespace crosspascal.ast.nodes
 			return scope;
 		}
 
-		public CompositeType declaringObject;
+		private CompositeType declaringObject;
 		public CompositeType GetDeclaringObject()
 		{
 			return declaringObject;

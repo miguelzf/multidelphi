@@ -81,7 +81,6 @@ namespace crosspascal.ast
 		 */
 			}
 
-
 			MethodInfo mi;
 			if (!methodsMapping.TryGetValue(nodeType, out mi))
 				return DefaultReturnValue();		// method not mapped. Nothing to do

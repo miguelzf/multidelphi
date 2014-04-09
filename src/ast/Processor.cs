@@ -34,7 +34,7 @@ namespace crosspascal.ast
 		// Create with given traverser object
 		public Processor(Traverser<T> trav)
 		{
-			traverse = trav.traverse;
+			realTraverse = traverse = trav.traverse;
 		}
 
 		/// <summary>
@@ -46,6 +46,13 @@ namespace crosspascal.ast
 				traverse = new MapTraverser<T>(this).traverse;
 			else
 				traverse = t;
+			realTraverse = traverse;
+		}
+
+		protected T traverseDebug(Node n)
+		{
+			Console.WriteLine("visiting Node " + ((n == null) ? "null" : n.NodeName()));
+			return realTraverse(n);
 		}
 
 		public virtual T Visit(Node node)
