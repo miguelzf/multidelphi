@@ -13,9 +13,6 @@ namespace crosspascal.ast
 
 	class PostProcessing
 	{
-
-		static int count = 0;
-
 		static public void GenericTraverse(Node node, Func<Node, Node, bool> evalFunc)
 		{
 			// do not recurse on Refs to classes or records, avoid circular deps

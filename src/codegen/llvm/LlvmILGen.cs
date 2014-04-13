@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define passes
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,28 +44,34 @@ namespace crosspascal.codegen.llvm
 		{
 			InitTypeMap();
 
+			LLVM.Native.LinkInJIT();
+			//LLVM.Native.InitializeNativeTarget(); // Declared in bindings but not exported from the shared library.
+			LLVM.Native.InitializeX86TargetInfo();
+			LLVM.Native.InitializeX86Target();
+			LLVM.Native.InitializeX86TargetMC();
+
 			using (module = new Module("llvm compiler"))
 			using (builder = new LlvmIRBuilder())
 			{
 				execEngine = new ExecutionEngine(module);
-
 			/*
 				passManager = new PassManager(module);
 				passManager.AddTargetData(execEngine.GetTargetData());
 			
 				// optimizations
+			#if false
 				passManager.AddBasicAliasAnalysisPass();
-				passManager.AddInstructionCombiningPass();
 				passManager.AddPromoteMemoryToRegisterPass();
+				passManager.AddInstructionCombiningPass();
 				passManager.AddReassociatePass();
 				passManager.AddGVNPass();
 				passManager.AddCFGSimplificationPass();
-				
+			#endif
 				passManager.Initialize();
-			 */
-				
+			*/
+				// main = EmitTestLLVMIR();
 				Value valRet = traverse(n);
-			
+
 				module.Dump();
 
 			//	if (valRet.Equals(Value.Null))
@@ -78,6 +85,50 @@ namespace crosspascal.codegen.llvm
 		}
 
 
+		#region Debug
+
+		Function EmitTestLLVMIR()
+		{
+			/* define i32 @main() {
+				entry:
+				  %a = alloca i32
+				  %c = alloca i32
+				  %p = alloca i32*
+				  store i32 1, i32* %a
+				  store i32* %a, i32** %p
+				  %0 = load i32** %p
+				  %1 = load i32* %0
+				  store i32 %1, i32* %c
+				  ret i32 0
+				}
+			*/
+
+			var tint = TypeRef.CreateInt32();
+			TypeRef intptr = TypeRef.CreatePointer(tint);
+
+			Function func = new Function(module, "main", tint, new TypeRef[0]);
+			func.SetLinkage(LLVMLinkage.CommonLinkage);
+
+			// Create a new basic block to start insertion into.
+			BasicBlock bb = func.AppendBasicBlock("entry");
+			builder.SetInsertPoint(bb);
+
+			Value a = builder.BuildAlloca(tint, "a");	//  %a = alloca i32
+			Value c = builder.BuildAlloca(tint, "c");	//  %c = alloca i32
+
+			Value p = builder.BuildAlloca(intptr, "p");	//  %p = alloca i32*
+			
+			builder.BuildStore(Value.CreateConstInt32(111), a);	// store i32 1, i32* %a
+			builder.BuildStore(a, p);							// store i32* %a, i32** %p
+			// Value va = builder.BuildLoad(a);
+			Value lp = builder.BuildLoad(p);					// %0 = load i32** %p
+			Value llp= builder.BuildLoad(lp);					// %1 = load i32* %0
+			builder.BuildStore(llp, c);
+
+			builder.BuildReturn(builder.BuildLoad(c));
+			return func;
+		}
+
 		bool Error(string msg, Node n = null)
 		{
 			string outp = "[ERROR in LLVM IR generator] " + msg;
@@ -89,6 +140,8 @@ namespace crosspascal.codegen.llvm
 			Console.ResetColor();
 			return false;
 		}
+		
+		#endregion
 
 
 		#region Helpers
@@ -147,49 +200,51 @@ namespace crosspascal.codegen.llvm
 
 
 
-		public override Value Visit(UnaryMinus node)
+
+		public override Value Visit(ProgramSection node)
 		{
-			Value arg = traverse(node.expr);
-			Debug.Assert(!arg.IsNull);
-			
-			// 0 - arg
-			return builder.BuildSub(Value.CreateConstInt32(0), arg);
-		}
+			Function func = new Function(module, "main", TypeRef.CreateInt32(), new TypeRef[0]);
+			//TypeRef.CreateVoid(), new TypeRef[0]);
+			main = func;
+			func.SetLinkage(LLVMLinkage.CommonLinkage);
 
-		public override Value Visit(UnaryPlus node)
-		{
-			return traverse(node.expr);
-		}
+			// Create a new basic block to start insertion into.
+			BasicBlock bb = func.AppendBasicBlock("entry");
+			builder.SetInsertPoint(bb);
 
-		public override Value Visit(LogicalNot node)
-		{
-			Value arg = traverse(node.expr);
+			traverse(node.decls);
+			traverse(node.block);
 
-			return builder.BuildNot(arg);
-		}
-
-
-
-		public override Value Visit(Identifier node)
-		{
-			// ID has been previously validated
-			return values[node.decl];
+			Value ret = builder.BuildLoad(values.ElementAt(values.Count - 1).Value);
+			//	return builder.BuildReturn(Value.CreateConstInt32(0));
+			return builder.BuildReturn(ret);
+			//	return builder.BuildReturn();
 		}
 
 
-		public override Value Visit(AddressLvalue node)
+
+		#region Declarations
+
+		public override Value Visit(VarDeclaration node)
 		{
-			Value arg = traverse(node.expr);
-			Value alloca = builder.BuildAlloca(TypeRef.CreatePointer(GetLLVMType(node.Type)));
-			builder.BuildStore(arg, alloca);
-			return alloca;
+			var llvmtype = GetLLVMType(node.type);
+			var vdecl = builder.AddGlobal(module, llvmtype, node.name);
+			Utils.SetInitializer(vdecl, llvmtype.CreateNullValue());
+
+			//	var vdecl = builder.BuildAlloca(llvmtype, node.name);
+
+			values.Add(node, vdecl);
+
+			Console.WriteLine(node.name + " with LLVM TYpe: " + Utils.Tostring(llvmtype));
+			return vdecl;
 		}
 
-		public override Value Visit(PointerDereference node)
-		{
-			Value arg = traverse(node.expr);
-			return builder.BuildLoad(arg);
-		}
+		#endregion
+
+
+
+
+
 
 		public override Value Visit(Assignment node)
 		{
@@ -202,10 +257,32 @@ namespace crosspascal.codegen.llvm
 			return builder.BuildStore(rvalue, lvalue);
 		}
 
+		#region Lvalues
+
+		public override Value Visit(Identifier node)
+		{
+			// ID has been previously validated
+			return values[node.decl];
+		}
+
+		public override Value Visit(AddressLvalue node)
+		{
+			Value addr = traverse(node.expr);
+			// Address of an lvalue is an expression (rvalue). Load and it and leave
+			return addr;
+		}
+
+		public override Value Visit(PointerDereference node)
+		{
+			Value arg = traverse(node.expr);
+			return builder.BuildLoad(arg);
+		}
+
 		public override Value Visit(LvalueAsExpr node)
 		{
 			Value addr = traverse(node.lval);
-			return builder.BuildLoad(addr);
+			Value ret = builder.BuildLoad(addr);
+			return ret;
 		}
 
 		// Load a value to use as address of a store
@@ -213,38 +290,8 @@ namespace crosspascal.codegen.llvm
 		{
 			return traverse(node.expr);
 		}
-
-		public override Value Visit(VarDeclaration node)
-		{
-			var llvmtype = GetLLVMType(node.type);
-			var vdecl = builder.AddGlobal(module, llvmtype, node.name);
-			unsafe { Native.SetInitializer(vdecl.Handle, Value.CreateConstInt32(0).Handle); }
-
-			values.Add(node, vdecl);
-
-			Console.WriteLine(node.name +  " with LLVM TYpe: " + llvmtype.TypeKind);
-			return vdecl;
-		}
-
-
-		public override Value Visit(ProgramSection node)
-		{
-			Function func = new Function(module, "main", TypeRef.CreateInt32(), new TypeRef[0]);
-			main = func;
-			func.SetLinkage(LLVMLinkage.CommonLinkage);
-
-			// Create a new basic block to start insertion into.
-			BasicBlock bb = func.AppendBasicBlock("entry");
-			builder.SetInsertPoint(bb);
-
-			traverse(node.decls);
-			traverse(node.block);
-
-			builder.BuildReturn(values.ElementAt(values.Count-1).Value);
-			
-			return Value.Null;
-		}
-
+		
+		#endregion
 
 
 		#region Load literals
@@ -278,9 +325,30 @@ namespace crosspascal.codegen.llvm
 
 		#endregion
 
+		
+		#region Expressions
 
-		#region Arithmetic and Logical Binary Expressions
+		public override Value Visit(UnaryMinus node)
+		{
+			Value arg = traverse(node.expr);
+			Debug.Assert(!arg.IsNull);
 
+			// 0 - arg
+			return builder.BuildSub(Value.CreateConstInt32(0), arg);
+		}
+
+		public override Value Visit(UnaryPlus node)
+		{
+			return traverse(node.expr);
+		}
+
+		public override Value Visit(LogicalNot node)
+		{
+			Value arg = traverse(node.expr);
+
+			return builder.BuildNot(arg);
+		}
+		
 		// Currently only working with ints
 		public override Value Visit(ArithmethicBinaryExpression node)
 		{
@@ -351,7 +419,86 @@ namespace crosspascal.codegen.llvm
 		#endregion
 
 
-	/*
+		public Value Visit(RoutineDeclaration node)
+		{
+			ProceduralType functype = node.Type;
+			TypeRef llvmfrettype = (node.IsFunction? GetLLVMType(functype.funcret) : TypeRef.CreateVoid());
+
+			var @params = functype.@params.decls.nodes.Cast<ParamDeclaration>();
+			var args = @params.Select(a => GetLLVMType(a.type));
+
+			Function func = new Function(module, node.name, llvmfrettype, args.ToArray());
+
+			func.SetLinkage(LLVMLinkage.ExternalLinkage);
+
+			// If F conflicted, there was already something named 'Name'.  If it has a
+			// body, don't allow redefinition or reextern.
+			if(func.IsDuplicate())
+			{
+				// Delete the one we just made and get the existing one.
+				func.Delete();
+				func = module.GetFunction(node.name);
+			}
+
+			// Set names for all arguments.
+			uint i = 0;
+			foreach (var param in @params)
+			{
+				Value val = func.GetParameter(i++);
+				val.Name = param.name;	// calls llvm
+			}
+
+			return Value.Null;
+		}
+
+		/*
+		public void CreateArgAllocas(Function function, IRBuilder builder)
+		{
+			for(int i = 0; i < function.ArgCount; ++i)
+			{
+				Value alloca = builder.BuildEntryBlockAlloca(function, TypeRef.CreateDouble(), node.Args[i]);
+				builder.BuildStore(function.GetParameter((uint)i), alloca);
+				values[node.Args[i]] = alloca;
+			}
+		}
+
+		public Function Visit(RoutineDefinition node)
+		{
+			CodeGenManager.NamedValues.Clear();
+			Function func = node.Proto.CodeGen(builder);
+			if(func == null)
+				return null;
+
+			// If this is an operator, install it.
+			if(node.Proto.IsBinaryOp)
+				CodeGenManager.BinopPrecendence[Proto.OperatorName] = Proto.Precedence;
+
+			// Create a new basic block to start insertion into.
+			BasicBlock bb = func.AppendBasicBlock("entry");
+			builder.SetInsertPoint(bb);
+
+			Proto.CreateArgAllocas(func, builder);
+
+			Value retVal = Body.CodeGen(builder);
+
+			if(!retVal.IsNull)
+			{
+				builder.BuildReturn(retVal);
+
+				// Validate the generated code, checking for consistency.
+				func.Validate(LLVMVerifierFailureAction.PrintMessageAction);
+
+				// Optimize the function.
+				passManager.Run(func);
+
+				return func;
+			}
+
+			// Error reading body, remove function.
+			func.Delete();
+			return null;
+		}
+		
 		public override Value Visit(RoutineCall node)
 		{
 			// Look up the name in the global module table.
@@ -397,8 +544,11 @@ namespace crosspascal.codegen.llvm
 
 			return builder.BuildCall(func, args.ToArray());
 		}
-	
+	*/
 
+
+		 #region Statements 
+	/*
 		/// IfExprAST - Expression class for if/then/else.
 
 		public ExprAST Cond { get; set; }
@@ -548,138 +698,8 @@ namespace crosspascal.codegen.llvm
 			return Value.CreateConstDouble(0);
 		}
 
-
-
-	/// PrototypeAST - This class represents the "prototype" for a function,
-	/// which captures its name, and its argument names (thus implicitly the number
-	/// of arguments the function takes).
-		public string Name { get; set; }
-		public List<string> Args { get; private set; }
-		public bool IsOperator { get; set; }
-		public int Precedence { get; set; }
-
-		public bool IsUnaryOp
-		{
-			get { return node.IsOperator && node.Args.Count == 1; }
-		}
-
-		public bool IsBinaryOp
-		{
-			get { return node.IsOperator && node.Args.Count == 2; }
-		}
-
-		public char OperatorName
-		{
-			get
-			{
-				Debug.Assert(IsOperator);
-				return node.Name[0];
-			}
-		}
-
-		public PrototypeAST(string name, IEnumerable<string> args, bool isOp, int precedence)
-		{
-			node.Name = name;
-			node.Args = new List<string>(args);
-			node.IsOperator = isOp;
-			node.Precedence = precedence;
-		}
-
-		public Function ProcessFuncProto(IRBuilder builder)
-		{
-			List<TypeRef> args = new List<TypeRef>();
-			node.Args.ForEach(a => args.Add(TypeRef.CreateDouble()));
-
-			Function func = new Function(CodeGenManager.Module, node.Name,
-												 TypeRef.CreateDouble(), args.ToArray());
-			func.SetLinkage(LLVMLinkage.ExternalLinkage);
-
-			// If F conflicted, there was already something named 'Name'.  If it has a
-			// body, don't allow redefinition or reextern.
-			if(func.IsDuplicate())
-			{
-				// Delete the one we just made and get the existing one.
-				func.Delete();
-				func = CodeGenManager.Module.GetFunction(node.Name);
-
-				// If F already has a body, reject node.
-				if(func.HasBody)
-				{
-					CodeGenManager.ErrorOutput.WriteLine("redefinition of function.");
-					return null;
-				}
-
-				// If F took a different number of args, reject.
-				if(func.ArgCount != node.Args.Count)
-				{
-					CodeGenManager.ErrorOutput.WriteLine("redefinition of function with different # args.");
-					return null;
-				}
-			}
-
-			// Set names for all arguments.
-			for(int i = 0; i < func.ArgCount; ++i)
-			{
-				Value val = func.GetParameter((uint)i);
-				val.Name = node.Args[i];
-			}
-
-			return func;
-		}
-
-		public void CreateArgAllocas(Function function, IRBuilder builder)
-		{
-			for(int i = 0; i < function.ArgCount; ++i)
-			{
-				Value alloca = builder.BuildEntryBlockAlloca(function, TypeRef.CreateDouble(), node.Args[i]);
-				builder.BuildStore(function.GetParameter((uint)i), alloca);
-				CodeGenManager.NamedValues[node.Args[i]] = alloca;
-			}
-		}
-
-	
-		public PrototypeAST Proto { get; set; }
-		public ExprAST Body { get; set; }
-
-
-		public Function processFunction(IRBuilder builder, PassManager passManager)
-		{
-			CodeGenManager.NamedValues.Clear();
-			Function func = node.Proto.CodeGen(builder);
-			if(func == null)
-				return null;
-
-			// If this is an operator, install it.
-			if(node.Proto.IsBinaryOp)
-				CodeGenManager.BinopPrecendence[Proto.OperatorName] = Proto.Precedence;
-
-			// Create a new basic block to start insertion into.
-			BasicBlock bb = func.AppendBasicBlock("entry");
-			builder.SetInsertPoint(bb);
-
-			Proto.CreateArgAllocas(func, builder);
-
-			Value retVal = Body.CodeGen(builder);
-
-			if(!retVal.IsNull)
-			{
-				builder.BuildReturn(retVal);
-
-				// Validate the generated code, checking for consistency.
-				func.Validate(LLVMVerifierFailureAction.PrintMessageAction);
-
-				// Optimize the function.
-				passManager.Run(func);
-
-				return func;
-			}
-
-			// Error reading body, remove function.
-			func.Delete();
-			return null;
-		}
-	};
-		*/
+	*/
+		#endregion
 
 	}
 }

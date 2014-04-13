@@ -32,6 +32,10 @@ namespace crosspascal.ast.nodes
 
 		public RoutineDirectives Directives { get; set; }
 
+		public bool IsFunction { get { return funcret != null; } }
+
+		public String KindName { get { return (IsFunction ? "function" : "procedure"); } }
+
 		public ProceduralType(ParametersSection @params, TypeNode ret = null, RoutineDirectives dirs = null)
 		{
 			this.@params = @params;
@@ -103,7 +107,7 @@ namespace crosspascal.ast.nodes
 		/// <summary>
 		/// Returns wether this callable is a function or procedue
 		/// </summary>
-		public bool IsFunction { get { return Type.funcret != null; } }
+		public bool IsFunction { get { return Type.IsFunction; } }
 
 		/// <summary>
 		/// Gets the fully qualified name of this callable 

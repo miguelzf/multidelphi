@@ -16,18 +16,46 @@ Type
 }
 
 Var
+
 	ttt : i;
-    A,aa,bb:Integer;
-//    C:^Integer;
+    a,b,c:Integer;
+    par:^Integer;
+	Ret : Integer;
 
 begin
 	ttt := 6;
 
-	aa := 3;
-	bb := ttt;
+	a := 1;
+	b := ttt;
 //	ttt := fff(3,ttt);
 	
-	A := aa*2 + bb;
-//	C := @A;
-//	A := C^ + A;
+	A := a*2 + b;
+
+	par := @A;
+	
+	c := par^;
+	Ret := C shr 1;
 End.
+
+def test(x)
+  printd(x) :
+  x = 4 :
+  printd(x);
+  
+def f(x y z) x = 11 : y = 35 : z = x / y ;
+
+def binary : 1 (x y) y;
+
+def fib(x)
+  if (x < 3) then
+    1
+  else
+    fib(x-1)+fib(x-2);
+
+def fibi(x)
+  var a = 1, b = 1, c in
+  (for i = 3, i < x in
+     c = a + b :
+     a = b :
+     b = c) :
+  b;

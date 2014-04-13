@@ -83,6 +83,7 @@
     <Compile Include="codegen\cpp\CppCodegen.cs" />
     <Compile Include="codegen\llvm\IRBuilder.cs" />
     <Compile Include="codegen\llvm\LlvmILGen.cs" />
+    <Compile Include="codegen\llvm\LlvmUtils.cs" />
     <Compile Include="semantics\NestingProcessor.cs" />
     <Compile Include="utils\OutputStream.cs" />
     <Compile Include="core\Compiler.cs" />
