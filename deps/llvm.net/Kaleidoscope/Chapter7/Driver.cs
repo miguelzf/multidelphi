@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LLVM;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +16,8 @@ namespace Kaleidoscope.Chapter7
         private LLVM.IRBuilder m_builder;
         private LLVM.PassManager m_passMgr;
         private LLVM.ExecutionEngine m_engine;
+		Module module;
+		IRBuilder builder;
 
         public Driver()
         {
@@ -22,10 +25,14 @@ namespace Kaleidoscope.Chapter7
 
         public void Run()
         {
+					//	string ex1 = "def binary : 1 (x y) y;";
+		//	string ex2 = "def fibi(x) var a = 1, b = 1, c in  (for i = 3, i < x in c = a + b :  a = b :  b = c) : b;";
+		//	var ss = new StringReader(ex1+"  " + ex2);
+
             Lexer lexer = new Lexer(Console.In);
             m_parser = new Parser(lexer);
-            using(LLVM.Module module = new LLVM.Module("my cool jit"))
-            using(m_builder = new LLVM.IRBuilder())
+            using(module = new LLVM.Module("my cool jit"))
+			using (builder = m_builder = new LLVM.IRBuilder())
             {
                 CodeGenManager.Module = module;
                 m_engine = new LLVM.ExecutionEngine(module);
@@ -38,6 +45,17 @@ namespace Kaleidoscope.Chapter7
                 m_passMgr.AddGVNPass();
                 m_passMgr.AddCFGSimplificationPass();
                 m_passMgr.Initialize();
+
+
+				Function main = EmitTestLLVMIR();
+				module.Dump();
+
+				//	if (valRet.Equals(Value.Null))
+				//		return Value.Null;
+
+				GenericValue val = m_engine.RunFunction(main, new GenericValue[0]);
+				Console.WriteLine("Evaluated to " + val.ToUInt());
+
 
                 while(true)
                 {
@@ -66,6 +84,50 @@ namespace Kaleidoscope.Chapter7
                 }
             }
         }
+
+
+		Function EmitTestLLVMIR()
+		{
+			/* define i32 @main() {
+				entry:
+				  %a = alloca i32
+				  %c = alloca i32
+				  %p = alloca i32*
+				  store i32 1, i32* %a
+				  store i32* %a, i32** %p
+				  %0 = load i32** %p
+				  %1 = load i32* %0
+				  store i32 %1, i32* %c
+				  ret i32 0
+				}
+			*/
+
+			var tint = TypeRef.CreateInt32();
+		//	TypeRef ptr = TypeRef.CreatePointer(tint);
+
+			Function func = new Function(module, "main", tint, new TypeRef[0]);
+			func.SetLinkage(LLVMLinkage.CommonLinkage);
+
+			// Create a new basic block to start insertion into.
+			BasicBlock bb = func.AppendBasicBlock("entry");
+			builder.SetInsertPoint(bb);
+
+			Value a = builder.BuildAlloca(tint, "a");	//  %a = alloca i32
+			Value c = builder.BuildAlloca(tint, "c");	//  %c = alloca i32
+
+			//	Value p = builder.BuildAlloca(ptr, "p");	//  %p = alloca i32*
+
+			builder.BuildStore(Value.CreateConstInt32(111), a);	// store i32 1, i32* %a
+			//	builder.BuildStore(a, p);							// store i32* %a, i32** %p
+			Value va = builder.BuildLoad(a,"");
+			//	Value lp = builder.BuildLoad(p);					// %0 = load i32** %p
+			//	Value llp= builder.BuildLoad(lp);					// %1 = load i32* %0
+			//	builder.BuildStore(llp, c);
+
+			builder.BuildReturn(va);
+			return func;
+		}
+
 
         private void HandleDefinition()
         {

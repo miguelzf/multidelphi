@@ -12,8 +12,10 @@ namespace LLVM
         public ExecutionEngine(Module module)
         {
             StringBuilder sb = new StringBuilder(1024);
-            if(Native.CreateExecutionEngineForModule(ref m_handle, module.Handle, ref sb) == 0)
-                Console.Error.WriteLine(sb.ToString());
+		//	if (Native.CreateExecutionEngineForModule(ref m_handle, module.Handle, ref sb) == 0)
+		//	if (Native.CreateInterpreterForModule(ref m_handle, module.Handle, ref sb) == 0)
+			if (Native.CreateJITCompilerForModule(ref m_handle, module.Handle, 0, ref sb) == 0)
+				Console.Error.WriteLine(sb.ToString());
         }
 
         ~ExecutionEngine()

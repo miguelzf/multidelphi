@@ -83,7 +83,10 @@ namespace LLVM
             return System.Runtime.InteropServices.Marshal.PtrToStringAnsi(name);
         }
 
-        public static Value CreateConstBool(bool value)
+
+		#region Consts
+
+		public static Value CreateConstBool(bool value)
         {
             return new Value(Native.ConstInt(TypeRef.CreateBool().Handle, (ulong)(value ? 1 : 0), 0));
         }
@@ -152,6 +155,9 @@ namespace LLVM
         {
             return new Value(Native.ConstReal(TypeRef.CreateFloat().Handle, value));
         }
+
+		#endregion
+
 
         #region IPointerWrapper Members
 

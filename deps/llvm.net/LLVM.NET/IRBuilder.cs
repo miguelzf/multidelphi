@@ -54,7 +54,7 @@ namespace LLVM
 		// the exclusive means of building instructions using the C interface.
 
 
-		protected const string tmpvarname = "tmp";
+		protected const string tmpvarname = "";
 
 		#region Arithmetic and Logical Instructions
 		
@@ -200,6 +200,11 @@ namespace LLVM
         }
 		
 		#endregion
+
+		public Value BuildAlloca(TypeRef arg, string name = tmpvarname)
+		{
+			return new Value(Native.BuildAlloca(m_builder, arg.Handle, name));
+		}
 
 
         public Value BuildCall(Function func, IEnumerable<Value> args)

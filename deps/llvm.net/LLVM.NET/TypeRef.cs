@@ -11,12 +11,15 @@ namespace LLVM
 
         private readonly LLVMTypeRef* m_handle;
 
+		public LLVMTypeRef* pointedType;
+
         public TypeRef(LLVMTypeRef* handle)
         {
             if(handle == null)
                 throw new ArgumentNullException("handle");
 
             m_handle = handle;
+			pointedType = null;
         }
 
         public LLVMTypeRef* Handle
@@ -90,8 +93,10 @@ namespace LLVM
 
         public static TypeRef CreatePointer(TypeRef elType)
         {
-            return new TypeRef(Native.PointerType(elType.Handle, 0));
-        }
+            TypeRef var = new TypeRef(Native.PointerType(elType.Handle, 0));
+			var.pointedType = elType.Handle;
+			return var;
+		}
 
         #region IPointerWrapper Members
 
