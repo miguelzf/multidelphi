@@ -406,7 +406,7 @@ namespace crosspascal.ast
 		
 		public virtual T Visit(Assignment node)
 		{
-			return Visit((Statement)node);
+			Visit((Statement)node);
 			traverse(node.lvalue);
 			return traverse(node.expr);
 		}
