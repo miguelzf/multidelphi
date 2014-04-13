@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using LLVM;
 
-namespace crosspascal.codegen.llvm
+namespace MultiPascal.Codegen.LlvmIR
 {
 
 	/// <summary>

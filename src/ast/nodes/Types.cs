@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using crosspascal.core;
+using MultiPascal.core;
 
-namespace crosspascal.ast.nodes
+namespace MultiPascal.AST.Nodes
 {
 	// override Equals but not GetHashCode warning
 

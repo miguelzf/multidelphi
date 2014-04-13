@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Threading;
 
-namespace crosspascal.parser
+namespace MultiPascal.Parser
 {
 	public partial class DelphiPreprocessor	
 	{

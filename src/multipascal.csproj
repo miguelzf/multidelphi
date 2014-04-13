@@ -7,7 +7,7 @@
     <ProjectGuid>{A83E4A24-4797-47FD-B944-76050FA303EB}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>crosspascal</RootNamespace>
+    <RootNamespace>MultiPascal</RootNamespace>
     <AssemblyName>crosspascal</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -51,7 +51,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>crosspascal.testunits.CppProgram</StartupObject>
+    <StartupObject>MultiPascal.TestUnits.CppProgram</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LLVM.NET">

@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using crosspascal.parser;
+using MultiPascal.Parser;
 
-namespace crosspascal.ast.nodes
+namespace MultiPascal.AST.Nodes
 {
 	/// <summary>
 	/// Delphi Nodes hierarchy

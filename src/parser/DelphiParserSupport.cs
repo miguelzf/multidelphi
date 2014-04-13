@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
-using crosspascal.semantics;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
+using MultiPascal.Semantics;
 using System.IO;
 using System.Diagnostics;
 using System.Collections;
-using crosspascal.core;
+using MultiPascal.core;
 
-namespace crosspascal.parser
+namespace MultiPascal.Parser
 {
 	/// <summary>
 	/// Internal support utils for DelphiParser

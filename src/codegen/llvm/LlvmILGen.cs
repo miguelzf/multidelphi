@@ -3,21 +3,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
-using crosspascal.semantics;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
+using MultiPascal.Semantics;
 
 using LLVM;
 using System.IO;
 using System.Diagnostics;
 
-namespace crosspascal.codegen.llvm
+namespace MultiPascal.Codegen.LlvmIR
 {
 
 	class LlvmILGen : Processor<LLVM.Value>
 	{
-		private int ident = 0;
-
 		public LlvmILGen()
 		{
 			realTraverse = traverse;
@@ -31,7 +29,6 @@ namespace crosspascal.codegen.llvm
 
 
 		LlvmIRBuilder builder;
-		PassManager passManager;
 		ExecutionEngine execEngine;
 		Module module;
 
@@ -55,7 +52,7 @@ namespace crosspascal.codegen.llvm
 			{
 				execEngine = new ExecutionEngine(module);
 			/*
-				passManager = new PassManager(module);
+				PassManager passManager = new PassManager(module);
 				passManager.AddTargetData(execEngine.GetTargetData());
 			
 				// optimizations
@@ -69,7 +66,7 @@ namespace crosspascal.codegen.llvm
 			#endif
 				passManager.Initialize();
 			*/
-				// main = EmitTestLLVMIR();
+			// main = EmitTestLLVMIR();
 				Value valRet = traverse(n);
 
 				module.Dump();
@@ -419,7 +416,9 @@ namespace crosspascal.codegen.llvm
 		#endregion
 
 
-		public Value Visit(RoutineDeclaration node)
+		#region Routines
+
+		public override Value Visit(RoutineDeclaration node)
 		{
 			ProceduralType functype = node.Type;
 			TypeRef llvmfrettype = (node.IsFunction? GetLLVMType(functype.funcret) : TypeRef.CreateVoid());
@@ -546,9 +545,11 @@ namespace crosspascal.codegen.llvm
 		}
 	*/
 
+		#endregion
 
-		 #region Statements 
-	/*
+
+		#region Statements
+		/*
 		/// IfExprAST - Expression class for if/then/else.
 
 		public ExprAST Cond { get; set; }

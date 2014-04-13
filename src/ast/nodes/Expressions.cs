@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace crosspascal.ast.nodes
+namespace MultiPascal.AST.Nodes
 {
 	#region Expressions hierarchy
 	/// <remarks>

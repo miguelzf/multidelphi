@@ -5,14 +5,14 @@ using System.Text;
 using System.Diagnostics;
 using System.IO;
 
-using crosspascal.parser;
-using crosspascal.semantics;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
-using crosspascal.codegen.cpp;
-using crosspascal.codegen.llvm;
+using MultiPascal.Parser;
+using MultiPascal.Semantics;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
+using MultiPascal.Codegen.Cpp;
+using MultiPascal.Codegen.LlvmIR;
 
-namespace crosspascal.core
+namespace MultiPascal.core
 {
 	public class Compiler
 	{
@@ -20,7 +20,7 @@ namespace crosspascal.core
 		TranslationPlanner planner;
 		DelphiParser parser;
 
-		public const int DefaultDebugLevel = 0;
+		public const int DefaultDebugLevel = 2;
 
 		public static int DebugLevel;
 
@@ -104,7 +104,6 @@ namespace crosspascal.core
 			//	new ParentProcessor().StartProcessing(ast);
 				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
 
-				Console.ReadLine();
 				astPrinter.Process(ast);
 				Console.WriteLine(astPrinter.Output());
 

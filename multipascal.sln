@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Express 2012 for Windows Desktop
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crosspascal", "src\crosspascal.csproj", "{A83E4A24-4797-47FD-B944-76050FA303EB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "multipascal", "src\multipascal.csproj", "{A83E4A24-4797-47FD-B944-76050FA303EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

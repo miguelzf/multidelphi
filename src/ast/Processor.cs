@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using crosspascal.ast.nodes;
+using MultiPascal.AST.Nodes;
 
 
 //
@@ -13,7 +13,7 @@ using crosspascal.ast.nodes;
 // since it is heavily depending on each Processor's logic.
 //
 
-namespace crosspascal.ast
+namespace MultiPascal.AST
 {
 	public delegate T TreeTraverse<T>(Node n);
 

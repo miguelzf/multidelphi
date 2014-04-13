@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using crosspascal.parser;
-using crosspascal.semantics;
+using MultiPascal.Parser;
+using MultiPascal.Semantics;
 
-namespace crosspascal.ast.nodes
+namespace MultiPascal.AST.Nodes
 {
 	#region Statements hierarchy
 	/// <remarks>

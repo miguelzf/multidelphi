@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using crosspascal.ast.nodes;
+using MultiPascal.AST.Nodes;
 
-namespace crosspascal.ast
+namespace MultiPascal.AST
 {
 	// Delivers a visitor pattern with which to traverse the AST
 

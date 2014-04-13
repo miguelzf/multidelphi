@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using LLVM;
 
-namespace crosspascal.codegen.llvm
+namespace MultiPascal.Codegen.LlvmIR
 {
 
 	/// <summary>
@@ -17,11 +17,6 @@ namespace crosspascal.codegen.llvm
 		public Value BuildIntToPtr(Value arg, TypeRef ptrType, string name = tmpvarname)
 		{
 			return new Value(Native.BuildIntToPtr(m_builder, arg.Handle, ptrType.Handle, name));
-		}
-
-		public Value BuildAlloca(TypeRef arg, string name = tmpvarname)
-		{
-			return new Value(Native.BuildAlloca(m_builder, arg.Handle, name));
 		}
 
 		public Value AddGlobal(Module module, TypeRef type, String name)

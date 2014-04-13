@@ -4,11 +4,11 @@ using System.Linq;
 using System.Collections;
 using System.IO;
 using System.Text;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
-using crosspascal.semantics;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
+using MultiPascal.Semantics;
 
-namespace crosspascal.parser
+namespace MultiPascal.Parser
 {
 
     // Open main Parser class

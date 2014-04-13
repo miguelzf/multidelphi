@@ -4,12 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using crosspascal.ast.nodes;
-using crosspascal.parser;
+using MultiPascal.AST.Nodes;
+using MultiPascal.Parser;
 using System.Collections.Specialized;
 using System.Collections;
 
-namespace crosspascal.core
+namespace MultiPascal.core
 {
 
 	class TranslationPlanner

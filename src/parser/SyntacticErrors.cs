@@ -2,9 +2,9 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Text;
-using crosspascal.core;
+using MultiPascal.core;
 
-namespace crosspascal.parser
+namespace MultiPascal.Parser
 {
 	public class ParserException : CrossPascalException
 	{

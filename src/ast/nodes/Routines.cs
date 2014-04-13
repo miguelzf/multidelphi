@@ -1,13 +1,13 @@
-﻿using crosspascal.parser;
+﻿using MultiPascal.Parser;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using crosspascal.semantics;
+using MultiPascal.Semantics;
 
-namespace crosspascal.ast.nodes
+namespace MultiPascal.AST.Nodes
 {
 	// override Equals but not GetHashCode warning
 	#pragma warning disable 659

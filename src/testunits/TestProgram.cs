@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
-using crosspascal.utils;
-using crosspascal.parser;
-using crosspascal.semantics;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
+using MultiPascal.utils;
+using MultiPascal.Parser;
+using MultiPascal.Semantics;
 
 
-namespace crosspascal.core
+namespace MultiPascal.core
 {
 	class TestProgram
 	{

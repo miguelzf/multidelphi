@@ -7,9 +7,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using crosspascal.ast.nodes;
+using MultiPascal.AST.Nodes;
 
-namespace crosspascal.ast
+namespace MultiPascal.AST
 {
 	public abstract partial class Processor<T>
 	{

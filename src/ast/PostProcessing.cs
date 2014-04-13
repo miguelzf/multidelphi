@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using crosspascal.ast.nodes;
+using MultiPascal.AST.Nodes;
 using System.Reflection;
 
-namespace crosspascal.ast
+namespace MultiPascal.AST
 {
 	/// <summary>
 	/// Static methods that process the AST

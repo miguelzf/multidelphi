@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace crosspascal.core
+namespace MultiPascal.core
 {
 	public class CrossPascalException : Exception
 	{

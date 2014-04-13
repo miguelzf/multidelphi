@@ -6,13 +6,13 @@ JAYFLAGS=-tvc
 CSFLEXFLAGS=-q --nobak --skel Flex-skeleton-nested.cs
 #-debug
 FLEXDEBUG=
-DEBUGFLAG=$(shell grep "int +DefaultDebugLevel += +2"  ../core/Compiler.cs)
+DEBUGFLAG=
+#$(shell grep "int +DefaultDebugLevel += +2"  ..\core\Compiler.cs)
 
 JAYEXEC=$(DEPSDIR)\cs-jay\jay.exe
 LEXEXEC=$(DEPSDIR)\cs-jflex\csflex.exe
 
 DEPS=DelphiPreprocessor.cs DelphiScanner.cs DelphiParser.cs
-
 
 all: setvars $(DEPS)
 
@@ -27,6 +27,6 @@ DelphiPreprocessor.cs: DelphiPreprocessor.l ..\core\Compiler.cs
 DelphiScanner.cs: DelphiLex.l ..\core\compiler.cs
 	$(LEXEXEC) $(FLEXDEBUG) $(CSFLEXFLAGS)  $<
 
-DelphiParser.cs: DelphiGrammar.y
+DelphiParser.cs: DelphiGrammar.y  ..\core\compiler.cs
 	$(JAYEXEC) $(JAYFLAGS) < Jay-CS-skeleton.cs $< > $@
 

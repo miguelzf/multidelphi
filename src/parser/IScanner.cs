@@ -1,6 +1,6 @@
 using System;
 
-namespace crosspascal.parser
+namespace MultiPascal.Parser
 {
 	// must be implemented by a scanner object to supply input to the parser.
 

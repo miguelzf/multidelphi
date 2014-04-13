@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace crosspascal.semantics
+namespace MultiPascal.Semantics
 {
 	/// <summary>
 	/// DAG-based symbol manager

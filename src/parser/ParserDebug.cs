@@ -5,7 +5,7 @@ using System.Text;
 using System.Diagnostics;
 
 
-namespace crosspascal.parser
+namespace MultiPascal.Parser
 {
 	public interface ParserDebug
 	{

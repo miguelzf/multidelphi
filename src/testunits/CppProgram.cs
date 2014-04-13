@@ -3,14 +3,14 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using crosspascal.core;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
-using crosspascal.parser;
-using crosspascal.codegen.cpp;
-using crosspascal.semantics;
+using MultiPascal.core;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
+using MultiPascal.Parser;
+using MultiPascal.Codegen.Cpp;
+using MultiPascal.Semantics;
 
-namespace crosspascal.testunits
+namespace MultiPascal.TestUnits
 {
 
 	class CppProgram

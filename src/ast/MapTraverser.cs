@@ -5,12 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Runtime.Serialization;
-using crosspascal.utils;
-using crosspascal.ast.nodes;
-using crosspascal.core;
+using MultiPascal.utils;
+using MultiPascal.AST.Nodes;
+using MultiPascal.core;
 
 
-namespace crosspascal.ast
+namespace MultiPascal.AST
 {
 	// Delivers a Mapping with which to traverse the AST
 

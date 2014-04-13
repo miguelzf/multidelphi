@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using crosspascal.core;
-using crosspascal.parser;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
-using crosspascal.codegen.cpp;
+using MultiPascal.core;
+using MultiPascal.Parser;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
+using MultiPascal.Codegen.Cpp;
 
-namespace crosspascal.testunits
+namespace MultiPascal.TestUnits
 {
 
 	class TestDriver

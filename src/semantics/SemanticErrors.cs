@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using crosspascal.core;
+using MultiPascal.core;
 
-namespace crosspascal.semantics
+namespace MultiPascal.Semantics
 {
 	public class SemanticException : CrossPascalException
 	{

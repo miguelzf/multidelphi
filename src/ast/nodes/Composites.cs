@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using crosspascal.semantics;
+using MultiPascal.Semantics;
 
-namespace crosspascal.ast.nodes
+namespace MultiPascal.AST.Nodes
 {
 
 	//

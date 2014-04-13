@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace crosspascal.utils
+namespace MultiPascal.utils
 {
 	// semi-singleton
 	public class Logger

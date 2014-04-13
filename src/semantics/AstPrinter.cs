@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
 
-namespace crosspascal.semantics
+namespace MultiPascal.Semantics
 {
 
 	// For debug, prints the whole tree

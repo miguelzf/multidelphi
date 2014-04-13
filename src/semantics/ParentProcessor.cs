@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
 
-namespace crosspascal.semantics
+namespace MultiPascal.Semantics
 {
 	/// <summary>
 	/// Processor to set the backward pointer-to-parent in each node

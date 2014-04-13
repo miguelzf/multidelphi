@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using crosspascal.ast;
-using crosspascal.ast.nodes;
-using crosspascal.semantics;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
+using MultiPascal.Semantics;
 
 
-namespace crosspascal.semantics
+namespace MultiPascal.Semantics
 {
 	class NestingProcessor : Processor<bool>
 	{

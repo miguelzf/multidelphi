@@ -6,7 +6,7 @@ using System.Text;
 using System.Linq;
 using System.Globalization;
 
-namespace crosspascal.parser
+namespace MultiPascal.Parser
 {
 
 /**

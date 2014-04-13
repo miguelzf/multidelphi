@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using crosspascal.ast.nodes;
-using crosspascal.semantics;
+using MultiPascal.AST.Nodes;
+using MultiPascal.Semantics;
 
-namespace crosspascal.core
+namespace MultiPascal.core
 {
 	public class SourceFile
 	{

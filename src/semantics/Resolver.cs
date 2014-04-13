@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
-using crosspascal.ast;
-using crosspascal.ast.nodes;
-using crosspascal.core;
+using MultiPascal.AST;
+using MultiPascal.AST.Nodes;
+using MultiPascal.core;
 
-namespace crosspascal.semantics
+namespace MultiPascal.Semantics
 {
 
 	class TypeWrapper : LvalueExpression

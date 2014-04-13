@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using crosspascal.ast.nodes;
-using crosspascal.ast;
+using MultiPascal.AST.Nodes;
+using MultiPascal.AST;
 
-namespace crosspascal.semantics
+namespace MultiPascal.Semantics
 {
 	class ConstantFolder : Processor<bool>
 	{

@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using System.Linq;
 
-namespace crosspascal.parser
+namespace MultiPascal.Parser
 {
 
 /**
