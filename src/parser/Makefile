@@ -6,7 +6,7 @@ JAYFLAGS=-tvc
 CSFLEXFLAGS=-q --nobak --skel Flex-skeleton-nested.cs
 #-debug
 FLEXDEBUG=
-DEBUGFLAG=$(shell grep "int +DefaultDebugLevel += +2"  ..\core\Compiler.cs)
+DEBUGFLAG=$(shell grep "int +DefaultDebugLevel += +2"  ../core/Compiler.cs)
 
 JAYEXEC=$(DEPSDIR)\cs-jay\jay.exe
 LEXEXEC=$(DEPSDIR)\cs-jflex\csflex.exe
