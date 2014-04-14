@@ -724,6 +724,15 @@ namespace MultiPascal.Semantics
 		{
 			Visit((Statement) node);
 			traverse(node.stmt);
+
+			var decl =  declEnv.GetDeclaration(node.label);
+			if (decl == null)
+				throw new DeclarationNotFound(node.label);
+
+			node.decl = decl as LabelDeclaration;
+			if (node.decl == null)
+				return Error(decl.NodeName() + " is not a label", node);
+
 			return true;
 		}
 		
@@ -741,6 +750,15 @@ namespace MultiPascal.Semantics
 		public override bool Visit(GotoStatement node)
 		{
 			Visit((Statement) node);
+
+			var decl = declEnv.GetDeclaration(node.gotolabel);
+			if (decl == null)
+				throw new DeclarationNotFound(node.gotolabel);
+
+			node.decl = decl as LabelDeclaration;
+			if (node.decl == null)
+				return Error(decl.NodeName() + " is not a label", node);
+
 			return true;
 		}
 		

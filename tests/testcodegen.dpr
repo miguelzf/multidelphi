@@ -28,18 +28,63 @@ Type
 Var
 
 	ttt : i;
-    a,b,c:Integer;
+    a,b,c,aa:Integer;
     par :^Integer;
 	Ret : Integer;
+	ii : Integer;
+	
+Label lblrep;
 
 begin
 	ttt := 6;
-
 	a := 1;
 	b := ttt;
+	aa := 50;
+
+	if (a < b)
+	then
+		begin
+			c := a;
+			b := c * 3+a;
+		end
+	else
+		begin
+			a := b;
+			c := a / 3 + ttt;
+		end ;
+		
+	for ii := 34 downto 22 do
+		begin
+			a := ret shr 1 + (b shl 1);
+			b := ret / (b+1) + a;
+			if (a mod b = 1) then 
+				goto lblrep;
+		end;
+
+	repeat
+		begin
+			aa := aa - 1 ;
+			if (aa mod 3 = 1) 
+			then 
+				aa := aa + b
+			else
+				aa := aa - b
+		end;
+	until aa < 70;
 	
+	
+	while ( aa < 100) do
+		begin
+			aa := aa + 1 ;
+			if (a mod b*2 = 12) then 
+				break;
+			if (a / b = 7) then 
+				continue;
+		end;
+
 	ttt := fff(1,ttt);
 	
+lblrep:
 	ppp(200/a*11,ttt);
 	
 	A := a*2 + b;
@@ -49,26 +94,3 @@ begin
 	c := par^;
 	Ret := C shr 1;
 End.
-
-def test(x)
-  printd(x) :
-  x = 4 :
-  printd(x);
-  
-def f(x y z) x = 11 : y = 35 : z = x / y ;
-
-def binary : 1 (x y) y;
-
-def fib(x)
-  if (x < 3) then
-    1
-  else
-    fib(x-1)+fib(x-2);
-
-def fibi(x)
-  var a = 1, b = 1, c in
-  (for i = 3, i < x in
-     c = a + b :
-     a = b :
-     b = c) :
-  b;

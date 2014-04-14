@@ -191,12 +191,12 @@ namespace LLVM
 
         public Value BuildCondBr(Value ifVal, BasicBlock thenBlock, BasicBlock elseBlock)
         {
-            return new Value(Native.BuildCondBr(m_builder, ifVal.Handle, thenBlock.Handle, elseBlock.Handle));
+            return new Value(Native.BuildCondBr(m_builder, ifVal.Handle, thenBlock.BBHandle, elseBlock.BBHandle));
         }
 
         public Value BuildBr(BasicBlock branchBlock)
         {
-            return new Value(Native.BuildBr(m_builder, branchBlock.Handle));
+            return new Value(Native.BuildBr(m_builder, branchBlock.BBHandle));
         }
 		
 		#endregion
@@ -264,14 +264,14 @@ namespace LLVM
         public void AddPhiIncoming(Value phiNode, Value value, BasicBlock block)
         {
             IntPtr[] valPointers = new IntPtr[] { (IntPtr)value.Handle };
-            IntPtr[] blockPointers = new IntPtr[] { (IntPtr)block.Handle };
+            IntPtr[] blockPointers = new IntPtr[] { (IntPtr)block.BBHandle };
 
             Native.AddIncoming(phiNode.Handle, valPointers, blockPointers, 1);
         }
 
         public void SetInsertPoint(BasicBlock bb)
         {
-            Native.PositionBuilderAtEnd(m_builder, bb.Handle);
+            Native.PositionBuilderAtEnd(m_builder, bb.BBHandle);
         }
 
         public BasicBlock GetInsertPoint()

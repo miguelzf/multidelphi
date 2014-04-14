@@ -104,8 +104,8 @@ namespace MultiPascal.core
 			//	new ParentProcessor().StartProcessing(ast);
 				Console.WriteLine("SET parents OK: " + ast.name + " " + ast.ToString());
 
-				astPrinter.Process(ast);
-				Console.WriteLine(astPrinter.Output());
+			//	astPrinter.Process(ast);
+			//	Console.WriteLine(astPrinter.Output());
 
 				ConstantFolder constfolder = new ConstantFolder();
 				constfolder.Process(ast);

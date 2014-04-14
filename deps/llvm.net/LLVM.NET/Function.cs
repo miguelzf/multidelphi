@@ -137,7 +137,7 @@ namespace LLVM
 
         public BasicBlock AppendBasicBlock(BasicBlock block)
         {
-            Native.MoveBasicBlockAfter(block.Handle, Native.GetLastBasicBlock(m_handle));
+            Native.MoveBasicBlockAfter(block.BBHandle, Native.GetLastBasicBlock(m_handle));
             return block;
         }
 

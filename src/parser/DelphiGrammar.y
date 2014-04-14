@@ -759,7 +759,7 @@ goto_stmt
 ifstmt
     : KW_IF expr KW_THEN nonlblstmt 
         KW_ELSE nonlblstmt              { $$ = new IfStatement($2, $4, $6); }
-    | KW_IF expr KW_THEN nonlblstmt { $$ = new IfStatement($2, $4, null); }
+    | KW_IF expr KW_THEN nonlblstmt     { $$ = new IfStatement($2, $4, null); }
     ;
 
 casestmt

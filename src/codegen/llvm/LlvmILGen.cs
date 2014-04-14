@@ -16,34 +16,130 @@ namespace MultiPascal.Codegen.LlvmIL
 
 	class LlvmILGen : Processor<LLVM.Value>
 	{
-		public LlvmILGen()
-		{
-			realTraverse = traverse;
-			traverse = traverseDebug;
-		}
-
-		public override Value DefaultReturnValue()
-		{
-			return Value.NotNull;
-		}
-
-
 		LlvmIRBuilder builder;
 		ExecutionEngine execEngine;
 		Module module;
 		PassManager passManager;
+		LLVMValueMap valuemap = new LLVMValueMap();
+		GeneratorContext evalCtx = new GeneratorContext();
 
-		// Global Map of all ID-declarations to LLVM values.
-		// All the declarations must have been previously resolved and checked,
-		// hence there should not occurr any conflicts now
-		Dictionary<Declaration, Value> values
-			= new Dictionary<Declaration, Value>(8*1024);
+		public LlvmILGen()
+		{
+			realTraverse = traverse;
+		//	traverse = traverseDebug;
+		}
 
-		// Marks if we are currently evaluating top-level declarations
-		// quick and dirty hack
-		bool inTopLevel = true;
+		public override Value DefaultReturnValue()
+		{
+			return Value.NonNull;
+		}
 
-		Function main;
+		bool Error(string msg, Node n = null)
+		{
+			string outp = "[ERROR in LLVM IR generator] " + msg;
+			if (n != null)
+				outp += n.Loc.ToString();
+
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.WriteLine(outp);
+			Console.ResetColor();
+			return false;
+		}
+
+
+		#region Map of LLVM values
+
+		class LLVMValueMap
+		{
+
+			// Global Map of all ID-declarations to LLVM values.
+			// All the declarations must have been previously resolved and checked,
+			// hence there should not occurr any conflicts now
+			Dictionary<Declaration, Value> values
+				= new Dictionary<Declaration, Value>(8 * 1024);
+
+			unsafe String PtrToStr(Value val)
+			{
+				return "" + (ulong)val.Handle;
+			}
+			internal bool AddValue(Declaration d, Value val)
+			{
+				//	Console.WriteLine("ADD DECL " + d.DeclName() + " VAL " + val.ToString() + " HAND: " + PtrToStr(val));
+				values.Add(d, val);
+				return true;
+			}
+
+			internal Value GetValue(Declaration d)
+			{
+				Value val = null;
+				bool ret = values.TryGetValue(d, out val);
+				Debug.Assert(!ret || val != null, "LLVM value not found for declaration: " + d.DeclName());
+				return val;
+			}
+
+			internal Value TryGetValue(Declaration d)
+			{
+				Value val = null;
+				bool ret = values.TryGetValue(d, out val);
+				if (ret)return val;
+				else	return Value.Null;
+			}
+		}
+		#endregion
+
+
+		#region Generator Context
+
+		// Ad-hoc eval context. quick and dirty hack. FIXME
+		class GeneratorContext
+		{
+			// ProgramaSection return == main function
+			internal Function main;
+
+			// Marks if we are currently evaluating top-level declarations
+			internal bool inTopLevel;
+
+			// Current function being evaluated.
+			internal Function func;
+
+			// BasicBlock labels to jump to in continues and breaks
+			Stack<BasicBlock> continuebbs;
+			Stack<BasicBlock> breakbbs;
+
+			internal BasicBlock ContinueBB	{ get { return continuebbs.Peek(); } }
+			internal BasicBlock BreakBB		{ get { return	  breakbbs.Peek(); } }
+
+			internal GeneratorContext()
+			{
+				continuebbs = new Stack<BasicBlock>(16);
+				breakbbs = new Stack<BasicBlock>(16);
+				main = null;
+				func = null;
+				inTopLevel = true;
+			}
+
+			internal void Reset()
+			{
+				inTopLevel = true;
+				continuebbs.Clear();
+				breakbbs.Clear();
+			}
+
+			internal void EnterLoop(BasicBlock loopstart, BasicBlock loopend)
+			{
+				continuebbs.Push(loopstart);
+				breakbbs.Push(loopend);
+			}
+
+			internal void LeaveLoop()
+			{
+				continuebbs.Pop();
+				breakbbs.Pop();
+			}
+		}
+
+		#endregion
+
 
 		public override Value Process(Node n)
 		{
@@ -82,7 +178,7 @@ namespace MultiPascal.Codegen.LlvmIL
 			//	if (valRet.Equals(Value.Null))
 			//		return Value.Null;
 
-				GenericValue val = execEngine.RunFunction(main, new GenericValue[0]);
+				GenericValue val = execEngine.RunFunction(evalCtx.main, new GenericValue[0]);
 				Console.WriteLine("Evaluated to " + val.ToUInt());
 			}
 
@@ -90,40 +186,7 @@ namespace MultiPascal.Codegen.LlvmIL
 		}
 
 
-		#region Helpers
-
-		bool Error(string msg, Node n = null)
-		{
-			string outp = "[ERROR in LLVM IR generator] " + msg;
-			if (n != null)
-				outp += n.Loc.ToString();
-
-			Console.ForegroundColor = ConsoleColor.Red;
-			Console.WriteLine(outp);
-			Console.ResetColor();
-			return false;
-		}
-
-		unsafe String PtrToStr(Value val)
-		{
-			return "" + (ulong)val.Handle;
-		}
-
-		bool LLVMAddValue(Declaration d, Value val)
-		{
-		//	Console.WriteLine("ADD DECL " + d.DeclName() + " VAL " + val.ToString() + " HAND: " + PtrToStr(val));
-			values.Add(d, val);
-			return true;
-		}
-
-		Value LLVMGetValue(Declaration d)
-		{
-			Value val = null;
-			bool ret = values.TryGetValue(d, out val);
-			Debug.Assert(!ret || val != null, "LLVM value not found for declaration: " + d.DeclName());
-			return val;
-		}
-
+		#region Handlers of LLVM Types
 
 		Dictionary<TypeNode, LLVM.TypeRef> typeMap;
 
@@ -216,12 +279,12 @@ namespace MultiPascal.Codegen.LlvmIL
 		public override Value Visit(ProgramSection node)
 		{
 			traverse(node.decls);
-			inTopLevel = false;
+			evalCtx.inTopLevel = false;
 
 			Function func = new Function(module, "main", TypeRef.CreateInt32(), new TypeRef[0]);
-			//TypeRef.CreateVoid(), new TypeRef[0]);
-			main = func;
 			func.SetLinkage(LLVMLinkage.CommonLinkage);
+			// set 'func' and 'main' instance vars (current function and main function)
+			evalCtx.main = evalCtx.func = func;
 
 			// Create a new basic block to start insertion into.
 			BasicBlock bb = func.AppendBasicBlock("entry");
@@ -269,7 +332,7 @@ namespace MultiPascal.Codegen.LlvmIL
 				val.Name = param.name;	// calls llvm
 			}
 
-			LLVMAddValue(node, func);
+			valuemap.AddValue(node, func);
 			return func;
 		}
 
@@ -281,17 +344,17 @@ namespace MultiPascal.Codegen.LlvmIL
 			builder.BuildStore(func.GetParameter((uint)i), alloca);
 
 			Debug.Assert(alloca != null);
-			Console.WriteLine("ADD " + param.DeclName());
-			LLVMAddValue(param, alloca);
+			valuemap.AddValue(param, alloca);
 			return alloca;
 		}
 
 		public override Value Visit(RoutineDefinition node)
 		{
+			// set instance var func
 			Function func = (Function)Visit((RoutineDeclaration)node);
-			if (func == null)
-				return null;
-			inTopLevel = false;
+			Debug.Assert(!func.IsNull, "Invalid function declaration " + node.name);
+			evalCtx.inTopLevel = false;
+			evalCtx.func = func;
 
 			// Create a new basic block to start insertion into.
 			BasicBlock bb = func.AppendBasicBlock("entry");
@@ -308,7 +371,7 @@ namespace MultiPascal.Codegen.LlvmIL
 				var retvar = @params.returnVar;
 				var llvmtype = GetLLVMType(retvar.type);
 				retVal = builder.BuildAlloca(llvmtype, retvar.name);
-				LLVMAddValue(retvar, retVal);
+				valuemap.AddValue(retvar, retVal);
 			}
 
 			Value ret = traverse(node.body);
@@ -318,7 +381,7 @@ namespace MultiPascal.Codegen.LlvmIL
 				func.Delete();
 				return null;
 			}
-			inTopLevel = true;
+			evalCtx.inTopLevel = true;
 
 			if (node.IsFunction)
 				builder.BuildReturn(builder.BuildLoad(retVal));
@@ -340,22 +403,13 @@ namespace MultiPascal.Codegen.LlvmIL
 			int i = 0;
 			Value[] args = new Value[func.ArgCount];
 			foreach (var arg in node.args)
-			{
 				args[i++] = traverse(arg);
-				Console.WriteLine("ARG: " + arg + " llvmtype: " + Utils.GetType(args[i - 1]));
-			}
-
-			for (i = 0; i < func.ArgCount; i++)
-			{
-				var arg = func.GetParameter((uint)i);
-				Console.WriteLine("FORMAL PARAM: " + arg + " llvmtype: " + Utils.GetType(arg));
-			}
 
 			Value funcretval = builder.BuildCall(func, args);
 
 			if (func.ReturnType.TypeKind == LLVMTypeKind.VoidTypeKind)
 			{	// procedure
-				return Value.NotNull;
+				return Value.NonNull;
 			}
 
 			// Create temp alloca to hold address of value
@@ -372,7 +426,7 @@ namespace MultiPascal.Codegen.LlvmIL
 			var llvmtype = GetLLVMType(node.type);
 			
 			Value vdecl;
-			if (inTopLevel)
+			if (evalCtx.inTopLevel)
 			{
 				vdecl = builder.AddGlobal(module, llvmtype, node.name);
 				Utils.SetInitializer(vdecl, llvmtype.CreateNullValue());
@@ -380,9 +434,7 @@ namespace MultiPascal.Codegen.LlvmIL
 			else
 				vdecl = builder.BuildAlloca(llvmtype, node.name);
 
-			LLVMAddValue(node, vdecl);
-
-			Console.WriteLine(node.name + " with LLVM TYpe: " + Utils.Tostring(llvmtype));
+			valuemap.AddValue(node, vdecl);
 			return vdecl;
 		}
 		
@@ -393,10 +445,8 @@ namespace MultiPascal.Codegen.LlvmIL
 
 		public override Value Visit(Identifier node)
 		{
-			Console.WriteLine("IDENTIFIER: " + node.decl.DeclName());
-
 			// ID has been previously validated
-			return LLVMGetValue(node.decl);
+			return valuemap.GetValue(node.decl);
 		}
 
 		public override Value Visit(AddressLvalue node)
@@ -510,7 +560,7 @@ namespace MultiPascal.Codegen.LlvmIL
 				case ArithmeticBinaryOp.SHR:
 					return builder.BuildLShr(l, r);
 				case ArithmeticBinaryOp.SHL:
-					return builder.BuildFAdd(l, r);
+					return builder.BuildShl(l, r);
 
 				default:	// never happens
 					Error("Invalid arithmetic binary operator: " + node.op, node);
@@ -566,157 +616,197 @@ namespace MultiPascal.Codegen.LlvmIL
 			return builder.BuildStore(rvalue, lvalue);
 		}
 
-		/*
-		/// IfExprAST - Expression class for if/then/else.
-
-		public ExprAST Cond { get; set; }
-		public ExprAST Then { get; set; }
-		public ExprAST Else { get; set; }
-
 		public override Value Visit(IfStatement node)
 		{
-			Value condV = node.Cond.CodeGen(builder);
-			if(condV.IsNull) return condV;
-
-			condV = builder.BuildFCmp(condV, LLVMRealPredicate.RealONE, 
-									  Value.CreateConstDouble(0));
+			// func was set in Visit(RoutineDefinition node)
+			Function func = evalCtx.func;
 			
-			BasicBlock startBlock = builder.GetInsertPoint();
-			Function func = startBlock.GetParent();
+			Value cond = traverse(node.condition);
+			Debug.Assert(!cond.IsNull, "Invalid If Condition");
 
-			BasicBlock thenBB = func.AppendBasicBlock("then");
-			builder.SetInsertPoint(thenBB);
+			BasicBlock thenblock = func.AppendBasicBlock("if_then");
+			BasicBlock mergeblock = func.AppendBasicBlock("ifcont");
+			BasicBlock elseblock = (node.elseblock.IsEmpty ? mergeblock 
+										: func.AppendBasicBlock("if_else"));
+			builder.BuildCondBr(cond, thenblock, elseblock);
 
-			Value thenV = node.Then.CodeGen(builder);
-			if(thenV.IsNull) return thenV;
-	  
-			// Codegen of 'then' can change the current block, update then_bb for the
-			// phi. We create a new name because one is used for the phi node, and the
-			// other is used for the conditional branch.
-			BasicBlock newThenBB = builder.GetInsertPoint();
+			builder.ResetInsertPoint(func, thenblock);
+			Value thenV = traverse(node.thenblock);
+			Debug.Assert(!thenV.IsNull, "Invalid If Then block");
+			builder.BuildBr(mergeblock);
 
-			// Emit else block
-			BasicBlock elseBB = func.AppendBasicBlock("else");
-			func.AppendBasicBlock(elseBB);
-			builder.SetInsertPoint(elseBB);
+			if (!node.elseblock.IsEmpty)
+			{
+				builder.ResetInsertPoint(func, elseblock);
+				Value elseV = traverse(node.elseblock);
+				Debug.Assert(!thenV.IsNull, "Invalid If Else block");
+				builder.BuildBr(mergeblock);
+			}
 
-			Value elseV = node.Else.CodeGen(builder);
-			if(elseV.IsNull) return elseV;
-
-			// Codegen of 'Else' can change the current block, update ElseBB for the PHI.
-			BasicBlock newElseBB = builder.GetInsertPoint();
-
-			// Emit merge block
-			BasicBlock mergeBB = func.AppendBasicBlock("ifcont");
-			func.AppendBasicBlock(mergeBB);
-			builder.SetInsertPoint(mergeBB);
-
-			PhiIncoming incoming = new PhiIncoming();
-			incoming.Add(thenV, thenBB);
-			incoming.Add(elseV, elseBB);
-			Value phi = builder.BuildPhi(TypeRef.CreateDouble(), "iftmp", incoming);
-
-			builder.SetInsertPoint(startBlock);
-			builder.BuildCondBr(condV, thenBB, elseBB);
-
-			builder.SetInsertPoint(thenBB);
-			builder.BuildBr(mergeBB);
-
-			builder.SetInsertPoint(elseBB);
-			builder.BuildBr(mergeBB);
-
-			builder.SetInsertPoint(mergeBB);
-
-			return phi;
+			builder.ResetInsertPoint(func, mergeblock);
+			return Value.NonNull;
 		}
 	
-
-
-		/// forexpr ::= 'for' identifier '=' expr ',' expr (',' expr)? 'in' expression
-		public string VarName { get; set; }
-		public ExprAST Start { get; set; }
-		public ExprAST End { get; set; }
-		public ExprAST Step { get; set; }
-		public ExprAST Body { get; set; }
-
 		public override Value Visit(ForLoop node)
 		{
-			// Output this as:
-			//   var = alloca double
-			//   ...
-			//   start = startexpr
-			//   store start -> var
-			//   goto loop
-			// loop: 
-			//   ...
-			//   bodyexpr
-			//   ...
-			// loopend:
-			//   step = stepexpr
-			//   endcond = endexpr
-			//
-			//   curvar = load var
-			//   nextvar = curvar + step
-			//   store nextvar -> var
-			//   br endcond, loop, endloop
-			// outloop:
+			//	Output this as:
+			//		store startval, id
+			//	forloop: 
+			//		body
+			//		idval = load id
+			//		incr/decr idval
+			//		store idval, id
+			//		cmp idval, endval
+			//		br slt/sgt forloop, forend
+			//	forend:
+			// NOTE: it is invalid to modify the id var inside the loop
 
-			BasicBlock startBlock = builder.GetInsertPoint();
-			Function func = startBlock.GetParent();
+			// func was set in Visit(RoutineDefinition node)
+			Function func = evalCtx.func;
 
-			Value alloca = builder.BuildEntryBlockAlloca(func, TypeRef.CreateDouble(), node.VarName);
+			Value id = traverse(node.var);
+			Value startval = traverse(node.start);
+			Value endval = traverse(node.end);
+			builder.BuildStore(startval, id);
 
-			Value startV = node.Start.CodeGen(builder);
-			if(startV.IsNull) return startV;
+			Debug.Assert(!id.IsNull, "Invalid For var id");
+			Debug.Assert(!startval.IsNull, "Invalid For start value");
+			Debug.Assert(!endval.IsNull, "Invalid For end value");
+			
+			BasicBlock forloop = func.AppendBasicBlock("forloop");
+			BasicBlock forend = func.AppendBasicBlock("forend");
 
-			builder.BuildStore(startV, alloca);
+			evalCtx.EnterLoop(forloop, forend);
+			builder.BuildBr(forloop);
+			builder.ResetInsertPoint(func, forloop);
 
-			BasicBlock loopBB = func.AppendBasicBlock("loop");
-			builder.BuildBr(loopBB);
-			builder.SetInsertPoint(loopBB);
+			Value body = traverse(node.block);
+			Debug.Assert(!body.IsNull, "Invalid For loop body");
 
-			// Within the loop, the variable is defined equal to the PHI node. If it
-			// shadows an existing variable, we have to restore it, so save it
-			// now.
-			Value oldVal = Value.Null;
-			CodeGenManager.NamedValues.TryGetValue(node.VarName, out oldVal);
-			CodeGenManager.NamedValues[node.VarName] = alloca;
+			// emit the step and test
+			Value idval = builder.BuildLoad(id);
+			if (node.direction > 0)	// incr
+				idval = builder.BuildAdd(idval, Value.CreateConstInt32(1));
+			else	// decr
+				idval = builder.BuildSub(idval, Value.CreateConstInt32(1));
 
-			// Emit the body of the loop.  This, like any other expr, can change the
-			// current BB.  Note that we ignore the value computed by the body, but
-			// don't allow an error 
-			Body.CodeGen(builder);
+			builder.BuildStore(idval, id);	// persist the final value after the For
+			var op =  (node.direction > 0) ? LLVMIntPredicate.IntULT : LLVMIntPredicate.IntUGT;
+			Value cmpres = builder.BuildICmp(idval, op, endval);
+			builder.BuildCondBr(cmpres, forloop, forend);
 
-			// Emit the step value;
-			Value stepV = Value.Null;
-
-			if(node.Step != null)
-				stepV = node.Step.CodeGen(builder);
-			else
-				stepV = Value.CreateConstDouble(1);
-
-			// Compute the end condition
-			Value endCond = node.End.CodeGen(builder);
-			endCond = builder.BuildFCmp(endCond, LLVMRealPredicate.RealONE, Value.CreateConstDouble(0), "loopcond");
-
-			Value curvar = builder.BuildLoad(alloca, VarName);
-			Value nextVar = builder.BuildFAdd(curvar, stepV, "nextvar");
-			builder.BuildStore(nextVar, alloca);
-
-			BasicBlock loopEndBB = builder.GetInsertPoint();
-			BasicBlock afterBB = func.AppendBasicBlock("afterloop");
-			builder.BuildCondBr(endCond, loopBB, afterBB);
-			builder.SetInsertPoint(afterBB);
-
-			if(!oldVal.IsNull)
-				CodeGenManager.NamedValues[node.VarName] = oldVal;
-			else
-				CodeGenManager.NamedValues.Remove(node.VarName);
-
-			return Value.CreateConstDouble(0);
+			builder.ResetInsertPoint(func, forend);
+			evalCtx.LeaveLoop();
+			return Value.NonNull;
 		}
 
-	*/
+		public override Value Visit(WhileLoop node)
+		{
+			//	Output this as:
+			//	br whileloop	; llvm demands it
+			//	whileloop: 
+			//		br cond, whilebody, whileend
+			//	whilebody:
+			//		body
+			//		br whileloop
+			//	whileend:
+
+			// func was set in Visit(RoutineDefinition node)
+			Function func = evalCtx.func;
+
+			BasicBlock whileloop = func.AppendBasicBlock("whileloop");
+			BasicBlock whilebody = func.AppendBasicBlock("whilebody");
+			BasicBlock whileend  = func.AppendBasicBlock("whileend");
+
+			evalCtx.EnterLoop(whileloop, whileend);
+			builder.BuildBr(whileloop);
+
+			builder.ResetInsertPoint(func, whileloop);
+			Value cond = traverse(node.condition);
+			builder.BuildCondBr(cond, whilebody, whileend);
+
+			builder.ResetInsertPoint(func, whilebody);
+			Value block = traverse(node.block);
+			builder.BuildBr(whileend);
+
+			Debug.Assert(!block.IsNull, "Invalid While loop block");
+			Debug.Assert(!cond.IsNull, "Invalid While loop condition");
+
+			builder.ResetInsertPoint(func, whileend);
+			evalCtx.LeaveLoop();
+			return Value.NonNull;
+		}
+
+		public override Value Visit(RepeatLoop node)
+		{
+			//	Output this as:
+			//	br repeatloop	; llvm demands it
+			//	repeatloop:
+			//		body
+			//		br cond, repeatend, repeatloop
+			//	repeatend:
+			// NOTE: it is invalid to modify the id var inside the loop
+
+			// func was set in Visit(RoutineDefinition node)
+			Function func = evalCtx.func;
+
+			BasicBlock repeatloop = func.AppendBasicBlock("repeatloop");
+			BasicBlock repeatend  = func.AppendBasicBlock("repeatend");
+
+			evalCtx.EnterLoop(repeatloop, repeatend);
+			builder.BuildBr(repeatloop);
+			builder.ResetInsertPoint(func, repeatloop);
+
+			Value block = traverse(node.block);
+			Value cond = traverse(node.condition);
+			builder.BuildCondBr(cond, repeatend, repeatloop);
+
+			Debug.Assert(!block.IsNull, "Invalid Repeat loop block");
+			Debug.Assert(!cond .IsNull, "Invalid Repeat loop condition");
+
+			builder.ResetInsertPoint(func, repeatend);
+			evalCtx.LeaveLoop();
+			return Value.NonNull;
+		}
+
+		#endregion
+
+
+		#region Labels and Control Flow instructions
+
+		public override Value Visit(BreakStatement node)
+		{
+			return builder.BuildBr(evalCtx.BreakBB);
+		}
+
+		public override Value Visit(ContinueStatement node)
+		{
+			return builder.BuildBr(evalCtx.ContinueBB);
+		}
+
+		public override Value Visit(LabelDeclaration node)
+		{
+			Function func = evalCtx.func;
+			valuemap.AddValue(node, func.AppendBasicBlock(node.name));
+			return Value.NonNull;
+		}
+
+		public override Value Visit(LabelStatement node)
+		{
+			Function func = evalCtx.func;
+			BasicBlock label = valuemap.GetValue(node.decl) as BasicBlock;
+			func.AppendBasicBlock(label);
+			builder.BuildBr(label);
+			builder.ResetInsertPoint(func,label);
+			return traverse(node.stmt);
+		}
+
+		public override Value Visit(GotoStatement node)
+		{
+			BasicBlock label = valuemap.GetValue(node.decl) as BasicBlock;
+			return builder.BuildBr(label);
+		}
+		
 		#endregion
 
 	}

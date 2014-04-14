@@ -71,6 +71,7 @@ namespace MultiPascal.AST.Nodes
 		/// </summary>
 		public TypeNode ForcedType { get; set; }
 
+		public virtual bool IsEmpty { get { return false; } }
 
 		/// <summary>
 		/// Downcast the ConstantValue to an IntegralType, and return the content.
@@ -106,7 +107,7 @@ namespace MultiPascal.AST.Nodes
 
 	public class EmptyExpression : Expression
 	{
-		// Do nothing
+		public override bool IsEmpty { get { return true; } }
 	}
 
 

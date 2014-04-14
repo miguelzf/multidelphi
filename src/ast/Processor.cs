@@ -57,7 +57,7 @@ namespace MultiPascal.AST
 
 		public virtual T Visit(Node node)
 		{
-			return default(T);
+			return DefaultReturnValue();
 		}
 
 

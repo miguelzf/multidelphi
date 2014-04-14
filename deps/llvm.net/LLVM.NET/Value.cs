@@ -8,7 +8,7 @@ namespace LLVM
     public unsafe class Value : IPointerWrapper
     {
         public static readonly Value Null = new Value();
-		public static readonly Value NotNull = new Value((LLVMValueRef*) 0x11111);
+		public static readonly Value NonNull = new Value((LLVMValueRef*) 0x11111);
 
         protected LLVMValueRef* m_handle;
 
@@ -30,12 +30,12 @@ namespace LLVM
             get { return m_handle; }
         }
 
-        public bool IsNull
+        public virtual bool IsNull
         {
             get { return m_handle == null; }
         }
 
-        public bool IsUsed
+        public virtual bool IsUsed
         {
             get { return Used(m_handle); }
         }

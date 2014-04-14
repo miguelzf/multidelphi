@@ -24,6 +24,10 @@ namespace MultiPascal.Codegen.LlvmIL
 			return new Value(Native.AddGlobal(module.Handle, type.Handle, name));
 		}
 
-
+		public void ResetInsertPoint(Function func, BasicBlock bb)
+		{
+			func.AppendBasicBlock(bb);
+			this.SetInsertPoint(bb);
+		}
 	}
 }

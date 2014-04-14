@@ -37,13 +37,16 @@ namespace MultiPascal.AST.Nodes
 
 	public abstract class Statement : Node
 	{
-
+		public virtual bool IsEmpty { get { return false; } }
 	}
 
 	public class LabelStatement : Statement
 	{
 		public String label;
 		public Statement stmt;
+
+		// to be set by the resolver
+		public LabelDeclaration decl;
 
 		public LabelStatement(String label, Statement stmt)
 		{
@@ -52,9 +55,23 @@ namespace MultiPascal.AST.Nodes
 		}
 	}
 
+
+	public class GotoStatement : Statement
+	{
+		public String gotolabel;
+
+		// to be set by the resolver
+		public LabelDeclaration decl;
+
+		public GotoStatement(String label)
+		{
+			this.gotolabel = label;
+		}
+	}
+
 	public class EmptyStatement : Statement
 	{
-		// Do nothing
+		public override bool IsEmpty { get { return true; } }
 	}
 
 	public class BreakStatement : Statement
@@ -77,16 +94,6 @@ namespace MultiPascal.AST.Nodes
 		}
 	}
 
-	public class GotoStatement : Statement
-	{
-		public string gotolabel;
-
-		public GotoStatement(string label)
-		{
-			this.gotolabel = label;
-		}
-	}
-
 	public class IfStatement : Statement
 	{
 		public Expression condition;
@@ -98,6 +105,8 @@ namespace MultiPascal.AST.Nodes
 			this.condition = condition;
 			this.thenblock = ifTrue;
 			this.elseblock = ifFalse;
+			if (elseblock == null)
+				elseblock = new EmptyStatement();
 		}
 	}
 
