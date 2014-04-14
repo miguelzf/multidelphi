@@ -2,24 +2,34 @@ Program testcodegenints;
 
 Type 
 	i = Integer;
-{
+
 	function fff(aa: i; bb: i):i;
 	Var
 	  A:Integer;
 	  C:^Integer;
 
 	Begin
-	  A := aa*2 / bb;
+	  A := aa; //*2 / bb;
 	  C := @A;
 	  Result := C^ + A;
 	end;
-}
 
+
+	
+	procedure ppp(aa: i; bb: i);
+	Var
+	  A:Integer;
+	  C:^Integer;
+
+	Begin
+	  A := aa; //*2 / bb;
+	  C := @A;
+	end;
 Var
 
 	ttt : i;
     a,b,c:Integer;
-    par:^Integer;
+    par :^Integer;
 	Ret : Integer;
 
 begin
@@ -27,7 +37,10 @@ begin
 
 	a := 1;
 	b := ttt;
-//	ttt := fff(3,ttt);
+	
+	ttt := fff(1,ttt);
+	
+	ppp(200/a*11,ttt);
 	
 	A := a*2 + b;
 

@@ -167,6 +167,11 @@ namespace MultiPascal.AST.Nodes
 				decls = new DeclarationList();
 		}
 
+		public IEnumerable<ParamDeclaration> Parameters()
+		{
+			return decls.Cast<ParamDeclaration>();
+		}
+
 		public override bool Equals(object obj)
 		{
 			ParametersSection sec = obj as ParametersSection;

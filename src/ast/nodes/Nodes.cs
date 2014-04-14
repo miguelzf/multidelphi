@@ -73,7 +73,15 @@ namespace MultiPascal.AST.Nodes
 		public String NodeName()
 		{
 			String fullname = this.ToString();
-			return fullname.Substring(fullname.LastIndexOf('.') + 1) + Loc.ToString();
+			return fullname.Substring(fullname.LastIndexOf('.') + 1);
+		}
+
+		/// <summary>
+		/// Returns name + location
+		/// </summary>
+		public String NameLoc()
+		{
+			return NodeName() + Loc.ToString();
 		}
 
 		/// <summary>
@@ -83,7 +91,7 @@ namespace MultiPascal.AST.Nodes
 		protected bool Error(string msg)
 		{
 			string outp = "[ERROR in node creation] " + msg + Loc.ToString();
-			// throw new crosspascal.parser.AstNodeException(outp);
+			// throw new MultiPascal.Parser.AstNodeException(outp);
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine(outp);
 			Console.ResetColor();
@@ -97,7 +105,7 @@ namespace MultiPascal.AST.Nodes
 		protected bool ErrorInternal(string msg)
 		{
 			string outp = "[ERROR internal] " + msg + Loc.ToString();
-			// throw new crosspascal.parser.AstNodeException(outp);
+			// throw new MultiPascal.parser.AstNodeException(outp);
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine(outp);
 			Console.ResetColor();

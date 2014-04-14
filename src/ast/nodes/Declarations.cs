@@ -51,9 +51,9 @@ namespace MultiPascal.AST.Nodes
 			this.name = name;
 		}
 
-		public override string ToString()
+		public String DeclName()
 		{
-			return "("+ name + " decl type " + (type == null? "null" : type.GetType().Name) + ")";
+			return "("+ name + " " + this.NodeName() + " type " + (type == null? "null" : type.GetType().Name) + ")";
 		}
 	}
 

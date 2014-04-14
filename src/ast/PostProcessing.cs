@@ -94,7 +94,7 @@ namespace MultiPascal.AST
 							return false;
 						if (node.Parent == null)
 							Console.Error.WriteLine("[ERROR testsetparents] parent "
-													+ par.NodeName() + " is null in " + node);
+													+ par.NameLoc() + " is null in " + node);
 						return true;
 					}));
 		}

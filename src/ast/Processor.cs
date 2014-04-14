@@ -51,7 +51,7 @@ namespace MultiPascal.AST
 
 		protected T traverseDebug(Node n)
 		{
-			Console.WriteLine("visiting Node " + ((n == null) ? "null" : n.NodeName()));
+			Console.WriteLine("visiting Node " + ((n == null) ? "null" : n.NameLoc()));
 			return realTraverse(n);
 		}
 

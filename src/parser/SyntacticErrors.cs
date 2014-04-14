@@ -6,7 +6,7 @@ using MultiPascal.core;
 
 namespace MultiPascal.Parser
 {
-	public class ParserException : CrossPascalException
+	public class ParserException : MultiPascalException
 	{
 		const string DefaultMsg = "Syntax Error";
 	
@@ -35,7 +35,7 @@ namespace MultiPascal.Parser
 		public InputRejected (string message = DefaultMsg) : base (message) { }
 	}
 
-	class ScannerException : CrossPascalException 
+	class ScannerException : MultiPascalException 
 	{
 		internal ScannerException(int line, string msg = "Lexical Error")
 			: base(msg + " in line " + line) { }
@@ -43,7 +43,7 @@ namespace MultiPascal.Parser
 		internal ScannerException(string msg = "Lexical Error") : base(msg) { }
 	}
 
-	class PreprocessorException : CrossPascalException 
+	class PreprocessorException : MultiPascalException 
 	{
 		internal PreprocessorException(int line, string msg = "Preprocessor Error")
 			: base(msg + " in line " + line) { }

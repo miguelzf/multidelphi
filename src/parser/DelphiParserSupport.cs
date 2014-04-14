@@ -96,7 +96,7 @@ namespace MultiPascal.Parser
 			{
 				parserRet = yyparse(lexer);
 			}
-			catch (CrossPascalException yye)
+			catch (MultiPascalException yye)
 			{
 				yyerror(yye.Message);
 				return null;

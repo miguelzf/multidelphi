@@ -6,7 +6,7 @@ using MultiPascal.core;
 
 namespace MultiPascal.Semantics
 {
-	public class SemanticException : CrossPascalException
+	public class SemanticException : MultiPascalException
 	{
 		const string DefaultMsg = "Semantic Error";
 
@@ -15,7 +15,7 @@ namespace MultiPascal.Semantics
 		public SemanticException(string message = DefaultMsg) : base(message) { }
 	}
 
-	internal class InternalSemanticError : CrossPascalException
+	internal class InternalSemanticError : MultiPascalException
 	{
 		const string DefaultMsg = "Internal Semantic Error";
 

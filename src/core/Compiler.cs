@@ -10,7 +10,7 @@ using MultiPascal.Semantics;
 using MultiPascal.AST;
 using MultiPascal.AST.Nodes;
 using MultiPascal.Codegen.Cpp;
-using MultiPascal.Codegen.LlvmIR;
+using MultiPascal.Codegen.LlvmIL;
 
 namespace MultiPascal.core
 {
@@ -41,7 +41,7 @@ namespace MultiPascal.core
 		public bool Compile(string[] filenames)
 		{
 			bool success = true;
-			Console.WriteLine("CrossPascal Delphi compiler");
+			Console.WriteLine("MultiPascal Delphi compiler");
 
 			// Load, preprocess and order them
 			planner.LoadFiles(filenames);

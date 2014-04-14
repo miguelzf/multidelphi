@@ -5,14 +5,14 @@ using System.Text;
 
 namespace MultiPascal.core
 {
-	public class CrossPascalException : Exception
+	public class MultiPascalException : Exception
 	{
 		const string DefaultMsg = "Compilation Error";
 	
-		public CrossPascalException (int lineno, string message = DefaultMsg)
+		public MultiPascalException (int lineno, string message = DefaultMsg)
 			: base (message + " in line " + lineno) { }
 
-		public CrossPascalException(string message = DefaultMsg)
+		public MultiPascalException(string message = DefaultMsg)
 			: base (message) { }
 	}
 
@@ -21,7 +21,7 @@ namespace MultiPascal.core
 	// Internal Errors
 	//
 
-	public class AstNodeException : CrossPascalException
+	public class AstNodeException : MultiPascalException
 	{
 		const string DefaultMsg = "Error creating an AST Node";
 
@@ -30,7 +30,7 @@ namespace MultiPascal.core
 		public AstNodeException (string message = DefaultMsg) : base (message) { }
 	}
 
-	public class NotImplementedException : CrossPascalException
+	public class NotImplementedException : MultiPascalException
 	{
 		const string DefaultMsg = " not implemented";
 
@@ -39,7 +39,7 @@ namespace MultiPascal.core
 		public NotImplementedException(string message) : base(message + DefaultMsg) { }
 	}
 
-	public class InvalidAbstractException : CrossPascalException
+	public class InvalidAbstractException : MultiPascalException
 	{
 		const string DefaultMsg = " method should never be called";
 

@@ -101,7 +101,7 @@ namespace MultiPascal.AST
 			{
 				var realExc = e.InnerException;
 
-				if (realExc is CrossPascalException)
+				if (realExc is MultiPascalException)
 					throw realExc;
 				else
 					throw new Exception("wrapper", e.InnerException);
