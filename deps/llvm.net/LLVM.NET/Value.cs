@@ -5,11 +5,17 @@ using System.Text;
 
 namespace LLVM
 {
-    public unsafe struct Value : IPointerWrapper
+    public unsafe class Value : IPointerWrapper
     {
         public static readonly Value Null = new Value();
+		public static readonly Value NotNull = new Value((LLVMValueRef*) 0x11111);
 
-        private readonly LLVMValueRef* m_handle;
+        protected LLVMValueRef* m_handle;
+
+		public Value()
+		{
+			m_handle = null;
+		}
 
         public Value(LLVMValueRef* handle)
         {
@@ -34,7 +40,7 @@ namespace LLVM
             get { return Used(m_handle); }
         }
 
-        public string Name
+        public virtual string Name
         {
             get
             {

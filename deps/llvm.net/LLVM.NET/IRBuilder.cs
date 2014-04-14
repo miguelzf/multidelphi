@@ -206,12 +206,6 @@ namespace LLVM
 			return new Value(Native.BuildAlloca(m_builder, arg.Handle, name));
 		}
 
-
-        public Value BuildCall(Function func, IEnumerable<Value> args)
-        {
-            return BuildCall(func, args, "calltmp");
-        }
-
 		public Value BuildCall(Function func, IEnumerable<Value> args, string varName = tmpvarname)
         {
             IntPtr[] argVals = LLVMHelper.MarshallPointerArray(args);

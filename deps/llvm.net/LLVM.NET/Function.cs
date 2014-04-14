@@ -5,13 +5,14 @@ using System.Text;
 
 namespace LLVM
 {
-    public unsafe class Function : IPointerWrapper
+    public unsafe class Function : Value
     {
         private readonly LLVMTypeRef* m_funcType;
-        private readonly LLVMValueRef* m_handle;
         private readonly string m_name;
-        private readonly TypeRef m_returnType;
-        private readonly TypeRef[] m_paramTypes;
+		
+		public readonly TypeRef ReturnType;
+        
+		public readonly TypeRef[] RaramTypes;
 
         /// <summary>
         /// Create a void function that takes no arguments
@@ -45,8 +46,8 @@ namespace LLVM
         public Function(Module module, string name, TypeRef returnType, TypeRef[] paramTypes)
         {
             m_name = name;
-            m_returnType = returnType;
-            m_paramTypes = paramTypes;
+            ReturnType = returnType;
+            RaramTypes = paramTypes;
 
             IntPtr[] paramArray = LLVMHelper.MarshallPointerArray(paramTypes);
 
@@ -64,10 +65,10 @@ namespace LLVM
             m_name = name;
             m_handle = handle;
             m_funcType = Native.GetElementType(Native.TypeOf(handle));
-            m_returnType = new TypeRef(Native.GetReturnType(m_funcType));
+            ReturnType = new TypeRef(Native.GetReturnType(m_funcType));
 
             uint paramCount = Native.CountParamTypes(m_funcType);
-            m_paramTypes = new TypeRef[paramCount];
+            RaramTypes = new TypeRef[paramCount];
 
             if(paramCount > 0)
             {
@@ -76,15 +77,19 @@ namespace LLVM
 
                 for(int i = 0; i < paramCount; ++i)
                 {
-                    m_paramTypes[i] = new TypeRef((LLVMTypeRef*)types[i]);
+                    RaramTypes[i] = new TypeRef((LLVMTypeRef*)types[i]);
                 }
             }
         }
 
-        public LLVMValueRef* Handle
-        {
-            get { return m_handle; }
-        }
+
+		public override string Name
+		{
+			get
+			{
+				return m_name;
+			}
+		}
 
         public LLVMTypeRef* FunctionType
         {
@@ -93,7 +98,7 @@ namespace LLVM
 
         public int ArgCount
         {
-            get { return m_paramTypes.Length; }
+            get { return RaramTypes.Length; }
         }
 
         public bool HasBody
@@ -145,14 +150,5 @@ namespace LLVM
         {
             Native.DumpValue(m_handle);
         }
-
-        #region IPointerWrapper Members
-
-        IntPtr IPointerWrapper.NativePointer
-        {
-            get { return (IntPtr)m_handle; }
-        }
-
-        #endregion
     }
 }
