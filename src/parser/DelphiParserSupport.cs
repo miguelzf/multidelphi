@@ -80,7 +80,7 @@ namespace MultiPascal.Parser
 		// wrapper for yyparse
 		public TranslationUnit Parse(TextReader tr, SourceFile file = null, ParserDebug dgb = null)
 		{
-			//if (dgb != null)
+			if (dgb != null)
 			{
 				this.debug = (ParserDebug)dgb;
 				DebugLevel = 1;
@@ -129,14 +129,6 @@ namespace MultiPascal.Parser
 		}
 
 		T ListAdd<T, N>(T bodylst, T elems)
-			where N : Node
-			where T : ListNode<N>
-		{
-			bodylst.Add(elems);
-			return bodylst;
-		}
-
-		T ListAddRange<T, N>(T bodylst, T elems)
 			where N : Node
 			where T : ListNode<N>
 		{

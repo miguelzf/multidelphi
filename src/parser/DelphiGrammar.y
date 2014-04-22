@@ -309,7 +309,7 @@ interfsec
 
 interfdecllst
     :                                       { $$ = new DeclarationList();}
-    | interfdecllst interfdecl              { $$ = ListAddRange<DeclarationList,Declaration>($1, $2); }
+    | interfdecllst interfdecl              { $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
     ;
 
 initsec
@@ -323,12 +323,12 @@ finalsec
         
 maindecllst
     : maindeclsec                           { $$ = $1; }
-    | maindecllst maindeclsec               { $$ = ListAddRange<DeclarationList,Declaration>($1, $2); }
+    | maindecllst maindeclsec               { $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
     ;
 
 declseclst
     : funcdeclsec                           { $$ = $1;}
-    | declseclst funcdeclsec                { $$ = ListAddRange<DeclarationList,Declaration>($1, $2); }
+    | declseclst funcdeclsec                { $$ = ListAdd<DeclarationList,Declaration>($1, $2); }
     ;
 
     
