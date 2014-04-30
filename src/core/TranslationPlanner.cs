@@ -4,12 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using MultiPascal.AST.Nodes;
-using MultiPascal.Parser;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.Parser;
 using System.Collections.Specialized;
 using System.Collections;
 
-namespace MultiPascal.core
+namespace MultiDelphi.core
 {
 
 	class TranslationPlanner

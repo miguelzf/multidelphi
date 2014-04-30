@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
 
-namespace MultiPascal.Semantics
+namespace MultiDelphi.Semantics
 {
 
 	// For debug, prints the whole tree

@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MultiPascal.Parser;
+using MultiDelphi.Parser;
 
-namespace MultiPascal.AST.Nodes
+namespace MultiDelphi.AST.Nodes
 {
 
 	#region Declarations hierarchy

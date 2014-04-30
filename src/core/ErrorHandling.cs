@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MultiPascal.core
+namespace MultiDelphi.core
 {
-	public class MultiPascalException : Exception
+	public class MultiDelphiException : Exception
 	{
 		const string DefaultMsg = "Compilation Error";
 	
-		public MultiPascalException (int lineno, string message = DefaultMsg)
+		public MultiDelphiException (int lineno, string message = DefaultMsg)
 			: base (message + " in line " + lineno) { }
 
-		public MultiPascalException(string message = DefaultMsg)
+		public MultiDelphiException(string message = DefaultMsg)
 			: base (message) { }
 	}
 
@@ -21,7 +21,7 @@ namespace MultiPascal.core
 	// Internal Errors
 	//
 
-	public class AstNodeException : MultiPascalException
+	public class AstNodeException : MultiDelphiException
 	{
 		const string DefaultMsg = "Error creating an AST Node";
 
@@ -30,7 +30,7 @@ namespace MultiPascal.core
 		public AstNodeException (string message = DefaultMsg) : base (message) { }
 	}
 
-	public class NotImplementedException : MultiPascalException
+	public class NotImplementedException : MultiDelphiException
 	{
 		const string DefaultMsg = " not implemented";
 
@@ -39,7 +39,7 @@ namespace MultiPascal.core
 		public NotImplementedException(string message) : base(message + DefaultMsg) { }
 	}
 
-	public class InvalidAbstractException : MultiPascalException
+	public class InvalidAbstractException : MultiDelphiException
 	{
 		const string DefaultMsg = " method should never be called";
 

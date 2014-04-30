@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
-using MultiPascal.Semantics;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.Semantics;
 using System.IO;
 using System.Diagnostics;
 using System.Collections;
-using MultiPascal.core;
+using MultiDelphi.core;
 
-namespace MultiPascal.Parser
+namespace MultiDelphi.Parser
 {
 	/// <summary>
 	/// Internal support utils for DelphiParser
@@ -96,7 +96,7 @@ namespace MultiPascal.Parser
 			{
 				parserRet = yyparse(lexer);
 			}
-			catch (MultiPascalException yye)
+			catch (MultiDelphiException yye)
 			{
 				yyerror(yye.Message);
 				return null;

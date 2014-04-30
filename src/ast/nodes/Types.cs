@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MultiPascal.core;
+using MultiDelphi.core;
 
-namespace MultiPascal.AST.Nodes
+namespace MultiDelphi.AST.Nodes
 {
 	// override Equals but not GetHashCode warning
 

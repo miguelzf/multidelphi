@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MultiPascal.AST.Nodes;
-using MultiPascal.Semantics;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.Semantics;
 
-namespace MultiPascal.core
+namespace MultiDelphi.core
 {
 	public class SourceFile
 	{

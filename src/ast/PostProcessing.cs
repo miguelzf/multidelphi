@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MultiPascal.AST.Nodes;
+using MultiDelphi.AST.Nodes;
 using System.Reflection;
 
-namespace MultiPascal.AST
+namespace MultiDelphi.AST
 {
 	/// <summary>
 	/// Static methods that process the AST

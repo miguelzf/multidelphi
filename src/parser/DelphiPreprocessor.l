@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using System.Linq;
 
-namespace MultiPascal.Parser
+namespace MultiDelphi.Parser
 {
 
 /**

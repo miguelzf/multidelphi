@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using LLVM;
 
-namespace MultiPascal.Codegen.LlvmIL
+namespace MultiDelphi.Codegen.LlvmIL
 {
 
 	/// <summary>

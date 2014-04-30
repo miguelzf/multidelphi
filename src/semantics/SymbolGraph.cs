@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MultiPascal.Semantics
+namespace MultiDelphi.Semantics
 {
 	/// <summary>
 	/// DAG-based symbol manager

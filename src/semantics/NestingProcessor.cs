@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
-using MultiPascal.Semantics;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.Semantics;
 
 
-namespace MultiPascal.Semantics
+namespace MultiDelphi.Semantics
 {
 	class NestingProcessor : Processor<bool>
 	{

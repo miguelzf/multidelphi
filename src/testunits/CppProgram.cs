@@ -3,14 +3,14 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using MultiPascal.core;
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
-using MultiPascal.Parser;
-using MultiPascal.Codegen.Cpp;
-using MultiPascal.Semantics;
+using MultiDelphi.core;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.Parser;
+using MultiDelphi.Codegen.Cpp;
+using MultiDelphi.Semantics;
 
-namespace MultiPascal.TestUnits
+namespace MultiDelphi.TestUnits
 {
 
 	class CppProgram

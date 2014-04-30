@@ -5,14 +5,14 @@ using System.Text;
 using System.Diagnostics;
 using System.IO;
 
-using MultiPascal.Parser;
-using MultiPascal.Semantics;
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
-using MultiPascal.Codegen.Cpp;
-using MultiPascal.Codegen.LlvmIL;
+using MultiDelphi.Parser;
+using MultiDelphi.Semantics;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.Codegen.Cpp;
+using MultiDelphi.Codegen.LlvmIL;
 
-namespace MultiPascal.core
+namespace MultiDelphi.core
 {
 	public class Compiler
 	{
@@ -41,7 +41,7 @@ namespace MultiPascal.core
 		public bool Compile(string[] filenames)
 		{
 			bool success = true;
-			Console.WriteLine("MultiPascal Delphi compiler");
+			Console.WriteLine("MultiDelphi compiler");
 
 			// Load, preprocess and order them
 			planner.LoadFiles(filenames);

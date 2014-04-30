@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MultiPascal.AST.Nodes;
+using MultiDelphi.AST.Nodes;
 
 
 //
@@ -13,7 +13,7 @@ using MultiPascal.AST.Nodes;
 // since it is heavily depending on each Processor's logic.
 //
 
-namespace MultiPascal.AST
+namespace MultiDelphi.AST
 {
 	public delegate T TreeTraverse<T>(Node n);
 

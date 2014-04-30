@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MultiPascal.Parser;
+using MultiDelphi.Parser;
 
-namespace MultiPascal.AST.Nodes
+namespace MultiDelphi.AST.Nodes
 {
 	/// <summary>
 	/// Delphi Nodes hierarchy
@@ -91,7 +91,7 @@ namespace MultiPascal.AST.Nodes
 		protected bool Error(string msg)
 		{
 			string outp = "[ERROR in node creation] " + msg + Loc.ToString();
-			// throw new MultiPascal.Parser.AstNodeException(outp);
+			// throw new MultiDelphi.Parser.AstNodeException(outp);
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine(outp);
 			Console.ResetColor();
@@ -105,7 +105,7 @@ namespace MultiPascal.AST.Nodes
 		protected bool ErrorInternal(string msg)
 		{
 			string outp = "[ERROR internal] " + msg + Loc.ToString();
-			// throw new MultiPascal.parser.AstNodeException(outp);
+			// throw new MultiDelphi.parser.AstNodeException(outp);
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine(outp);
 			Console.ResetColor();

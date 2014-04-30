@@ -4,11 +4,11 @@ using System.Linq;
 using System.Collections;
 using System.IO;
 using System.Text;
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
-using MultiPascal.Semantics;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.Semantics;
 
-namespace MultiPascal.Parser
+namespace MultiDelphi.Parser
 {
 
     // Open main Parser class

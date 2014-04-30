@@ -7,8 +7,8 @@
     <ProjectGuid>{A83E4A24-4797-47FD-B944-76050FA303EB}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MultiPascal</RootNamespace>
-    <AssemblyName>multipascal</AssemblyName>
+    <RootNamespace>MultiDelphi</RootNamespace>
+    <AssemblyName>MultiDelphi</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
@@ -51,7 +51,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>MultiPascal.TestUnits.CppProgram</StartupObject>
+    <StartupObject>MultiDelphi.TestUnits.CppProgram</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LLVM.NET">

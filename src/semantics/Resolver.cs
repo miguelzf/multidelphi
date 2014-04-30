@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
-using MultiPascal.core;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.core;
 
-namespace MultiPascal.Semantics
+namespace MultiDelphi.Semantics
 {
 
 	class TypeWrapper : LvalueExpression

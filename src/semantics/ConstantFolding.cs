@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MultiPascal.AST.Nodes;
-using MultiPascal.AST;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.AST;
 
-namespace MultiPascal.Semantics
+namespace MultiDelphi.Semantics
 {
 	class ConstantFolder : Processor<bool>
 	{

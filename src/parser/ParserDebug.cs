@@ -5,7 +5,7 @@ using System.Text;
 using System.Diagnostics;
 
 
-namespace MultiPascal.Parser
+namespace MultiDelphi.Parser
 {
 	public interface ParserDebug
 	{

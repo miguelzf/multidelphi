@@ -1,13 +1,13 @@
-﻿using MultiPascal.Parser;
+﻿using MultiDelphi.Parser;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MultiPascal.Semantics;
+using MultiDelphi.Semantics;
 
-namespace MultiPascal.AST.Nodes
+namespace MultiDelphi.AST.Nodes
 {
 	// override Equals but not GetHashCode warning
 	#pragma warning disable 659

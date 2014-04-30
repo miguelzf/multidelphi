@@ -5,12 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Runtime.Serialization;
-using MultiPascal.utils;
-using MultiPascal.AST.Nodes;
-using MultiPascal.core;
+using MultiDelphi.utils;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.core;
 
 
-namespace MultiPascal.AST
+namespace MultiDelphi.AST
 {
 	// Delivers a Mapping with which to traverse the AST
 
@@ -101,7 +101,7 @@ namespace MultiPascal.AST
 			{
 				var realExc = e.InnerException;
 
-				if (realExc is MultiPascalException)
+				if (realExc is MultiDelphiException)
 					throw realExc;
 				else
 					throw new Exception("wrapper", e.InnerException);

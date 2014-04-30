@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MultiPascal.core;
+using MultiDelphi.core;
 
-namespace MultiPascal.Semantics
+namespace MultiDelphi.Semantics
 {
-	public class SemanticException : MultiPascalException
+	public class SemanticException : MultiDelphiException
 	{
 		const string DefaultMsg = "Semantic Error";
 
@@ -15,7 +15,7 @@ namespace MultiPascal.Semantics
 		public SemanticException(string message = DefaultMsg) : base(message) { }
 	}
 
-	internal class InternalSemanticError : MultiPascalException
+	internal class InternalSemanticError : MultiDelphiException
 	{
 		const string DefaultMsg = "Internal Semantic Error";
 

@@ -7,9 +7,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MultiPascal.AST.Nodes;
+using MultiDelphi.AST.Nodes;
 
-namespace MultiPascal.AST
+namespace MultiDelphi.AST
 {
 	public abstract partial class Processor<T>
 	{

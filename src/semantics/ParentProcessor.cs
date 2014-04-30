@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
 
-namespace MultiPascal.Semantics
+namespace MultiDelphi.Semantics
 {
 	/// <summary>
 	/// Processor to set the backward pointer-to-parent in each node

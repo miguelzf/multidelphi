@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MultiPascal.AST.Nodes;
+using MultiDelphi.AST.Nodes;
 
-namespace MultiPascal.Semantics
+namespace MultiDelphi.Semantics
 {
 
 	/// <summary>

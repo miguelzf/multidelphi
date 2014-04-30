@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MultiPascal.Parser;
-using MultiPascal.Semantics;
+using MultiDelphi.Parser;
+using MultiDelphi.Semantics;
 
-namespace MultiPascal.AST.Nodes
+namespace MultiDelphi.AST.Nodes
 {
 	#region Statements hierarchy
 	/// <remarks>

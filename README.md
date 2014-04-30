@@ -1,20 +1,20 @@
-MultiPascal
+MultiDelphi
 ===========
 
-MultiPascal is a Delphi<sup>TM</sup> (ObjectPascal) multi-target compiler using the LLVM framework.  
+MultiDelphi is a Delphi<sup>TM</sup> (ObjectPascal) multi-target compiler using the LLVM framework.  
 This project is an attempt at a working multi-target Delphi7 compiler, capable of compiling to Flash (ActionScript 3).  
 
 Its original goal was to target the [ActionScript Virtual Machine (AVM)][16], in order to port some large Delphi projects such as the [TERRA graphical engine][3] and the [Minimon 3D game][4].  Other future targets include x86, probably Javascript/[asm.js][17]+[WebGL][23] and probably [Haxe][18].
 
-MultiPascal was started in February 2014 and it's still in its early stages. As of Abril 2014, the Delphi front-end is mostly done, with the C++ back-end supporting most of Delphi features and an initial prototype of the LLVM IR back-end.
+MultiDelphi was started in February 2014 and it's still in its early stages. As of Abril 2014, the Delphi front-end is mostly done, with the C++ back-end supporting most of Delphi features and an initial prototype of the LLVM IR back-end.
 
 Stages of the project:
 
 * a Delphi front-end for LLVM
 
 	Initially we thought of using the [Dgrok][19] recursive-descent (LL(k)) parser. However, looking at the work required to convert the simple lexical-oriented Parse Tree that Dgrok produces to a robust complete AST, we decided to create our own shift-reduce parser.     
-	So MultiPascal ended up with a complete new shift-reduce (LALR) parser created with the C# ports of the Jay Yacc-based parser generator ([CSJay][10]) and the JFlex lexer generator ([CSFlex][12]).     
-	Currently MultiPascal is built on top of [LLVM 3.2][6], the same version used in [FlaCC/Crossbridge][15].     
+	So MultiDelphi ended up with a complete new shift-reduce (LALR) parser created with the C# ports of the Jay Yacc-based parser generator ([CSJay][10]) and the JFlex lexer generator ([CSFlex][12]).     
+	Currently MultiDelphi is built on top of [LLVM 3.2][6], the same version used in [FlaCC/Crossbridge][15].     
 
 
 * a C++ back-end

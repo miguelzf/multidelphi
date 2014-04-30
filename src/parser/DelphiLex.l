@@ -6,7 +6,7 @@ using System.Text;
 using System.Linq;
 using System.Globalization;
 
-namespace MultiPascal.Parser
+namespace MultiDelphi.Parser
 {
 
 /**

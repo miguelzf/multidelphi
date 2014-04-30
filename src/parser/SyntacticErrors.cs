@@ -2,11 +2,11 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Text;
-using MultiPascal.core;
+using MultiDelphi.core;
 
-namespace MultiPascal.Parser
+namespace MultiDelphi.Parser
 {
-	public class ParserException : MultiPascalException
+	public class ParserException : MultiDelphiException
 	{
 		const string DefaultMsg = "Syntax Error";
 	
@@ -35,7 +35,7 @@ namespace MultiPascal.Parser
 		public InputRejected (string message = DefaultMsg) : base (message) { }
 	}
 
-	class ScannerException : MultiPascalException 
+	class ScannerException : MultiDelphiException 
 	{
 		internal ScannerException(int line, string msg = "Lexical Error")
 			: base(msg + " in line " + line) { }
@@ -43,7 +43,7 @@ namespace MultiPascal.Parser
 		internal ScannerException(string msg = "Lexical Error") : base(msg) { }
 	}
 
-	class PreprocessorException : MultiPascalException 
+	class PreprocessorException : MultiDelphiException 
 	{
 		internal PreprocessorException(int line, string msg = "Preprocessor Error")
 			: base(msg + " in line " + line) { }

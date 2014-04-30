@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
-using MultiPascal.utils;
-using MultiPascal.Parser;
-using MultiPascal.Semantics;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.utils;
+using MultiDelphi.Parser;
+using MultiDelphi.Semantics;
 
 
-namespace MultiPascal.core
+namespace MultiDelphi.core
 {
 	class TestProgram
 	{

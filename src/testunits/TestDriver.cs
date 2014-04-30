@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using MultiPascal.core;
-using MultiPascal.Parser;
-using MultiPascal.AST;
-using MultiPascal.AST.Nodes;
-using MultiPascal.Codegen.Cpp;
+using MultiDelphi.core;
+using MultiDelphi.Parser;
+using MultiDelphi.AST;
+using MultiDelphi.AST.Nodes;
+using MultiDelphi.Codegen.Cpp;
 
-namespace MultiPascal.TestUnits
+namespace MultiDelphi.TestUnits
 {
 
 	class TestDriver
