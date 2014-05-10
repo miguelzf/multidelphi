@@ -1,14 +1,13 @@
 MultiDelphi
 ===========
 
-MultiDelphi is a Delphi<sup>TM</sup> (ObjectPascal) multi-target compiler using the LLVM framework.  
-This project is an attempt at a working multi-target Delphi7 compiler, capable of compiling to Flash (ActionScript 3).  
+MultiDelphi is a Delphi<sup>TM</sup> (ObjectPascal) multi-target compiler using the LLVM framework.  This project is an attempt at a working multi-target Delphi7 compiler, in particular one capable of compiling to Flash (ActionScript 3).  
 
-Its original goal was to target the [ActionScript Virtual Machine (AVM)][16], in order to port some large Delphi projects such as the [TERRA graphical engine][3] and the [Minimon 3D game][4].  Other future targets include x86, probably Javascript/[asm.js][17]+[WebGL][23] and probably [Haxe][18].
+The original goal was to target the [ActionScript Virtual Machine (AVM)][16], in order to port some large Delphi projects such as the [TERRA graphical engine][3] and the [Minimon 3D game][4] to the web.  Other future targets will include x86,  Javascript/[asm.js][17]+[WebGL][23] and probably [Haxe][18].
 
 MultiDelphi was started in February 2014 and it's still in its early stages. As of Abril 2014, the Delphi front-end is mostly done, with the C++ back-end supporting most of Delphi features and an initial prototype of the LLVM IR back-end.
 
-Stages of the project:
+Planned stages of the project:
 
 * a Delphi front-end for LLVM
 
