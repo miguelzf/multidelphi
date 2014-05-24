@@ -1,0 +1,3 @@
+[submodule "deps/LLVM.NET"]
+	path = deps/LLVM.NET
+	url = git://github.com/MiguelZF/LLVM.NET.git
