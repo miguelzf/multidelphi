@@ -1319,16 +1319,14 @@ namespace MultiDelphi.Codegen.Cpp
 		{
 			//Visit((LvalueExpression) node);
 
-			string name = (node.func as Identifier).name;
-			//traverse(node.func);
-            outputCode(name + "(", false, false);
+			// string name = (node.func as Identifier).name;
+			traverse(node.func);
+            outputCode("(", false, false);
 			int i = 0;
 			foreach (Expression n in node.args)
 			{
 				if (i > 0)
-				{
 					outputCode(", ", false, false);
-				}
 				traverse(n);
 				i++;
 			}
@@ -1345,8 +1343,6 @@ namespace MultiDelphi.Codegen.Cpp
 					outputCode("delete "+obj.name, true, false);
 				}
 			}
-			//if (DeclReg.symEnv.Lookup(node.field) is ClassDeclaration))
-			
 
 			return true;
 		}

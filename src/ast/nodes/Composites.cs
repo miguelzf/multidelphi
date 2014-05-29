@@ -21,6 +21,7 @@ namespace MultiDelphi.AST.Nodes
 		public CompositeDeclaration(String name, CompositeType ctype)
 			: base(name, ctype)
 		{
+			ctype.decl = this;
 		}
 	}
 
@@ -57,6 +58,8 @@ namespace MultiDelphi.AST.Nodes
 		public List<String> heritage;
 
 		public ObjectSection section;
+
+		public CompositeDeclaration decl;
 
 		public bool IsPacked { get; set; }
 

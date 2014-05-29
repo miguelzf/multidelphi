@@ -1,3 +1,4 @@
+using MultiPascal.utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -284,9 +285,9 @@ namespace MultiDelphi.Semantics
 		/// Recursive DFS from bottom to top (children to parents).
 		/// (takes each parent in depth)
 		/// </summary>
-		internal SymbolT LookupRec(SymbolContext<SymbolT, CtxKey> ctx, String symbName)
+		internal IEnumerable<SymbolT> LookupRec(SymbolContext<SymbolT, CtxKey> ctx, String symbName)
 		{
-			SymbolT t = ctx.Lookup(symbName);
+			var t = ctx.LookupAll(symbName);
 			if (t != null)
 				return t;
 
@@ -297,11 +298,11 @@ namespace MultiDelphi.Semantics
 			return null;
 		}
 
-		SymbolT LookupRec(SymbolContext<SymbolT, CtxKey> ctx, String symbName, CtxKey key)
+		IEnumerable<SymbolT> LookupRec(SymbolContext<SymbolT, CtxKey> ctx, String symbName, CtxKey key)
 		{
-			SymbolT t;
+			IEnumerable<SymbolT> t;
 			if (ReferenceEquals(ctx.Key,key))
-				if ((t = ctx.Lookup(symbName)) != null)
+				if ((t = ctx.LookupAll(symbName)) != null)
 					return t;
 
 			foreach (var p in ctx.parents)
@@ -311,15 +312,34 @@ namespace MultiDelphi.Semantics
 			return null;
 		}
 
+		public IEnumerable<SymbolT> LookupAll(String symbName, CtxKey key = null)
+		{
+			if (!CheckValidId(symbName))
+				return null;
+
+			IEnumerable<SymbolT> results;
+			if (key == null)
+				results = LookupRec(current, symbName);
+			else
+				results = LookupRec(current, symbName, key);
+			return results;
+		}
+
 		public SymbolT Lookup(String symbName, CtxKey key = null)
 		{
 			if (!CheckValidId(symbName))
 				return null;
 
+			IEnumerable<SymbolT> results;
 			if (key == null)
-				return LookupRec(current, symbName);
+				results = LookupRec(current, symbName);
 			else
-				return LookupRec(current, symbName, key);
+				results = LookupRec(current, symbName, key);
+
+			if (results == null)
+				return null;
+			else
+				return results.First();
 		}
 
 		public SymbolT LookupCurrent(String symbName)
@@ -350,15 +370,16 @@ namespace MultiDelphi.Semantics
 		}
 
 		/// <summary>
-		/// Add symbol to current context. Checks that the symbol has not been defined 
+		/// Add symbol to current context. If the argument flag checkRepeated is not set, 
+		/// by default it checks that the symbol has not been defined 
 		/// in any previous context that does allow shadowing
 		/// </summary>
-		public bool Add(String key, SymbolT symbol)
+		public bool Add(String key, SymbolT symbol, bool checkRepeated = true)
 		{
 			if (!CheckValidId(key))
 				return false;
 
-			if (!CanAddSymbol(key))
+			if (checkRepeated && !CanAddSymbol(key))
 				return false;
 
 			return current.Add(key, symbol);
@@ -373,6 +394,21 @@ namespace MultiDelphi.Semantics
 				return false;
 
 			return current.Replace(key, symbol);
+		}
+
+		/// <summary>
+		/// Maps a non-yet-set key to a symbol, or replaces the mapped symbol
+		/// Replaces (redefines) a symbol in the current context
+		/// </summary>
+		public bool SetOrReplace(String key, SymbolT symbol)
+		{
+			if (!CheckValidId(key))
+				return false;
+
+			if (current.Lookup(key) == null)
+				return current.Add(key, symbol);
+			else
+				return current.Replace(key, symbol);
 		}
 
 		#endregion
@@ -426,14 +462,15 @@ namespace MultiDelphi.Semantics
 
 	/// <summary>
 	/// Context of declared symbols.
-	/// Implemented as a node of a DAG
+	/// Allows for multiple values mapped to the same key
+	/// Implemented as a node of a DAG.
 	/// </summary>
 	class SymbolContext<T,CtxKey> where T : class
 	{
 		internal List<SymbolContext<T, CtxKey>> parents;
 		internal List<SymbolContext<T, CtxKey>> children;
 
-		internal Dictionary<String, T> symbols;
+		internal Multimap<String, T> symbols;
 		internal T lastInserted;
 
 		internal bool allowShadowing;
@@ -452,7 +489,7 @@ namespace MultiDelphi.Semantics
 			this.parents = parents;
 			this.Key = key;
 			children = new List<SymbolContext<T, CtxKey>>(DefaultAllocNLinks);
-			symbols = new Dictionary<String, T>(32);
+			symbols = new Multimap<String, T>(32);
 		}
 
 		internal SymbolContext(String id = null, CtxKey key = default(CtxKey), bool allowShadowing = true)
@@ -511,18 +548,27 @@ namespace MultiDelphi.Semantics
 
 		#region Access and Lookup
 
+		/// <summary>
+		/// Looks up and returns if found a value for a given key in the context
+		/// </summary>
 		internal T Lookup(String key)
 		{
 			return (symbols.ContainsKey(key) ? symbols[key] : null);
 		}
 
 		/// <summary>
-		/// Adds new or resets already added symbol
+		/// Looks up and returns all the values for a given key in the context
+		/// </summary>
+		internal IEnumerable<T> LookupAll(String key)
+		{
+			return (symbols.ContainsKey(key) ? symbols.GetAll(key) : null);
+		}
+
+		/// <summary>
+		/// Adds a new symbol to the key
 		/// </summary>
 		internal bool Add(String key, T symbol)
 		{
-			// if (symbols.ContainsKey(key)) return false;
-
 			lastInserted = symbol;
 			symbols[key] = symbol;
 			return true;
@@ -533,7 +579,7 @@ namespace MultiDelphi.Semantics
 			if (!symbols.ContainsKey(key))
 				return false;
 
-			symbols[key] = symbol;
+			symbols.Replace(key, symbol);
 			return true;
 		}
 
@@ -553,8 +599,8 @@ namespace MultiDelphi.Semantics
 			var ctx = new SymbolContext<T,CtxKey>(Id, Key, allowShadowing);
 			ctx.lastInserted = lastInserted;
 
-			ctx.symbols = new Dictionary<string, T>(symbols.Count);
-			foreach (var s in symbols)
+			ctx.symbols = new Multimap<string, T>(symbols.Count);
+			foreach (var s in symbols.KeyValueSet)
 				if (pred(s.Value))
 					ctx.symbols.Add(s.Key, s.Value);
 			return ctx;
@@ -596,5 +642,6 @@ namespace MultiDelphi.Semantics
 	// end Symbol Context
 
 }
+
 
 

@@ -20,7 +20,7 @@ namespace MultiDelphi.core
 		TranslationPlanner planner;
 		DelphiParser parser;
 
-		public const int DefaultDebugLevel = 2;
+		public const int DefaultDebugLevel = 1;
 
 		public static int DebugLevel;
 
@@ -116,7 +116,7 @@ namespace MultiDelphi.core
 				Console.WriteLine(cppGen.Output());
 
 				LlvmILGen llvmGen = new LlvmILGen();
-				llvmGen.Process(ast);
+			//	llvmGen.Process(ast);
 			}
 
 			return success;

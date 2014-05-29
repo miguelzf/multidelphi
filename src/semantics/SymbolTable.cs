@@ -10,7 +10,7 @@ namespace MultiDelphi.Semantics
 	// Not used now
 
 	/// <summary>
-	/// Stack-based symbol table
+	/// Stack-based symbol manager
 	/// </summary>
 	public class SymbolTable<T> where T : class
 	{

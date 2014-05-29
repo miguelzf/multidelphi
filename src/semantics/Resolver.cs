@@ -444,24 +444,37 @@ namespace MultiDelphi.Semantics
 					p.type = ResolvedNode<TypeNode>();
 
 			String fullqualname = node.name;
-			if (node.Directives.Contains((int) GeneralDirective.Overload))
+			// TODO move this to the typechecker
+		/*	if (node.Directives.Contains((int) GeneralDirective.Overload))
 				foreach (ParamDeclaration p in node.Type.@params.decls)
 				{
 					String qualname = p.type.ToString();
 					fullqualname += "$" + qualname.Substring(qualname.LastIndexOf('.') + 1);
 				}
-
+		*/
 			node.QualifiedName = fullqualname;
 			
 			return true;
 		}
-		
+
+		private void RegisterCallable(CallableDeclaration node, bool mayRedefine = false)
+		{
+			if (node.Directives.Contains(GeneralDirective.Overload))
+				declEnv.RegisterDeclarationRemap(node.QualifiedName, node);
+			else if (node.Directives.Contains((int)MethodDirective.Override))
+				declEnv.RegisterDeclaration(node.QualifiedName, node, true);
+			
+			else	// TODO: check for implementation of interface methods
+				declEnv.RegisterDeclaration(node.QualifiedName, node, true); // mayRedefine);
+
+			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
+		}
+
 		public override bool Visit(RoutineDeclaration node)
 		{
 			Visit((CallableDeclaration)node);
 
-			declEnv.RegisterDeclaration(node.QualifiedName, node);
-			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
+			RegisterCallable(node);
 			traverse(node.Type);
 			traverse(node.Directives);
 			declEnv.ExitContext();
@@ -473,19 +486,16 @@ namespace MultiDelphi.Semantics
 		{
 			Visit((CallableDeclaration)node);
 
-			bool checkRegister = true;
+			bool canRedefine = false;
 			// check if current callable is an implementation of a declared callable (in the interface)
 			var decl = declEnv.GetDeclaration(node.QualifiedName);
 			if (decl is RoutineDeclaration && node.declaringSection is ImplementationSection
 			&& (decl as RoutineDeclaration).declaringSection is InterfaceSection)
 			{	// implementation of a declared routine
-				checkRegister = false;	// declare it, ignoring the interface shadowing
+				canRedefine = true;	// declare it, ignoring the interface shadowing
 			}
 			// 	if decl not null, will throw exception when trying to register
-
-			declEnv.RegisterDeclaration(node.QualifiedName, node, checkRegister);
-
-			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
+			RegisterCallable(node, canRedefine);
 
 			traverse(node.Type);
 			traverse(node.Directives);
@@ -498,8 +508,8 @@ namespace MultiDelphi.Semantics
 		public override bool Visit(MethodDeclaration node)
 		{
 			Visit((CallableDeclaration)node);
-			declEnv.RegisterDeclaration(node.QualifiedName, node);
-			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
+
+			RegisterCallable(node);
 			traverse(node.Type);
 
 			if (node.Type.kind == MethodKind.Constructor)
@@ -513,9 +523,8 @@ namespace MultiDelphi.Semantics
 		{
 			Visit((CallableDeclaration)node);
 
-			declEnv.RegisterDeclaration(node.objname+"."+node.QualifiedName, node);
 			node.declaringObject = declEnv.CreateCompositeContext(node.objname);
-			declEnv.CreateContext(node.QualifiedName + " Params", node.Type.@params);
+			RegisterCallable(node);
 
 			traverse(node.Type);
 			if (node.Type.kind == MethodKind.Constructor)
@@ -600,7 +609,7 @@ namespace MultiDelphi.Semantics
 				throw new IdentifierRedeclared(node.name);
 			else	// forward declaration
 				// register it again and hide previous declaration
-				declEnv.RegisterDeclaration(node.name, node, false);
+				declEnv.RegisterDeclaration(node.name, node, true);
 			
 			if (TraverseResolve(node.type))
 				node.type = ResolvedNode<CompositeType>();

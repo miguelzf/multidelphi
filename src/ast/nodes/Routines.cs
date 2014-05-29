@@ -345,6 +345,11 @@ namespace MultiDelphi.AST.Nodes
 				Error("Invalid routine diretive");
 		}
 
+		public virtual bool Contains(GeneralDirective dir)
+		{
+			return generaldirs.Contains((GeneralDirective)dir);
+		}
+
 		public virtual bool Contains(int dir)
 		{
 			if (Enum.IsDefined(typeof(GeneralDirective), dir))
@@ -352,7 +357,8 @@ namespace MultiDelphi.AST.Nodes
 			else if (Enum.IsDefined(typeof(CallConvention), dir))
 				return Callconv == (CallConvention)dir;
 			else
-				return Error("Invalid routine diretive");
+				return false;	// may be an import or method directive
+			//	return Error("Invalid routine diretive");
 		}
 
 		/// <summary>

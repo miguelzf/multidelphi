@@ -14,6 +14,11 @@ var
       result := n * 2;
     end;
 
+    function c(n:single):integer; overload;
+    begin
+      result := trunc(n * 2);
+    end;
+	
   begin
     total := sum + c(count);
   end;

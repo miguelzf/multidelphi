@@ -8,7 +8,7 @@ using System.Reflection;
 namespace MultiDelphi.AST
 {
 	/// <summary>
-	/// Static methods that process the AST
+	/// Static methods to proccess the AST
 	/// </summary>
 
 	class PostProcessing
@@ -78,7 +78,7 @@ namespace MultiDelphi.AST
 
 
 		/// <summary>
-		/// Sets parent back reference in each AST node through the reflection API
+		/// Checks the parent back reference in each AST node through the reflection API
 		/// </summary>
 		public static void TestSetParents(Node root)
 		{
@@ -98,7 +98,6 @@ namespace MultiDelphi.AST
 						return true;
 					}));
 		}
-
 
 	}
 }

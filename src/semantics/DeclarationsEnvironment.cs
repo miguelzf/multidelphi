@@ -76,22 +76,34 @@ namespace MultiDelphi.Semantics
 		/// <summary>
 		/// Register new declaration, of any kind
 		/// </summary>
-		public void RegisterDeclaration(String name, Declaration decl, bool checkCanAdd = true)
+		public void RegisterDeclaration(String name, Declaration decl, bool canReplace = false)
 		{
 			if (name == null || decl == null)
 				throw new InternalSemanticError("trying to register null declaration");
 			
-			if (checkCanAdd)
-			{
+			if (canReplace)
+				// add without checking
+				symEnv.SetOrReplace(name, decl);
+			else
+				// check if key not set yet
 				if (!symEnv.Add(name, decl))
 					throw new IdentifierRedeclared(name);
-			}
-			else	// add without checking
-				symEnv.GetContext().Add(name, decl);
 
 			Debug("Register Decl " + name); // + Environment.NewLine + symtab.ListTable(3));
 		}
 
+		/// <summary>
+		/// Register a new declaration for a possibly repeated name.
+		/// Useful to support Overloaded routine and so on
+		/// </summary>
+		public void RegisterDeclarationRemap(String name, Declaration decl)
+		{
+			if (!symEnv.Add(name, decl, false))
+				throw new InternalSemanticError("could not register " + decl.DeclName());
+
+			Debug("Register Decl " + name); // + Environment.NewLine + symtab.ListTable(3));
+		}
+	
 		/// <summary>
 		/// Fetch declaration denoted by a given name.
 		/// General method, for any kind of declaration.
@@ -161,10 +173,10 @@ namespace MultiDelphi.Semantics
 			while (ctx != null && !(ctx.Key is ObjectSection))
 				ctx = ctx.GetFirstParent();
 
-			if (ctx == null || ctx.Key == null)
+			if (ctx == null || !(ctx.Key is ObjectSection))
 				return null;
 			// get the last declaration of the previous context
-			return ctx.GetFirstParent().lastInserted as CompositeDeclaration;
+			return (ctx.Key as ObjectSection).declaringObject.decl;
 		}
 
 		/// <summary>
@@ -364,8 +376,7 @@ namespace MultiDelphi.Semantics
 
 		#endregion
 
-
-
+		
 		Declaration FetchMethodOrField(String name)
 		{
 			var decl = GetDeclaration(name);

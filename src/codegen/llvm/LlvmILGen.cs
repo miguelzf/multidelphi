@@ -16,7 +16,7 @@ namespace MultiDelphi.Codegen.LlvmIL
 
 	class LlvmILGen : Processor<LLVM.Value>
 	{
-		LlvmIRBuilder builder;
+		IRBuilder builder;
 		ExecutionEngine execEngine;
 		Module module;
 		PassManager passManager;
@@ -152,7 +152,7 @@ namespace MultiDelphi.Codegen.LlvmIL
 			LLVM.Native.InitializeX86TargetMC();
 
 			using (module = new Module("llvm compiler"))
-			using (builder = new LlvmIRBuilder())
+			using (builder = new IRBuilder())
 			{
 				execEngine = new ExecutionEngine(module);
 			
@@ -429,7 +429,7 @@ namespace MultiDelphi.Codegen.LlvmIL
 			if (evalCtx.inTopLevel)
 			{
 				vdecl = builder.AddGlobal(module, llvmtype, node.name);
-				Utils.SetInitializer(vdecl, llvmtype.CreateNullValue());
+				vdecl.SetInitializer(llvmtype.CreateNullValue());
 			}
 			else
 				vdecl = builder.BuildAlloca(llvmtype, node.name);
