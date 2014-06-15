@@ -649,7 +649,6 @@ namespace MultiDelphi.Codegen.LlvmIL
 	
 		public override Value Visit(ForLoop node)
 		{
-			//	Output this as:
 			//		store startval, id
 			//	forloop: 
 			//		body
@@ -702,7 +701,6 @@ namespace MultiDelphi.Codegen.LlvmIL
 
 		public override Value Visit(WhileLoop node)
 		{
-			//	Output this as:
 			//	br whileloop	; llvm demands it
 			//	whileloop: 
 			//		br cond, whilebody, whileend
@@ -739,7 +737,6 @@ namespace MultiDelphi.Codegen.LlvmIL
 
 		public override Value Visit(RepeatLoop node)
 		{
-			//	Output this as:
 			//	br repeatloop	; llvm demands it
 			//	repeatloop:
 			//		body

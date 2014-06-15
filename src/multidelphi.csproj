@@ -55,7 +55,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LLVM.NET">
-      <HintPath>..\deps\llvm.net\LLVM.NET.dll</HintPath>
+      <HintPath>..\deps\LLVM.NET\LLVM.NET\bin\Debug\LLVM.NET.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
