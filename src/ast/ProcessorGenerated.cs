@@ -666,7 +666,7 @@ namespace MultiDelphi.AST
 			return Visit((BinaryExpression) node);
 		}
 		
-		public virtual T Visit(ArithmethicBinaryExpression node)
+		public virtual T Visit(ArithmeticBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
 			traverse(node.left);
@@ -676,42 +676,42 @@ namespace MultiDelphi.AST
 		
 		public virtual T Visit(Subtraction node)
 		{
-			return Visit((ArithmethicBinaryExpression) node);
+			return Visit((ArithmeticBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Addition node)
 		{
-			return Visit((ArithmethicBinaryExpression) node);
+			return Visit((ArithmeticBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Product node)
 		{
-			return Visit((ArithmethicBinaryExpression) node);
+			return Visit((ArithmeticBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Division node)
 		{
-			return Visit((ArithmethicBinaryExpression) node);
+			return Visit((ArithmeticBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Quotient node)
 		{
-			return Visit((ArithmethicBinaryExpression) node);
+			return Visit((ArithmeticBinaryExpression) node);
 		}
 		
 		public virtual T Visit(Modulus node)
 		{
-			return Visit((ArithmethicBinaryExpression) node);
+			return Visit((ArithmeticBinaryExpression) node);
 		}
 		
 		public virtual T Visit(ShiftRight node)
 		{
-			return Visit((ArithmethicBinaryExpression) node);
+			return Visit((ArithmeticBinaryExpression) node);
 		}
 		
 		public virtual T Visit(ShiftLeft node)
 		{
-			return Visit((ArithmethicBinaryExpression) node);
+			return Visit((ArithmeticBinaryExpression) node);
 		}
 		
 		public virtual T Visit(LogicalBinaryExpression node)

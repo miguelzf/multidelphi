@@ -948,7 +948,7 @@ namespace MultiDelphi.Codegen.Cpp
 			return true;
 		}
 
-		public override bool Visit(ArithmethicBinaryExpression node)
+		public override bool Visit(ArithmeticBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
 			//traverse(node.left);
@@ -1626,7 +1626,6 @@ namespace MultiDelphi.Codegen.Cpp
 			traverse(node.compTypes);
 			return true;
 		}
-
 
 	}
 }

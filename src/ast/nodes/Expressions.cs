@@ -447,55 +447,55 @@ namespace MultiDelphi.AST.Nodes
 		SHR, SHL,
 	}
 
-	public abstract class ArithmethicBinaryExpression : BinaryExpression
+	public abstract class ArithmeticBinaryExpression : BinaryExpression
 	{
 		public Expression left;
 		public Expression right;
 		public ArithmeticBinaryOp op;
 
-		public ArithmethicBinaryExpression(Expression e1, Expression e2)
+		public ArithmeticBinaryExpression(Expression e1, Expression e2)
 		{
 			left = e1;
 			right= e2;
 		}
 	}
 
-	public class Subtraction : ArithmethicBinaryExpression
+	public class Subtraction : ArithmeticBinaryExpression
 	{
 		public Subtraction	(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.SUB; }
 	}
 
-	public class Addition : ArithmethicBinaryExpression
+	public class Addition : ArithmeticBinaryExpression
 	{
 		public Addition		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.ADD; }
 	}
 
-	public class Product : ArithmethicBinaryExpression
+	public class Product : ArithmeticBinaryExpression
 	{
 		public Product		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.MUL; }
 	}
 
-	public class Division: ArithmethicBinaryExpression
+	public class Division: ArithmeticBinaryExpression
 	{
 		public Division		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.DIV; }
 	}
 
-	public class Quotient: ArithmethicBinaryExpression
+	public class Quotient: ArithmeticBinaryExpression
 	{
 		public Quotient		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.QUOT; }
 	}
 
-	public class Modulus: ArithmethicBinaryExpression
+	public class Modulus: ArithmeticBinaryExpression
 	{
 		public Modulus		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.MOD; }
 	}
 
-	public class ShiftRight: ArithmethicBinaryExpression
+	public class ShiftRight: ArithmeticBinaryExpression
 	{
 		public ShiftRight	(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.SHR; }
 	}
 
-	public class ShiftLeft: ArithmethicBinaryExpression
+	public class ShiftLeft: ArithmeticBinaryExpression
 	{
 		public ShiftLeft	(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.SHL; }
 	}

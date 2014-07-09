@@ -1055,7 +1055,7 @@ namespace MultiDelphi.Semantics
 			return true;
 		}
 		
-		public override bool Visit(ArithmethicBinaryExpression node)
+		public override bool Visit(ArithmeticBinaryExpression node)
 		{
 			Visit((BinaryExpression) node);
 			if (TraverseResolve(node.left))
@@ -1067,49 +1067,49 @@ namespace MultiDelphi.Semantics
 		
 		public override bool Visit(Subtraction node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+			Visit((ArithmeticBinaryExpression) node);
 			return true;
 		}
 		
 		public override bool Visit(Addition node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+			Visit((ArithmeticBinaryExpression) node);
 			return true;
 		}
 		
 		public override bool Visit(Product node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+			Visit((ArithmeticBinaryExpression) node);
 			return true;
 		}
 		
 		public override bool Visit(Division node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+			Visit((ArithmeticBinaryExpression) node);
 			return true;
 		}
 		
 		public override bool Visit(Quotient node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+			Visit((ArithmeticBinaryExpression) node);
 			return true;
 		}
 		
 		public override bool Visit(Modulus node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+			Visit((ArithmeticBinaryExpression) node);
 			return true;
 		}
 		
 		public override bool Visit(ShiftRight node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+			Visit((ArithmeticBinaryExpression) node);
 			return true;
 		}
 		
 		public override bool Visit(ShiftLeft node)
 		{
-			Visit((ArithmethicBinaryExpression) node);
+			Visit((ArithmeticBinaryExpression) node);
 			return true;
 		}
 		
