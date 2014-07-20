@@ -75,7 +75,7 @@ namespace MultiDelphi.AST.Nodes
 
 		/// <summary>
 		/// Downcast the ConstantValue to an IntegralType, and return the content.
-		/// The type of the expression must be checked first to ensure
+		/// The type of the expression must be checked first for safety.
 		/// </summary>
 		public ulong ValueIntegral()
 		{
@@ -305,6 +305,10 @@ namespace MultiDelphi.AST.Nodes
 
 		public IntegralValue(ulong val) { this.val = val; }
 
+		public IntegralValue(long val) { this.val = (ulong) val; }
+
+		public IntegralValue(bool val) { this.val = (val ? 1UL : 0UL); }
+
 		public override Object Val() { return val; }
 
 		public override bool Equals(object obj)
@@ -312,7 +316,7 @@ namespace MultiDelphi.AST.Nodes
 			return (obj is IntegralValue) && val == ((IntegralValue)obj).val;
 		}
 
-		// Assumes the values belong same-type constants
+		// Assumes the values belong to same-type constants
 		// this < other
 		public ulong range(IntegralValue l2)
 		{
@@ -480,7 +484,8 @@ namespace MultiDelphi.AST.Nodes
 		public Division		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.DIV; }
 	}
 
-	public class Quotient: ArithmeticBinaryExpression
+	// Integer division
+	public class Quotient : ArithmeticBinaryExpression
 	{
 		public Quotient		(Expression e1, Expression e2) : base(e1, e2) { this.op = ArithmeticBinaryOp.QUOT; }
 	}
@@ -509,11 +514,15 @@ namespace MultiDelphi.AST.Nodes
 		AND,
 		OR,
 		XOR,
+	}
+
+	public enum ComparisonBinaryOp
+	{
 		// int values match LLVM's constants
 		EQ = 32,
 		NE,
 			// unsigned compare
-		LT,
+		LT = 34,
 		LE,
 		GT,
 		GE,
@@ -537,6 +546,19 @@ namespace MultiDelphi.AST.Nodes
 		}
 	}
 
+	public abstract class ComparisonBinaryExpression : BinaryExpression
+	{
+		public Expression left;
+		public Expression right;
+		public ComparisonBinaryOp op;
+
+		public ComparisonBinaryExpression(Expression e1, Expression e2)
+		{
+			left = e1;
+			right = e2;
+		}
+	}
+
 	public class LogicalAnd : LogicalBinaryExpression
 	{
 		public LogicalAnd	(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.AND; }
@@ -552,34 +574,34 @@ namespace MultiDelphi.AST.Nodes
 		public LogicalXor	(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.XOR; }
 	}
 
-	public class Equal : LogicalBinaryExpression
+	public class Equal : ComparisonBinaryExpression
 	{
-		public Equal		(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.EQ; }
+		public Equal		(Expression e1, Expression e2) : base(e1, e2) { this.op = ComparisonBinaryOp.EQ; }
 	}
 
-	public class NotEqual : LogicalBinaryExpression
+	public class NotEqual : ComparisonBinaryExpression
 	{
-		public NotEqual		(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.NE; }
+		public NotEqual		(Expression e1, Expression e2) : base(e1, e2) { this.op = ComparisonBinaryOp.NE; }
 	}
 
-	public class LessThan : LogicalBinaryExpression
+	public class LessThan : ComparisonBinaryExpression
 	{
-		public LessThan		(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.LT; }
+		public LessThan		(Expression e1, Expression e2) : base(e1, e2) { this.op = ComparisonBinaryOp.LT; }
 	}
 
-	public class LessOrEqual : LogicalBinaryExpression
+	public class LessOrEqual : ComparisonBinaryExpression
 	{
-		public LessOrEqual	(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.LE; }
+		public LessOrEqual	(Expression e1, Expression e2) : base(e1, e2) { this.op = ComparisonBinaryOp.LE; }
 	}
 
-	public class GreaterThan : LogicalBinaryExpression
+	public class GreaterThan : ComparisonBinaryExpression
 	{
-		public GreaterThan	(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.GT; }
+		public GreaterThan	(Expression e1, Expression e2) : base(e1, e2) { this.op = ComparisonBinaryOp.GT; }
 	}
 
-	public class GreaterOrEqual : LogicalBinaryExpression
+	public class GreaterOrEqual : ComparisonBinaryExpression
 	{
-		public GreaterOrEqual(Expression e1, Expression e2) : base(e1, e2) { this.op = LogicalBinaryOp.GE; }
+		public GreaterOrEqual(Expression e1,Expression e2) : base(e1, e2) { this.op = ComparisonBinaryOp.GE; }
 	}
 
 	#endregion

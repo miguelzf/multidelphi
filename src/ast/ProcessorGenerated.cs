@@ -13,8 +13,9 @@ namespace MultiDelphi.AST
 {
 	public abstract partial class Processor<T>
 	{
+		//
 		//	Complete interface to be implemented by any specific AST processor	
-
+		//
 		
 		public virtual T Visit(FixmeNode node)
 		{
@@ -722,6 +723,14 @@ namespace MultiDelphi.AST
 			return DefaultReturnValue();
 		}
 		
+		public virtual T Visit(ComparisonBinaryExpression node)
+		{
+			Visit((BinaryExpression) node);
+			traverse(node.left);
+			traverse(node.right);
+			return DefaultReturnValue();
+		}
+		
 		public virtual T Visit(LogicalAnd node)
 		{
 			return Visit((LogicalBinaryExpression) node);
@@ -739,32 +748,32 @@ namespace MultiDelphi.AST
 		
 		public virtual T Visit(Equal node)
 		{
-			return Visit((LogicalBinaryExpression) node);
+			return Visit((ComparisonBinaryExpression) node);
 		}
 		
 		public virtual T Visit(NotEqual node)
 		{
-			return Visit((LogicalBinaryExpression) node);
+			return Visit((ComparisonBinaryExpression)node);
 		}
 		
 		public virtual T Visit(LessThan node)
 		{
-			return Visit((LogicalBinaryExpression) node);
+			return Visit((ComparisonBinaryExpression)node);
 		}
 		
 		public virtual T Visit(LessOrEqual node)
 		{
-			return Visit((LogicalBinaryExpression) node);
+			return Visit((ComparisonBinaryExpression)node);
 		}
 		
 		public virtual T Visit(GreaterThan node)
 		{
-			return Visit((LogicalBinaryExpression) node);
+			return Visit((ComparisonBinaryExpression)node);
 		}
 		
 		public virtual T Visit(GreaterOrEqual node)
 		{
-			return Visit((LogicalBinaryExpression) node);
+			return Visit((ComparisonBinaryExpression)node);
 		}
 		
 		public virtual T Visit(TypeBinaryExpression node)

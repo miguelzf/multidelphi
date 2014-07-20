@@ -845,6 +845,14 @@ namespace MultiDelphi.Semantics
 			TraverseSetParent(node,node.right);
 			return true;
 		}
+
+		public override bool Visit(ComparisonBinaryExpression node)
+		{
+			Visit((BinaryExpression)node);
+			TraverseSetParent(node, node.left);
+			TraverseSetParent(node, node.right);
+			return true;
+		}
 		
 		public override bool Visit(LogicalAnd node)
 		{
@@ -866,37 +874,37 @@ namespace MultiDelphi.Semantics
 		
 		public override bool Visit(Equal node)
 		{
-			Visit((LogicalBinaryExpression) node);
+			Visit((ComparisonBinaryExpression)node);
 			return true;
 		}
 		
 		public override bool Visit(NotEqual node)
 		{
-			Visit((LogicalBinaryExpression) node);
+			Visit((ComparisonBinaryExpression)node);
 			return true;
 		}
 		
 		public override bool Visit(LessThan node)
 		{
-			Visit((LogicalBinaryExpression) node);
+			Visit((ComparisonBinaryExpression)node);
 			return true;
 		}
 		
 		public override bool Visit(LessOrEqual node)
 		{
-			Visit((LogicalBinaryExpression) node);
+			Visit((ComparisonBinaryExpression)node);
 			return true;
 		}
 		
 		public override bool Visit(GreaterThan node)
 		{
-			Visit((LogicalBinaryExpression) node);
+			Visit((ComparisonBinaryExpression) node);
 			return true;
 		}
 		
 		public override bool Visit(GreaterOrEqual node)
 		{
-			Visit((LogicalBinaryExpression) node);
+			Visit((ComparisonBinaryExpression)node);
 			return true;
 		}
 		

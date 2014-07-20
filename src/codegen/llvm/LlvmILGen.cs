@@ -586,18 +586,22 @@ namespace MultiDelphi.Codegen.LlvmIL
 					return builder.BuildOr(l, r);
 				case LogicalBinaryOp.XOR:
 					return builder.BuildXor(l, r);
-				case LogicalBinaryOp.EQ:
-				case LogicalBinaryOp.NE:
-				case LogicalBinaryOp.LE:
-				case LogicalBinaryOp.LT:
-				case LogicalBinaryOp.GE:
-				case LogicalBinaryOp.GT:
-					// LogicalBinaryOp values for comparison operands match LLVMIntPredicate values
-					return builder.BuildICmp(l, (LLVMIntPredicate)node.op, r);
-
 				default:	// never happens
 					return Value.Null;
 			}
+		}
+
+		public override Value Visit(ComparisonBinaryExpression node)
+		{
+			Visit((BinaryExpression)node);
+			Value l = traverse(node.left);
+			Value r = traverse(node.right);
+				
+			if (l.IsNull || r.IsNull)
+				return Value.Null;
+
+			// LogicalBinaryOp values for comparison operands match LLVMIntPredicate values
+			return builder.BuildICmp(l, (LLVMIntPredicate)node.op, r);
 		}
 
 		#endregion
