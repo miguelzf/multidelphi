@@ -503,7 +503,7 @@ as			{ return KW_AS; }	// cast
 "+"			{ return KW_SUM; }
 "/"			{ return KW_DIV; }
 "*"			{ return KW_MUL; }
-div			{ return KW_QUOT;}
+div			{ return KW_QUOT;}	// 'div' keyword is actually a quotient, integer division
 mod			{ return KW_MOD; }
 
 	/* expr: logical operators */

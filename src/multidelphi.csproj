@@ -57,6 +57,9 @@
     <Reference Include="LLVM.NET">
       <HintPath>..\deps\LLVM.NET\LLVM.NET\bin\Debug\LLVM.NET.dll</HintPath>
     </Reference>
+    <Reference Include="MiscUtil">
+      <HintPath>..\deps\MiscUtils\MiscUtil.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
