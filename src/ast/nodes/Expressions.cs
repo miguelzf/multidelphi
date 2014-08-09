@@ -288,14 +288,26 @@ namespace MultiDelphi.AST.Nodes
 
 	#region Compile-time computed values
 
-	public abstract class ConstantValue : Node
+	public abstract class ConstantValue : Node, ICloneable
 	{
+		public Object Clone()
+		{
+			return this.MemberwiseClone();
+		}
+
 		public T Val<T>()
 		{
 			return (T) Val();
 		}
 
+		public void SetVal<T>(T o)
+		{
+			SetVal(o);
+		}
+
 		public abstract Object Val();
+
+		public abstract void SetVal(Object o);
 	}
 
 	// For ints, chars and bools
@@ -310,6 +322,8 @@ namespace MultiDelphi.AST.Nodes
 		public IntegralValue(bool val) { this.val = (val ? 1UL : 0UL); }
 
 		public override Object Val() { return val; }
+
+		public override void SetVal(Object o) { val = (ulong) o; }
 
 		public override bool Equals(object obj)
 		{
@@ -388,6 +402,8 @@ namespace MultiDelphi.AST.Nodes
 
 		public override Object Val() { return val; }
 
+		public override void SetVal(Object o) { val = (string) o; }
+
 		public override bool Equals(object obj)
 		{
 			return (obj is StringValue) && val == ((StringValue)obj).val;
@@ -400,6 +416,8 @@ namespace MultiDelphi.AST.Nodes
 		public RealValue(double val) { this.val = val; }
 
 		public override Object Val() { return val; }
+
+		public override void SetVal(Object o) { val = (double) o; }
 
 		public override bool Equals(object obj)
 		{
