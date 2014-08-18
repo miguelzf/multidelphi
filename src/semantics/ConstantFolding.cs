@@ -8,6 +8,11 @@ using MiscUtil;
 
 namespace MultiDelphi.Semantics
 {
+
+	/// <summary>
+	/// Compile-time folding of constant values.
+	/// The computed values are stored in Expression.Value, currently *no* expression nodes are replaced here.
+	/// </summary>
 	class ConstantFolder : Processor<bool>
 	{
 		//
@@ -19,12 +24,13 @@ namespace MultiDelphi.Semantics
 			return true;
 		}
 
+	/*
 		private static bool isReal(double x)
 		{
 			double frac = x - Math.Floor(x);
 			return (frac != 0.0);
 		}
-
+	*/
 
 		//
 		// Processor Interface
