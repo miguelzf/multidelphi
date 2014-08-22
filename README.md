@@ -3,23 +3,21 @@ MultiDelphi
 
 MultiDelphi is a Delphi (ObjectPascal) multi-target compiler using the LLVM framework. It is an attempt at a working Delphi7 compiler, in particular one capable of compiling to Flash (ActionScript 3).  The original goal was to target the [ActionScript Virtual Machine (AVM)][16], in order to port some large Delphi projects such as the [TERRA graphical engine][3] and the [Minimon 3D game][4] to the web.  Other future targets will include x86 and Javascript/[asm.js][17]+[WebGL][23] (probably using [emscripten](https://github.com/kripken/emscripten)). Another interestig target would be [Haxe][18].
 
-MultiDelphi was started in January 2014 and it's still in its early stages. As of Abril 2014, the Delphi front-end is mostly done, with the C++ back-end supporting most of Delphi features and an initial prototype of the LLVM IR back-end.
-
-Planned stages of the project:
+This project is still in its early stages. The Delphi front-end is mostly done, with the C++ back-end supporting most of Delphi features and an initial prototype of the LLVM IR back-end. Planned stages of the project:
 
 * a Delphi front-end for LLVM
 
 	Initially we thought of using the [Dgrok][19] recursive-descent (LL(k)) parser. However, looking at the work required to convert the simple lexical-oriented Parse Tree that Dgrok produces to a robust complete AST, we decided to create our own shift-reduce parser.
 	So MultiDelphi ended up with a complete new shift-reduce (LALR) parser created with the C# ports of the Jay Yacc-based parser generator ([CSJay][10]) and the JFlex lexer generator ([CSFlex][12]).
-	Currently MultiDelphi is built on top of [LLVM 3.2][6], the same version used in [FlaCC/Crossbridge][15].
-
+	Currently MultiDelphi is built on top of [LLVM 3.2][6], the same version used in [FlaCC/Crossbridge][14].
 
 * a C++ back-end
 
 * AS3 (Flash) back-end
 
-* ABC (AS3 bytecode) back-end, based on [FlaCC/Crossbridge][15]
+	We meant to emulate the manual memory management of Delphi through the Flash domain memory component, which was introduced in AS3 to support the FlaCC/Crossbridge C++ compiler. Some documentation on manual memory management in Flash can be found [here](https://github.com/adobe-flash/crossbridge/wiki/Memory-Fragmentation)
 
+* ABC (AS3 bytecode) back-end, based on the [AVM2 target developed in FlaCC/Crossbridge][15]
 
 
 
@@ -28,10 +26,10 @@ Planned stages of the project:
 
 * Delphi
 
-	[Delphi Embarcadero wiki][1]
-	[Delphi Docs][2]
-	[TERRA graphical engine][3]
-	[Minimon 3D game][4]
+	[Delphi Embarcadero wiki][1]  
+	[Delphi Docs][2]  
+	[TERRA graphical engine][3]  
+	[Minimon 3D game][4]  
 
 [1]:http://docwiki.embarcadero.com/RADStudio/XE6/en/Delphi_Reference
 [2]:http://www.delphibasics.co.uk/
@@ -40,12 +38,12 @@ Planned stages of the project:
 
 * LLVM
 
-	[LLVM Documentation][5]
-	[LLVM 3.2][6]
-	[LLVM C API][20]
-	[LLVM Programmer's manual][21]
-	[LLVM IR Language reference][22]
-	[LLVM.NET wrapper][7]
+	[LLVM Documentation][5]  
+	[LLVM 3.2][6]  
+	[LLVM C API][20]  
+	[LLVM Programmer's manual][21]  
+	[LLVM IR Language reference][22]  
+	[LLVM.NET wrapper][7]  
 
 [5]:http://llvm.org/docs
 [6]:http://llvm.org/releases/3.2/docs/ReleaseNotes.html
@@ -54,13 +52,12 @@ Planned stages of the project:
 [21]:http://llvm.org/docs/ProgrammersManual.html
 [22]:http://llvm.org/docs/LangRef.html
 
-
 * Parser/Lexer
 
-	[Yacc/Flex docs][8]
-	[Jay][9]   and [CSJay][10]
-	[JFlex][11] and [CSFLEX][12]
-	[Dgrok][19]
+	[Yacc/Flex docs][8]  
+	[Jay][9]   and [CSJay][10]  
+	[JFlex][11] and [CSFLEX][12]  
+	[Dgrok][19]  
 
 [8]:http://dinosaur.compilertools.net
 [9]:http://www.cs.rit.edu/~ats/projects/lp/doc/jay/package-summary.html
@@ -71,23 +68,23 @@ Planned stages of the project:
 
 * Flash
 
-	[AS3 documentation][13]
-	[Crossbridge][14]
-	[FlaCC/Crossbridge][15]
-	[AVM overview][16]
-	[Tamarin JS/AS engine][24]
+	[AS3 documentation][13]  
+	[FlaCC/Crossbridge][14]  
+	[FlaCC/Crossbridge LLVM target for the AVM2][15]  
+	[AVM overview][16]  
+	[Tamarin JS/AS engine][24]  
 
 [13]:http://www.adobe.com/devnet/actionscript/documentation.html
 [14]:http://adobe-flash.github.io/crossbridge
-[15]:https://github.com/adobe-flash/crossbridge
+[15]:https://github.com/adobe-flash/crossbridge/tree/futures/llvm-3.2/lib/Target/AVM2
 [16]:http://www.adobe.com/content/dam/Adobe/en/devnet/actionscript/articles/avm2overview.pdf
 [24]:https://developer.mozilla.org/en-US/docs/Archive/Mozilla/Tamarin
 
 * Misc
 
-	[asm.js][17]
-	[WebGL][23]
-	[Haxe][18]
+	[asm.js][17]  
+	[WebGL][23]  
+	[Haxe][18]  
 
 [18]:http://haxe.org/
 [17]:http://asmjs.org/
